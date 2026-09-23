@@ -14,5 +14,6 @@ screenshots/level1_2026-09-05_07-53-21.png
 screenshots/level1_2026-09-06_22-53-33.png
 screenshots/level1_2026-09-24_03-00-32.png
 screenshots/spark36_menu_verified.png
+screenshots/spark36_modal_verified.png
 screenshots/spark36_verified.png
 screenshots/spark36_victory_verified.png
