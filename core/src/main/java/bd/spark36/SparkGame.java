@@ -321,6 +321,18 @@ public class SparkGame extends ApplicationAdapter {
             centerX - glyphLayout.width / 2f, 45f);
 
         menuBatch.end();
+
+        // Automated visual verification for Main Menu
+        if (System.getProperty("bd.spark36.testMenuScreenshot") != null) {
+            testTimer += delta;
+            if (!autoScreenshotTaken && testTimer >= 1.0f) {
+                takeScreenshot("spark36_menu_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        }
     }
 
     // ==========================================
