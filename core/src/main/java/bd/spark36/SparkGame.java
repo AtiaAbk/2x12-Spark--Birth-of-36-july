@@ -444,7 +444,7 @@ public class SparkGame extends ApplicationAdapter {
         } else if (System.getProperty("bd.spark36.testModalScreenshot") != null) {
             testTimer += delta;
             if (testTimer >= 1.0f && !hud.isModalOpen()) {
-                hud.openMemorialModal(memorials.getNearest(player.getPosition().x, player.getPosition().z));
+                hud.openMemorialModal(memorials.getNextObjective(player.getPosition()));
             }
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
                 takeScreenshot("spark36_modal_verified");
