@@ -441,6 +441,18 @@ public class SparkGame extends ApplicationAdapter {
                     Gdx.app.exit();
                 }
             }
+        } else if (System.getProperty("bd.spark36.testModalScreenshot") != null) {
+            testTimer += delta;
+            if (testTimer >= 1.0f && !hud.isModalOpen()) {
+                hud.openMemorialModal(memorials.getNearest(player.getPosition().x, player.getPosition().z));
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("spark36_modal_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
         } else if (System.getProperty("bd.spark36.testScreenshot") != null) {
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
