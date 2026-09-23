@@ -922,10 +922,10 @@ public class WhereWindsMeetHUD implements Disposable {
         // Text
         spriteBatch.begin();
         fonts.headerFont.setColor(1.0f, 0.85f, 0.40f, alpha);
-        fonts.headerFont.draw(spriteBatch, "◆ ARCHIVE UNLOCKED • MISSION COMPLETE ◆", bx + 48f, by + bh - 14f);
+        fonts.headerFont.draw(spriteBatch, "ARCHIVE UNLOCKED  |  MISSION COMPLETE", bx + 48f, by + bh - 14f);
 
         fonts.smallFont.setColor(1f, 1f, 1f, 0.95f * alpha);
-        String sub = String.format("%s  •  [ %d / 5 Archives Secured ]", missionBannerTitle, missionBannerCount);
+        String sub = String.format("%s   |   [ %d / 5 Archives Secured ]", missionBannerTitle, missionBannerCount);
         fonts.smallFont.draw(spriteBatch, sub, bx + 48f, by + 22f);
         spriteBatch.end();
     }
