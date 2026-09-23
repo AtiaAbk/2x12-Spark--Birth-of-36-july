@@ -325,7 +325,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // 1. ACTIVE MISSION TAG
         fonts.smallFont.setColor(allDone ? Color.GREEN : goldAccent);
         String missionTag = allDone ?
-            "◆ ALL ARCHIVES UNLOCKED: 05 / 05" :
+            "ALL ARCHIVES UNLOCKED: 05 / 05" :
             String.format("ACTIVE MISSION: %02d / %02d", Math.min(ins + 1, total), total);
         fonts.smallFont.draw(spriteBatch, missionTag, cardX + 28f, cardY + 148f);
 
