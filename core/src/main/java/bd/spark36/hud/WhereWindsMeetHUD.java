@@ -1038,6 +1038,11 @@ public class WhereWindsMeetHUD implements Disposable {
         isVictoryOpen = true;
     }
 
+    /** Open memorial modal directly (used for automated visual verification) */
+    public void openMemorialModal(MemorialEntry entry) {
+        this.activeModalEntry = entry;
+    }
+
     public boolean isModalOpen() {
         return activeModalEntry != null || isMapOpen || isPauseMenuOpen || isVictoryOpen;
     }
