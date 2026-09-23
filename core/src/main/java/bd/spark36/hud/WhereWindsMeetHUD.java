@@ -759,7 +759,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Subtitle: Date & Location
         fonts.smallFont.setColor(new Color(0.92f, 0.85f, 0.65f, 1f));
-        fonts.smallFont.draw(spriteBatch, "◆ " + entry.date + "   •   " + entry.location, textX, my + mh - 48f);
+        fonts.smallFont.draw(spriteBatch, entry.date + "   |   " + entry.location, textX, my + mh - 48f);
 
         // Historical Description (concise, powerful narrative)
         fonts.bodyFont.setColor(Color.WHITE);
