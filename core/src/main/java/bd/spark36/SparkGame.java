@@ -383,16 +383,17 @@ public class SparkGame extends ApplicationAdapter {
             }
         }
 
-        // Toggle cursor capture on mouse click
-        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-            if (!hud.isModalOpen() && !Gdx.input.isCursorCatched()) {
+        // Automatic cursor capture management:
+        // In active gameplay (no modal/map/pause open), ALWAYS keep cursor captured
+        // so trackpad/mouse immediately controls camera without needing a click.
+        if (!hud.isModalOpen()) {
+            if (!Gdx.input.isCursorCatched()) {
                 Gdx.input.setCursorCatched(true);
             }
-        }
-
-        // Release cursor when modal or map is active
-        if (hud.isModalOpen() && Gdx.input.isCursorCatched()) {
-            Gdx.input.setCursorCatched(false);
+        } else {
+            if (Gdx.input.isCursorCatched()) {
+                Gdx.input.setCursorCatched(false);
+            }
         }
 
         // F12 Screenshot key

@@ -618,11 +618,11 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.keyFont.draw(spriteBatch, "M", kBaseX + 51f, kBaseY + 15f);
         fonts.keyFont.draw(spriteBatch, "ESC", kBaseX + 118f, kBaseY + 15f);
 
-        // Action sub-labels matching mockup
+        // Action sub-labels matching updated keybinds: SPACE = SPRINT, SHIFT = JUMP
         fonts.smallFont.setColor(Color.WHITE);
         fonts.smallFont.draw(spriteBatch, "MOVE", kBaseX - 6f, kBaseY + 72f);
-        fonts.smallFont.draw(spriteBatch, "SPRINT", kBaseX + 194f, kBaseY + 72f);
-        fonts.smallFont.draw(spriteBatch, "JUMP", kBaseX + 84f, kBaseY + 42f);
+        fonts.smallFont.draw(spriteBatch, "JUMP", kBaseX + 194f, kBaseY + 72f);
+        fonts.smallFont.draw(spriteBatch, "SPRINT", kBaseX + 84f, kBaseY + 42f);
         fonts.smallFont.draw(spriteBatch, "INTERACT", kBaseX + 164f, kBaseY + 42f);
         fonts.smallFont.draw(spriteBatch, "MAP", kBaseX + 75f, kBaseY + 15f);
         fonts.smallFont.draw(spriteBatch, "PAUSE", kBaseX + 156f, kBaseY + 15f);

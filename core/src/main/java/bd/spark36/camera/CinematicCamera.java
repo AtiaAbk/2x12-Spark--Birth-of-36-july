@@ -28,10 +28,10 @@ public class CinematicCamera {
     private final float minPitch = -15f;
     private final float maxPitch = 38f;
 
-    // Mouse sensitivity & frame skipping
-    private float mouseSensitivity = 0.18f;
+    // Mouse & Trackpad sensitivity
+    private float mouseSensitivity = 0.22f;
     private boolean mouseLookActive = true;
-    private int initFrameSkip = 5; // Skip OS window mouse jump on startup
+    private int initFrameSkip = 2; // Skip initial window focus frame
 
     // Smooth interpolation
     private final Vector3 currentCameraPos = new Vector3();
@@ -52,18 +52,26 @@ public class CinematicCamera {
     }
 
     /**
-     * Updates camera rotation from mouse input and interpolates position smoothly.
+     * Updates camera rotation from mouse/trackpad input and interpolates position smoothly.
+     * Auto-maintains cursor capture so trackpad gestures immediately rotate camera without clicking.
      */
     public void update(float delta, Vector3 playerPos, boolean inputEnabled) {
-        // 1. Mouse rotation when active and cursor is captured
-        if (inputEnabled && mouseLookActive && Gdx.input.isCursorCatched()) {
+        // 1. Mouse/Trackpad rotation when active
+        if (inputEnabled && mouseLookActive) {
+            // Auto-ensure cursor is captured in gameplay without requiring click
+            if (!Gdx.input.isCursorCatched()) {
+                Gdx.input.setCursorCatched(true);
+            }
+
             if (initFrameSkip > 0) {
                 initFrameSkip--;
                 Gdx.input.getDeltaX();
                 Gdx.input.getDeltaY();
             } else {
-                float deltaX = MathUtils.clamp(Gdx.input.getDeltaX(), -30f, 30f);
-                float deltaY = MathUtils.clamp(Gdx.input.getDeltaY(), -30f, 30f);
+                float rawDeltaX = Gdx.input.getDeltaX();
+                float rawDeltaY = Gdx.input.getDeltaY();
+                float deltaX = MathUtils.clamp(rawDeltaX, -100f, 100f);
+                float deltaY = MathUtils.clamp(rawDeltaY, -100f, 100f);
 
                 if (Math.abs(deltaX) > 0.001f || Math.abs(deltaY) > 0.001f) {
                     yaw -= deltaX * mouseSensitivity;
