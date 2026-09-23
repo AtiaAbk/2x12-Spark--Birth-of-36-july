@@ -345,13 +345,19 @@ public class SparkGame extends ApplicationAdapter {
 
         handleGameplayInputs(delta);
 
-        // Check for exit actions from pause menu
+        // Check for exit actions from pause menu or victory screen
         int exitAction = hud.consumeExitAction();
         if (exitAction == 1) {
             returnToMainMenu();
             return;
         } else if (exitAction == 2) {
             Gdx.app.exit();
+            return;
+        } else if (exitAction == 3) {
+            // Replay Level 1
+            player.setPosition(0f, 0f, 49.4f);
+            memorials.reset();
+            hud.reset();
             return;
         }
 
@@ -420,7 +426,22 @@ public class SparkGame extends ApplicationAdapter {
         }
 
         // Automated visual verification support
-        if (System.getProperty("bd.spark36.testScreenshot") != null) {
+        if (System.getProperty("bd.spark36.testVictory") != null) {
+            testTimer += delta;
+            if (testTimer >= 1.0f && !hud.isModalOpen()) {
+                for (bd.spark36.world.JulyMemorials.MemorialEntry e : memorials.getEntries()) {
+                    e.inspected = true;
+                }
+                hud.triggerVictoryForTest();
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("spark36_victory_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testScreenshot") != null) {
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
                 takeScreenshot("spark36_verified");

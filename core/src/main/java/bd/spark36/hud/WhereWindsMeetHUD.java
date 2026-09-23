@@ -1009,6 +1009,11 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
+    /** Trigger victory screen directly (used for automated visual verification) */
+    public void triggerVictoryForTest() {
+        isVictoryOpen = true;
+    }
+
     public boolean isModalOpen() {
         return activeModalEntry != null || isMapOpen || isPauseMenuOpen || isVictoryOpen;
     }
