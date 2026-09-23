@@ -8,12 +8,13 @@ import com.badlogic.gdx.math.Vector3;
 
 /**
  * Handles student character locomotion, dual input schemes (WASD + Arrow Keys),
- * sprint stamina management, jump physics, collision detection, and procedural movement animation.
+ * sprint stamina management, jump physics, AABB collision detection with world
+ * geometry, and procedural movement animation.
  */
 public class PlayerController {
 
     // Position and Physics
-    private final Vector3 position = new Vector3(0f, 0f, 49.4f); // Start on central avenue facing Curzon Hall (65.4m from Curzon Arcade)
+    private final Vector3 position = new Vector3(0f, 0f, 49.4f); // Start on central avenue facing Curzon Hall
     private final Vector3 velocity = new Vector3();
     private float verticalVelocity = 0f;
     private boolean isGrounded = true;
@@ -28,6 +29,11 @@ public class PlayerController {
     public static final float ACCELERATION = 14f;
     public static final float JUMP_VELOCITY = 6.8f;
     public static final float GRAVITY = -20f;
+
+    // Collision Constants
+    private static final float PLAYER_RADIUS = 0.4f;
+    private static final float PLAYER_HEIGHT = 1.7f;
+    private static final float STEP_UP_HEIGHT = 0.65f; // Auto-step up for obstacles <= this height
 
     // Stamina & Vitality
     private float health = 100f;
@@ -48,6 +54,36 @@ public class PlayerController {
     private final Vector2 moveDir = new Vector2();
     private final Vector3 prevPosition = new Vector3();
 
+    /**
+     * AABB collision boxes for all solid world geometry.
+     * Each entry: {minX, minY, minZ, maxX, maxY, maxZ}
+     * Derived from DhakaCampusWorld.java geometry positions and sizes.
+     */
+    private static final float[][] COLLISION_BOXES = {
+        // Curzon Hall Main Block: createBox(38,14,17) at (0,7,-32)
+        {-19f, 0f, -40.5f, 19f, 14f, -23.5f},
+        // East Wing: createBox(28,11.5,15) at (32,5.75,-31)
+        {18f, 0f, -38.5f, 46f, 11.5f, -23.5f},
+        // West Wing: createBox(28,11.5,15) at (-32,5.75,-31)
+        {-46f, 0f, -38.5f, -18f, 11.5f, -23.5f},
+        // Portico (front projection): createBox(15,15.6,3.8) at (0,7.8,-22.5)
+        {-7.5f, 0f, -24.4f, 7.5f, 15.6f, -20.6f},
+        // Grand Steps: createBox(16,0.6,4.2) at (0,0.3,-19.5)
+        {-8f, 0f, -21.6f, 8f, 0.6f, -17.4f},
+        // Bench at Z=6 (rotated 90°): createBox(2.2,0.8,0.7) at (-7,0.4,6)
+        {-8.1f, 0f, 4.9f, -5.9f, 0.8f, 7.1f},
+        // Bench at Z=24
+        {-8.1f, 0f, 22.9f, -5.9f, 0.8f, 25.1f},
+        // Bench at Z=42
+        {-8.1f, 0f, 40.9f, -5.9f, 0.8f, 43.1f},
+        // Bicycle at Z=7.2
+        {-9.0f, 0f, 6.7f, -7.4f, 1.0f, 7.7f},
+        // Bicycle at Z=25.2
+        {-9.0f, 0f, 24.7f, -7.4f, 1.0f, 25.7f},
+        // Bicycle at Z=43.2
+        {-9.0f, 0f, 42.7f, -7.4f, 1.0f, 43.7f},
+    };
+
     public PlayerController() {
     }
 
@@ -56,6 +92,7 @@ public class PlayerController {
      *
      * @param delta time step in seconds
      * @param cameraYawDegrees horizontal yaw angle of the camera in degrees
+     * @param inputEnabled whether player input is active (false when modal/menu is open)
      */
     public void update(float delta, float cameraYawDegrees, boolean inputEnabled) {
         if (delta > 0.1f) delta = 0.1f; // Cap spike deltas
@@ -137,7 +174,7 @@ public class PlayerController {
             targetVx = worldMoveX * currentSpeed;
             targetVz = worldMoveZ * currentSpeed;
 
-            // Calculate target character heading angle in degrees (0 = +Z, 90 = +X, 180 = -Z, 270 = -X)
+            // Calculate target character heading angle
             targetHeadingDegrees = MathUtils.atan2(worldMoveX, worldMoveZ) * MathUtils.radiansToDegrees;
         }
 
@@ -163,23 +200,16 @@ public class PlayerController {
             verticalVelocity += GRAVITY * delta;
         }
 
-        // 5. Apply displacement & collision check
+        // 5. Apply displacement
         prevPosition.set(position);
         position.x += velocity.x * delta;
         position.z += velocity.z * delta;
         position.y += verticalVelocity * delta;
 
-        // Ground collision
-        if (position.y <= 0f) {
-            position.y = 0f;
-            verticalVelocity = 0f;
-            isGrounded = true;
-        }
-
-        // Campus boundaries and building collisions
+        // 6. Full AABB collision resolution (ground plane + world objects)
         resolveCollisions();
 
-        // 6. Walk cycle animation progression
+        // 7. Walk cycle animation progression
         if (isMoving) {
             float cycleSpeed = isSprinting ? 14f : 8.5f;
             walkCycle += cycleSpeed * delta;
@@ -189,26 +219,76 @@ public class PlayerController {
     }
 
     /**
-     * Clamps player to the Dhaka University Curzon Hall campus bounds and prevents
-     * walking through solid building walls.
+     * Full AABB collision resolution against all world geometry.
+     * Handles:
+     * - Outer campus boundary clamping
+     * - Horizontal wall collision (push back to previous position)
+     * - Vertical platform landing (land on top of objects when falling)
+     * - Step-up for low obstacles (auto-step onto stairs, curbs)
+     * - Edge detection (start falling when walking off a platform)
+     * - Ground plane collision at Y=0
      */
     private void resolveCollisions() {
         // Outer campus boundary
         position.x = MathUtils.clamp(position.x, -95f, 95f);
         position.z = MathUtils.clamp(position.z, -55f, 85f);
 
-        // Curzon Hall Central Building AABB collision box:
-        // Main block: X from -35 to +35, Z from -42 to -22
-        float curzonMinX = -36f;
-        float curzonMaxX = 36f;
-        float curzonMinZ = -43f;
-        float curzonMaxZ = -20f;
+        float landingSurface = 0f; // Default ground plane
 
-        if (position.x > curzonMinX && position.x < curzonMaxX &&
-            position.z > curzonMinZ && position.z < curzonMaxZ) {
-            // Push back to previous valid position
-            position.x = prevPosition.x;
-            position.z = prevPosition.z;
+        for (float[] box : COLLISION_BOXES) {
+            float bMinX = box[0], bMinY = box[1], bMinZ = box[2];
+            float bMaxX = box[3], bMaxY = box[4], bMaxZ = box[5];
+
+            // Check horizontal overlap (player has collision radius)
+            boolean overlapX = position.x + PLAYER_RADIUS > bMinX && position.x - PLAYER_RADIUS < bMaxX;
+            boolean overlapZ = position.z + PLAYER_RADIUS > bMinZ && position.z - PLAYER_RADIUS < bMaxZ;
+
+            if (!overlapX || !overlapZ) continue;
+
+            // Player horizontally overlaps this box
+            float boxHeight = bMaxY - bMinY;
+
+            // Was player above this box on the previous frame?
+            boolean wasAbove = prevPosition.y >= bMaxY - 0.1f;
+
+            if (wasAbove) {
+                // Player was above — this box is a potential landing platform
+                landingSurface = Math.max(landingSurface, bMaxY);
+
+            } else if (boxHeight <= STEP_UP_HEIGHT && bMaxY - position.y <= STEP_UP_HEIGHT) {
+                // Low obstacle (steps, curbs) — auto-step up
+                landingSurface = Math.max(landingSurface, bMaxY);
+
+            } else if (position.y < bMaxY && position.y + PLAYER_HEIGHT > bMinY) {
+                // Tall obstacle — wall collision: push back horizontally
+                position.x = prevPosition.x;
+                position.z = prevPosition.z;
+                velocity.x = 0f;
+                velocity.z = 0f;
+            }
+        }
+
+        // Apply landing on the highest available surface
+        if (position.y <= landingSurface) {
+            position.y = landingSurface;
+            verticalVelocity = 0f;
+            isGrounded = true;
+        }
+
+        // Edge detection: if grounded above ground level, check if still over a surface
+        if (isGrounded && position.y > 0.01f) {
+            boolean onSurface = false;
+            for (float[] box : COLLISION_BOXES) {
+                boolean overX = position.x + PLAYER_RADIUS > box[0] && position.x - PLAYER_RADIUS < box[3];
+                boolean overZ = position.z + PLAYER_RADIUS > box[2] && position.z - PLAYER_RADIUS < box[5];
+                if (overX && overZ && Math.abs(position.y - box[4]) < 0.15f) {
+                    onSurface = true;
+                    break;
+                }
+            }
+            if (!onSurface) {
+                isGrounded = false; // Walk off edge — start falling
+            }
         }
     }
 
