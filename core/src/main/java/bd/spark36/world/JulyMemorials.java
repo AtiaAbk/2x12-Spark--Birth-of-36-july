@@ -204,6 +204,16 @@ public class JulyMemorials implements Disposable {
         return entries.size;
     }
 
+    public boolean isAllInspected() {
+        return getInspectedCount() >= entries.size;
+    }
+
+    public void reset() {
+        for (MemorialEntry e : entries) {
+            e.inspected = false;
+        }
+    }
+
     public Array<MemorialEntry> getEntries() {
         return entries;
     }

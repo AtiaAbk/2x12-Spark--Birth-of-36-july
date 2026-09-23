@@ -43,9 +43,16 @@ public class WhereWindsMeetHUD implements Disposable {
     private MemorialEntry activeModalEntry = null;
     private boolean isMapOpen = false;
     private boolean isPauseMenuOpen = false;
+    private boolean isVictoryOpen = false;
+    private boolean victoryShown = false;
     private float animTime = 0f;
 
-    // Exit actions: 0=none, 1=return to main menu, 2=quit game
+    // Toast Notification Banner (triggered on memorial inspection)
+    private float missionBannerTime = 0f;
+    private String missionBannerTitle = "";
+    private int missionBannerCount = 0;
+
+    // Exit actions: 0=none, 1=return to main menu, 2=quit game, 3=replay level
     private int exitAction = 0;
 
     public WhereWindsMeetHUD(FontRenderer fontRenderer) {
@@ -54,29 +61,65 @@ public class WhereWindsMeetHUD implements Disposable {
 
     public void update(float delta, PlayerController player, JulyMemorials memorials) {
         animTime += delta;
+        if (missionBannerTime > 0f) {
+            missionBannerTime -= delta;
+        }
+
+        // Handle Victory Screen input
+        if (isVictoryOpen) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                exitAction = 1; // Return to Main Menu
+                isVictoryOpen = false;
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+                exitAction = 3; // Replay Level 1
+                isVictoryOpen = false;
+                victoryShown = false;
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.X)) {
+                exitAction = 2; // Quit Game
+                isVictoryOpen = false;
+            }
+            return;
+        }
 
         MemorialEntry nearby = memorials.getNearbyMemorial(player.getPosition());
 
         if (nearby != null && (Gdx.input.isKeyJustPressed(Input.Keys.E) || Gdx.input.isKeyJustPressed(Input.Keys.ENTER))) {
             if (activeModalEntry == null) {
                 activeModalEntry = nearby;
+                boolean wasNew = !nearby.inspected;
                 nearby.inspected = true;
+                if (wasNew) {
+                    missionBannerTime = 5.0f;
+                    missionBannerTitle = nearby.title;
+                    missionBannerCount = memorials.getInspectedCount();
+                }
             } else {
                 activeModalEntry = null;
+                // If all memorials inspected and victory hasn't triggered yet, open Victory Screen!
+                if (memorials.isAllInspected() && !victoryShown) {
+                    isVictoryOpen = true;
+                    victoryShown = true;
+                }
             }
         }
 
         if (activeModalEntry != null && Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             activeModalEntry = null;
+            if (memorials.isAllInspected() && !victoryShown) {
+                isVictoryOpen = true;
+                victoryShown = true;
+            }
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
-            if (activeModalEntry == null) {
+            if (activeModalEntry == null && !isVictoryOpen) {
                 isMapOpen = !isMapOpen;
             }
         }
 
-        if (activeModalEntry == null && !isMapOpen && Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+        if (activeModalEntry == null && !isMapOpen && !isVictoryOpen && Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             isPauseMenuOpen = !isPauseMenuOpen;
         }
 
@@ -122,13 +165,13 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // 1. Draw HUD Background Shapes & Ornate Geometry
         shapeRenderer.begin(ShapeType.Filled);
-        drawMissionCardBg(w, h);
+        drawMissionCardBg(memorials, w, h);
         drawCurvedHealthBarBg(player, w, h);
         drawAntiqueCompassRoseFilled(w, h, cameraYaw);
         drawKeycapsBg(w, h);
 
         MemorialEntry nearby = memorials.getNearbyMemorial(player.getPosition());
-        if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
+        if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
             drawSpeechBubblePromptBg(w, h);
         }
         shapeRenderer.end();
@@ -140,7 +183,7 @@ public class WhereWindsMeetHUD implements Disposable {
         drawAntiqueCompassRoseLines(w, h, cameraYaw);
         drawKeycapsBorders(w, h);
 
-        if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
+        if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
             drawSpeechBubblePromptBorders(w, h);
         }
         shapeRenderer.end();
@@ -152,13 +195,20 @@ public class WhereWindsMeetHUD implements Disposable {
         drawAntiqueCompassRoseText(w, h, cameraYaw);
         drawKeycapsText(w, h);
 
-        if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
+        if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
             drawSpeechBubblePromptText(nearby, w, h);
         }
         spriteBatch.end();
 
-        // 4. Overlays: Historical Archival Modal, Map, or Pause Menu
-        if (activeModalEntry != null) {
+        // 4. Toast Notification Banner (renders on top of HUD when active)
+        if (!isVictoryOpen && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
+            renderMissionCompleteBanner(w, h);
+        }
+
+        // 5. Overlays: Historical Archival Modal, Map, Pause Menu, or Victory Screen
+        if (isVictoryOpen) {
+            renderVictoryScreen(w, h);
+        } else if (activeModalEntry != null) {
             renderMemorialModal(activeModalEntry, w, h);
         } else if (isMapOpen) {
             renderCampusMap(player, memorials, cameraYaw, w, h);
@@ -170,7 +220,7 @@ public class WhereWindsMeetHUD implements Disposable {
     // ==========================================
     // 1. TOP-LEFT MISSION CARD (Matching Mockup)
     // ==========================================
-    private void drawMissionCardBg(float w, float h) {
+    private void drawMissionCardBg(JulyMemorials memorials, float w, float h) {
         float cardX = 36f;
         float cardY = h - 195f;
         float cardW = 390f;
@@ -188,7 +238,7 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.triangle(dX, dY + dS, dX + dS, dY, dX, dY - dS);
         shapeRenderer.triangle(dX, dY + dS, dX - dS, dY, dX, dY - dS);
 
-        // Glowing Golden Progress Bar
+        // Glowing Golden Progress Bar (Dynamic: fills as archives are inspected)
         float barX = cardX + 16f;
         float barY = cardY + 48f;
         float barW = 300f;
@@ -198,15 +248,21 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(0.18f, 0.16f, 0.12f, 0.9f);
         shapeRenderer.rect(barX, barY, barW, barH);
 
-        // Gold Fill with Gleam
-        shapeRenderer.setColor(goldAccent);
-        float fillW = barW * 0.72f;
-        shapeRenderer.rect(barX, barY, fillW, barH);
+        // Gold/Green Fill with Gleam based on actual mission progress
+        int inspected = memorials.getInspectedCount();
+        int total = memorials.getTotalCount();
+        float progress = total > 0 ? (float) inspected / (float) total : 0f;
+        float fillW = barW * progress;
 
-        // Gleam particle
-        float gleamPos = (MathUtils.sin(animTime * 2.5f) + 1f) * 0.5f * fillW;
-        shapeRenderer.setColor(1.0f, 0.98f, 0.85f, 0.95f);
-        shapeRenderer.circle(barX + gleamPos, barY + barH / 2f, 4f, 12);
+        if (fillW > 0f) {
+            shapeRenderer.setColor(inspected >= total ? Color.GREEN : goldAccent);
+            shapeRenderer.rect(barX, barY, fillW, barH);
+
+            // Gleam particle
+            float gleamPos = (MathUtils.sin(animTime * 2.5f) + 1f) * 0.5f * fillW;
+            shapeRenderer.setColor(1.0f, 0.98f, 0.85f, 0.95f);
+            shapeRenderer.circle(barX + gleamPos, barY + barH / 2f, 4f, 12);
+        }
 
         // Waypoint Compass Needle Icon Circle (next to DISTANCE)
         float cX = cardX + 338f;
@@ -262,23 +318,32 @@ public class WhereWindsMeetHUD implements Disposable {
         float cardX = 36f;
         float cardY = h - 195f;
 
-        // 1. ACTIVE MISSION
-        fonts.smallFont.setColor(goldAccent);
-        int ins = memorials.getInspectedCount() + 1;
-        String missionTag = String.format("ACTIVE MISSION: %02d / %02d", Math.min(ins, 5), 5);
+        int ins = memorials.getInspectedCount();
+        int total = memorials.getTotalCount();
+        boolean allDone = ins >= total;
+
+        // 1. ACTIVE MISSION TAG
+        fonts.smallFont.setColor(allDone ? Color.GREEN : goldAccent);
+        String missionTag = allDone ?
+            "◆ ALL ARCHIVES UNLOCKED: 05 / 05" :
+            String.format("ACTIVE MISSION: %02d / %02d", Math.min(ins + 1, total), total);
         fonts.smallFont.draw(spriteBatch, missionTag, cardX + 28f, cardY + 148f);
 
-        // 2. REACH CURZON HALL (Bold uppercase header)
+        // 2. MISSION TITLE
         fonts.titleFont.setColor(Color.WHITE);
-        fonts.titleFont.draw(spriteBatch, "REACH CURZON HALL", cardX + 16f, cardY + 124f);
+        String missionTitle = allDone ? "LEVEL 1 ACCOMPLISHED" : (nearest != null ? nearest.title : "EXPLORE CAMPUS");
+        fonts.titleFont.draw(spriteBatch, missionTitle, cardX + 16f, cardY + 124f);
 
-        // 3. Subtitle description
+        // 3. Subtitle description / location
         fonts.bodyFont.setColor(new Color(0.88f, 0.88f, 0.90f, 1f));
-        fonts.bodyFont.draw(spriteBatch, "Investigate the historical science faculty forecourt", cardX + 16f, cardY + 92f);
+        String missionDesc = allDone ?
+            "All 5 historical archives secured. Victory achieved!" :
+            (nearest != null ? "Target: " + nearest.location : "Investigate Dhaka University archives");
+        fonts.bodyFont.draw(spriteBatch, missionDesc, cardX + 16f, cardY + 92f);
 
-        // 4. DISTANCE: 65.4 M
+        // 4. DISTANCE
         fonts.headerFont.setColor(goldAccent);
-        String distStr = String.format("DISTANCE: %.1f M", dst);
+        String distStr = allDone ? "STATUS: COMPLETED" : String.format("DISTANCE: %.1f M", dst);
         fonts.headerFont.draw(spriteBatch, distStr, cardX + 16f, cardY + 30f);
     }
 
@@ -787,15 +852,175 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
-    public boolean isModalOpen() {
-        return activeModalEntry != null || isMapOpen || isPauseMenuOpen;
+    // ==========================================
+    // TOAST NOTIFICATION: MISSION COMPLETE BANNER
+    // ==========================================
+    private void renderMissionCompleteBanner(float w, float h) {
+        if (missionBannerTime <= 0f) return;
+
+        // Smooth alpha fade: 0.8s fade in, 0.8s fade out
+        float alpha = 1f;
+        if (missionBannerTime > 4.2f) {
+            alpha = (5.0f - missionBannerTime) / 0.8f;
+        } else if (missionBannerTime < 0.8f) {
+            alpha = missionBannerTime / 0.8f;
+        }
+        alpha = MathUtils.clamp(alpha, 0f, 1f);
+
+        float bw = 560f;
+        float bh = 68f;
+        float bx = (w - bw) / 2f;
+        float by = h - 95f;
+
+        // Dark glass background
+        shapeRenderer.begin(ShapeType.Filled);
+        shapeRenderer.setColor(0.04f, 0.06f, 0.08f, 0.90f * alpha);
+        shapeRenderer.rect(bx, by, bw, bh);
+
+        // Gold top accent
+        shapeRenderer.setColor(1.0f, 0.85f, 0.40f, 0.95f * alpha);
+        shapeRenderer.rect(bx, by + bh - 3f, bw, 3f);
+
+        // Gold diamond icon on left
+        float dx = bx + 26f;
+        float dy = by + bh / 2f;
+        float ds = 7f;
+        shapeRenderer.triangle(dx, dy + ds, dx + ds, dy, dx, dy - ds);
+        shapeRenderer.triangle(dx, dy + ds, dx - ds, dy, dx, dy - ds);
+        shapeRenderer.end();
+
+        // Border
+        shapeRenderer.begin(ShapeType.Line);
+        shapeRenderer.setColor(0.92f, 0.76f, 0.32f, 0.85f * alpha);
+        shapeRenderer.rect(bx, by, bw, bh);
+        shapeRenderer.end();
+
+        // Text
+        spriteBatch.begin();
+        fonts.headerFont.setColor(1.0f, 0.85f, 0.40f, alpha);
+        fonts.headerFont.draw(spriteBatch, "◆ ARCHIVE UNLOCKED • MISSION COMPLETE ◆", bx + 48f, by + bh - 14f);
+
+        fonts.smallFont.setColor(1f, 1f, 1f, 0.95f * alpha);
+        String sub = String.format("%s  •  [ %d / 5 Archives Secured ]", missionBannerTitle, missionBannerCount);
+        fonts.smallFont.draw(spriteBatch, sub, bx + 48f, by + 22f);
+        spriteBatch.end();
     }
 
-    /** Reset HUD state (used when returning from main menu) */
+    // ==========================================
+    // GRAND LEVEL 1 VICTORY / CONGRATULATIONS SCREEN
+    // ==========================================
+    private void renderVictoryScreen(float w, float h) {
+        shapeRenderer.begin(ShapeType.Filled);
+        // Dim screen background
+        shapeRenderer.setColor(0f, 0f, 0f, 0.88f);
+        shapeRenderer.rect(0, 0, w, h);
+
+        float vw = 760f;
+        float vh = 520f;
+        float vx = (w - vw) / 2f;
+        float vy = (h - vh) / 2f;
+
+        // Dark glass panel
+        shapeRenderer.setColor(0.04f, 0.06f, 0.08f, 0.95f);
+        shapeRenderer.rect(vx, vy, vw, vh);
+
+        // Header band
+        shapeRenderer.setColor(0.08f, 0.07f, 0.05f, 0.95f);
+        shapeRenderer.rect(vx, vy + vh - 75f, vw, 75f);
+
+        // Gold top accent
+        shapeRenderer.setColor(goldAccent);
+        shapeRenderer.rect(vx, vy + vh - 4f, vw, 4f);
+
+        // Statistics sub-card
+        float sx = vx + 40f;
+        float sy = vy + 115f;
+        float sw = vw - 80f;
+        float sh = 105f;
+        shapeRenderer.setColor(0.08f, 0.10f, 0.13f, 0.80f);
+        shapeRenderer.rect(sx, sy, sw, sh);
+        shapeRenderer.end();
+
+        // Lines and Borders
+        shapeRenderer.begin(ShapeType.Line);
+        shapeRenderer.setColor(goldBorder);
+        shapeRenderer.rect(vx, vy, vw, vh);
+        shapeRenderer.line(vx, vy + vh - 75f, vx + vw, vy + vh - 75f);
+        shapeRenderer.rect(sx, sy, sw, sh);
+
+        // Ornate Corner Brackets (⌜ ⌝ ⌞ ⌟)
+        float cLen = 22f;
+        shapeRenderer.setColor(goldAccent);
+        // Top-Left
+        shapeRenderer.line(vx - 4f, vy + vh + 4f, vx + cLen, vy + vh + 4f);
+        shapeRenderer.line(vx - 4f, vy + vh + 4f, vx - 4f, vy + vh - cLen);
+        // Top-Right
+        shapeRenderer.line(vx + vw + 4f, vy + vh + 4f, vx + vw - cLen, vy + vh + 4f);
+        shapeRenderer.line(vx + vw + 4f, vy + vh + 4f, vx + vw + 4f, vy + vh - cLen);
+        // Bottom-Left
+        shapeRenderer.line(vx - 4f, vy - 4f, vx + cLen, vy - 4f);
+        shapeRenderer.line(vx - 4f, vy - 4f, vx - 4f, vy + cLen);
+        // Bottom-Right
+        shapeRenderer.line(vx + vw + 4f, vy - 4f, vx + vw - cLen, vy - 4f);
+        shapeRenderer.line(vx + vw + 4f, vy - 4f, vx + vw + 4f, vy + cLen);
+        shapeRenderer.end();
+
+        // Typography
+        spriteBatch.begin();
+        // Title
+        fonts.titleFont.setColor(goldAccent);
+        fonts.titleFont.draw(spriteBatch, "CONGRATULATIONS!", vx + 40f, vy + vh - 22f);
+
+        fonts.headerFont.setColor(new Color(0.95f, 0.90f, 0.80f, 1f));
+        fonts.headerFont.draw(spriteBatch, "LEVEL 1 COMPLETED — 36 JULY: THE SPARK OF FREEDOM", vx + 40f, vy + vh - 48f);
+
+        // Historical Tribute Narrative
+        fonts.bodyFont.setColor(Color.WHITE);
+        fonts.bodyFont.draw(spriteBatch,
+            "You have successfully documented all 5 historical checkpoints of the July 2024 Student Mass Uprising across Dhaka University campus.",
+            vx + 40f, vy + vh - 100f, vw - 80f, 10, true);
+
+        fonts.bodyFont.setColor(new Color(0.88f, 0.88f, 0.90f, 1f));
+        fonts.bodyFont.draw(spriteBatch,
+            "From the initial solidarity at Curzon Hall to the climax of 36 July (August 5), students and citizens stood united for meritocracy, equality, and democratic rights. Authoritarian rule dissolved, opening a new dawn of freedom for Bangladesh.",
+            vx + 40f, vy + vh - 145f, vw - 80f, 10, true);
+
+        // Statistics Card
+        fonts.headerFont.setColor(goldAccent);
+        fonts.headerFont.draw(spriteBatch, "MISSION STATISTICS", sx + 20f, sy + sh - 15f);
+
+        fonts.smallFont.setColor(Color.WHITE);
+        fonts.smallFont.draw(spriteBatch, "Historical Archives Documented: 5 / 5 (100% Completed)", sx + 20f, sy + 52f);
+        fonts.smallFont.draw(spriteBatch, "Campus Sector Explored: Curzon Hall & Central Avenue", sx + 20f, sy + 30f);
+
+        fonts.smallFont.setColor(Color.GREEN);
+        fonts.smallFont.draw(spriteBatch, "STATUS: VICTORY ACHIEVED", sx + sw - 210f, sy + 42f);
+
+        // Interactive action prompts
+        fonts.promptFont.setColor(goldAccent);
+        fonts.promptFont.draw(spriteBatch, "[ENTER] Return to Main Menu", vx + 50f, vy + 55f);
+
+        fonts.promptFont.setColor(new Color(1f, 0.80f, 0.40f, 1f));
+        fonts.promptFont.draw(spriteBatch, "[R] Replay Level 1", vx + 330f, vy + 55f);
+
+        fonts.promptFont.setColor(new Color(0.95f, 0.40f, 0.35f, 1f));
+        fonts.promptFont.draw(spriteBatch, "[X] Exit Game", vx + 540f, vy + 55f);
+
+        spriteBatch.end();
+    }
+
+    public boolean isModalOpen() {
+        return activeModalEntry != null || isMapOpen || isPauseMenuOpen || isVictoryOpen;
+    }
+
+    /** Reset HUD state (used when returning from main menu or replaying) */
     public void reset() {
         activeModalEntry = null;
         isMapOpen = false;
         isPauseMenuOpen = false;
+        isVictoryOpen = false;
+        victoryShown = false;
+        missionBannerTime = 0f;
         exitAction = 0;
     }
 
@@ -805,4 +1030,5 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.dispose();
     }
 }
+
 
