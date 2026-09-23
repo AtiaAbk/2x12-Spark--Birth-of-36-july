@@ -76,7 +76,7 @@ public class JulyMemorials implements Disposable {
             "July 15, 2024",
             "TSC Raju Anti-Terrorism Sculpture",
             "Named after martyr Moin Hossain Raju, this intersection became the heartbeat of student resistance. When peaceful protesters faced brutal crackdowns by ruling party cadres, students held hands, faced water cannons, and stood unshaken for their fundamental rights.",
-            new Vector3(0f, 0f, 52f)
+            new Vector3(-6.5f, 0f, 48f)
         ));
 
         entries.add(new MemorialEntry(
@@ -169,11 +169,11 @@ public class JulyMemorials implements Disposable {
     }
 
     /**
-     * Finds the nearest memorial within the interaction distance (3.8m).
+     * Finds the nearest memorial within the interaction distance (7.5m).
      */
     public MemorialEntry getNearbyMemorial(Vector3 playerPos) {
         for (MemorialEntry entry : entries) {
-            if (playerPos.dst(entry.position) <= 3.8f) {
+            if (playerPos.dst(entry.position) <= 7.5f) {
                 return entry;
             }
         }
@@ -181,28 +181,15 @@ public class JulyMemorials implements Disposable {
     }
 
     /**
-     * Gets the nearest unvisited memorial, or closest memorial overall.
+     * Gets the current active mission objective (first uninspected in sequence, or closest overall).
      */
     public MemorialEntry getNextObjective(Vector3 playerPos) {
-        MemorialEntry closestUnvisited = null;
-        float minUnvisitedDst = Float.MAX_VALUE;
-
-        MemorialEntry closestOverall = null;
-        float minOverallDst = Float.MAX_VALUE;
-
         for (MemorialEntry entry : entries) {
-            float dst = playerPos.dst(entry.position);
-            if (!entry.inspected && dst < minUnvisitedDst) {
-                minUnvisitedDst = dst;
-                closestUnvisited = entry;
-            }
-            if (dst < minOverallDst) {
-                minOverallDst = dst;
-                closestOverall = entry;
+            if (!entry.inspected) {
+                return entry;
             }
         }
-
-        return closestUnvisited != null ? closestUnvisited : closestOverall;
+        return entries.first();
     }
 
     public int getInspectedCount() {

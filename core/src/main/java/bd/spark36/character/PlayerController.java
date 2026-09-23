@@ -13,7 +13,7 @@ import com.badlogic.gdx.math.Vector3;
 public class PlayerController {
 
     // Position and Physics
-    private final Vector3 position = new Vector3(0f, 0f, 25f); // Start on central lawn facing Curzon Hall
+    private final Vector3 position = new Vector3(0f, 0f, 49.4f); // Start on central avenue facing Curzon Hall (65.4m from Curzon Arcade)
     private final Vector3 velocity = new Vector3();
     private float verticalVelocity = 0f;
     private boolean isGrounded = true;

@@ -16,15 +16,15 @@ public class CinematicCamera {
     private final PerspectiveCamera camera;
 
     // Follow target configuration
-    private float distance = 4.4f;
-    private final float minDistance = 2.8f;
-    private final float maxDistance = 6.5f;
-    private final float shoulderOffset = 0.35f; // Slight right-shoulder offset
-    private final float targetHeight = 1.45f;   // Player chest/eye level
+    private float distance = 3.3f;
+    private final float minDistance = 2.2f;
+    private final float maxDistance = 6.0f;
+    private final float shoulderOffset = 0.28f; // Gentle right-shoulder offset
+    private final float targetHeight = 1.32f;   // Player chest/eye level
 
     // Angles (degrees)
     private float yaw = 0f;    // 0 is looking North (-Z) towards Curzon Hall
-    private float pitch = 7.5f; // Gentle over-the-shoulder angle
+    private float pitch = 5.0f; // Eye-level over-the-shoulder framing
     private final float minPitch = -15f;
     private final float maxPitch = 38f;
 
@@ -43,20 +43,20 @@ public class CinematicCamera {
         camera = new PerspectiveCamera(65f, viewportWidth, viewportHeight);
         camera.near = 0.2f;
         camera.far = 350f;
-        camera.position.set(0f, 2.1f, 29.5f);
-        camera.lookAt(0f, 1.45f, 25f);
+        camera.position.set(0.28f, 1.85f, 52.7f);
+        camera.lookAt(0f, 1.32f, 49.4f);
         camera.update();
 
         currentCameraPos.set(camera.position);
-        currentLookAt.set(0f, 1.45f, 25f);
+        currentLookAt.set(0f, 1.32f, 49.4f);
     }
 
     /**
      * Updates camera rotation from mouse input and interpolates position smoothly.
      */
     public void update(float delta, Vector3 playerPos, boolean inputEnabled) {
-        // 1. Mouse rotation when active
-        if (inputEnabled && mouseLookActive) {
+        // 1. Mouse rotation when active and cursor is captured
+        if (inputEnabled && mouseLookActive && Gdx.input.isCursorCatched()) {
             if (initFrameSkip > 0) {
                 initFrameSkip--;
                 Gdx.input.getDeltaX();

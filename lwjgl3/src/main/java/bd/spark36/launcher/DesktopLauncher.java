@@ -31,7 +31,13 @@ public class DesktopLauncher {
         // Anti-aliasing (4x MSAA) for clean polygon edges
         configuration.setBackBufferConfig(8, 8, 8, 8, 16, 0, 4);
         configuration.useVsync(true);
-        configuration.setForegroundFPS(Lwjgl3ApplicationConfiguration.getDisplayMode().refreshRate);
+        int refreshRate = 60;
+        try {
+            refreshRate = Lwjgl3ApplicationConfiguration.getDisplayMode().refreshRate;
+        } catch (Throwable ignored) {
+            refreshRate = 60;
+        }
+        configuration.setForegroundFPS(refreshRate);
         configuration.setInitialVisible(true);
         configuration.disableAudio(false);
 

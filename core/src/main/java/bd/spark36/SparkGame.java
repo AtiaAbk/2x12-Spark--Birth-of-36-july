@@ -12,8 +12,10 @@ import bd.spark36.character.PlayerController;
 import bd.spark36.character.StudentMesh;
 import bd.spark36.hud.FontRenderer;
 import bd.spark36.hud.WhereWindsMeetHUD;
+import bd.spark36.world.AtmosphereRenderer;
 import bd.spark36.world.DhakaCampusWorld;
 import bd.spark36.world.JulyMemorials;
+import bd.spark36.world.TextureFactory;
 
 /**
  * Main game class for 2x12: Spark — Birth of 36 July.
@@ -34,30 +36,32 @@ public class SparkGame extends ApplicationAdapter {
     private FontRenderer fontRenderer;
     private WhereWindsMeetHUD hud;
 
-    // Sky Renderer for Dawn Gradient
-    private com.badlogic.gdx.graphics.glutils.ShapeRenderer skyRenderer;
-    private final Color horizonColor = new Color(0.92f, 0.84f, 0.72f, 1f); // Warm dawn golden haze
-    private final Color zenithColor = new Color(0.38f, 0.60f, 0.86f, 1f);  // Morning cerulean blue
+    // Atmospheric & Procedural Subsystems
+    private TextureFactory textures;
+    private AtmosphereRenderer atmosphere;
 
     @Override
     public void create() {
-        // Initialize 3D Batch & Sky Renderer
+        // Initialize 3D Batch
         modelBatch = new ModelBatch();
-        skyRenderer = new com.badlogic.gdx.graphics.glutils.ShapeRenderer();
+
+        // Initialize Procedural Texture Factory
+        textures = new TextureFactory();
 
         // Initialize Campus World & Historical Memorials
-        world = new DhakaCampusWorld();
+        world = new DhakaCampusWorld(textures);
         memorials = new JulyMemorials();
 
-        // Initialize Student Character & Controller
-        studentMesh = new StudentMesh();
+        // Initialize Student Character & Controller with Textures
+        studentMesh = new StudentMesh(textures);
         player = new PlayerController();
 
         // Initialize Over-the-shoulder Cinematic Camera
         camera = new CinematicCamera(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
 
-        // Initialize Crisp FreeType Fonts & Glassmorphic HUD
+        // Initialize Crisp FreeType Fonts, Atmospheric Effects & Glassmorphic HUD
         fontRenderer = new FontRenderer();
+        atmosphere = new AtmosphereRenderer(fontRenderer);
         hud = new WhereWindsMeetHUD(fontRenderer);
 
         // Catch cursor for seamless PC mouse-look
@@ -79,12 +83,8 @@ public class SparkGame extends ApplicationAdapter {
         memorials.update(delta);
         hud.update(delta, player, memorials);
 
-        // 2. Render Atmospheric Dawn Sky Gradient (Where Winds Meet Golden Morning)
-        Gdx.gl.glViewport(0, 0, screenW, screenH);
-        skyRenderer.getProjectionMatrix().setToOrtho2D(0, 0, screenW, screenH);
-        skyRenderer.begin(com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType.Filled);
-        skyRenderer.rect(0, 0, screenW, screenH, horizonColor, horizonColor, zenithColor, zenithColor);
-        skyRenderer.end();
+        // 2. Render Atmospheric Dawn Sky Background (Golden Morning)
+        atmosphere.renderSkyBackground(screenW, screenH);
 
         // 3. Clear Depth Buffer for 3D Scene
         Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
@@ -105,7 +105,10 @@ public class SparkGame extends ApplicationAdapter {
         );
         modelBatch.end();
 
-        // 5. Render 2D Where Winds Meet HUD Pass
+        // 5. Render Atmospheric Crepuscular God Rays & In-World 3D Labels
+        atmosphere.renderAtmosphereOverlays(camera.getCamera(), delta, screenW, screenH);
+
+        // 6. Render 2D Where Winds Meet HUD Pass
         hud.render(player, memorials, camera.getYaw());
     }
 
@@ -190,6 +193,7 @@ public class SparkGame extends ApplicationAdapter {
         if (studentMesh != null) studentMesh.dispose();
         if (hud != null) hud.dispose();
         if (fontRenderer != null) fontRenderer.dispose();
-        if (skyRenderer != null) skyRenderer.dispose();
+        if (atmosphere != null) atmosphere.dispose();
+        if (textures != null) textures.dispose();
     }
 }

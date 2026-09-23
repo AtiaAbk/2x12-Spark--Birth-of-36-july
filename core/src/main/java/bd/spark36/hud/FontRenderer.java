@@ -39,8 +39,11 @@ public class FontRenderer implements Disposable {
 
                 FreeTypeFontParameter p = new FreeTypeFontParameter();
 
+                String chars = FreeTypeFontGenerator.DEFAULT_CHARS + "—◆•°–";
+
                 // Title: large bold for modal titles and headers
                 p.size = 24;
+                p.characters = chars;
                 p.color = Color.WHITE;
                 p.borderWidth = 1.2f;
                 p.borderColor = new Color(0f, 0f, 0f, 0.7f);
@@ -51,6 +54,7 @@ public class FontRenderer implements Disposable {
 
                 // Header: medium bold for quest cards and titles
                 p = new FreeTypeFontParameter();
+                p.characters = chars;
                 p.size = 17;
                 p.color = Color.WHITE;
                 p.borderWidth = 1.0f;
@@ -59,6 +63,7 @@ public class FontRenderer implements Disposable {
 
                 // Body: regular text for narrative stories
                 p = new FreeTypeFontParameter();
+                p.characters = chars;
                 p.size = 14;
                 p.color = new Color(0.92f, 0.92f, 0.95f, 1f);
                 p.shadowOffsetX = 1;
@@ -68,12 +73,14 @@ public class FontRenderer implements Disposable {
 
                 // Small: UI badges, distance counters, sub-labels
                 p = new FreeTypeFontParameter();
+                p.characters = chars;
                 p.size = 11;
                 p.color = new Color(0.85f, 0.85f, 0.88f, 0.9f);
                 smallFont = regularGen.generateFont(p);
 
                 // Prompt: interactive key prompts e.g. "[E] Inspect Memorial"
                 p = new FreeTypeFontParameter();
+                p.characters = chars;
                 p.size = 15;
                 p.color = Color.WHITE;
                 p.borderWidth = 1.0f;
@@ -82,6 +89,7 @@ public class FontRenderer implements Disposable {
 
                 // Key font: for keycaps icons [W], [SHIFT]
                 p = new FreeTypeFontParameter();
+                p.characters = chars;
                 p.size = 12;
                 p.color = new Color(1f, 0.88f, 0.45f, 1f); // Warm gold
                 keyFont = boldGen.generateFont(p);
