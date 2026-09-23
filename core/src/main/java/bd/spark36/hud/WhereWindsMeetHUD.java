@@ -166,7 +166,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // 1. Draw HUD Background Shapes & Ornate Geometry
         shapeRenderer.begin(ShapeType.Filled);
         drawMissionCardBg(memorials, w, h);
-        drawCurvedHealthBarBg(player, w, h);
+        drawCurvedHealthBarBg(player, memorials, w, h);
         drawAntiqueCompassRoseFilled(w, h, cameraYaw);
         drawKeycapsBg(w, h);
 
@@ -179,7 +179,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // 2. Draw HUD Outlines, Accents & Filigree
         shapeRenderer.begin(ShapeType.Line);
         drawMissionCardBorders(w, h);
-        drawCurvedHealthBarBorders(player, w, h);
+        drawCurvedHealthBarBorders(player, memorials, w, h);
         drawAntiqueCompassRoseLines(w, h, cameraYaw);
         drawKeycapsBorders(w, h);
 
@@ -191,7 +191,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // 3. Draw Typography & Glyphs
         spriteBatch.begin();
         drawMissionCardText(memorials, nearest, dstToNearest, w, h);
-        drawCurvedHealthBarText(player, w, h);
+        drawCurvedHealthBarText(player, memorials, w, h);
         drawAntiqueCompassRoseText(w, h, cameraYaw);
         drawKeycapsText(w, h);
 
@@ -497,7 +497,10 @@ public class WhereWindsMeetHUD implements Disposable {
     // ========================================================
     // 3. BOTTOM-LEFT FLUID CURVED HEALTH BAR (Matching Mockup)
     // ========================================================
-    private void drawCurvedHealthBarBg(PlayerController player, float w, float h) {
+    // ========================================================
+    // 3. BOTTOM-LEFT LIVE MISSION ARCHIVE COUNTER & STAMINA
+    // ========================================================
+    private void drawCurvedHealthBarBg(PlayerController player, JulyMemorials memorials, float w, float h) {
         float bx = 38f;
         float by = 38f;
         float barW = 280f;
@@ -507,14 +510,20 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.triangle(bx - 18f, by + barH / 2f, bx + 2f, by + barH + 4f, bx + 2f, by - 4f);
 
-        // Health Bar Track
-        shapeRenderer.setColor(healthBg);
+        // Archive Progress Track
+        shapeRenderer.setColor(0.08f, 0.10f, 0.14f, 0.88f);
         shapeRenderer.rect(bx, by, barW, barH);
 
-        // Fluid Gradient Fill (Gold into Crimson Red)
-        float hpRatio = MathUtils.clamp(player.getHealth() / player.getMaxHealth(), 0f, 1f);
-        float fillW = barW * hpRatio;
-        shapeRenderer.rect(bx, by, fillW, barH, goldAccent, healthRed, healthRed, goldAccent);
+        // Live Gradient Fill: Gold into Jade Green based on Archives Secured
+        int ins = memorials.getInspectedCount();
+        int tot = memorials.getTotalCount();
+        float fillRatio = tot > 0 ? (float) ins / (float) tot : 0f;
+        float fillW = barW * fillRatio;
+
+        if (fillW > 0f) {
+            Color fillC2 = ins >= tot ? Color.GREEN : staminaGreen;
+            shapeRenderer.rect(bx, by, fillW, barH, goldAccent, fillC2, fillC2, goldAccent);
+        }
 
         // Secondary Stamina Bar Underneath (in Jade Cyan)
         float stY = by - 8f;
@@ -527,7 +536,7 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.rect(bx + 15f, stY, (barW - 15f) * stRatio, stH);
     }
 
-    private void drawCurvedHealthBarBorders(PlayerController player, float w, float h) {
+    private void drawCurvedHealthBarBorders(PlayerController player, JulyMemorials memorials, float w, float h) {
         float bx = 38f;
         float by = 38f;
         float barW = 280f;
@@ -545,15 +554,23 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.rect(bx + 15f, by - 8f, barW - 15f, 4f);
     }
 
-    private void drawCurvedHealthBarText(PlayerController player, float w, float h) {
+    private void drawCurvedHealthBarText(PlayerController player, JulyMemorials memorials, float w, float h) {
         float bx = 38f;
         float by = 38f;
         float barW = 280f;
 
-        // Numeric HP readout "100/100" in crisp gold/white
-        fonts.keyFont.setColor(Color.WHITE);
-        String hpStr = (int) player.getHealth() + "/100";
-        fonts.keyFont.draw(spriteBatch, hpStr, bx + barW - 55f, by + 14f);
+        int ins = memorials.getInspectedCount();
+        int tot = memorials.getTotalCount();
+        int pct = tot > 0 ? (ins * 100 / tot) : 0;
+
+        // Live Readout: "ARCHIVES: X / 5 (XX%)" in crisp gold/green
+        fonts.keyFont.setColor(ins >= tot ? Color.GREEN : goldAccent);
+        String archiveStr = String.format("ARCHIVES: %d / %d  (%d%%)", ins, tot, pct);
+        fonts.keyFont.draw(spriteBatch, archiveStr, bx + 12f, by + 14f);
+
+        // Stamina readout
+        fonts.smallFont.setColor(new Color(0.6f, 0.8f, 0.7f, 0.8f));
+        fonts.smallFont.draw(spriteBatch, "STAMINA", bx + barW - 55f, by - 10f);
     }
 
     // ========================================================

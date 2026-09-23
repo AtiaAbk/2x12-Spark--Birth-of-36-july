@@ -25,7 +25,12 @@ public class DesktopLauncher {
         Lwjgl3ApplicationConfiguration configuration = new Lwjgl3ApplicationConfiguration();
 
         configuration.setTitle("2x12: Spark — Birth of 36 July");
-        configuration.setWindowedMode(1440, 900);
+        // Launch directly in Fullscreen mode as requested by user
+        try {
+            configuration.setFullscreenMode(Lwjgl3ApplicationConfiguration.getDisplayMode());
+        } catch (Throwable t) {
+            configuration.setWindowedMode(1440, 900);
+        }
         configuration.setResizable(true);
 
         // Anti-aliasing (4x MSAA) for clean polygon edges

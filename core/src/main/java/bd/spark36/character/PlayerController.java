@@ -170,11 +170,17 @@ public class PlayerController {
             boolean left = Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT);
             boolean right = Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT);
 
-            // SPRINT = SPACE BAR (hold)
-            sprintKey = Gdx.input.isKeyPressed(Input.Keys.SPACE);
+            // SPRINT: SHIFT (standard PC gaming) or CONTROL or SPACE (hold)
+            sprintKey = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) ||
+                        Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT) ||
+                        Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) ||
+                        Gdx.input.isKeyPressed(Input.Keys.SPACE);
 
-            // JUMP = SHIFT KEY (tap)
-            jumpKey = Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_RIGHT);
+            // JUMP / LONG JUMP: C, V, SPACE, or SHIFT (tap)
+            jumpKey = Gdx.input.isKeyJustPressed(Input.Keys.C) ||
+                      Gdx.input.isKeyJustPressed(Input.Keys.V) ||
+                      Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
+                      (!sprintKey && (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_RIGHT)));
 
             if (up) moveDir.y += 1f;
             if (down) moveDir.y -= 1f;
@@ -247,9 +253,22 @@ public class PlayerController {
             headingDegrees += diff * Math.min(1f, 15f * delta);
         }
 
-        // 4. Jump physics
+        // 4. Jump & Athletic LONG JUMP Physics
         if (isGrounded && jumpKey && inputEnabled) {
-            verticalVelocity = JUMP_VELOCITY;
+            if (isSprinting && isMoving) {
+                // Running / Sprinting LONG JUMP (high athletic forward leap!)
+                verticalVelocity = 9.4f; // High upward leap
+                velocity.x *= 1.45f;     // Forward trajectory boost to sail onto high obstacles
+                velocity.z *= 1.45f;
+            } else if (isMoving) {
+                // Moving forward jump
+                verticalVelocity = 8.0f;
+                velocity.x *= 1.20f;
+                velocity.z *= 1.20f;
+            } else {
+                // Standing vertical hop
+                verticalVelocity = 7.0f;
+            }
             isGrounded = false;
         }
 
