@@ -45,6 +45,9 @@ public class WhereWindsMeetHUD implements Disposable {
     private boolean isPauseMenuOpen = false;
     private float animTime = 0f;
 
+    // Exit actions: 0=none, 1=return to main menu, 2=quit game
+    private int exitAction = 0;
+
     public WhereWindsMeetHUD(FontRenderer fontRenderer) {
         this.fonts = fontRenderer;
     }
@@ -76,6 +79,28 @@ public class WhereWindsMeetHUD implements Disposable {
         if (activeModalEntry == null && !isMapOpen && Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             isPauseMenuOpen = !isPauseMenuOpen;
         }
+
+        // Pause menu exit actions
+        if (isPauseMenuOpen) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
+                exitAction = 1; // Return to main menu
+                isPauseMenuOpen = false;
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.X)) {
+                exitAction = 2; // Quit game
+                isPauseMenuOpen = false;
+            }
+        }
+    }
+
+    /**
+     * Returns and clears the pending exit action.
+     * @return 0=none, 1=return to main menu, 2=quit game
+     */
+    public int consumeExitAction() {
+        int action = exitAction;
+        exitAction = 0;
+        return action;
     }
 
     public void render(PlayerController player, JulyMemorials memorials, float cameraYaw) {
