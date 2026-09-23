@@ -695,73 +695,80 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.keyFont.draw(spriteBatch, "D", kBaseX + 108f, kBaseY + 72f);
 
         fonts.keyFont.draw(spriteBatch, "SHIFT", kBaseX + 146f, kBaseY + 72f);
-        fonts.keyFont.draw(spriteBatch, "SPACE", kBaseX + 26f, kBaseY + 42f);
+        fonts.keyFont.draw(spriteBatch, "SPACE/C", kBaseX + 18f, kBaseY + 42f);
         fonts.keyFont.draw(spriteBatch, "E", kBaseX + 139f, kBaseY + 42f);
         fonts.keyFont.draw(spriteBatch, "M", kBaseX + 51f, kBaseY + 15f);
         fonts.keyFont.draw(spriteBatch, "ESC", kBaseX + 118f, kBaseY + 15f);
 
-        // Action sub-labels matching updated keybinds: SPACE = SPRINT, SHIFT = JUMP
+        // Action sub-labels matching updated keybinds:
         fonts.smallFont.setColor(Color.WHITE);
         fonts.smallFont.draw(spriteBatch, "MOVE", kBaseX - 6f, kBaseY + 72f);
-        fonts.smallFont.draw(spriteBatch, "JUMP", kBaseX + 194f, kBaseY + 72f);
-        fonts.smallFont.draw(spriteBatch, "SPRINT", kBaseX + 84f, kBaseY + 42f);
+        fonts.smallFont.draw(spriteBatch, "SPRINT", kBaseX + 194f, kBaseY + 72f);
+        fonts.smallFont.draw(spriteBatch, "LONG JUMP", kBaseX + 80f, kBaseY + 42f);
         fonts.smallFont.draw(spriteBatch, "INTERACT", kBaseX + 164f, kBaseY + 42f);
         fonts.smallFont.draw(spriteBatch, "MAP", kBaseX + 75f, kBaseY + 15f);
         fonts.smallFont.draw(spriteBatch, "PAUSE", kBaseX + 156f, kBaseY + 15f);
     }
 
     // ==========================================
-    // HISTORICAL MEMORIAL MODAL
+    // HISTORICAL MEMORIAL FLOATING OVERLAY (Translucent, No Black Screen)
     // ==========================================
     private void renderMemorialModal(MemorialEntry entry, float w, float h) {
-        shapeRenderer.begin(ShapeType.Filled);
-        shapeRenderer.setColor(0f, 0f, 0f, 0.78f);
-        shapeRenderer.rect(0, 0, w, h);
+        // NO full-screen black overlay: 3D campus world and Curzon Hall remain 100% visible!
 
-        float mw = 720f;
-        float mh = 440f;
+        float mw = 760f;
+        float mh = 230f;
         float mx = (w - mw) / 2f;
-        float my = (h - mh) / 2f;
+        float my = 60f; // Floating in lower-third of screen
 
-        shapeRenderer.setColor(glassBg);
+        // Sleek translucent dark glass panel (68% opacity)
+        shapeRenderer.begin(ShapeType.Filled);
+        shapeRenderer.setColor(0.04f, 0.06f, 0.09f, 0.72f);
         shapeRenderer.rect(mx, my, mw, mh);
 
-        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.94f);
-        shapeRenderer.rect(mx, my + mh - 58f, mw, 58f);
-
+        // Top gold accent bar
         shapeRenderer.setColor(goldAccent);
-        shapeRenderer.rect(mx, my + mh - 4f, mw, 4f);
+        shapeRenderer.rect(mx, my + mh - 3f, mw, 3f);
         shapeRenderer.end();
 
+        // Lines and Borders
         shapeRenderer.begin(ShapeType.Line);
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.rect(mx, my, mw, mh);
-        shapeRenderer.line(mx, my + mh - 58f, mx + mw, my + mh - 58f);
-        shapeRenderer.line(mx + 30f, my + 60f, mx + mw - 30f, my + 60f);
+
+        // Ornate Corner Brackets (⌜ ⌝ ⌞ ⌟)
+        float cLen = 16f;
+        shapeRenderer.setColor(goldAccent);
+        shapeRenderer.line(mx - 3f, my + mh + 3f, mx + cLen, my + mh + 3f);
+        shapeRenderer.line(mx - 3f, my + mh + 3f, mx - 3f, my + mh - cLen);
+        shapeRenderer.line(mx + mw + 3f, my + mh + 3f, mx + mw - cLen, my + mh + 3f);
+        shapeRenderer.line(mx + mw + 3f, my + mh + 3f, mx + mw + 3f, my + mh - cLen);
+        shapeRenderer.line(mx - 3f, my - 3f, mx + cLen, my - 3f);
+        shapeRenderer.line(mx - 3f, my - 3f, mx - 3f, my + cLen);
+        shapeRenderer.line(mx + mw + 3f, my - 3f, mx + mw - cLen, my - 3f);
+        shapeRenderer.line(mx + mw + 3f, my - 3f, mx + mw + 3f, my + cLen);
         shapeRenderer.end();
 
+        // Essential Text Only
         spriteBatch.begin();
-        float textX = mx + 40f;
-        float textTop = my + mh - 22f;
+        float textX = mx + 30f;
 
+        // Header Title
         fonts.titleFont.setColor(goldAccent);
-        fonts.titleFont.draw(spriteBatch, entry.title, textX, textTop);
+        fonts.titleFont.draw(spriteBatch, entry.title, textX, my + mh - 18f);
 
-        fonts.smallFont.setColor(new Color(0.85f, 0.85f, 0.90f, 1f));
-        fonts.smallFont.draw(spriteBatch, entry.date + "   |   " + entry.location, textX, textTop - 50f);
+        // Subtitle: Date & Location
+        fonts.smallFont.setColor(new Color(0.92f, 0.85f, 0.65f, 1f));
+        fonts.smallFont.draw(spriteBatch, "◆ " + entry.date + "   •   " + entry.location, textX, my + mh - 48f);
 
-        fonts.bodyFont.setColor(new Color(0.95f, 0.95f, 0.95f, 1f));
-        fonts.bodyFont.draw(spriteBatch, entry.description, textX, textTop - 92f, mw - 80f, 10, true);
+        // Historical Description (concise, powerful narrative)
+        fonts.bodyFont.setColor(Color.WHITE);
+        fonts.bodyFont.draw(spriteBatch, entry.description, textX, my + mh - 78f, mw - 60f, 10, true);
 
-        fonts.headerFont.setColor(goldAccent);
-        fonts.headerFont.draw(spriteBatch, "HISTORICAL SIGNIFICANCE", textX, my + 135f);
-        fonts.smallFont.setColor(new Color(0.85f, 0.85f, 0.85f, 1f));
-        fonts.smallFont.draw(spriteBatch,
-            "Documented as part of the student-led democratic reform movement for meritocracy and justice in Bangladesh.",
-            textX, my + 105f, mw - 80f, 10, true);
-
+        // Close prompt in bottom-right
         fonts.promptFont.setColor(goldAccent);
-        fonts.promptFont.draw(spriteBatch, "[E] or [ESC] Close & Continue Exploration", textX + 140f, my + 42f);
+        fonts.promptFont.draw(spriteBatch, "[E] / [ESC] Close Archive", mx + mw - 220f, my + 28f);
+
         spriteBatch.end();
     }
 
