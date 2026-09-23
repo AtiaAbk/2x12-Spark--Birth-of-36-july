@@ -749,26 +749,39 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.rect(0, 0, w, h);
 
         float pw = 420f;
-        float ph = 290f;
+        float ph = 360f;
         float px = (w - pw) / 2f;
         float py = (h - ph) / 2f;
 
         shapeRenderer.setColor(glassBg);
         shapeRenderer.rect(px, py, pw, ph);
+
+        // Gold accent bar at top
+        shapeRenderer.setColor(goldAccent);
+        shapeRenderer.rect(px, py + ph - 4f, pw, 4f);
         shapeRenderer.end();
 
         shapeRenderer.begin(ShapeType.Line);
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.rect(px, py, pw, ph);
+        // Separator line below title
+        shapeRenderer.line(px + 20f, py + ph - 62f, px + pw - 20f, py + ph - 62f);
         shapeRenderer.end();
 
         spriteBatch.begin();
         fonts.titleFont.setColor(goldAccent);
-        fonts.titleFont.draw(spriteBatch, "GAME PAUSED", px + 115f, py + ph - 40f);
+        fonts.titleFont.draw(spriteBatch, "GAME PAUSED", px + 115f, py + ph - 22f);
 
         fonts.headerFont.setColor(Color.WHITE);
-        fonts.headerFont.draw(spriteBatch, "Press [ESC] to Resume", px + 105f, py + 155f);
-        fonts.headerFont.draw(spriteBatch, "Press [M] for Campus Map", px + 95f, py + 115f);
+        fonts.headerFont.draw(spriteBatch, "[ESC]  Resume Game", px + 80f, py + 250f);
+        fonts.headerFont.draw(spriteBatch, "[M]    Campus Map", px + 80f, py + 210f);
+
+        fonts.headerFont.setColor(new Color(1f, 0.75f, 0.35f, 1f));
+        fonts.headerFont.draw(spriteBatch, "[Q]    Exit to Main Menu", px + 80f, py + 160f);
+
+        fonts.headerFont.setColor(new Color(0.95f, 0.35f, 0.30f, 1f));
+        fonts.headerFont.draw(spriteBatch, "[X]    Quit Game", px + 80f, py + 120f);
+
         fonts.smallFont.setColor(goldMuted);
         fonts.smallFont.draw(spriteBatch, "2x12: Spark — Birth of 36 July", px + 108f, py + 52f);
         spriteBatch.end();
@@ -778,9 +791,18 @@ public class WhereWindsMeetHUD implements Disposable {
         return activeModalEntry != null || isMapOpen || isPauseMenuOpen;
     }
 
+    /** Reset HUD state (used when returning from main menu) */
+    public void reset() {
+        activeModalEntry = null;
+        isMapOpen = false;
+        isPauseMenuOpen = false;
+        exitAction = 0;
+    }
+
     @Override
     public void dispose() {
         shapeRenderer.dispose();
         spriteBatch.dispose();
     }
 }
+
