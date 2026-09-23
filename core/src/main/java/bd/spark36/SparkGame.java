@@ -138,6 +138,12 @@ public class SparkGame extends ApplicationAdapter {
         int screenW = Gdx.graphics.getBackBufferWidth();
         int screenH = Gdx.graphics.getBackBufferHeight();
 
+        // Automated testing support: auto start gameplay if system property set
+        if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoStartGame"))) {
+            startGameplay();
+            return;
+        }
+
         // Handle menu navigation (WASD + Arrow Keys + ENTER/SPACE)
         if (Gdx.input.isKeyJustPressed(Input.Keys.UP) || Gdx.input.isKeyJustPressed(Input.Keys.W)) {
             menuSelection = 0;
