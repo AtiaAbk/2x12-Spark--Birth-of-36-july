@@ -26,10 +26,14 @@ public class DesktopLauncher {
 
         configuration.setTitle("2x12: Spark — Birth of 36 July");
         // Launch directly in Fullscreen mode as requested by user
-        try {
-            configuration.setFullscreenMode(Lwjgl3ApplicationConfiguration.getDisplayMode());
-        } catch (Throwable t) {
+        if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.windowed"))) {
             configuration.setWindowedMode(1440, 900);
+        } else {
+            try {
+                configuration.setFullscreenMode(Lwjgl3ApplicationConfiguration.getDisplayMode());
+            } catch (Throwable t) {
+                configuration.setWindowedMode(1440, 900);
+            }
         }
         configuration.setResizable(true);
 
