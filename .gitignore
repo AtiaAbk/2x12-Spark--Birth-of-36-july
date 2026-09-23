@@ -1,0 +1,8 @@
+.gradle/
+build/
+core/build/
+lwjgl3/build/
+.idea/
+*.iml
+.DS_Store
+*.log
