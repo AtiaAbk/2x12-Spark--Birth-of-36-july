@@ -38,59 +38,77 @@ public class FontRenderer implements Disposable {
                 regularGen = new FreeTypeFontGenerator(regFile);
 
                 FreeTypeFontParameter p = new FreeTypeFontParameter();
+                p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                p.genMipMaps = true;
 
-                String chars = FreeTypeFontGenerator.DEFAULT_CHARS + "—◆•°–";
+                String chars = FreeTypeFontGenerator.DEFAULT_CHARS + "—◆•°–|[]/\\:";
 
                 // Title: large bold for modal titles and headers
-                p.size = 24;
+                p.size = 26;
                 p.characters = chars;
                 p.color = Color.WHITE;
-                p.borderWidth = 1.2f;
-                p.borderColor = new Color(0f, 0f, 0f, 0.7f);
+                p.borderWidth = 1.4f;
+                p.borderColor = new Color(0f, 0f, 0f, 0.8f);
                 p.shadowOffsetX = 1;
                 p.shadowOffsetY = 1;
-                p.shadowColor = new Color(0f, 0f, 0f, 0.5f);
+                p.shadowColor = new Color(0f, 0f, 0f, 0.6f);
                 titleFont = boldGen.generateFont(p);
 
                 // Header: medium bold for quest cards and titles
                 p = new FreeTypeFontParameter();
+                p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                p.genMipMaps = true;
                 p.characters = chars;
-                p.size = 17;
+                p.size = 18;
                 p.color = Color.WHITE;
-                p.borderWidth = 1.0f;
-                p.borderColor = new Color(0f, 0f, 0f, 0.6f);
+                p.borderWidth = 1.1f;
+                p.borderColor = new Color(0f, 0f, 0f, 0.7f);
                 headerFont = boldGen.generateFont(p);
 
                 // Body: regular text for narrative stories
                 p = new FreeTypeFontParameter();
+                p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                p.genMipMaps = true;
                 p.characters = chars;
-                p.size = 14;
-                p.color = new Color(0.92f, 0.92f, 0.95f, 1f);
+                p.size = 15;
+                p.color = new Color(0.94f, 0.94f, 0.96f, 1f);
                 p.shadowOffsetX = 1;
                 p.shadowOffsetY = 1;
-                p.shadowColor = new Color(0f, 0f, 0f, 0.4f);
+                p.shadowColor = new Color(0f, 0f, 0f, 0.5f);
                 bodyFont = regularGen.generateFont(p);
 
                 // Small: UI badges, distance counters, sub-labels
                 p = new FreeTypeFontParameter();
+                p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                p.genMipMaps = true;
                 p.characters = chars;
-                p.size = 11;
-                p.color = new Color(0.85f, 0.85f, 0.88f, 0.9f);
+                p.size = 12;
+                p.color = new Color(0.90f, 0.90f, 0.92f, 0.95f);
                 smallFont = regularGen.generateFont(p);
 
                 // Prompt: interactive key prompts e.g. "[E] Inspect Memorial"
                 p = new FreeTypeFontParameter();
+                p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                p.genMipMaps = true;
                 p.characters = chars;
-                p.size = 15;
+                p.size = 16;
                 p.color = Color.WHITE;
-                p.borderWidth = 1.0f;
-                p.borderColor = new Color(0f, 0f, 0f, 0.8f);
+                p.borderWidth = 1.2f;
+                p.borderColor = new Color(0f, 0f, 0f, 0.85f);
                 promptFont = boldGen.generateFont(p);
 
                 // Key font: for keycaps icons [W], [SHIFT]
                 p = new FreeTypeFontParameter();
+                p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                p.genMipMaps = true;
                 p.characters = chars;
-                p.size = 12;
+                p.size = 13;
                 p.color = new Color(1f, 0.88f, 0.45f, 1f); // Warm gold
                 keyFont = boldGen.generateFont(p);
 

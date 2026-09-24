@@ -258,7 +258,7 @@ public class PlayerController {
 
         // 4. Jump & Athletic LONG JUMP Physics
         if (isGrounded && jumpKey && inputEnabled) {
-            if (isSprinting && isMoving) {
+            if ((isSprinting || sprintKey) && isMoving) {
                 // Running / Sprinting LONG JUMP (high athletic forward leap!)
                 verticalVelocity = 9.4f; // High upward leap
                 velocity.x *= 1.45f;     // Forward trajectory boost to sail onto high obstacles
