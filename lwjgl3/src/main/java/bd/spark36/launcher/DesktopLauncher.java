@@ -17,14 +17,29 @@ public class DesktopLauncher {
 
         // Ensure macOS brings this game window to the absolute front and gives it full keyboard focus
         if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
-            try {
-                String jvmName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
-                String pid = jvmName.split("@")[0];
-                Runtime.getRuntime().exec(new String[]{
-                    "osascript", "-e",
-                    "tell application \"System Events\" to set frontmost of first process whose unix id is " + pid + " to true"
-                });
-            } catch (Throwable ignored) {}
+            Thread focusThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        String jvmName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
+                        String pid = jvmName.split("@")[0];
+                        int[] delays = {400, 800, 1500, 2500};
+                        for (int delay : delays) {
+                            Thread.sleep(delay);
+                            Runtime.getRuntime().exec(new String[]{
+                                "osascript", "-e",
+                                "tell application \"System Events\" to set frontmost of first process whose unix id is " + pid + " to true"
+                            });
+                            Runtime.getRuntime().exec(new String[]{
+                                "osascript", "-e",
+                                "tell application \"System Events\" to set frontmost of (every process whose name contains \"java\") to true"
+                            });
+                        }
+                    } catch (Throwable ignored) {}
+                }
+            });
+            focusThread.setDaemon(true);
+            focusThread.start();
         }
 
         createApplication();

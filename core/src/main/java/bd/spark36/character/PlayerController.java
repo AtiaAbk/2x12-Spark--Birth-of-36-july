@@ -170,17 +170,19 @@ public class PlayerController {
             boolean left = Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT);
             boolean right = Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT);
 
-            // SPRINT / RUN: SHIFT or CONTROL, or holding SPACE while moving
+            // SPRINT / RUN: SHIFT, CONTROL, or holding SPACE while moving
             boolean spaceHeld = Gdx.input.isKeyPressed(Input.Keys.SPACE);
             boolean spaceJustPressed = Gdx.input.isKeyJustPressed(Input.Keys.SPACE);
+            boolean shiftHeld = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT);
+            boolean shiftJustPressed = Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_RIGHT);
 
-            sprintKey = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) ||
-                        Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT) ||
+            sprintKey = shiftHeld ||
                         Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) ||
                         (spaceHeld && !spaceJustPressed && isMoving);
 
-            // JUMP / LONG JUMP: Pressing SPACE, C, V, or mouse right-click
+            // JUMP / LONG JUMP: SPACE tap, SHIFT tap, C, V, or Right-Click
             jumpKey = spaceJustPressed ||
+                      shiftJustPressed ||
                       Gdx.input.isKeyJustPressed(Input.Keys.C) ||
                       Gdx.input.isKeyJustPressed(Input.Keys.V) ||
                       Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT);
@@ -197,31 +199,10 @@ public class PlayerController {
 
         isMoving = moveDir.len2() > 0.001f;
 
-        // 2. Sprint and Stamina logic
-        if (staminaExhausted) {
-            if (stamina > 20f) {
-                staminaExhausted = false;
-            }
-        }
-
-        if (isMoving && sprintKey && !staminaExhausted && stamina > 0f) {
-            isSprinting = true;
-            stamina -= staminaDrainRate * delta;
-            staminaCooldown = 0.6f;
-            if (stamina <= 0f) {
-                stamina = 0f;
-                staminaExhausted = true;
-                isSprinting = false;
-            }
-        } else {
-            isSprinting = false;
-            if (staminaCooldown > 0f) {
-                staminaCooldown -= delta;
-            } else if (stamina < maxStamina) {
-                stamina += staminaRegenRate * delta;
-                if (stamina > maxStamina) stamina = maxStamina;
-            }
-        }
+        // 2. Sprint and Unlimited Stamina (free running for smooth exploration)
+        stamina = maxStamina;
+        staminaExhausted = false;
+        isSprinting = isMoving && sprintKey;
 
         // 3. Movement direction relative to camera angle
         float currentSpeed = isSprinting ? SPRINT_SPEED : WALK_SPEED;
@@ -260,17 +241,17 @@ public class PlayerController {
         if (isGrounded && jumpKey && inputEnabled) {
             if ((isSprinting || sprintKey) && isMoving) {
                 // Running / Sprinting LONG JUMP (high athletic forward leap!)
-                verticalVelocity = 9.4f; // High upward leap
-                velocity.x *= 1.45f;     // Forward trajectory boost to sail onto high obstacles
-                velocity.z *= 1.45f;
+                verticalVelocity = 9.8f; // High upward leap to easily clear and land on platforms
+                velocity.x *= 1.50f;     // Forward trajectory boost
+                velocity.z *= 1.50f;
             } else if (isMoving) {
                 // Moving forward jump
-                verticalVelocity = 8.0f;
-                velocity.x *= 1.20f;
-                velocity.z *= 1.20f;
+                verticalVelocity = 8.5f;
+                velocity.x *= 1.30f;
+                velocity.z *= 1.30f;
             } else {
                 // Standing vertical hop
-                verticalVelocity = 7.0f;
+                verticalVelocity = 7.5f;
             }
             isGrounded = false;
         }
@@ -318,8 +299,8 @@ public class PlayerController {
             boolean overlapZ = (position.z + PLAYER_RADIUS > bMinZ) && (position.z - PLAYER_RADIUS < bMaxZ);
 
             if (overlapX && overlapZ) {
-                // If player was at or above this surface (or within step margin), it's a valid landing surface
-                if (prevPosition.y >= bMaxY - 0.20f) {
+                // If player was at or above this surface (or within landing reach), it's a valid landing surface
+                if (position.y >= bMaxY - 0.40f || prevPosition.y >= bMaxY - 0.40f || (proposedY <= bMaxY + 0.15f && position.y >= bMaxY - 0.50f)) {
                     if (bMaxY > highestGround) {
                         highestGround = bMaxY;
                     }
@@ -357,9 +338,12 @@ public class PlayerController {
             // Check if proposed X enters the box
             boolean overlapX = (proposedX + PLAYER_RADIUS > bMinX) && (proposedX - PLAYER_RADIUS < bMaxX);
             if (overlapX) {
-                // Low obstacle auto-step check: if box top is within step-up reach from current feet
+                // Jumpable surface check (benches, bicycles, memorial bases, stairs <= 1.5m)
+                boolean isJumpableSurface = (bMaxY <= 1.5f);
                 if (bMaxY <= position.y + STEP_UP_HEIGHT && (bMaxY - bMinY) <= STEP_UP_HEIGHT) {
                     // Allowed to enter; vertical step-up will elevate player
+                } else if (isJumpableSurface && (!isGrounded && (position.y + 0.65f >= bMaxY || verticalVelocity > 0f))) {
+                    // Player is in mid-air leaping onto or over the obstacle! Allow entry to land on top
                 } else {
                     // Firm wall collision! Push outside box along X
                     if (position.x <= (bMinX + bMaxX) / 2f) {
@@ -393,9 +377,12 @@ public class PlayerController {
             // Check if proposed Z enters the box
             boolean overlapZ = (proposedZ + PLAYER_RADIUS > bMinZ) && (proposedZ - PLAYER_RADIUS < bMaxZ);
             if (overlapZ) {
-                // Low obstacle auto-step check
+                // Jumpable surface check (benches, bicycles, memorial bases, stairs <= 1.5m)
+                boolean isJumpableSurface = (bMaxY <= 1.5f);
                 if (bMaxY <= position.y + STEP_UP_HEIGHT && (bMaxY - bMinY) <= STEP_UP_HEIGHT) {
                     // Allowed to enter; vertical step-up will elevate player
+                } else if (isJumpableSurface && (!isGrounded && (position.y + 0.65f >= bMaxY || verticalVelocity > 0f))) {
+                    // Player is in mid-air leaping onto or over the obstacle! Allow entry to land on top
                 } else {
                     // Firm wall collision! Push outside box along Z
                     if (position.z <= (bMinZ + bMaxZ) / 2f) {
@@ -419,12 +406,12 @@ public class PlayerController {
             boolean overlapZ = (position.z + PLAYER_RADIUS > bMinZ) && (position.z - PLAYER_RADIUS < bMaxZ);
 
             if (overlapX && overlapZ) {
-                // Can step up onto this box if it's within reach
+                // Can step up onto this box if it's within reach or landing on top
                 if (bMaxY >= position.y && bMaxY <= position.y + STEP_UP_HEIGHT) {
                     if (bMaxY > surfaceUnderFoot) {
                         surfaceUnderFoot = bMaxY;
                     }
-                } else if (position.y >= bMaxY - 0.20f) {
+                } else if (position.y >= bMaxY - 0.40f) {
                     if (bMaxY > surfaceUnderFoot) {
                         surfaceUnderFoot = bMaxY;
                     }
