@@ -23,9 +23,12 @@ public class TextureFactory implements Disposable {
     public final Texture lawnGrass;
     public final Texture treeBark;
     public final Texture foliage;
+    public final Texture krishnachuraBlossom;
     public final Texture backpackFabric;
     public final Texture studentJacket;
     public final Texture movementBanner;
+    public final Texture bdFlag;
+    public final Texture aparajeyoStone;
 
     public TextureFactory() {
         brickPavement = createBrickPavement();
@@ -33,12 +36,16 @@ public class TextureFactory implements Disposable {
         lawnGrass = createLawnGrass();
         treeBark = createTreeBark();
         foliage = createFoliage();
+        krishnachuraBlossom = createKrishnachuraBlossom();
         backpackFabric = createBackpackFabric();
         studentJacket = createStudentJacket();
         movementBanner = createMovementBanner();
+        bdFlag = createBdFlag();
+        aparajeyoStone = createAparajeyoStone();
 
         textures.addAll(brickPavement, curzonBrick, lawnGrass, treeBark,
-                        foliage, backpackFabric, studentJacket, movementBanner);
+                        foliage, krishnachuraBlossom, backpackFabric, studentJacket,
+                        movementBanner, bdFlag, aparajeyoStone);
     }
 
     private Texture createBrickPavement() {
