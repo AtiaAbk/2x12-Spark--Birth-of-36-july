@@ -972,7 +972,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.headerFont.draw(spriteBatch, "[X]    Quit Game", px + 80f, py + 120f);
 
         fonts.smallFont.setColor(goldMuted);
-        fonts.smallFont.draw(spriteBatch, "2x12: Spark — Birth of 36 July", px + 108f, py + 52f);
+        fonts.smallFont.draw(spriteBatch, "2x12: Spark -- Birth of 36 July", px + 108f, py + 52f);
         spriteBatch.end();
     }
 
