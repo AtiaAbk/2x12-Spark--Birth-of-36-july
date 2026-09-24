@@ -1024,12 +1024,12 @@ public class WhereWindsMeetHUD implements Disposable {
         // Text with drop shadows
         spriteBatch.begin();
         fonts.titleFont.setColor(0f, 0f, 0f, 0.85f * alpha);
-        fonts.titleFont.draw(spriteBatch, "★ MISSION COMPLETE! ★", bx + 50f + 2f, by + bh - 16f);
+        fonts.titleFont.draw(spriteBatch, "* MISSION COMPLETE! *", bx + 50f + 2f, by + bh - 16f);
         fonts.titleFont.setColor(1.0f, 0.88f, 0.40f, alpha);
-        fonts.titleFont.draw(spriteBatch, "★ MISSION COMPLETE! ★", bx + 50f, by + bh - 14f);
+        fonts.titleFont.draw(spriteBatch, "* MISSION COMPLETE! *", bx + 50f, by + bh - 14f);
 
         fonts.headerFont.setColor(0f, 0f, 0f, 0.85f * alpha);
-        String sub = String.format("%s  •  [ %d / 5 Archives Secured ]", missionBannerTitle, missionBannerCount);
+        String sub = String.format("%s  |  [ %d / 5 Archives Secured ]", missionBannerTitle, missionBannerCount);
         fonts.headerFont.draw(spriteBatch, sub, bx + 50f + 1.5f, by + 26f);
         fonts.headerFont.setColor(1f, 1f, 1f, 0.95f * alpha);
         fonts.headerFont.draw(spriteBatch, sub, bx + 50f, by + 28f);
@@ -1102,7 +1102,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.titleFont.draw(spriteBatch, "CONGRATULATIONS!", vx + 40f, vy + vh - 22f);
 
         fonts.headerFont.setColor(new Color(0.95f, 0.90f, 0.80f, 1f));
-        fonts.headerFont.draw(spriteBatch, "LEVEL 1 COMPLETED — 36 JULY: THE SPARK OF FREEDOM", vx + 40f, vy + vh - 48f);
+        fonts.headerFont.draw(spriteBatch, "LEVEL 1 COMPLETED -- 36 JULY: THE SPARK OF FREEDOM", vx + 40f, vy + vh - 48f);
 
         // Historical Tribute Narrative
         fonts.bodyFont.setColor(Color.WHITE);
