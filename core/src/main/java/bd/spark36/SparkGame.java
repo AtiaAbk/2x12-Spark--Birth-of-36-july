@@ -151,7 +151,7 @@ public class SparkGame extends ApplicationAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) || Gdx.input.isKeyJustPressed(Input.Keys.S)) {
             menuSelection = 1;
         }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.J)) {
             if (menuSelection == 0) {
                 startGameplay();
                 return;
@@ -308,7 +308,7 @@ public class SparkGame extends ApplicationAdapter {
 
         // Navigation hint
         fontRenderer.smallFont.setColor(new Color(0.55f, 0.52f, 0.48f, 0.8f));
-        String navHint = "W/S or Arrow Keys Navigate    ENTER Select";
+        String navHint = "W/S or Arrow Keys Navigate    ENTER or J Select";
         glyphLayout.setText(fontRenderer.smallFont, navHint);
         fontRenderer.smallFont.draw(menuBatch, navHint,
             centerX - glyphLayout.width / 2f, exitBtnY - 30f);
