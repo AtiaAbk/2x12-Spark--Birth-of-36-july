@@ -56,6 +56,16 @@ public class WhereWindsMeetHUD implements Disposable {
     // Exit actions: 0=none, 1=return to main menu, 2=quit game, 3=replay level
     private int exitAction = 0;
 
+    // Boundary Stone (1921) Heritage Marker
+    private final MemorialEntry boundaryStoneEntry = new MemorialEntry(
+        99,
+        "HISTORIC DU BOUNDARY STONE (1921)",
+        "Founding Era — July 1, 1921",
+        "Curzon Hall Heritage Precinct",
+        "This weathered granite boundary marker demarcates the historic eastern perimeter of Dhaka University, established in 1921. For over a century, these grounds have witnessed generations of courageous students defending truth, freedom, and equal rights—culminating in the July 2024 Mass Uprising and the birth of 36 July.",
+        bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS
+    );
+
     public WhereWindsMeetHUD(FontRenderer fontRenderer) {
         this.fonts = fontRenderer;
     }
@@ -99,6 +109,9 @@ public class WhereWindsMeetHUD implements Disposable {
         }
 
         MemorialEntry nearby = memorials.getNearbyMemorial(player.getPosition());
+        if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
+            nearby = boundaryStoneEntry;
+        }
 
         if (nearby != null && (Gdx.input.isKeyJustPressed(Input.Keys.E) || Gdx.input.isKeyJustPressed(Input.Keys.ENTER))) {
             if (activeModalEntry == null) {
@@ -193,6 +206,9 @@ public class WhereWindsMeetHUD implements Disposable {
         drawKeycapsBg(w, h);
 
         MemorialEntry nearby = memorials.getNearbyMemorial(player.getPosition());
+        if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
+            nearby = boundaryStoneEntry;
+        }
         if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
             drawSpeechBubblePromptBg(w, h);
         }
@@ -710,16 +726,29 @@ public class WhereWindsMeetHUD implements Disposable {
         float px = (w - promptW) / 2f + 140f;
         float py = h * 0.44f;
 
-        // Text with drop shadows
-        fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
-        fonts.headerFont.draw(spriteBatch, "[E]  INSPECT HISTORICAL ARCHIVE", px + 23f, py + 41f);
-        fonts.headerFont.setColor(goldAccent);
-        fonts.headerFont.draw(spriteBatch, "[E]  INSPECT HISTORICAL ARCHIVE", px + 22f, py + 42f);
+        if (nearby != null && nearby.id == 99) {
+            // Boundary Stone Prompt (Matching reference image [RT] Boundary Stone)
+            fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.headerFont.draw(spriteBatch, "[E]  INSPECT BOUNDARY STONE (1921)", px + 18f, py + 41f);
+            fonts.headerFont.setColor(goldAccent);
+            fonts.headerFont.draw(spriteBatch, "[E]  INSPECT BOUNDARY STONE (1921)", px + 17f, py + 42f);
 
-        fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
-        fonts.smallFont.draw(spriteBatch, "-- 36 JULY STUDENT MASS MOVEMENT", px + 63f, py + 19f);
-        fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.80f, 1f));
-        fonts.smallFont.draw(spriteBatch, "-- 36 JULY STUDENT MASS MOVEMENT", px + 62f, py + 20f);
+            fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.smallFont.draw(spriteBatch, "-- HISTORIC DHAKA UNIVERSITY HERITAGE", px + 48f, py + 19f);
+            fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.80f, 1f));
+            fonts.smallFont.draw(spriteBatch, "-- HISTORIC DHAKA UNIVERSITY HERITAGE", px + 47f, py + 20f);
+        } else {
+            // Text with drop shadows
+            fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.headerFont.draw(spriteBatch, "[E]  INSPECT HISTORICAL ARCHIVE", px + 23f, py + 41f);
+            fonts.headerFont.setColor(goldAccent);
+            fonts.headerFont.draw(spriteBatch, "[E]  INSPECT HISTORICAL ARCHIVE", px + 22f, py + 42f);
+
+            fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.smallFont.draw(spriteBatch, "-- 36 JULY STUDENT MASS MOVEMENT", px + 63f, py + 19f);
+            fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.80f, 1f));
+            fonts.smallFont.draw(spriteBatch, "-- 36 JULY STUDENT MASS MOVEMENT", px + 62f, py + 20f);
+        }
     }
 
     // ========================================================

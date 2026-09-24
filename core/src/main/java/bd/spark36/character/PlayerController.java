@@ -149,6 +149,20 @@ public class PlayerController {
         // Memorial 5 at (28, 0, -10) — 36 July Gateway
         {26.9f, 0f, -11.1f, 29.1f, 0.4f, -8.9f},
         {27.5f, 0.4f, -10.5f, 28.5f, 3.0f, -9.5f},
+
+        // ======== HISTORICAL BOUNDARY STONE (1921) & BOULDERS (Mountable!) ========
+        {7.1f, 0f, 35.8f, 8.5f, 0.35f, 37.2f},  // Plinth base (0.35m)
+        {7.3f, 0f, 36.1f, 8.3f, 1.85f, 36.9f},  // Monolith pillar (1.85m - Jump & land on top!)
+        {8.6f, 0f, 34.8f, 10.5f, 0.95f, 36.4f}, // Boulder East (0.95m)
+        {5.6f, 0f, 37.0f, 7.0f, 0.85f, 38.4f},  // Boulder West (0.85m)
+        {8.2f, 0f, 37.1f, 10.4f, 1.25f, 39.0f}, // Boulder South (1.25m)
+        {9.7f, 0f, 32.5f, 12.1f, 1.40f, 34.6f}, // Boulder North-East (1.40m)
+
+        // ======== CURZON HALL PUKUR PERIMETER CURBS (0.45m - Step-up & jumpable!) ========
+        {10.1f, 0f, -2.3f, 26.9f, 0.45f, -1.7f}, // North curb
+        {10.1f, 0f, 21.7f, 26.9f, 0.45f, 22.3f}, // South curb
+        {10.1f, 0f, -2.0f, 10.7f, 0.45f, 22.0f}, // West curb
+        {26.3f, 0f, -2.0f, 26.9f, 0.45f, 22.0f}, // East curb
     };
 
     public PlayerController() {

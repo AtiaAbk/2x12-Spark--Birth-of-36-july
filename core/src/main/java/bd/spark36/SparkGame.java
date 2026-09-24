@@ -365,6 +365,7 @@ public class SparkGame extends ApplicationAdapter {
         boolean canMove = !hud.isModalOpen();
         player.update(delta, camera.getYaw(), canMove);
         camera.update(delta, player.getPosition(), canMove);
+        world.update(delta);
         memorials.update(delta);
         hud.update(delta, player, memorials);
 

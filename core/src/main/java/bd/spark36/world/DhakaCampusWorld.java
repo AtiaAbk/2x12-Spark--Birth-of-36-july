@@ -1,6 +1,7 @@
 package bd.spark36.world;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Material;
@@ -8,9 +9,14 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
+import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder.VertexInfo;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
@@ -22,10 +28,14 @@ import com.badlogic.gdx.utils.Disposable;
  */
 public class DhakaCampusWorld implements Disposable {
 
+    public static final Vector3 BOUNDARY_STONE_POS = new Vector3(7.8f, 0f, 36.5f);
+
     private final Environment environment;
     private final DirectionalLight sunLight;
     private final Array<Model> models = new Array<>();
     private final Array<ModelInstance> instances = new Array<>();
+    private final Array<ModelInstance> boundarySparkles = new Array<>();
+    private float animTime = 0f;
 
     public DhakaCampusWorld(TextureFactory textures) {
         environment = new Environment();
@@ -71,13 +81,48 @@ public class DhakaCampusWorld implements Disposable {
 
         Material foliageMat = new Material(
             TextureAttribute.createDiffuse(textures.foliage),
-            ColorAttribute.createDiffuse(new Color(0.92f, 0.96f, 0.90f, 1f))
+            FloatAttribute.createAlphaTest(0.35f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(0.96f, 0.98f, 0.94f, 1f))
         );
 
         Material krishnachuraMat = new Material(
             TextureAttribute.createDiffuse(textures.krishnachuraBlossom),
-            ColorAttribute.createDiffuse(new Color(0.98f, 0.95f, 0.92f, 1f))
+            FloatAttribute.createAlphaTest(0.35f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(1f, 0.96f, 0.94f, 1f))
         );
+
+        Material bambooCulmMat = new Material(
+            TextureAttribute.createDiffuse(textures.bambooCulm),
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.92f, 1f))
+        );
+
+        Material bambooLeafMat = new Material(
+            TextureAttribute.createDiffuse(textures.bambooFoliage),
+            FloatAttribute.createAlphaTest(0.35f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(0.96f, 0.98f, 0.92f, 1f))
+        );
+
+        Material bushMat = new Material(
+            TextureAttribute.createDiffuse(textures.bushFoliage),
+            FloatAttribute.createAlphaTest(0.35f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.92f, 1f))
+        );
+
+        Material weatheredStoneMat = new Material(
+            TextureAttribute.createDiffuse(textures.weatheredStone),
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.95f, 0.92f, 1f))
+        );
+
+        Material curzonPukurWaterMat = new Material(
+            TextureAttribute.createDiffuse(textures.curzonWater),
+            ColorAttribute.createDiffuse(new Color(0.92f, 0.96f, 1.0f, 1f))
+        );
+
+        Material sparkleMat = new Material(ColorAttribute.createDiffuse(new Color(1f, 1f, 0.85f, 1f)));
 
         Material flagMat = new Material(
             TextureAttribute.createDiffuse(textures.bdFlag)
@@ -325,30 +370,36 @@ public class DhakaCampusWorld implements Disposable {
             }
         }
 
-        // 4. REALISTIC DHAKA UNIVERSITY CAMPUS TREES (Rain Trees, Krishnachura & Palms)
-        // Rain Tree: Thick dark gnarled trunk + spreading branches + multi-tiered broad canopy
-        Model rainTrunk = mb.createCylinder(1.15f, 6.4f, 1.15f, 12, treeTrunkMat, attr);
-        Model rainBranch = mb.createBox(0.42f, 2.6f, 0.42f, treeTrunkMat, attr);
-        Model rainCanopyMain = mb.createSphere(10.2f, 4.2f, 10.2f, 16, 12, foliageMat, attr);
-        Model rainCanopySide = mb.createSphere(7.2f, 3.4f, 7.2f, 14, 10, foliageMat, attr);
+        // 4. REALISTIC DHAKA UNIVERSITY CAMPUS VEGETATION & LANDMARKS
+        // Rain Tree & Krishnachura Trunks & Branches
+        Model rainTrunk = mb.createCylinder(1.10f, 4.4f, 1.10f, 12, treeTrunkMat, attr);
+        Model rainBranch = mb.createBox(0.42f, 3.2f, 0.42f, treeTrunkMat, attr);
+        Model krishnaTrunk = mb.createCylinder(0.82f, 4.0f, 0.82f, 10, treeTrunkMat, attr);
+        Model krishnaBranch = mb.createBox(0.35f, 2.8f, 0.35f, treeTrunkMat, attr);
+        Model palmTrunk = mb.createCylinder(0.38f, 9.6f, 0.38f, 10, treeTrunkMat, attr);
         models.add(rainTrunk);
         models.add(rainBranch);
-        models.add(rainCanopyMain);
-        models.add(rainCanopySide);
-
-        // Krishnachura Tree: Feathery canopy with vibrant scarlet blossom petals
-        Model krishnaTrunk = mb.createCylinder(0.85f, 5.6f, 0.85f, 10, treeTrunkMat, attr);
-        Model krishnaCanopy = mb.createSphere(8.8f, 3.8f, 8.8f, 16, 12, krishnachuraMat, attr);
-        Model krishnaSide = mb.createSphere(6.2f, 3.0f, 6.2f, 14, 10, krishnachuraMat, attr);
         models.add(krishnaTrunk);
-        models.add(krishnaCanopy);
-        models.add(krishnaSide);
-
-        // Royal Palm Tree: Slender ringed trunk + radiating crown
-        Model palmTrunk = mb.createCylinder(0.40f, 9.6f, 0.40f, 10, treeTrunkMat, attr);
-        Model palmCrown = mb.createSphere(5.2f, 2.0f, 5.2f, 14, 8, foliageMat, attr);
+        models.add(krishnaBranch);
         models.add(palmTrunk);
-        models.add(palmCrown);
+
+        // Bamboo Culm Models (slender segmented canes: 8.5m, 10.5m, 12m)
+        Model culm8 = mb.createCylinder(0.14f, 8.5f, 0.14f, 8, bambooCulmMat, attr);
+        Model culm10 = mb.createCylinder(0.16f, 10.5f, 0.16f, 8, bambooCulmMat, attr);
+        Model culm12 = mb.createCylinder(0.16f, 12.0f, 0.16f, 8, bambooCulmMat, attr);
+        Model bambooShoot = mb.createCylinder(0.08f, 1.4f, 0.08f, 6, bambooCulmMat, attr);
+        models.add(culm8);
+        models.add(culm10);
+        models.add(culm12);
+        models.add(bambooShoot);
+
+        // Combined Foliage Meshes (Batch-rendered for 60fps performance!)
+        ModelBuilder mbFoliage = new ModelBuilder();
+        mbFoliage.begin();
+        MeshPartBuilder mpbRain = mbFoliage.part("rainLeaves", GL20.GL_TRIANGLES, attr, foliageMat);
+        MeshPartBuilder mpbKrishna = mbFoliage.part("krishnaLeaves", GL20.GL_TRIANGLES, attr, krishnachuraMat);
+        MeshPartBuilder mpbBamboo = mbFoliage.part("bambooLeaves", GL20.GL_TRIANGLES, attr, bambooLeafMat);
+        MeshPartBuilder mpbBushes = mbFoliage.part("bushes", GL20.GL_TRIANGLES, attr, bushMat);
 
         float[][] treeLocations = {
             // Avenue flanks: Alternating Rain Trees & Krishnachura
@@ -374,62 +425,250 @@ public class DhakaCampusWorld implements Disposable {
             int type = (int) loc[2];
 
             if (type == 0) {
-                // Rain Tree (Majestic spreading umbrella)
+                // Rain Tree (Majestic spreading umbrella with real branches & cutout leaf cards)
                 ModelInstance tInst = new ModelInstance(rainTrunk);
-                tInst.transform.setTranslation(tx, 3.2f, tz);
+                tInst.transform.setTranslation(tx, 2.2f, tz);
                 instances.add(tInst);
 
-                // Spreading branch limbs
-                ModelInstance b1 = new ModelInstance(rainBranch);
-                b1.transform.setTranslation(tx - 1.4f, 5.2f, tz);
-                b1.transform.rotate(Vector3.Z, 35f);
-                instances.add(b1);
+                // 4 Spreading gnarled branches reaching outwards
+                float[][] bOffsets = {
+                    {1.5f, 3.8f, 1.5f, 35f, 35f},
+                    {-1.5f, 3.8f, 1.5f, 35f, -35f},
+                    {1.5f, 3.8f, -1.5f, -35f, 35f},
+                    {-1.5f, 3.8f, -1.5f, -35f, -35f}
+                };
 
-                ModelInstance b2 = new ModelInstance(rainBranch);
-                b2.transform.setTranslation(tx + 1.4f, 5.2f, tz);
-                b2.transform.rotate(Vector3.Z, -35f);
-                instances.add(b2);
+                for (float[] bo : bOffsets) {
+                    ModelInstance b = new ModelInstance(rainBranch);
+                    b.transform.setTranslation(tx + bo[0], bo[1], tz + bo[2]);
+                    b.transform.rotate(Vector3.X, bo[3]).rotate(Vector3.Z, bo[4]);
+                    instances.add(b);
 
-                // Broad flattened canopy
-                ModelInstance cMain = new ModelInstance(rainCanopyMain);
-                cMain.transform.setTranslation(tx, 7.2f, tz);
-                instances.add(cMain);
+                    // Multi-layer foliage cards at branch tip
+                    addCrossedQuads(mpbRain, tx + bo[0] * 1.6f, 4.4f, tz + bo[2] * 1.6f, 5.2f, 3.6f, 3, 0f);
+                    addHorizontalQuad(mpbRain, tx + bo[0] * 1.6f, 6.2f, tz + bo[2] * 1.6f, 4.8f);
+                }
 
-                ModelInstance cL = new ModelInstance(rainCanopySide);
-                cL.transform.setTranslation(tx - 2.8f, 6.4f, tz + 1.4f);
-                instances.add(cL);
+                // Central high canopy crown
+                addCrossedQuads(mpbRain, tx, 4.8f, tz, 6.5f, 4.2f, 4, 0f);
+                addHorizontalQuad(mpbRain, tx, 6.9f, tz, 5.8f);
 
-                ModelInstance cR = new ModelInstance(rainCanopySide);
-                cR.transform.setTranslation(tx + 2.8f, 6.5f, tz - 1.4f);
-                instances.add(cR);
+                // Ground bush ring around tree trunk
+                addCrossedQuads(mpbBushes, tx + 1.2f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
+                addCrossedQuads(mpbBushes, tx - 1.0f, 0f, tz - 1.1f, 1.6f, 1.1f, 3, 0f);
             } else if (type == 1) {
-                // Krishnachura Tree (Scarlet red blossom canopy)
+                // Krishnachura Tree (Vibrant scarlet-red blossoms & feathery fronds)
                 ModelInstance tInst = new ModelInstance(krishnaTrunk);
-                tInst.transform.setTranslation(tx, 2.8f, tz);
+                tInst.transform.setTranslation(tx, 2.0f, tz);
                 instances.add(tInst);
 
-                ModelInstance cMain = new ModelInstance(krishnaCanopy);
-                cMain.transform.setTranslation(tx, 6.6f, tz);
-                instances.add(cMain);
+                float[][] bOffsets = {
+                    {1.3f, 3.5f, 1.1f, 30f, 30f},
+                    {-1.3f, 3.5f, 1.1f, 30f, -30f},
+                    {0.0f, 3.6f, -1.4f, -35f, 0f}
+                };
 
-                ModelInstance cL = new ModelInstance(krishnaSide);
-                cL.transform.setTranslation(tx - 2.2f, 5.9f, tz + 1.2f);
-                instances.add(cL);
+                for (float[] bo : bOffsets) {
+                    ModelInstance b = new ModelInstance(krishnaBranch);
+                    b.transform.setTranslation(tx + bo[0], bo[1], tz + bo[2]);
+                    b.transform.rotate(Vector3.X, bo[3]).rotate(Vector3.Z, bo[4]);
+                    instances.add(b);
 
-                ModelInstance cR = new ModelInstance(krishnaSide);
-                cR.transform.setTranslation(tx + 2.2f, 6.0f, tz - 1.2f);
-                instances.add(cR);
+                    addCrossedQuads(mpbKrishna, tx + bo[0] * 1.5f, 4.2f, tz + bo[2] * 1.5f, 4.8f, 3.4f, 3, 0f);
+                    addHorizontalQuad(mpbKrishna, tx + bo[0] * 1.5f, 5.8f, tz + bo[2] * 1.5f, 4.4f);
+                }
+
+                // Central flower crown
+                addCrossedQuads(mpbKrishna, tx, 4.6f, tz, 5.8f, 3.8f, 4, 0f);
+                addHorizontalQuad(mpbKrishna, tx, 6.4f, tz, 5.2f);
+
+                // Wildflower shrub around base
+                addCrossedQuads(mpbBushes, tx + 0.9f, 0f, tz + 0.9f, 1.7f, 1.2f, 3, 0f);
             } else {
-                // Royal Palm Tree
+                // Royal Palm Tree with radiating fronds
                 ModelInstance pInst = new ModelInstance(palmTrunk);
                 pInst.transform.setTranslation(tx, 4.8f, tz);
                 instances.add(pInst);
 
-                ModelInstance crInst = new ModelInstance(palmCrown);
-                crInst.transform.setTranslation(tx, 9.8f, tz);
-                instances.add(crInst);
+                addCrossedQuads(mpbRain, tx, 8.8f, tz, 5.8f, 2.4f, 4, 0f);
+                addHorizontalQuad(mpbRain, tx, 9.6f, tz, 5.0f);
             }
         }
+
+        // ==========================================
+        // DENSE BAMBOO GROVES (বাঁশঝাড় — Authentic Asian Bamboo Stands)
+        // ==========================================
+        float[][] bambooGroves = {
+            // Front walkway flank (Right next to spawn & Boundary Stone!)
+            {12.5f, 38f},
+            // Opposite walkway flank
+            {-13.5f, 38f},
+            // Western garden stands
+            {-24.0f, 26f},
+            // Eastern garden stands
+            {24.0f, 26f},
+            // Curzon Hall North-West & North-East Flanks
+            {-22.0f, -8f},
+            {22.0f, -8f}
+        };
+
+        for (float[] grove : bambooGroves) {
+            float gx = grove[0], gz = grove[1];
+
+            // 11-13 slender bamboo culms clustered naturally in each grove
+            float[][] culmOffsets = {
+                {0f, 0f, 12f}, {0.8f, 0.5f, 10.5f}, {-0.7f, 0.6f, 12f},
+                {1.2f, -0.6f, 10.5f}, {-1.1f, -0.4f, 8.5f}, {0.4f, 1.2f, 10.5f},
+                {-0.5f, 1.3f, 8.5f}, {1.5f, 0.8f, 12f}, {-1.4f, 0.9f, 10.5f},
+                {0.2f, -1.2f, 8.5f}, {-0.8f, -1.1f, 10.5f}, {1.0f, -1.3f, 8.5f}
+            };
+
+            for (int c = 0; c < culmOffsets.length; c++) {
+                float[] co = culmOffsets[c];
+                float cx = gx + co[0];
+                float cz = gz + co[1];
+                float h = co[2];
+
+                Model culmModel = (h > 11f) ? culm12 : ((h > 9.5f) ? culm10 : culm8);
+                ModelInstance cInst = new ModelInstance(culmModel);
+                cInst.transform.setTranslation(cx, h * 0.5f, cz);
+
+                // Slight natural wind tilt (1 to 4 degrees)
+                float tiltAngle = (c * 37f) % 4.5f - 2.2f;
+                cInst.transform.rotate(Vector3.X, tiltAngle).rotate(Vector3.Z, -tiltAngle);
+                instances.add(cInst);
+
+                // Multi-tiered bamboo leaf sprays along the upper half of the culm
+                float leafBaseY = h * 0.52f;
+                float leafTopY = h * 0.96f;
+                float leafH = (leafTopY - leafBaseY) * 0.65f;
+
+                // Crossed bamboo leaf quads radiating in all directions
+                addCrossedQuads(mpbBamboo, cx, leafBaseY, cz, 3.2f, leafH, 3, 0f);
+                addCrossedQuads(mpbBamboo, cx, leafBaseY + leafH * 0.4f, cz, 2.6f, leafH * 0.75f, 3, 0f);
+                addHorizontalQuad(mpbBamboo, cx, leafTopY, cz, 2.8f);
+            }
+
+            // Young bamboo shoot sprouts around grove perimeter
+            float[][] shootOffsets = {{-1.6f, 0.2f}, {1.7f, -0.4f}, {0.3f, 1.8f}, {-0.2f, -1.7f}};
+            for (float[] so : shootOffsets) {
+                ModelInstance sInst = new ModelInstance(bambooShoot);
+                sInst.transform.setTranslation(gx + so[0], 0.7f, gz + so[1]);
+                sInst.transform.rotate(Vector3.Z, so[0] * 5f);
+                instances.add(sInst);
+            }
+
+            // Low undergrowth bushes and fallen leaves at bamboo grove base
+            addCrossedQuads(mpbBushes, gx + 0.6f, 0f, gz - 0.4f, 2.2f, 1.4f, 3, 0f);
+            addCrossedQuads(mpbBushes, gx - 0.8f, 0f, gz + 0.6f, 2.0f, 1.2f, 3, 0f);
+        }
+
+        // ==========================================
+        // HISTORICAL BOUNDARY STONE (1921) & MOSSY BOULDERS
+        // (Directly echoing [RT] Boundary Stone from reference image)
+        // ==========================================
+        float bsX = BOUNDARY_STONE_POS.x, bsZ = BOUNDARY_STONE_POS.z;
+
+        // Flat granite plinth foundation
+        Model stonePlinth = mb.createBox(1.5f, 0.32f, 1.2f, weatheredStoneMat, attr);
+        models.add(stonePlinth);
+        ModelInstance plinthInst = new ModelInstance(stonePlinth);
+        plinthInst.transform.setTranslation(bsX, 0.16f, bsZ);
+        instances.add(plinthInst);
+
+        // Chiseled standing Boundary Stone monolith
+        Model stoneMonolith = mb.createBox(0.95f, 1.40f, 0.65f, weatheredStoneMat, attr);
+        Model stoneTop = mb.createCone(0.85f, 0.55f, 0.55f, 8, weatheredStoneMat, attr);
+        Model stonePlaque = mb.createBox(0.70f, 0.90f, 0.04f, aparajeyoMat, attr);
+        models.add(stoneMonolith);
+        models.add(stoneTop);
+        models.add(stonePlaque);
+
+        ModelInstance monolithInst = new ModelInstance(stoneMonolith);
+        monolithInst.transform.setTranslation(bsX, 1.02f, bsZ);
+        monolithInst.transform.rotate(Vector3.Y, 20f);
+        instances.add(monolithInst);
+
+        ModelInstance topInst = new ModelInstance(stoneTop);
+        topInst.transform.setTranslation(bsX, 1.95f, bsZ);
+        topInst.transform.rotate(Vector3.Y, 20f);
+        instances.add(topInst);
+
+        ModelInstance plaqueInst = new ModelInstance(stonePlaque);
+        plaqueInst.transform.setTranslation(bsX - 0.08f, 1.05f, bsZ + 0.32f);
+        plaqueInst.transform.rotate(Vector3.Y, 20f);
+        instances.add(plaqueInst);
+
+        // Surrounding weathered granite rock boulders
+        Model boulderLg = mb.createSphere(2.2f, 1.3f, 1.8f, 10, 8, weatheredStoneMat, attr);
+        Model boulderMd = mb.createSphere(1.5f, 0.95f, 1.3f, 8, 6, weatheredStoneMat, attr);
+        models.add(boulderLg);
+        models.add(boulderMd);
+
+        float[][] boulders = {
+            {bsX + 1.8f, 0.55f, bsZ - 0.8f, 0},
+            {bsX - 1.5f, 0.40f, bsZ + 1.1f, 1},
+            {bsX + 1.4f, 0.65f, bsZ + 1.6f, 0},
+            {bsX + 3.0f, 0.70f, bsZ - 2.8f, 0}
+        };
+
+        for (float[] b : boulders) {
+            ModelInstance bInst = new ModelInstance(b[3] == 0 ? boulderLg : boulderMd);
+            bInst.transform.setTranslation(b[0], b[1], b[2]);
+            instances.add(bInst);
+            // Shrub nestled beside boulder
+            addCrossedQuads(mpbBushes, b[0] + 0.5f, 0f, b[2] + 0.5f, 1.6f, 1.1f, 3, 0f);
+        }
+
+        // Sparkling aura particles orbiting Boundary Stone (matching reference image)
+        Model sparkleParticle = mb.createSphere(0.09f, 0.09f, 0.09f, 6, 6, sparkleMat, attr);
+        models.add(sparkleParticle);
+        for (int i = 0; i < 6; i++) {
+            ModelInstance sp = new ModelInstance(sparkleParticle);
+            sp.transform.setTranslation(bsX, 1.4f, bsZ);
+            boundarySparkles.add(sp);
+            instances.add(sp);
+        }
+
+        // ==========================================
+        // CURZON HALL PUKUR (Historic Campus Reflection Pond)
+        // ==========================================
+        float pukurX = 18.5f, pukurZ = 10.0f;
+        float pukurW = 16.0f, pukurL = 24.0f;
+
+        // Perimeter stone curb border
+        Model pukurCurbX = mb.createBox(pukurW + 0.8f, 0.45f, 0.6f, stoneCurb, attr);
+        Model pukurCurbZ = mb.createBox(0.6f, 0.45f, pukurL + 0.8f, stoneCurb, attr);
+        models.add(pukurCurbX);
+        models.add(pukurCurbZ);
+
+        ModelInstance pcN = new ModelInstance(pukurCurbX);
+        pcN.transform.setTranslation(pukurX, 0.22f, pukurZ - pukurL * 0.5f);
+        instances.add(pcN);
+
+        ModelInstance pcS = new ModelInstance(pukurCurbX);
+        pcS.transform.setTranslation(pukurX, 0.22f, pukurZ + pukurL * 0.5f);
+        instances.add(pcS);
+
+        ModelInstance pcW = new ModelInstance(pukurCurbZ);
+        pcW.transform.setTranslation(pukurX - pukurW * 0.5f, 0.22f, pukurZ);
+        instances.add(pcW);
+
+        ModelInstance pcE = new ModelInstance(pukurCurbZ);
+        pcE.transform.setTranslation(pukurX + pukurW * 0.5f, 0.22f, pukurZ);
+        instances.add(pcE);
+
+        // Water surface plane with lilies
+        Model pukurWater = mb.createBox(pukurW - 0.2f, 0.04f, pukurL - 0.2f, curzonPukurWaterMat, attr);
+        models.add(pukurWater);
+        ModelInstance pwInst = new ModelInstance(pukurWater);
+        pwInst.transform.setTranslation(pukurX, 0.12f, pukurZ);
+        instances.add(pwInst);
+
+        // End Foliage batch generation & register models
+        Model combinedFoliage = mbFoliage.end();
+        models.add(combinedFoliage);
+        instances.add(new ModelInstance(combinedFoliage));
 
         // 5. APARAJEYO BANGLA (অপরাজেয় বাংলা — Iconic 3-Student Sculpture)
         // Positioned on south-west campus lawn at (-36, 0, 26)
@@ -565,6 +804,66 @@ public class DhakaCampusWorld implements Disposable {
         }
     }
 
+    public void update(float delta) {
+        animTime += delta;
+        // Gently orbit and hover boundary stone sparkles
+        for (int i = 0; i < boundarySparkles.size; i++) {
+            ModelInstance sp = boundarySparkles.get(i);
+            float angle = animTime * 1.8f + i * (MathUtils.PI2 / boundarySparkles.size);
+            float rad = 0.95f + MathUtils.sin(animTime * 2f + i) * 0.15f;
+            float px = BOUNDARY_STONE_POS.x + MathUtils.cos(angle) * rad;
+            float pz = BOUNDARY_STONE_POS.z + MathUtils.sin(angle) * rad;
+            float py = 1.1f + MathUtils.sin(animTime * 2.8f + i * 1.5f) * 0.45f;
+            sp.transform.setTranslation(px, py, pz);
+        }
+    }
+
+    private void addCrossedQuads(MeshPartBuilder mpb, float cx, float cy, float cz,
+                                 float width, float height, int planes, float yOffset) {
+        float halfW = width * 0.5f;
+        float angleStep = 180f / planes;
+
+        VertexInfo v00 = new VertexInfo();
+        VertexInfo v10 = new VertexInfo();
+        VertexInfo v11 = new VertexInfo();
+        VertexInfo v01 = new VertexInfo();
+
+        for (int p = 0; p < planes; p++) {
+            float angle = p * angleStep;
+            float cos = MathUtils.cosDeg(angle);
+            float sin = MathUtils.sinDeg(angle);
+
+            float x0 = cx - halfW * cos;
+            float z0 = cz - halfW * sin;
+            float x1 = cx + halfW * cos;
+            float z1 = cz + halfW * sin;
+            float y0 = cy + yOffset;
+            float y1 = cy + yOffset + height;
+
+            v00.setPos(x0, y0, z0).setUV(0f, 1f).setNor(0f, 1f, 0f);
+            v10.setPos(x1, y0, z1).setUV(1f, 1f).setNor(0f, 1f, 0f);
+            v11.setPos(x1, y1, z1).setUV(1f, 0f).setNor(0f, 1f, 0f);
+            v01.setPos(x0, y1, z0).setUV(0f, 0f).setNor(0f, 1f, 0f);
+
+            mpb.rect(v00, v10, v11, v01);
+        }
+    }
+
+    private void addHorizontalQuad(MeshPartBuilder mpb, float cx, float cy, float cz, float size) {
+        float half = size * 0.5f;
+        VertexInfo v00 = new VertexInfo();
+        VertexInfo v10 = new VertexInfo();
+        VertexInfo v11 = new VertexInfo();
+        VertexInfo v01 = new VertexInfo();
+
+        v00.setPos(cx - half, cy, cz - half).setUV(0f, 1f).setNor(0f, 1f, 0f);
+        v10.setPos(cx + half, cy, cz - half).setUV(1f, 1f).setNor(0f, 1f, 0f);
+        v11.setPos(cx + half, cy, cz + half).setUV(1f, 0f).setNor(0f, 1f, 0f);
+        v01.setPos(cx - half, cy, cz + half).setUV(0f, 0f).setNor(0f, 1f, 0f);
+
+        mpb.rect(v00, v10, v11, v01);
+    }
+
     public void render(ModelBatch batch) {
         for (ModelInstance inst : instances) {
             batch.render(inst, environment);
@@ -582,5 +881,6 @@ public class DhakaCampusWorld implements Disposable {
         }
         models.clear();
         instances.clear();
+        boundarySparkles.clear();
     }
 }
