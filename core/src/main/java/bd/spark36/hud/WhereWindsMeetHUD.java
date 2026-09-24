@@ -586,9 +586,9 @@ public class WhereWindsMeetHUD implements Disposable {
         int ins = memorials.getInspectedCount();
         int tot = memorials.getTotalCount();
 
-        // 1. Header: "◆ MISSION PARAMETERS: 01 / 05"
+        // 1. Header: "* MISSION PARAMETERS: 01 / 05"
         fonts.keyFont.setColor(ins >= tot ? Color.GREEN : goldAccent);
-        String headerTitle = String.format("◆ MISSION PARAMETERS: %02d / %02d", ins, tot);
+        String headerTitle = String.format("* MISSION PARAMETERS: %02d / %02d", ins, tot);
         fonts.keyFont.draw(spriteBatch, headerTitle, bx + 16f, by + bh - 10f);
 
         // 2. Checklist of the 5 Memorial checkpoints
@@ -609,19 +609,19 @@ public class WhereWindsMeetHUD implements Disposable {
             MemorialEntry entry = entries.get(i);
             float y = startY - i * itemSpacing;
             if (entry.inspected) {
-                // Completed: green checkmark!
+                // Completed: green [OK]
                 fonts.smallFont.setColor(Color.GREEN);
-                fonts.smallFont.draw(spriteBatch, "[✓]  " + shortNames[i], bx + 16f, y);
+                fonts.smallFont.draw(spriteBatch, "[OK] " + shortNames[i], bx + 16f, y);
             } else if (entry == nextObj) {
                 // Active objective: pulsing gold with pointer arrow and distance!
                 float pulse = 0.8f + 0.2f * MathUtils.sin(animTime * 5f);
                 fonts.smallFont.setColor(1f, 0.85f * pulse, 0.35f, 1f);
                 float dst = player.getPosition().dst(entry.position);
-                fonts.smallFont.draw(spriteBatch, String.format("[►]  %s (%.0fm)", shortNames[i], dst), bx + 16f, y);
+                fonts.smallFont.draw(spriteBatch, String.format("[>]  %s (%.0fm)", shortNames[i], dst), bx + 16f, y);
             } else {
                 // Upcoming
                 fonts.smallFont.setColor(new Color(0.85f, 0.85f, 0.88f, 0.60f));
-                fonts.smallFont.draw(spriteBatch, "[  ]  " + shortNames[i], bx + 16f, y);
+                fonts.smallFont.draw(spriteBatch, "[  ] " + shortNames[i], bx + 16f, y);
             }
         }
 
@@ -661,7 +661,7 @@ public class WhereWindsMeetHUD implements Disposable {
             shapeRenderer.end();
 
             spriteBatch.begin();
-            String pinText = String.format("◆ %s (%.0fm)", target.title, dst);
+            String pinText = String.format("> %s (%.0fm)", target.title, dst);
             fonts.keyFont.setColor(0f, 0f, 0f, 0.90f);
             fonts.keyFont.draw(spriteBatch, pinText, px - 78f, py + 24f);
             fonts.keyFont.setColor(goldAccent);
@@ -674,18 +674,7 @@ public class WhereWindsMeetHUD implements Disposable {
     // 4. CENTER SPEECH-BUBBLE INTERACTION PROMPT (Matching Mockup)
     // ========================================================
     private void drawSpeechBubblePromptBg(float w, float h) {
-        float promptW = 460f;
-        float promptH = 58f;
-        float px = (w - promptW) / 2f + 140f; // Offset slightly right, pointing towards central memorial
-        float py = h * 0.44f;
-
-        // Transparent dark glass rounded box
-        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.20f);
-        shapeRenderer.rect(px, py, promptW, promptH);
-
-        // Left Pointer Beak (Speech bubble triangle pointing to Curzon archive)
-        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.20f);
-        shapeRenderer.triangle(px, py + 34f, px, py + 18f, px - 16f, py + 26f);
+        // Zero solid background: completely transparent campus view!
     }
 
     private void drawSpeechBubblePromptBorders(float w, float h) {
@@ -710,12 +699,16 @@ public class WhereWindsMeetHUD implements Disposable {
         float px = (w - promptW) / 2f + 140f;
         float py = h * 0.44f;
 
-        // Exact text from mockup!
+        // Text with drop shadows
+        fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
+        fonts.headerFont.draw(spriteBatch, "[E]  INSPECT HISTORICAL ARCHIVE", px + 23f, py + 41f);
         fonts.headerFont.setColor(goldAccent);
         fonts.headerFont.draw(spriteBatch, "[E]  INSPECT HISTORICAL ARCHIVE", px + 22f, py + 42f);
 
-        fonts.smallFont.setColor(new Color(0.92f, 0.92f, 0.95f, 1f));
-        fonts.smallFont.draw(spriteBatch, "— 36 JULY STUDENT MASS MOVEMENT", px + 62f, py + 20f);
+        fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+        fonts.smallFont.draw(spriteBatch, "-- 36 JULY STUDENT MASS MOVEMENT", px + 63f, py + 19f);
+        fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.80f, 1f));
+        fonts.smallFont.draw(spriteBatch, "-- 36 JULY STUDENT MASS MOVEMENT", px + 62f, py + 20f);
     }
 
     // ========================================================
