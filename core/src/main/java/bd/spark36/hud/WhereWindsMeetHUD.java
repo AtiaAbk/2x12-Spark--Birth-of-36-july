@@ -587,8 +587,10 @@ public class WhereWindsMeetHUD implements Disposable {
         int tot = memorials.getTotalCount();
 
         // 1. Header: "* MISSION PARAMETERS: 01 / 05"
-        fonts.keyFont.setColor(ins >= tot ? Color.GREEN : goldAccent);
         String headerTitle = String.format("* MISSION PARAMETERS: %02d / %02d", ins, tot);
+        fonts.keyFont.setColor(0f, 0f, 0f, 0.90f);
+        fonts.keyFont.draw(spriteBatch, headerTitle, bx + 17f, by + bh - 11f);
+        fonts.keyFont.setColor(ins >= tot ? Color.GREEN : goldAccent);
         fonts.keyFont.draw(spriteBatch, headerTitle, bx + 16f, by + bh - 10f);
 
         // 2. Checklist of the 5 Memorial checkpoints
@@ -610,25 +612,34 @@ public class WhereWindsMeetHUD implements Disposable {
             float y = startY - i * itemSpacing;
             if (entry.inspected) {
                 // Completed: green [OK]
+                fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+                fonts.smallFont.draw(spriteBatch, "[OK] " + shortNames[i], bx + 17f, y - 1f);
                 fonts.smallFont.setColor(Color.GREEN);
                 fonts.smallFont.draw(spriteBatch, "[OK] " + shortNames[i], bx + 16f, y);
             } else if (entry == nextObj) {
                 // Active objective: pulsing gold with pointer arrow and distance!
                 float pulse = 0.8f + 0.2f * MathUtils.sin(animTime * 5f);
-                fonts.smallFont.setColor(1f, 0.85f * pulse, 0.35f, 1f);
                 float dst = player.getPosition().dst(entry.position);
-                fonts.smallFont.draw(spriteBatch, String.format("[>]  %s (%.0fm)", shortNames[i], dst), bx + 16f, y);
+                String line = String.format("[>]  %s (%.0fm)", shortNames[i], dst);
+                fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+                fonts.smallFont.draw(spriteBatch, line, bx + 17f, y - 1f);
+                fonts.smallFont.setColor(1f, 0.85f * pulse, 0.35f, 1f);
+                fonts.smallFont.draw(spriteBatch, line, bx + 16f, y);
             } else {
                 // Upcoming
-                fonts.smallFont.setColor(new Color(0.85f, 0.85f, 0.88f, 0.60f));
+                fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+                fonts.smallFont.draw(spriteBatch, "[  ] " + shortNames[i], bx + 17f, y - 1f);
+                fonts.smallFont.setColor(new Color(0.95f, 0.95f, 0.98f, 0.95f));
                 fonts.smallFont.draw(spriteBatch, "[  ] " + shortNames[i], bx + 16f, y);
             }
         }
 
         // 3. Progress percentage
         int pct = tot > 0 ? (ins * 100 / tot) : 0;
-        fonts.smallFont.setColor(ins >= tot ? Color.GREEN : goldAccent);
         String pctStr = String.format("PROGRESS: %d%% (%d/5 COMPLETE)", pct, ins);
+        fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+        fonts.smallFont.draw(spriteBatch, pctStr, bx + bw - 194f, by + 29f);
+        fonts.smallFont.setColor(ins >= tot ? Color.GREEN : goldAccent);
         fonts.smallFont.draw(spriteBatch, pctStr, bx + bw - 195f, by + 30f);
     }
 
@@ -810,12 +821,8 @@ public class WhereWindsMeetHUD implements Disposable {
         float mx = (w - mw) / 2f;
         float my = 48f; // Floating in lower area of screen
 
-        // Ultra-transparent glass backing (0.05 opacity - virtually transparent, zero black screen)
-        shapeRenderer.begin(ShapeType.Filled);
-        shapeRenderer.setColor(0.01f, 0.02f, 0.03f, 0.05f);
-        shapeRenderer.rect(mx, my, mw, mh);
-
         // Thin golden top line
+        shapeRenderer.begin(ShapeType.Filled);
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(mx, my + mh - 2f, mw, 2f);
         shapeRenderer.end();
