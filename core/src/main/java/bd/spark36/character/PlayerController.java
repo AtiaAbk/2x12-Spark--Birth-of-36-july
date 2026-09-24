@@ -35,8 +35,13 @@ public class PlayerController {
     public static final float WALK_SPEED = 4.8f;
     public static final float SPRINT_SPEED = 9.2f;
     public static final float ACCELERATION = 14f;
-    public static final float JUMP_VELOCITY = 7.0f;
-    public static final float GRAVITY = -22.0f;
+    public static final float JUMP_VELOCITY = 13.5f;        // High single jump reaches ~4.6m (half a tree!)
+    public static final float DOUBLE_JUMP_VELOCITY = 14.5f; // Second mid-air jump reaches ~9.5-10.5m!
+    public static final float GRAVITY = -20.0f;
+
+    // Jump mechanics (Double-tap for double height)
+    private int jumpCount = 0;
+    private static final int MAX_JUMPS = 2;
 
     // Collision Dimensions
     public static final float PLAYER_RADIUS = 0.32f;
@@ -170,19 +175,15 @@ public class PlayerController {
             boolean left = Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT);
             boolean right = Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT);
 
-            // SPRINT / RUN: SHIFT, CONTROL, or holding SPACE while moving
-            boolean spaceHeld = Gdx.input.isKeyPressed(Input.Keys.SPACE);
-            boolean spaceJustPressed = Gdx.input.isKeyJustPressed(Input.Keys.SPACE);
+            // SPRINT / RUN: SHIFT, CONTROL, or R key
             boolean shiftHeld = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT);
-            boolean shiftJustPressed = Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_RIGHT);
-
             sprintKey = shiftHeld ||
                         Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) ||
-                        (spaceHeld && !spaceJustPressed && isMoving);
+                        Gdx.input.isKeyPressed(Input.Keys.R);
 
-            // JUMP / LONG JUMP: SPACE tap, SHIFT tap, C, V, or Right-Click
-            jumpKey = spaceJustPressed ||
-                      shiftJustPressed ||
+            // JUMP / DOUBLE JUMP: 'J' (Primary key, replacing SPACE completely as requested!)
+            // Also supports C, V, or Right-Click as alternative gamer inputs
+            jumpKey = Gdx.input.isKeyJustPressed(Input.Keys.J) ||
                       Gdx.input.isKeyJustPressed(Input.Keys.C) ||
                       Gdx.input.isKeyJustPressed(Input.Keys.V) ||
                       Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT);
@@ -225,9 +226,17 @@ public class PlayerController {
             targetHeadingDegrees = MathUtils.atan2(worldMoveX, worldMoveZ) * MathUtils.radiansToDegrees;
         }
 
-        // Smooth horizontal acceleration
-        velocity.x = MathUtils.lerp(velocity.x, targetVx, ACCELERATION * delta);
-        velocity.z = MathUtils.lerp(velocity.z, targetVz, ACCELERATION * delta);
+        // Smooth horizontal acceleration with mid-air steering control
+        if (isGrounded) {
+            velocity.x = MathUtils.lerp(velocity.x, targetVx, ACCELERATION * delta);
+            velocity.z = MathUtils.lerp(velocity.z, targetVz, ACCELERATION * delta);
+        } else {
+            // Mid-air air control: maintain forward velocity while allowing steering
+            if (isMoving) {
+                velocity.x = MathUtils.lerp(velocity.x, targetVx * 1.25f, (ACCELERATION * 0.6f) * delta);
+                velocity.z = MathUtils.lerp(velocity.z, targetVz * 1.25f, (ACCELERATION * 0.6f) * delta);
+            }
+        }
 
         // Smooth character heading turn
         if (isMoving) {
@@ -237,23 +246,43 @@ public class PlayerController {
             headingDegrees += diff * Math.min(1f, 15f * delta);
         }
 
-        // 4. Jump & Athletic LONG JUMP Physics
-        if (isGrounded && jumpKey && inputEnabled) {
-            if ((isSprinting || sprintKey) && isMoving) {
-                // Running / Sprinting LONG JUMP (high athletic forward leap!)
-                verticalVelocity = 9.8f; // High upward leap to easily clear and land on platforms
-                velocity.x *= 1.50f;     // Forward trajectory boost
-                velocity.z *= 1.50f;
-            } else if (isMoving) {
-                // Moving forward jump
-                verticalVelocity = 8.5f;
-                velocity.x *= 1.30f;
-                velocity.z *= 1.30f;
-            } else {
-                // Standing vertical hop
-                verticalVelocity = 7.5f;
+        // 4. Jump & Athletic DOUBLE JUMP Physics (Primary Key: 'J')
+        if (jumpKey && inputEnabled) {
+            if (isGrounded) {
+                // First Jump (reaches ~4.6m, half a tree!)
+                jumpCount = 1;
+                isGrounded = false;
+                verticalVelocity = JUMP_VELOCITY;
+
+                if (isSprinting && isMoving) {
+                    // Running / Sprinting Long Jump forward (boost trajectory!)
+                    velocity.x *= 1.45f;
+                    velocity.z *= 1.45f;
+                } else if (isMoving) {
+                    // Moving Jump forward
+                    velocity.x *= 1.30f;
+                    velocity.z *= 1.30f;
+                }
+            } else if (jumpCount < MAX_JUMPS) {
+                // Mid-air DOUBLE JUMP (Double Tap = Double Height, reaching ~9.5-10.5m!)
+                jumpCount = 2;
+                verticalVelocity = DOUBLE_JUMP_VELOCITY; // Explosive second vertical boost!
+
+                if (isMoving) {
+                    // Re-energize forward velocity in current camera direction
+                    float yawRad = cameraYawDegrees * MathUtils.degreesToRadians;
+                    float forwardX = -MathUtils.sin(yawRad);
+                    float forwardZ = -MathUtils.cos(yawRad);
+                    float rightX = MathUtils.cos(yawRad);
+                    float rightZ = -MathUtils.sin(yawRad);
+
+                    float worldMoveX = forwardX * moveDir.y + rightX * moveDir.x;
+                    float worldMoveZ = forwardZ * moveDir.y + rightZ * moveDir.x;
+
+                    velocity.x = worldMoveX * SPRINT_SPEED * 1.35f;
+                    velocity.z = worldMoveZ * SPRINT_SPEED * 1.35f;
+                }
             }
-            isGrounded = false;
         }
 
         // 5. Physics and Collision Resolution
@@ -313,6 +342,7 @@ public class PlayerController {
             position.y = highestGround;
             verticalVelocity = 0f;
             isGrounded = true;
+            jumpCount = 0; // Reset jumps upon landing on any surface!
         } else {
             position.y = proposedY;
             isGrounded = false;
@@ -338,12 +368,11 @@ public class PlayerController {
             // Check if proposed X enters the box
             boolean overlapX = (proposedX + PLAYER_RADIUS > bMinX) && (proposedX - PLAYER_RADIUS < bMaxX);
             if (overlapX) {
-                // Jumpable surface check (benches, bicycles, memorial bases, stairs <= 1.5m)
-                boolean isJumpableSurface = (bMaxY <= 1.5f);
+                // Check if within step-up height
                 if (bMaxY <= position.y + STEP_UP_HEIGHT && (bMaxY - bMinY) <= STEP_UP_HEIGHT) {
                     // Allowed to enter; vertical step-up will elevate player
-                } else if (isJumpableSurface && (!isGrounded && (position.y + 0.65f >= bMaxY || verticalVelocity > 0f))) {
-                    // Player is in mid-air leaping onto or over the obstacle! Allow entry to land on top
+                } else if (!isGrounded && (position.y + 0.65f >= bMaxY || (verticalVelocity > 0f && position.y + (verticalVelocity * verticalVelocity / (2 * -GRAVITY)) >= bMaxY))) {
+                    // Airborne and jumping high enough to clear or land on top of surface! Allow horizontal entry
                 } else {
                     // Firm wall collision! Push outside box along X
                     if (position.x <= (bMinX + bMaxX) / 2f) {
@@ -377,12 +406,11 @@ public class PlayerController {
             // Check if proposed Z enters the box
             boolean overlapZ = (proposedZ + PLAYER_RADIUS > bMinZ) && (proposedZ - PLAYER_RADIUS < bMaxZ);
             if (overlapZ) {
-                // Jumpable surface check (benches, bicycles, memorial bases, stairs <= 1.5m)
-                boolean isJumpableSurface = (bMaxY <= 1.5f);
+                // Check if within step-up height
                 if (bMaxY <= position.y + STEP_UP_HEIGHT && (bMaxY - bMinY) <= STEP_UP_HEIGHT) {
                     // Allowed to enter; vertical step-up will elevate player
-                } else if (isJumpableSurface && (!isGrounded && (position.y + 0.65f >= bMaxY || verticalVelocity > 0f))) {
-                    // Player is in mid-air leaping onto or over the obstacle! Allow entry to land on top
+                } else if (!isGrounded && (position.y + 0.65f >= bMaxY || (verticalVelocity > 0f && position.y + (verticalVelocity * verticalVelocity / (2 * -GRAVITY)) >= bMaxY))) {
+                    // Airborne and jumping high enough to clear or land on top of surface! Allow horizontal entry
                 } else {
                     // Firm wall collision! Push outside box along Z
                     if (position.z <= (bMinZ + bMaxZ) / 2f) {
@@ -424,6 +452,7 @@ public class PlayerController {
             position.y = surfaceUnderFoot;
             verticalVelocity = 0f;
             isGrounded = true;
+            jumpCount = 0;
         }
 
         // Edge detection: if standing on an elevated surface and walked off
