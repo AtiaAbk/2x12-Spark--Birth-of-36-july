@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
@@ -81,14 +82,16 @@ public class DhakaCampusWorld implements Disposable {
 
         Material foliageMat = new Material(
             TextureAttribute.createDiffuse(textures.foliage),
-            FloatAttribute.createAlphaTest(0.35f),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            FloatAttribute.createAlphaTest(0.20f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(0.96f, 0.98f, 0.94f, 1f))
         );
 
         Material krishnachuraMat = new Material(
             TextureAttribute.createDiffuse(textures.krishnachuraBlossom),
-            FloatAttribute.createAlphaTest(0.35f),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            FloatAttribute.createAlphaTest(0.20f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 0.96f, 0.94f, 1f))
         );
@@ -100,14 +103,16 @@ public class DhakaCampusWorld implements Disposable {
 
         Material bambooLeafMat = new Material(
             TextureAttribute.createDiffuse(textures.bambooFoliage),
-            FloatAttribute.createAlphaTest(0.35f),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            FloatAttribute.createAlphaTest(0.20f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(0.96f, 0.98f, 0.92f, 1f))
         );
 
         Material bushMat = new Material(
             TextureAttribute.createDiffuse(textures.bushFoliage),
-            FloatAttribute.createAlphaTest(0.35f),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            FloatAttribute.createAlphaTest(0.20f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.92f, 1f))
         );
@@ -119,6 +124,7 @@ public class DhakaCampusWorld implements Disposable {
 
         Material curzonPukurWaterMat = new Material(
             TextureAttribute.createDiffuse(textures.curzonWater),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.90f),
             ColorAttribute.createDiffuse(new Color(0.92f, 0.96f, 1.0f, 1f))
         );
 
@@ -449,9 +455,11 @@ public class DhakaCampusWorld implements Disposable {
                     addHorizontalQuad(mpbRain, tx + bo[0] * 1.6f, 6.2f, tz + bo[2] * 1.6f, 4.8f);
                 }
 
-                // Central high canopy crown
-                addCrossedQuads(mpbRain, tx, 4.8f, tz, 6.5f, 4.2f, 4, 0f);
-                addHorizontalQuad(mpbRain, tx, 6.9f, tz, 5.8f);
+                // Central lower and high canopy crown (fully enveloping trunk and branches)
+                addCrossedQuads(mpbRain, tx, 3.4f, tz, 7.2f, 3.8f, 3, 0f);
+                addHorizontalQuad(mpbRain, tx, 4.8f, tz, 6.4f);
+                addCrossedQuads(mpbRain, tx, 4.6f, tz, 7.8f, 4.4f, 4, 0f);
+                addHorizontalQuad(mpbRain, tx, 7.0f, tz, 6.8f);
 
                 // Ground bush ring around tree trunk
                 addCrossedQuads(mpbBushes, tx + 1.2f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
@@ -478,9 +486,11 @@ public class DhakaCampusWorld implements Disposable {
                     addHorizontalQuad(mpbKrishna, tx + bo[0] * 1.5f, 5.8f, tz + bo[2] * 1.5f, 4.4f);
                 }
 
-                // Central flower crown
-                addCrossedQuads(mpbKrishna, tx, 4.6f, tz, 5.8f, 3.8f, 4, 0f);
-                addHorizontalQuad(mpbKrishna, tx, 6.4f, tz, 5.2f);
+                // Central lower and high blossom crown
+                addCrossedQuads(mpbKrishna, tx, 3.2f, tz, 6.5f, 3.6f, 3, 0f);
+                addHorizontalQuad(mpbKrishna, tx, 4.5f, tz, 5.8f);
+                addCrossedQuads(mpbKrishna, tx, 4.4f, tz, 7.0f, 4.0f, 4, 0f);
+                addHorizontalQuad(mpbKrishna, tx, 6.6f, tz, 6.2f);
 
                 // Wildflower shrub around base
                 addCrossedQuads(mpbBushes, tx + 0.9f, 0f, tz + 0.9f, 1.7f, 1.2f, 3, 0f);
