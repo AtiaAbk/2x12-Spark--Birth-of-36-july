@@ -18,7 +18,8 @@ public class DesktopLauncher {
         // Ensure macOS brings this game window to the absolute front and gives it full keyboard focus
         if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
             try {
-                long pid = ProcessHandle.current().pid();
+                String jvmName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
+                String pid = jvmName.split("@")[0];
                 Runtime.getRuntime().exec(new String[]{
                     "osascript", "-e",
                     "tell application \"System Events\" to set frontmost of first process whose unix id is " + pid + " to true"
