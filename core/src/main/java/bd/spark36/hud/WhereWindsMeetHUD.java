@@ -28,8 +28,8 @@ public class WhereWindsMeetHUD implements Disposable {
     private final SpriteBatch spriteBatch = new SpriteBatch();
     private final FontRenderer fonts;
 
-    // Theme Colors
-    private final Color glassBg = new Color(0.05f, 0.07f, 0.10f, 0.82f);
+    // Theme Colors (Ultra-Transparent Glassmorphism matching concept board)
+    private final Color glassBg = new Color(0.02f, 0.04f, 0.06f, 0.16f);
     private final Color goldBorder = new Color(0.92f, 0.76f, 0.32f, 0.88f);
     private final Color goldAccent = new Color(1.0f, 0.85f, 0.40f, 1f);
     private final Color goldDark = new Color(0.55f, 0.42f, 0.18f, 1f);
@@ -355,8 +355,8 @@ public class WhereWindsMeetHUD implements Disposable {
         float cy = h - 105f;
         float r = 70f;
 
-        // Circular dark background
-        shapeRenderer.setColor(0.04f, 0.06f, 0.08f, 0.85f);
+        // Circular transparent glass background
+        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.16f);
         shapeRenderer.circle(cx, cy, r, 48);
 
         // Waypoint Ticker Pill to the left ("◆ CURZON HALL  W")
@@ -582,12 +582,12 @@ public class WhereWindsMeetHUD implements Disposable {
         float px = (w - promptW) / 2f + 140f; // Offset slightly right, pointing towards central memorial
         float py = h * 0.44f;
 
-        // Dark glass rounded box
-        shapeRenderer.setColor(0.04f, 0.06f, 0.08f, 0.88f);
+        // Transparent dark glass rounded box
+        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.20f);
         shapeRenderer.rect(px, py, promptW, promptH);
 
         // Left Pointer Beak (Speech bubble triangle pointing to Curzon archive)
-        shapeRenderer.setColor(0.04f, 0.06f, 0.08f, 0.88f);
+        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.20f);
         shapeRenderer.triangle(px, py + 34f, px, py + 18f, px - 16f, py + 26f);
     }
 
@@ -628,8 +628,8 @@ public class WhereWindsMeetHUD implements Disposable {
         float kBaseX = w - 240f;
         float kBaseY = 16f;
 
-        // Keycap button boxes
-        shapeRenderer.setColor(0.06f, 0.08f, 0.12f, 0.85f);
+        // Keycap button boxes (sleek transparent)
+        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.20f);
 
         // [W]
         shapeRenderer.rect(kBaseX + 68f, kBaseY + 84f, 28f, 26f);
@@ -695,7 +695,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.keyFont.draw(spriteBatch, "D", kBaseX + 108f, kBaseY + 72f);
 
         fonts.keyFont.draw(spriteBatch, "SHIFT", kBaseX + 146f, kBaseY + 72f);
-        fonts.keyFont.draw(spriteBatch, "SPACE/C", kBaseX + 18f, kBaseY + 42f);
+        fonts.keyFont.draw(spriteBatch, "SPACE", kBaseX + 24f, kBaseY + 42f);
         fonts.keyFont.draw(spriteBatch, "E", kBaseX + 139f, kBaseY + 42f);
         fonts.keyFont.draw(spriteBatch, "M", kBaseX + 51f, kBaseY + 15f);
         fonts.keyFont.draw(spriteBatch, "ESC", kBaseX + 118f, kBaseY + 15f);
@@ -704,7 +704,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.setColor(Color.WHITE);
         fonts.smallFont.draw(spriteBatch, "MOVE", kBaseX - 6f, kBaseY + 72f);
         fonts.smallFont.draw(spriteBatch, "SPRINT", kBaseX + 194f, kBaseY + 72f);
-        fonts.smallFont.draw(spriteBatch, "LONG JUMP", kBaseX + 80f, kBaseY + 42f);
+        fonts.smallFont.draw(spriteBatch, "JUMP / RUN", kBaseX + 74f, kBaseY + 42f);
         fonts.smallFont.draw(spriteBatch, "INTERACT", kBaseX + 164f, kBaseY + 42f);
         fonts.smallFont.draw(spriteBatch, "MAP", kBaseX + 75f, kBaseY + 15f);
         fonts.smallFont.draw(spriteBatch, "PAUSE", kBaseX + 156f, kBaseY + 15f);
@@ -721,9 +721,9 @@ public class WhereWindsMeetHUD implements Disposable {
         float mx = (w - mw) / 2f;
         float my = 60f; // Floating in lower-third of screen
 
-        // Sleek translucent dark glass panel (68% opacity)
+        // Sleek crystal-transparent glass panel (32% opacity, 100% Curzon visibility)
         shapeRenderer.begin(ShapeType.Filled);
-        shapeRenderer.setColor(0.04f, 0.06f, 0.09f, 0.72f);
+        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.32f);
         shapeRenderer.rect(mx, my, mw, mh);
 
         // Top gold accent bar
