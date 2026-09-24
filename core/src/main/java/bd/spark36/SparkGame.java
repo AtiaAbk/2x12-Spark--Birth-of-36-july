@@ -393,8 +393,8 @@ public class SparkGame extends ApplicationAdapter {
         // 5. Render Atmospheric Crepuscular God Rays & In-World 3D Labels
         atmosphere.renderAtmosphereOverlays(camera.getCamera(), delta, screenW, screenH);
 
-        // 6. Render 2D Where Winds Meet HUD Pass
-        hud.render(player, memorials, camera.getYaw());
+        // 6. Render 2D Where Winds Meet HUD Pass with 3D Waypoint Pin projection
+        hud.render(player, memorials, camera.getYaw(), camera.getCamera());
     }
 
     private void handleGameplayInputs(float delta) {
