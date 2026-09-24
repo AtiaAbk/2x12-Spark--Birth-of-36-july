@@ -170,17 +170,20 @@ public class PlayerController {
             boolean left = Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT);
             boolean right = Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT);
 
-            // SPRINT: SHIFT (standard PC gaming) or CONTROL or SPACE (hold)
+            // SPRINT / RUN: SHIFT or CONTROL, or holding SPACE while moving
+            boolean spaceHeld = Gdx.input.isKeyPressed(Input.Keys.SPACE);
+            boolean spaceJustPressed = Gdx.input.isKeyJustPressed(Input.Keys.SPACE);
+
             sprintKey = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) ||
                         Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT) ||
                         Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) ||
-                        Gdx.input.isKeyPressed(Input.Keys.SPACE);
+                        (spaceHeld && !spaceJustPressed && isMoving);
 
-            // JUMP / LONG JUMP: C, V, SPACE, or SHIFT (tap)
-            jumpKey = Gdx.input.isKeyJustPressed(Input.Keys.C) ||
+            // JUMP / LONG JUMP: Pressing SPACE, C, V, or mouse right-click
+            jumpKey = spaceJustPressed ||
+                      Gdx.input.isKeyJustPressed(Input.Keys.C) ||
                       Gdx.input.isKeyJustPressed(Input.Keys.V) ||
-                      Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
-                      (!sprintKey && (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_RIGHT)));
+                      Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT);
 
             if (up) moveDir.y += 1f;
             if (down) moveDir.y -= 1f;
