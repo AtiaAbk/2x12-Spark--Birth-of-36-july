@@ -159,10 +159,10 @@ public class PlayerController {
         {9.7f, 0f, 32.5f, 12.1f, 1.40f, 34.6f}, // Boulder North-East (1.40m)
 
         // ======== CURZON HALL PUKUR PERIMETER CURBS (0.45m - Step-up & jumpable!) ========
-        {10.1f, 0f, -2.3f, 26.9f, 0.45f, -1.7f}, // North curb
-        {10.1f, 0f, 21.7f, 26.9f, 0.45f, 22.3f}, // South curb
-        {10.1f, 0f, -2.0f, 10.7f, 0.45f, 22.0f}, // West curb
-        {26.3f, 0f, -2.0f, 26.9f, 0.45f, 22.0f}, // East curb
+        {-11.4f, 0f, -9.3f, 11.4f, 0.45f, -8.7f}, // North curb
+        {-11.4f, 0f, 8.7f, 11.4f, 0.45f, 9.3f}, // South curb
+        {-11.4f, 0f, -9.0f, -10.8f, 0.45f, 9.0f}, // West curb
+        {10.8f, 0f, -9.0f, 11.4f, 0.45f, 9.0f}, // East curb
 
         // ======== SOUTH BOUNDARY WALL & MAIN GATE ========
         {-110f, 0f, 77.2f, -4.2f, 2.8f, 78.8f},   // West perimeter wall

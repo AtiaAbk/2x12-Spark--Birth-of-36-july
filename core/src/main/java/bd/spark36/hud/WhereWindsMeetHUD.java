@@ -1058,10 +1058,10 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.rect(centerMapX + 41.6f * scale, centerMapY - (42f - 18f) * scale, 4.8f * scale, 12f * scale);
 
         // Curzon Hall Pukur (Central Campus Pond)
-        float pX = centerMapX + 16.5f * scale;
-        float pY = centerMapY - (8.0f - 18f) * scale;
-        float pW = 16.0f * scale;
-        float pH = 24.0f * scale;
+        float pX = centerMapX;
+        float pY = centerMapY + 18f * scale;  // worldZ=0, so (0-18)*-1 = +18
+        float pW = 22.0f * scale;
+        float pH = 18.0f * scale;
 
         // Pukur stone curb
         shapeRenderer.setColor(0.85f, 0.82f, 0.76f, 1f);
@@ -1128,7 +1128,7 @@ public class WhereWindsMeetHUD implements Disposable {
         }
 
         // 6. Arts Plaza & Aparajeyo Bangla Sculpture
-        float abMapX = centerMapX - 32f * scale;
+        float abMapX = centerMapX - 36f * scale;
         float abMapY = centerMapY - (26f - 18f) * scale;
         shapeRenderer.setColor(0.80f, 0.78f, 0.74f, 0.95f);
         shapeRenderer.rect(abMapX - 3.5f * scale, abMapY - 3.5f * scale, 7.0f * scale, 7.0f * scale);
@@ -1354,9 +1354,12 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.draw(spriteBatch, "Madhur Canteen", mcMapX - 42f, mcMapY + 10f * scale);
         fonts.smallFont.draw(spriteBatch, "Book Stalls", centerMapX - 47f * scale, centerMapY - (38f - 18f) * scale - 12f);
         fonts.smallFont.draw(spriteBatch, "Aparajeyo Bangla", abMapX - 44f, abMapY - 6f * scale);
+        fonts.smallFont.setColor(new Color(0.82f, 0.80f, 0.75f, 1f));
+        fonts.smallFont.draw(spriteBatch, "Arts Plaza", abMapX - 30f, abMapY - 3f * scale);
+        fonts.smallFont.setColor(Color.WHITE);
         fonts.smallFont.draw(spriteBatch, "Teacher-Student Centre (TSC)", tscMapX - 70f, tscMapY + 17f * scale);
-        fonts.smallFont.draw(spriteBatch, "Raju Memorial", rjMapX - 36f, rjMapY - 11f * scale);
-        fonts.smallFont.draw(spriteBatch, "Swadhinata Sangram", ssMapX - 52f, ssMapY + 12f * scale);
+        fonts.smallFont.draw(spriteBatch, "Raju Memorial Sculpture", rjMapX - 36f, rjMapY - 11f * scale);
+        fonts.smallFont.draw(spriteBatch, "Swadhinata Sangram Sculpture Garden", ssMapX - 52f, ssMapY + 12f * scale);
 
         // Visual Target Preview in Bottom-Left Card
         if (textures != null && textures.mapVisualTarget != null) {
