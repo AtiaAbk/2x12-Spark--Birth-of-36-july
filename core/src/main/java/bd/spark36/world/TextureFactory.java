@@ -198,21 +198,112 @@ public class TextureFactory implements Disposable {
     }
 
     private Texture createFoliage() {
-        int size = 256;
+        int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        pix.setColor(0.16f, 0.40f, 0.15f, 1f);
+        // Rich tropical leaf green base
+        pix.setColor(0.12f, 0.32f, 0.12f, 1f);
         pix.fill();
 
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
-                float leaf = MathUtils.sin(x * 0.4f) * MathUtils.sin(y * 0.4f)
-                           + MathUtils.cos((x - y) * 0.3f) * 0.5f;
-                float r = MathUtils.clamp(0.16f + leaf * 0.08f, 0.10f, 0.26f);
-                float g = MathUtils.clamp(0.42f + leaf * 0.14f, 0.28f, 0.58f);
-                float b = MathUtils.clamp(0.15f + leaf * 0.06f, 0.08f, 0.22f);
+                float leaf = MathUtils.sin(x * 0.22f) * MathUtils.sin(y * 0.22f)
+                           + MathUtils.cos((x - y) * 0.16f) * 0.45f
+                           + MathUtils.sin((x + y) * 0.35f) * 0.25f;
+                float r = MathUtils.clamp(0.13f + leaf * 0.08f, 0.06f, 0.24f);
+                float g = MathUtils.clamp(0.38f + leaf * 0.16f, 0.20f, 0.58f);
+                float b = MathUtils.clamp(0.12f + leaf * 0.06f, 0.05f, 0.20f);
 
                 pix.setColor(r, g, b, 1f);
+                pix.drawPixel(x, y);
+            }
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createKrishnachuraBlossom() {
+        int size = 512;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+
+        // Foliage base
+        pix.setColor(0.12f, 0.30f, 0.10f, 1f);
+        pix.fill();
+
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                float leaf = MathUtils.sin(x * 0.25f) * MathUtils.sin(y * 0.25f)
+                           + MathUtils.cos((x + y) * 0.18f) * 0.4f;
+                float r = MathUtils.clamp(0.12f + leaf * 0.06f, 0.07f, 0.20f);
+                float g = MathUtils.clamp(0.34f + leaf * 0.14f, 0.20f, 0.50f);
+                float b = MathUtils.clamp(0.10f + leaf * 0.05f, 0.05f, 0.18f);
+
+                pix.setColor(r, g, b, 1f);
+                pix.drawPixel(x, y);
+            }
+        }
+
+        // Clusters of iconic scarlet Krishnachura petals
+        for (int i = 0; i < 110; i++) {
+            int cx = (int)(MathUtils.random() * size);
+            int cy = (int)(MathUtils.random() * size);
+            int rad = MathUtils.random(6, 18);
+            for (int dx = -rad; dx <= rad; dx++) {
+                for (int dy = -rad; dy <= rad; dy++) {
+                    if (dx * dx + dy * dy <= rad * rad) {
+                        float pr = MathUtils.clamp(0.88f + MathUtils.random(-0.08f, 0.10f), 0.75f, 1f);
+                        float pg = MathUtils.clamp(0.22f + MathUtils.random(-0.06f, 0.12f), 0.12f, 0.36f);
+                        float pb = 0.08f;
+                        pix.setColor(pr, pg, pb, 1f);
+                        pix.drawPixel(Math.floorMod(cx + dx, size), Math.floorMod(cy + dy, size));
+                    }
+                }
+            }
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createBdFlag() {
+        int w = 500;
+        int h = 300;
+        Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
+
+        // Bottle green field (#006A4E)
+        pix.setColor(0.0f, 0.416f, 0.306f, 1f);
+        pix.fill();
+
+        // Crimson red circle offset slightly to left (#F42A41)
+        pix.setColor(0.957f, 0.165f, 0.255f, 1f);
+        pix.fillCircle(225, 150, 100);
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createAparajeyoStone() {
+        int size = 256;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+
+        // Chiseled white/grey sculpture stone
+        pix.setColor(0.86f, 0.85f, 0.82f, 1f);
+        pix.fill();
+
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                float n = (MathUtils.sin(x * 0.3f) * MathUtils.cos(y * 0.3f)) * 0.04f;
+                float c = MathUtils.clamp(0.86f + n + MathUtils.random(-0.02f, 0.02f), 0.78f, 0.94f);
+                pix.setColor(c, c - 0.01f, c - 0.03f, 1f);
                 pix.drawPixel(x, y);
             }
         }
