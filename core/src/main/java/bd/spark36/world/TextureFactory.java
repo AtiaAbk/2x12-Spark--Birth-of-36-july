@@ -34,6 +34,10 @@ public class TextureFactory implements Disposable {
     public final Texture movementBanner;
     public final Texture bdFlag;
     public final Texture aparajeyoStone;
+    public final Texture asphaltRoad;
+    public final Texture modernistConcrete;
+    public final Texture canteenTinRoof;
+    public final Texture mapVisualTarget;
 
     public TextureFactory() {
         brickPavement = createBrickPavement();
@@ -52,11 +56,16 @@ public class TextureFactory implements Disposable {
         movementBanner = createMovementBanner();
         bdFlag = createBdFlag();
         aparajeyoStone = createAparajeyoStone();
+        asphaltRoad = createAsphaltRoad();
+        modernistConcrete = createModernistConcrete();
+        canteenTinRoof = createCanteenTinRoof();
+        mapVisualTarget = createMapVisualTarget();
 
         textures.addAll(brickPavement, curzonBrick, lawnGrass, treeBark,
                         foliage, krishnachuraBlossom, bambooCulm, bambooFoliage,
                         bushFoliage, weatheredStone, curzonWater,
-                        backpackFabric, studentJacket, movementBanner, bdFlag, aparajeyoStone);
+                        backpackFabric, studentJacket, movementBanner, bdFlag, aparajeyoStone,
+                        asphaltRoad, modernistConcrete, canteenTinRoof, mapVisualTarget);
     }
 
     private Texture createBrickPavement() {
@@ -756,6 +765,177 @@ public class TextureFactory implements Disposable {
         pix.setColor(0.12f, 0.12f, 0.15f, 1f);
         pix.fillRectangle(40, 380, 176, 14);
         pix.fillRectangle(50, 410, 156, 12);
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createAsphaltRoad() {
+        int size = 512;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+
+        // Bitumen dark charcoal base
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                float noise = (MathUtils.sin(x * 12.3f + y * 7.9f) + MathUtils.cos(x * 5.1f - y * 14.2f)) * 0.5f;
+                float base = 0.18f + noise * 0.04f;
+                pix.setColor(base, base * 1.02f, base * 1.05f, 1f);
+                pix.drawPixel(x, y);
+            }
+        }
+
+        // White dashed center line down the middle
+        int stripeW = 12;
+        int stripeH = 64;
+        int gapH = 48;
+        int centerX = size / 2 - stripeW / 2;
+
+        pix.setColor(0.92f, 0.90f, 0.85f, 0.92f);
+        for (int y = 0; y < size; y += stripeH + gapH) {
+            pix.fillRectangle(centerX, y, stripeW, stripeH);
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createModernistConcrete() {
+        int size = 512;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+
+        // Warm light-grey architectural concrete (Doxiadis modernist style)
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                float n = (MathUtils.sin(x * 18.2f + y * 9.1f) + MathUtils.cos(x * 7.5f - y * 19.3f)) * 0.5f;
+                float c = 0.78f + n * 0.035f;
+                pix.setColor(c * 1.02f, c, c * 0.96f, 1f);
+                pix.drawPixel(x, y);
+            }
+        }
+
+        // Shuttering panel seams every 128 pixels
+        pix.setColor(0.62f, 0.60f, 0.58f, 0.7f);
+        for (int p = 0; p < size; p += 128) {
+            pix.drawLine(0, p, size - 1, p);
+            pix.drawLine(p, 0, p, size - 1);
+            // Formwork tie-rod holes
+            pix.setColor(0.45f, 0.42f, 0.40f, 0.9f);
+            pix.fillCircle(p + 16, p + 16, 3);
+            pix.fillCircle(p + 112, p + 16, 3);
+            pix.fillCircle(p + 16, p + 112, 3);
+            pix.fillCircle(p + 112, p + 112, 3);
+            pix.setColor(0.62f, 0.60f, 0.58f, 0.7f);
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createCanteenTinRoof() {
+        int size = 512;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+
+        // Weathered reddish terracotta-tin roof base
+        pix.setColor(0.62f, 0.28f, 0.22f, 1f);
+        pix.fill();
+
+        // Corrugated vertical ridges
+        int ridgeWidth = 16;
+        for (int x = 0; x < size; x += ridgeWidth) {
+            // Highlight left edge
+            pix.setColor(0.74f, 0.36f, 0.28f, 0.85f);
+            pix.fillRectangle(x, 0, ridgeWidth / 2, size);
+            // Shadow right edge
+            pix.setColor(0.48f, 0.18f, 0.14f, 0.85f);
+            pix.fillRectangle(x + ridgeWidth / 2, 0, ridgeWidth / 2, size);
+            // Subtle horizontal weathering streaks
+            for (int y = 0; y < size; y += 32) {
+                pix.setColor(0.40f, 0.20f, 0.16f, 0.3f);
+                pix.drawLine(x, y, x + ridgeWidth, y);
+            }
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createMapVisualTarget() {
+        int w = 512;
+        int h = 256;
+        Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
+
+        // Sky background gradient (warm golden morning)
+        for (int y = 0; y < h; y++) {
+            float t = (float) y / h;
+            pix.setColor(0.92f - t * 0.12f, 0.88f - t * 0.15f, 0.78f - t * 0.25f, 1f);
+            pix.drawLine(0, y, w, y);
+        }
+
+        // Lush green trees backdrop
+        pix.setColor(0.18f, 0.42f, 0.16f, 1f);
+        for (int x = 20; x < w - 20; x += 40) {
+            pix.fillCircle(x, 140, 45);
+        }
+
+        // Curzon Hall Facade Red Terracotta Block
+        int bY = 110;
+        int bH = 95;
+        pix.setColor(0.74f, 0.24f, 0.18f, 1f);
+        pix.fillRectangle(60, bY, w - 120, bH);
+
+        // White domes & finials
+        pix.setColor(0.95f, 0.94f, 0.90f, 1f);
+        pix.fillCircle(w / 2, bY - 15, 38);
+        pix.setColor(1.0f, 0.84f, 0.30f, 1f);
+        pix.fillRectangle(w / 2 - 2, bY - 65, 4, 30); // Finial spire
+
+        // Side domes
+        pix.setColor(0.95f, 0.94f, 0.90f, 1f);
+        pix.fillCircle(120, bY, 18);
+        pix.fillCircle(w - 120, bY, 18);
+
+        // Arched windows and white cusped portico
+        pix.setColor(0.96f, 0.94f, 0.90f, 1f);
+        pix.fillRectangle(w / 2 - 35, bY + 15, 70, bH - 15);
+        pix.setColor(0.20f, 0.12f, 0.08f, 1f);
+        pix.fillRectangle(w / 2 - 22, bY + 30, 44, bH - 30);
+
+        // Flanking arched windows
+        for (int i = 0; i < 4; i++) {
+            int wxL = 80 + i * 28;
+            int wxR = w - 80 - i * 28;
+            pix.setColor(0.96f, 0.94f, 0.90f, 1f);
+            pix.fillRectangle(wxL - 2, bY + 35, 18, 42);
+            pix.fillRectangle(wxR - 16, bY + 35, 18, 42);
+            pix.setColor(0.22f, 0.12f, 0.08f, 1f);
+            pix.fillRectangle(wxL, bY + 38, 14, 38);
+            pix.fillRectangle(wxR - 14, bY + 38, 14, 38);
+        }
+
+        // Green lawn in front
+        pix.setColor(0.24f, 0.55f, 0.20f, 1f);
+        pix.fillRectangle(0, bY + bH, w, h - (bY + bH));
+
+        // Central brick walkway
+        pix.setColor(0.72f, 0.32f, 0.22f, 1f);
+        pix.fillTriangle(w / 2 - 30, bY + bH, w / 2 + 30, bY + bH, w / 2 + 75, h);
+        pix.fillTriangle(w / 2 - 30, bY + bH, w / 2 - 75, h, w / 2 + 75, h);
+
+        // Gold border framing
+        pix.setColor(0.85f, 0.70f, 0.30f, 1f);
+        pix.drawRectangle(0, 0, w, h);
+        pix.drawRectangle(1, 1, w - 2, h - 2);
 
         Texture tex = new Texture(pix);
         tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);

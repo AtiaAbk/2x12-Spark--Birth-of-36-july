@@ -2,4 +2,5 @@ fonts/LICENSE-LiberationSans.txt
 fonts/LiberationSans-Bold.ttf
 fonts/LiberationSans-Regular.ttf
 libgdx.png
+screenshots/spark36_map_verified.png
 screenshots/spark36_verified.png

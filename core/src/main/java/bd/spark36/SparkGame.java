@@ -96,6 +96,7 @@ public class SparkGame extends ApplicationAdapter {
         camera = new CinematicCamera(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
         atmosphere = new AtmosphereRenderer(fontRenderer);
         hud = new WhereWindsMeetHUD(fontRenderer);
+        hud.setTextures(textures);
 
         gameplayInitialized = true;
     }
@@ -449,6 +450,18 @@ public class SparkGame extends ApplicationAdapter {
             }
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
                 takeScreenshot("spark36_modal_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testMapScreenshot") != null) {
+            testTimer += delta;
+            if (testTimer >= 1.0f && !hud.isMapOpen()) {
+                hud.openMapForTest();
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("spark36_map_verified");
                 autoScreenshotTaken = true;
                 if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
                     Gdx.app.exit();

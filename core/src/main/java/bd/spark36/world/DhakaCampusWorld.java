@@ -143,6 +143,21 @@ public class DhakaCampusWorld implements Disposable {
             TextureAttribute.createDiffuse(textures.movementBanner)
         );
 
+        Material asphaltMat = new Material(
+            TextureAttribute.createDiffuse(textures.asphaltRoad),
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.95f, 0.95f, 1f))
+        );
+
+        Material concreteMat = new Material(
+            TextureAttribute.createDiffuse(textures.modernistConcrete),
+            ColorAttribute.createDiffuse(new Color(0.96f, 0.95f, 0.92f, 1f))
+        );
+
+        Material canteenRoofMat = new Material(
+            TextureAttribute.createDiffuse(textures.canteenTinRoof),
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.92f, 0.90f, 1f))
+        );
+
         Material stoneCurb = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.85f, 0.80f, 1f)));
         Material curzonDomeMat = new Material(ColorAttribute.createDiffuse(new Color(0.93f, 0.92f, 0.88f, 1f)));
         Material curzonTrimMat = new Material(ColorAttribute.createDiffuse(new Color(0.96f, 0.94f, 0.90f, 1f)));
@@ -157,11 +172,11 @@ public class DhakaCampusWorld implements Disposable {
         Material hedgeMat = new Material(ColorAttribute.createDiffuse(new Color(0.14f, 0.38f, 0.12f, 1f)));
         Material flowerRed = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.16f, 0.18f, 1f)));
 
-        // 1. Central Campus Lawn
-        Model groundModel = mb.createBox(280f, 0.2f, 240f, grassMat, attr);
+        // 1. Central Campus Lawn (Spanning entire precinct)
+        Model groundModel = mb.createBox(280f, 0.2f, 260f, grassMat, attr);
         models.add(groundModel);
         ModelInstance groundInst = new ModelInstance(groundModel);
-        groundInst.transform.setTranslation(0f, -0.1f, 15f);
+        groundInst.transform.setTranslation(0f, -0.1f, 20f);
         instances.add(groundInst);
 
         // 2. Grand Herringbone Brick Avenue with Stone Curbs & Landscaped Flowerbeds
@@ -174,7 +189,8 @@ public class DhakaCampusWorld implements Disposable {
         models.add(hedgeTile);
         models.add(flowerTile);
 
-        for (float z = -20f; z <= 85f; z += 7.2f) {
+        // Central Promenade (from South Gate at 76m to Curzon steps at -18m)
+        for (float z = -18f; z <= 76f; z += 7.2f) {
             ModelInstance aInst = new ModelInstance(avenueTile);
             aInst.transform.setTranslation(0f, 0.03f, z);
             instances.add(aInst);
@@ -206,6 +222,54 @@ public class DhakaCampusWorld implements Disposable {
                 fR.transform.setTranslation(5.85f, 0.18f, z);
                 instances.add(fR);
             }
+        }
+
+        // Cross-Campus Promenade Network (Connecting West Hub & East Hub)
+        Model crossWalkEastWest = mb.createBox(5.4f, 0.06f, 4.8f, brickPavementMat, attr);
+        Model crossWalkNorthSouth = mb.createBox(4.8f, 0.06f, 5.4f, brickPavementMat, attr);
+        models.add(crossWalkEastWest);
+        models.add(crossWalkNorthSouth);
+
+        // West Avenue: from Central Promenade towards Arts Plaza & Central Library (Z=30m, X: -4m to -74m)
+        for (float x = -6f; x >= -74f; x -= 5.4f) {
+            ModelInstance cwInst = new ModelInstance(crossWalkEastWest);
+            cwInst.transform.setTranslation(x, 0.03f, 30f);
+            instances.add(cwInst);
+        }
+
+        // West North Branch: to Madhur Canteen (X=-56m, Z: 30m to -16m)
+        for (float z = 28f; z >= -16f; z -= 5.4f) {
+            ModelInstance cwInst = new ModelInstance(crossWalkNorthSouth);
+            cwInst.transform.setTranslation(-56f, 0.03f, z);
+            instances.add(cwInst);
+        }
+
+        // West South Branch: to Hakim Chattar (X=-58m, Z: 30m to 54m)
+        for (float z = 32f; z <= 54f; z += 5.4f) {
+            ModelInstance cwInst = new ModelInstance(crossWalkNorthSouth);
+            cwInst.transform.setTranslation(-58f, 0.03f, z);
+            instances.add(cwInst);
+        }
+
+        // East Avenue: from Central Promenade towards Raju Roundabout & TSC (Z=30m, X: +4m to +72m)
+        for (float x = 6f; x <= 72f; x += 5.4f) {
+            ModelInstance cwInst = new ModelInstance(crossWalkEastWest);
+            cwInst.transform.setTranslation(x, 0.03f, 30f);
+            instances.add(cwInst);
+        }
+
+        // East North Branch: to Swadhinata Sangram Sculpture Garden (X=+56m, Z: 30m to -16m)
+        for (float z = 28f; z >= -16f; z -= 5.4f) {
+            ModelInstance cwInst = new ModelInstance(crossWalkNorthSouth);
+            cwInst.transform.setTranslation(56f, 0.03f, z);
+            instances.add(cwInst);
+        }
+
+        // East South Branch: to Raju Memorial Roundabout (X=+44m, Z: 30m to 42m)
+        for (float z = 32f; z <= 42f; z += 5.4f) {
+            ModelInstance cwInst = new ModelInstance(crossWalkNorthSouth);
+            cwInst.transform.setTranslation(44f, 0.03f, z);
+            instances.add(cwInst);
         }
 
         // Front Verandah Walkway
@@ -742,27 +806,454 @@ public class DhakaCampusWorld implements Disposable {
         srHead.transform.setTranslation(aX + 0.9f, 4.15f, aZ + 0.1f);
         instances.add(srHead);
 
-        // 6. TSC (Teacher-Student Centre — Modernist Circular Pavilion)
-        // Positioned on western campus sector at (-58, 0, -8)
-        float tscX = -58.0f, tscZ = -8.0f;
-        Model tscDrum = mb.createCylinder(18.0f, 7.5f, 18.0f, 24, curzonBrickMat, attr);
-        Model tscRoof = mb.createCylinder(21.0f, 0.8f, 21.0f, 24, curzonTrimMat, attr);
-        Model tscWindows = mb.createCylinder(18.2f, 3.0f, 18.2f, 24, waterMat, attr);
-        models.add(tscDrum);
-        models.add(tscRoof);
-        models.add(tscWindows);
+        // ==========================================
+        // 6. SOUTH BOUNDARY WALL & MAIN GATE (DOEL CHATTAR ENTRANCE)
+        // ==========================================
+        // West Boundary Wall (from X=-110 to X=-4.5 at Z=78)
+        Model boundWallW = mb.createBox(105f, 2.6f, 0.6f, curzonBrickMat, attr);
+        Model boundWallE = mb.createBox(105f, 2.6f, 0.6f, curzonBrickMat, attr);
+        Model boundCopingW = mb.createBox(105f, 0.25f, 0.85f, stoneCurb, attr);
+        Model boundCopingE = mb.createBox(105f, 0.25f, 0.85f, stoneCurb, attr);
+        models.add(boundWallW);
+        models.add(boundWallE);
+        models.add(boundCopingW);
+        models.add(boundCopingE);
 
-        ModelInstance tscDrumInst = new ModelInstance(tscDrum);
-        tscDrumInst.transform.setTranslation(tscX, 3.75f, tscZ);
-        instances.add(tscDrumInst);
+        ModelInstance bwwInst = new ModelInstance(boundWallW);
+        bwwInst.transform.setTranslation(-57f, 1.3f, 78f);
+        instances.add(bwwInst);
 
-        ModelInstance tscRoofInst = new ModelInstance(tscRoof);
-        tscRoofInst.transform.setTranslation(tscX, 7.9f, tscZ);
-        instances.add(tscRoofInst);
+        ModelInstance bweInst = new ModelInstance(boundWallE);
+        bweInst.transform.setTranslation(57f, 1.3f, 78f);
+        instances.add(bweInst);
 
-        ModelInstance tscWinInst = new ModelInstance(tscWindows);
-        tscWinInst.transform.setTranslation(tscX, 4.0f, tscZ);
-        instances.add(tscWinInst);
+        ModelInstance bcwInst = new ModelInstance(boundCopingW);
+        bcwInst.transform.setTranslation(-57f, 2.7f, 78f);
+        instances.add(bcwInst);
+
+        ModelInstance bceInst = new ModelInstance(boundCopingE);
+        bceInst.transform.setTranslation(57f, 2.7f, 78f);
+        instances.add(bceInst);
+
+        // Brick wall piers with stone caps every 14m along south wall
+        Model wallPier = mb.createBox(0.9f, 3.0f, 0.9f, curzonBrickMat, attr);
+        Model pierCap = mb.createBox(1.1f, 0.25f, 1.1f, stoneCurb, attr);
+        models.add(wallPier);
+        models.add(pierCap);
+
+        for (float px = -105f; px <= 105f; px += 14f) {
+            if (Math.abs(px) < 6f) continue;
+            ModelInstance wp = new ModelInstance(wallPier);
+            wp.transform.setTranslation(px, 1.5f, 78f);
+            instances.add(wp);
+
+            ModelInstance cap = new ModelInstance(pierCap);
+            cap.transform.setTranslation(px, 3.1f, 78f);
+            instances.add(cap);
+        }
+
+        // MAIN GATE (Doel Chattar Grand Mughal Gateway at X=0, Z=78)
+        Model gateArchPillar = mb.createBox(1.8f, 7.2f, 1.8f, curzonBrickMat, attr);
+        Model gateArchBeam = mb.createBox(8.4f, 1.6f, 2.0f, curzonBrickMat, attr);
+        Model gateArchCrest = mb.createBox(6.4f, 1.2f, 0.4f, curzonTrimMat, attr);
+        Model gateTrimFrame = mb.createBox(4.8f, 5.6f, 0.15f, curzonTrimMat, attr);
+        Model sidePedArch = mb.createBox(2.4f, 4.4f, 1.6f, curzonBrickMat, attr);
+        Model guardKiosk = mb.createBox(2.8f, 3.2f, 2.8f, curzonBrickMat, attr);
+        Model guardRoof = mb.createBox(3.4f, 0.4f, 3.4f, curzonTrimMat, attr);
+        models.add(gateArchPillar);
+        models.add(gateArchBeam);
+        models.add(gateArchCrest);
+        models.add(gateTrimFrame);
+        models.add(sidePedArch);
+        models.add(guardKiosk);
+        models.add(guardRoof);
+
+        // Main gate left and right pillars
+        ModelInstance gpL = new ModelInstance(gateArchPillar);
+        gpL.transform.setTranslation(-3.3f, 3.6f, 78f);
+        instances.add(gpL);
+
+        ModelInstance gpR = new ModelInstance(gateArchPillar);
+        gpR.transform.setTranslation(3.3f, 3.6f, 78f);
+        instances.add(gpR);
+
+        // Central arch beam spanning across
+        ModelInstance gbInst = new ModelInstance(gateArchBeam);
+        gbInst.transform.setTranslation(0f, 6.4f, 78f);
+        instances.add(gbInst);
+
+        ModelInstance gcInst = new ModelInstance(gateArchCrest);
+        gcInst.transform.setTranslation(0f, 7.8f, 78f);
+        instances.add(gcInst);
+
+        ModelInstance gtInst = new ModelInstance(gateTrimFrame);
+        gtInst.transform.setTranslation(0f, 3.6f, 78f);
+        instances.add(gtInst);
+
+        // Finials atop gate pillars
+        ModelInstance gfL = new ModelInstance(finialBase);
+        gfL.transform.setTranslation(-3.3f, 7.6f, 78f);
+        instances.add(gfL);
+
+        ModelInstance gfR = new ModelInstance(finialBase);
+        gfR.transform.setTranslation(3.3f, 7.6f, 78f);
+        instances.add(gfR);
+
+        // Flanking pedestrian gates (left and right)
+        ModelInstance spL = new ModelInstance(sidePedArch);
+        spL.transform.setTranslation(-5.4f, 2.2f, 78f);
+        instances.add(spL);
+
+        ModelInstance spR = new ModelInstance(sidePedArch);
+        spR.transform.setTranslation(5.4f, 2.2f, 78f);
+        instances.add(spR);
+
+        // Security Guard Kiosk at East flank of gate
+        ModelInstance gkInst = new ModelInstance(guardKiosk);
+        gkInst.transform.setTranslation(8.5f, 1.6f, 75.5f);
+        instances.add(gkInst);
+
+        ModelInstance grInst = new ModelInstance(guardRoof);
+        grInst.transform.setTranslation(8.5f, 3.4f, 75.5f);
+        instances.add(grInst);
+
+        // Doel Chattar Road Corridor (Asphalt East-West Avenue outside the gate)
+        Model asphaltRoadSouth = mb.createBox(240f, 0.04f, 12f, asphaltMat, attr);
+        Model roadCurbTile = mb.createBox(240f, 0.25f, 0.45f, stoneCurb, attr);
+        models.add(asphaltRoadSouth);
+        models.add(roadCurbTile);
+
+        ModelInstance arsInst = new ModelInstance(asphaltRoadSouth);
+        arsInst.transform.setTranslation(0f, 0.02f, 85f);
+        instances.add(arsInst);
+
+        ModelInstance rcInst = new ModelInstance(roadCurbTile);
+        rcInst.transform.setTranslation(0f, 0.12f, 78.8f);
+        instances.add(rcInst);
+
+        // ==========================================
+        // 7. NORTH BOUNDARY WALL & FULLER ROAD CORRIDOR
+        // ==========================================
+        Model northWall = mb.createBox(220f, 2.8f, 0.6f, curzonBrickMat, attr);
+        Model northRoad = mb.createBox(220f, 0.04f, 10f, asphaltMat, attr);
+        models.add(northWall);
+        models.add(northRoad);
+
+        ModelInstance nwInst = new ModelInstance(northWall);
+        nwInst.transform.setTranslation(0f, 1.4f, -44.5f);
+        instances.add(nwInst);
+
+        ModelInstance nrInst = new ModelInstance(northRoad);
+        nrInst.transform.setTranslation(0f, 0.02f, -50f);
+        instances.add(nrInst);
+
+        // ==========================================
+        // 8. WEST HUB: CENTRAL LIBRARY BUILDING (WITH INNER COURTYARD)
+        // ==========================================
+        // 4 wings forming rectangular building (36m x 32m x 11.5m) with central open-air atrium (16m x 16m)
+        float clX = -68.0f, clZ = 22.0f;
+        Model clWingEW = mb.createBox(36f, 11.5f, 8f, curzonBrickMat, attr);
+        Model clWingNS = mb.createBox(8f, 11.5f, 16f, curzonBrickMat, attr);
+        Model clPortico = mb.createBox(8f, 11.5f, 16f, concreteMat, attr);
+        Model clSteps = mb.createBox(5f, 0.6f, 12f, stoneCurb, attr);
+        Model clLouver = mb.createBox(0.3f, 8.5f, 0.6f, concreteMat, attr);
+        Model clCornice = mb.createBox(38f, 0.8f, 34f, concreteMat, attr);
+        models.add(clWingEW);
+        models.add(clWingNS);
+        models.add(clPortico);
+        models.add(clSteps);
+        models.add(clLouver);
+        models.add(clCornice);
+
+        // South Wing
+        ModelInstance clSouth = new ModelInstance(clWingEW);
+        clSouth.transform.setTranslation(clX, 5.75f, clZ + 12f);
+        instances.add(clSouth);
+
+        // North Wing
+        ModelInstance clNorth = new ModelInstance(clWingEW);
+        clNorth.transform.setTranslation(clX, 5.75f, clZ - 12f);
+        instances.add(clNorth);
+
+        // West Wing
+        ModelInstance clWest = new ModelInstance(clWingNS);
+        clWest.transform.setTranslation(clX - 14f, 5.75f, clZ);
+        instances.add(clWest);
+
+        // East Wing (Facade with concrete portico entrance)
+        ModelInstance clEast = new ModelInstance(clPortico);
+        clEast.transform.setTranslation(clX + 14f, 5.75f, clZ);
+        instances.add(clEast);
+
+        // Concrete roof cornice capping the building
+        ModelInstance clcInst = new ModelInstance(clCornice);
+        clcInst.transform.setTranslation(clX, 11.8f, clZ);
+        instances.add(clcInst);
+
+        // Grand Entrance Steps facing the walkway
+        ModelInstance clsInst = new ModelInstance(clSteps);
+        clsInst.transform.setTranslation(clX + 19.5f, 0.3f, clZ);
+        instances.add(clsInst);
+
+        // Modernist vertical sun louvers on east facade
+        for (int l = -5; l <= 5; l++) {
+            ModelInstance luv = new ModelInstance(clLouver);
+            luv.transform.setTranslation(clX + 18.2f, 5.5f, clZ + l * 2.2f);
+            instances.add(luv);
+        }
+
+        // ==========================================
+        // 9. WEST HUB: HAKIM CHATTAR (OCTAGONAL STUDENT PAVILION)
+        // ==========================================
+        float hkX = -58.0f, hkZ = 54.0f;
+        Model hkPlinth = mb.createCylinder(9.0f, 0.6f, 9.0f, 16, concreteMat, attr);
+        Model hkPillar = mb.createCylinder(0.32f, 3.2f, 0.32f, 8, curzonTrimMat, attr);
+        Model hkRoof = mb.createCone(10.5f, 2.2f, 10.5f, 16, canteenRoofMat, attr);
+        Model hkFinial = mb.createCone(0.4f, 1.2f, 0.4f, 8, goldFinial, attr);
+        Model hkTable = mb.createCylinder(2.4f, 0.75f, 2.4f, 12, woodBench, attr);
+        models.add(hkPlinth);
+        models.add(hkPillar);
+        models.add(hkRoof);
+        models.add(hkFinial);
+        models.add(hkTable);
+
+        ModelInstance hkpInst = new ModelInstance(hkPlinth);
+        hkpInst.transform.setTranslation(hkX, 0.3f, hkZ);
+        instances.add(hkpInst);
+
+        // 8 Perimeter columns supporting the pavilion roof
+        for (int i = 0; i < 8; i++) {
+            float ang = i * 45f * MathUtils.degreesToRadians;
+            float px = hkX + 3.8f * MathUtils.cos(ang);
+            float pz = hkZ + 3.8f * MathUtils.sin(ang);
+            ModelInstance col = new ModelInstance(hkPillar);
+            col.transform.setTranslation(px, 2.2f, pz);
+            instances.add(col);
+        }
+
+        ModelInstance hkrInst = new ModelInstance(hkRoof);
+        hkrInst.transform.setTranslation(hkX, 4.8f, hkZ);
+        instances.add(hkrInst);
+
+        ModelInstance hkfInst = new ModelInstance(hkFinial);
+        hkfInst.transform.setTranslation(hkX, 6.4f, hkZ);
+        instances.add(hkfInst);
+
+        ModelInstance hktInst = new ModelInstance(hkTable);
+        hktInst.transform.setTranslation(hkX, 0.95f, hkZ);
+        instances.add(hktInst);
+
+        // ==========================================
+        // 10. WEST HUB: MADHUR CANTEEN (HISTORIC CANTEEN PAVILION)
+        // ==========================================
+        float mcX = -56.0f, mcZ = -16.0f;
+        Model mcPlinth = mb.createBox(18f, 0.6f, 14f, stoneCurb, attr);
+        Model mcBuilding = mb.createBox(14f, 3.8f, 10f, curzonBrickMat, attr);
+        Model mcRoof = mb.createBox(18.5f, 1.8f, 14.5f, canteenRoofMat, attr);
+        Model mcSign = mb.createBox(6.5f, 0.8f, 0.1f, curzonTrimMat, attr);
+        Model mcPillar = mb.createBox(0.28f, 3.6f, 0.28f, woodBench, attr);
+        models.add(mcPlinth);
+        models.add(mcBuilding);
+        models.add(mcRoof);
+        models.add(mcSign);
+        models.add(mcPillar);
+
+        ModelInstance mcpInst = new ModelInstance(mcPlinth);
+        mcpInst.transform.setTranslation(mcX, 0.3f, mcZ);
+        instances.add(mcpInst);
+
+        ModelInstance mcbInst = new ModelInstance(mcBuilding);
+        mcbInst.transform.setTranslation(mcX, 2.5f, mcZ - 1.5f);
+        instances.add(mcbInst);
+
+        ModelInstance mcrInst = new ModelInstance(mcRoof);
+        mcrInst.transform.setTranslation(mcX, 5.0f, mcZ);
+        instances.add(mcrInst);
+
+        // Verandah pillars along front (South facade)
+        for (float vx = -6.5f; vx <= 6.5f; vx += 3.25f) {
+            ModelInstance col = new ModelInstance(mcPillar);
+            col.transform.setTranslation(mcX + vx, 2.4f, mcZ + 5.2f);
+            instances.add(col);
+        }
+
+        // Historic Signboard above verandah entrance
+        ModelInstance mcsInst = new ModelInstance(mcSign);
+        mcsInst.transform.setTranslation(mcX, 4.0f, mcZ + 5.5f);
+        instances.add(mcsInst);
+
+        // ==========================================
+        // 11. WEST HUB: BOOK STALLS (বইয়ের দোকান)
+        // ==========================================
+        Model stallBox = mb.createBox(2.4f, 2.6f, 1.6f, woodBench, attr);
+        Model stallAwning = mb.createBox(2.8f, 0.3f, 2.2f, flowerRed, attr);
+        models.add(stallBox);
+        models.add(stallAwning);
+
+        float[] stallZ = {34f, 38f, 42f};
+        for (float sz : stallZ) {
+            ModelInstance sb = new ModelInstance(stallBox);
+            sb.transform.setTranslation(-42f, 1.3f, sz);
+            instances.add(sb);
+
+            ModelInstance sa = new ModelInstance(stallAwning);
+            sa.transform.setTranslation(-42f, 2.7f, sz);
+            sa.transform.rotate(Vector3.Z, 12f);
+            instances.add(sa);
+        }
+
+        // ==========================================
+        // 12. SYMMETRICAL ACADEMIC BUILDINGS (WEST & EAST WINGS)
+        // ==========================================
+        Model acadBuilding = mb.createBox(20f, 8.8f, 12f, curzonBrickMat, attr);
+        Model acadRoof = mb.createBox(21f, 1.2f, 13f, canteenRoofMat, attr);
+        models.add(acadBuilding);
+        models.add(acadRoof);
+
+        // West Academic Building at X=-26m, Z=52m
+        ModelInstance wabInst = new ModelInstance(acadBuilding);
+        wabInst.transform.setTranslation(-26f, 4.4f, 52f);
+        instances.add(wabInst);
+
+        ModelInstance warInst = new ModelInstance(acadRoof);
+        warInst.transform.setTranslation(-26f, 9.4f, 52f);
+        instances.add(warInst);
+
+        // East Academic Building at X=+26m, Z=52m
+        ModelInstance eabInst = new ModelInstance(acadBuilding);
+        eabInst.transform.setTranslation(26f, 4.4f, 52f);
+        instances.add(eabInst);
+
+        ModelInstance earInst = new ModelInstance(acadRoof);
+        earInst.transform.setTranslation(26f, 9.4f, 52f);
+        instances.add(earInst);
+
+        // ==========================================
+        // 13. EAST HUB: TEACHER-STUDENT CENTRE (TSC) — MODERNIST DOXIADIS COMPLEX
+        // ==========================================
+        float tscX = 68.0f, tscZ = 20.0f;
+        Model tscMain = mb.createBox(38f, 9.5f, 30f, concreteMat, attr);
+        Model tscAuditorium = mb.createBox(18f, 4.5f, 18f, concreteMat, attr);
+        Model tscPyramidRoof = mb.createCone(18f, 3.2f, 18f, 4, canteenRoofMat, attr);
+        Model tscTerrace = mb.createBox(12f, 0.5f, 24f, stoneCurb, attr);
+        Model tscFins = mb.createBox(0.25f, 7.5f, 0.8f, concreteMat, attr);
+        models.add(tscMain);
+        models.add(tscAuditorium);
+        models.add(tscPyramidRoof);
+        models.add(tscTerrace);
+        models.add(tscFins);
+
+        // Main modernist building volume
+        ModelInstance tmInst = new ModelInstance(tscMain);
+        tmInst.transform.setTranslation(tscX, 4.75f, tscZ);
+        instances.add(tmInst);
+
+        // Central auditorium rising above roof
+        ModelInstance taInst = new ModelInstance(tscAuditorium);
+        taInst.transform.setTranslation(tscX, 11.5f, tscZ);
+        instances.add(taInst);
+
+        // Pyramidal clerestory roof
+        ModelInstance tprInst = new ModelInstance(tscPyramidRoof);
+        tprInst.transform.setTranslation(tscX, 15.0f, tscZ);
+        instances.add(tprInst);
+
+        // Covered cafeteria entrance terrace facing west towards campus
+        ModelInstance ttInst = new ModelInstance(tscTerrace);
+        ttInst.transform.setTranslation(tscX - 22f, 0.25f, tscZ);
+        instances.add(ttInst);
+
+        // Vertical concrete sun-breaker fins on west facade
+        for (int f = -6; f <= 6; f++) {
+            ModelInstance fin = new ModelInstance(tscFins);
+            fin.transform.setTranslation(tscX - 19.3f, 4.8f, tscZ + f * 2.1f);
+            instances.add(fin);
+        }
+
+        // ==========================================
+        // 14. EAST HUB: RAJU MEMORIAL SCULPTURE (TSC ROUNDABOUT)
+        // ==========================================
+        float rmX = 44.0f, rmZ = 42.0f;
+        Model rmRoundabout = mb.createCylinder(16.0f, 0.35f, 16.0f, 24, stoneCurb, attr);
+        Model rmPedestal1 = mb.createBox(4.8f, 1.15f, 4.8f, stoneCurb, attr);
+        Model rmPedestal2 = mb.createBox(3.4f, 0.60f, 3.4f, aparajeyoMat, attr);
+        Model rmSpire = mb.createBox(0.85f, 4.8f, 0.85f, aparajeyoMat, attr);
+        Model rmFigure = mb.createBox(0.55f, 1.9f, 0.45f, aparajeyoMat, attr);
+        models.add(rmRoundabout);
+        models.add(rmPedestal1);
+        models.add(rmPedestal2);
+        models.add(rmSpire);
+        models.add(rmFigure);
+
+        ModelInstance rmrInst = new ModelInstance(rmRoundabout);
+        rmrInst.transform.setTranslation(rmX, 0.17f, rmZ);
+        instances.add(rmrInst);
+
+        ModelInstance rmp1 = new ModelInstance(rmPedestal1);
+        rmp1.transform.setTranslation(rmX, 0.92f, rmZ);
+        instances.add(rmp1);
+
+        ModelInstance rmp2 = new ModelInstance(rmPedestal2);
+        rmp2.transform.setTranslation(rmX, 1.8f, rmZ);
+        instances.add(rmp2);
+
+        ModelInstance rmsInst = new ModelInstance(rmSpire);
+        rmsInst.transform.setTranslation(rmX, 4.4f, rmZ);
+        instances.add(rmsInst);
+
+        // Figures locked arm-in-arm protesting around the central spire
+        for (int i = 0; i < 4; i++) {
+            float ang = i * 90f * MathUtils.degreesToRadians;
+            float fx = rmX + 1.1f * MathUtils.cos(ang);
+            float fz = rmZ + 1.1f * MathUtils.sin(ang);
+            ModelInstance fig = new ModelInstance(rmFigure);
+            fig.transform.setTranslation(fx, 3.05f, fz);
+            instances.add(fig);
+        }
+
+        // ==========================================
+        // 15. EAST HUB: SWADHINATA SANGRAM SCULPTURE GARDEN
+        // ==========================================
+        float ssX = 56.0f, ssZ = -16.0f;
+        Model ssPlaza = mb.createBox(22f, 0.08f, 18f, aparajeyoMat, attr);
+        Model ssWall = mb.createBox(22.6f, 0.5f, 0.4f, stoneCurb, attr);
+        Model ssPedLg = mb.createBox(2.2f, 1.5f, 2.2f, weatheredStoneMat, attr);
+        Model ssPedSm = mb.createBox(1.6f, 1.0f, 1.6f, weatheredStoneMat, attr);
+        Model ssStatue = mb.createBox(0.6f, 1.8f, 0.5f, aparajeyoMat, attr);
+        models.add(ssPlaza);
+        models.add(ssWall);
+        models.add(ssPedLg);
+        models.add(ssPedSm);
+        models.add(ssStatue);
+
+        ModelInstance ssPlInst = new ModelInstance(ssPlaza);
+        ssPlInst.transform.setTranslation(ssX, 0.04f, ssZ);
+        instances.add(ssPlInst);
+
+        // Low perimeter garden boundary
+        ModelInstance sswN = new ModelInstance(ssWall);
+        sswN.transform.setTranslation(ssX, 0.25f, ssZ - 9f);
+        instances.add(sswN);
+
+        ModelInstance sswS = new ModelInstance(ssWall);
+        sswS.transform.setTranslation(ssX, 0.25f, ssZ + 9f);
+        instances.add(sswS);
+
+        // 3 Historical Sculpture Pedestals & Statues
+        float[][] ssPedPositions = {
+            {ssX - 4.5f, 0.75f, ssZ - 3f, 0},
+            {ssX + 4.5f, 0.50f, ssZ - 3f, 1},
+            {ssX, 0.75f, ssZ + 3f, 0}
+        };
+        for (float[] spp : ssPedPositions) {
+            ModelInstance ped = new ModelInstance(spp[3] == 0 ? ssPedLg : ssPedSm);
+            ped.transform.setTranslation(spp[0], spp[1], spp[2]);
+            instances.add(ped);
+
+            ModelInstance stat = new ModelInstance(ssStatue);
+            stat.transform.setTranslation(spp[0], spp[1] * 2f + 0.9f, spp[2]);
+            instances.add(stat);
+        }
 
         // 7. Vintage Cast-Iron Lampposts with Student Movement Banners
         Model postModel = mb.createCylinder(0.18f, 4.2f, 0.18f, 8, castIron, attr);

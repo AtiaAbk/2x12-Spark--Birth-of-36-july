@@ -163,6 +163,62 @@ public class PlayerController {
         {10.1f, 0f, 21.7f, 26.9f, 0.45f, 22.3f}, // South curb
         {10.1f, 0f, -2.0f, 10.7f, 0.45f, 22.0f}, // West curb
         {26.3f, 0f, -2.0f, 26.9f, 0.45f, 22.0f}, // East curb
+
+        // ======== SOUTH BOUNDARY WALL & MAIN GATE ========
+        {-110f, 0f, 77.2f, -4.2f, 2.8f, 78.8f},   // West perimeter wall
+        {4.2f, 0f, 77.2f, 110f, 2.8f, 78.8f},     // East perimeter wall
+        {-4.4f, 0f, 76.6f, -2.2f, 7.2f, 79.4f},   // Main Gate Left Arch Pillar
+        {2.2f, 0f, 76.6f, 4.4f, 7.2f, 79.4f},     // Main Gate Right Arch Pillar
+        {7.0f, 0f, 74.0f, 10.0f, 3.2f, 77.0f},    // Security Guard Kiosk
+
+        // ======== NORTH BOUNDARY WALL (FULLER ROAD) ========
+        {-100f, 0f, -45.0f, 100f, 2.8f, -43.8f},
+
+        // ======== CENTRAL LIBRARY BUILDING (X=-68m, Z=22m) ========
+        {-86f, 0f, 29.8f, -50f, 11.5f, 38.2f},    // South wing
+        {-86f, 0f, 5.8f, -50f, 11.5f, 14.2f},     // North wing
+        {-86.2f, 0f, 14.0f, -77.8f, 11.5f, 30.0f},// West wing
+        {-58.2f, 0f, 14.0f, -49.8f, 11.5f, 30.0f},// East wing
+        {-52f, 0f, 17f, -46f, 0.6f, 27f},          // Entrance steps (0.6m, jumpable!)
+
+        // ======== HAKIM CHATTAR PAVILION (X=-58m, Z=54m) ========
+        {-62.5f, 0f, 49.5f, -53.5f, 0.6f, 58.5f}, // Stepped base plinth (0.6m, jumpable!)
+        {-58.8f, 0.6f, 53.2f, -57.2f, 3.2f, 54.8f},// Center table/column
+
+        // ======== MADHUR CANTEEN (X=-56m, Z=-16m) ========
+        {-65f, 0f, -23f, -47f, 0.6f, -9f},         // Verandah plinth (0.6m, jumpable!)
+        {-64.2f, 0.6f, -22.2f, -49.8f, 4.2f, -11.8f},// Main canteen walls
+
+        // ======== BOOK STALLS (X=-42m, Z=38m) ========
+        {-43.5f, 0f, 32.5f, -40.5f, 2.6f, 35.5f},
+        {-43.5f, 0f, 36.5f, -40.5f, 2.6f, 39.5f},
+        {-43.5f, 0f, 40.5f, -40.5f, 2.6f, 43.5f},
+
+        // ======== ARTS PLAZA & APARAJEYO BANGLA (X=-32m, Z=26m) ========
+        {-35.1f, 0f, 22.9f, -28.9f, 0.4f, 29.1f}, // Step 1 (0.4m, jumpable!)
+        {-34.5f, 0f, 23.5f, -29.5f, 0.65f, 28.5f},// Step 2 (0.65m, jumpable!)
+        {-33.9f, 0f, 24.1f, -30.1f, 1.35f, 27.9f},// Pedestal (1.35m, jumpable!)
+
+        // ======== WEST ACADEMIC BUILDING (X=-26m, Z=52m) ========
+        {-36.2f, 0f, 45.8f, -15.8f, 9.0f, 58.2f},
+
+        // ======== EAST ACADEMIC BUILDING (X=+26m, Z=52m) ========
+        {15.8f, 0f, 45.8f, 36.2f, 9.0f, 58.2f},
+
+        // ======== RAJU MEMORIAL SCULPTURE (X=+44m, Z=42m) ========
+        {36.5f, 0f, 34.5f, 51.5f, 0.35f, 49.5f},   // Roundabout curb (0.35m, jumpable!)
+        {41.6f, 0f, 39.6f, 46.4f, 1.15f, 44.4f},   // Base pedestal (1.15m, jumpable!)
+        {43.2f, 1.15f, 41.2f, 44.8f, 6.2f, 42.8f}, // Central monument column
+
+        // ======== TEACHER-STUDENT CENTRE (TSC) (X=+68m, Z=20m) ========
+        {49.0f, 0f, 4.8f, 87.0f, 10.5f, 35.2f},    // Main modernist complex
+        {44.8f, 0f, 12.0f, 49.0f, 0.5f, 28.0f},   // Terrace steps (0.5m, jumpable!)
+
+        // ======== SWADHINATA SANGRAM SCULPTURE GARDEN (X=+56m, Z=-16m) ========
+        {44.8f, 0f, -25.2f, 67.2f, 0.5f, -6.8f},  // Low perimeter wall (0.5m, jumpable!)
+        {52.5f, 0f, -18.5f, 54.5f, 1.2f, -16.5f}, // Pedestal 1 (1.2m, jumpable!)
+        {57.5f, 0f, -18.5f, 59.5f, 1.0f, -16.5f}, // Pedestal 2 (1.0m, jumpable!)
+        {54.5f, 0f, -14.5f, 57.5f, 1.5f, -11.5f}, // Pedestal 3 (1.5m, jumpable!)
     };
 
     public PlayerController() {
