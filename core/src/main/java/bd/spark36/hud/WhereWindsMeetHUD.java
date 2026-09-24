@@ -507,7 +507,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // Degree readout beneath
         int displayYaw = (int) ((yaw % 360 + 360) % 360);
         fonts.smallFont.setColor(goldAccent);
-        fonts.smallFont.draw(spriteBatch, displayYaw + "°", cx - 10f, cy - r - 8f);
+        fonts.smallFont.draw(spriteBatch, displayYaw + " deg", cx - 18f, cy - r - 8f);
 
         // Waypoint Ticker Text ("CURZON HALL   W")
         float pillW = 165f;
