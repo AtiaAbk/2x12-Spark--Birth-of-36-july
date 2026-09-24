@@ -707,8 +707,8 @@ public class DhakaCampusWorld implements Disposable {
         // ==========================================
         // CURZON HALL PUKUR (Historic Campus Reflection Pond)
         // ==========================================
-        float pukurX = 0f, pukurZ = 0f;
-        float pukurW = 22.0f, pukurL = 18.0f;
+        float pukurX = 12f, pukurZ = -2f;
+        float pukurW = 20.0f, pukurL = 16.0f;
 
         // Perimeter stone curb border
         Model pukurCurbX = mb.createBox(pukurW + 0.8f, 0.45f, 0.6f, stoneCurb, attr);
