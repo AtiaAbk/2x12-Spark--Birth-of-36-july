@@ -14,6 +14,18 @@ public class DesktopLauncher {
         if (StartupHelper.startNewJvmIfRequired()) {
             return;
         }
+
+        // Ensure macOS brings this game window to the absolute front and gives it full keyboard focus
+        if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
+            try {
+                long pid = ProcessHandle.current().pid();
+                Runtime.getRuntime().exec(new String[]{
+                    "osascript", "-e",
+                    "tell application \"System Events\" to set frontmost of first process whose unix id is " + pid + " to true"
+                });
+            } catch (Throwable ignored) {}
+        }
+
         createApplication();
     }
 
@@ -25,6 +37,10 @@ public class DesktopLauncher {
         Lwjgl3ApplicationConfiguration configuration = new Lwjgl3ApplicationConfiguration();
 
         configuration.setTitle("2x12: Spark — Birth of 36 July");
+
+        // Native Retina Display 1:1 Pixel HDPI Mode for razor-sharp rendering on macOS
+        configuration.setHdpiMode(com.badlogic.gdx.graphics.glutils.HdpiMode.Pixels);
+
         // Launch directly in Fullscreen mode as requested by user
         if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.windowed"))) {
             configuration.setWindowedMode(1440, 900);
@@ -37,8 +53,8 @@ public class DesktopLauncher {
         }
         configuration.setResizable(true);
 
-        // Anti-aliasing (4x MSAA) for clean polygon edges
-        configuration.setBackBufferConfig(8, 8, 8, 8, 16, 0, 4);
+        // Anti-aliasing (8x MSAA) and 24-bit depth buffer for crisp clean polygon edges
+        configuration.setBackBufferConfig(8, 8, 8, 8, 24, 0, 8);
         configuration.useVsync(true);
         int refreshRate = 60;
         try {
