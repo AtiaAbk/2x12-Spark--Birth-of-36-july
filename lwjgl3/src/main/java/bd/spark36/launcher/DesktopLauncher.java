@@ -69,6 +69,17 @@ public class DesktopLauncher {
         }
         configuration.setResizable(true);
 
+        // Immediate window focus grab upon creation
+        configuration.setWindowListener(new com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowAdapter() {
+            @Override
+            public void created(com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window window) {
+                try {
+                    org.lwjgl.glfw.GLFW.glfwFocusWindow(window.getWindowHandle());
+                    org.lwjgl.glfw.GLFW.glfwRequestWindowAttention(window.getWindowHandle());
+                } catch (Throwable ignored) {}
+            }
+        });
+
         // Anti-aliasing (8x MSAA) and 24-bit depth buffer for crisp clean polygon edges
         configuration.setBackBufferConfig(8, 8, 8, 8, 24, 0, 8);
         configuration.useVsync(true);
