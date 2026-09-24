@@ -325,53 +325,198 @@ public class DhakaCampusWorld implements Disposable {
             }
         }
 
-        // 4. Clustered Rain Trees with Overhanging Canopies
-        // 4. Clustered Rain Trees with Overhanging Foliage
-        Model trunk = mb.createCylinder(0.95f, 6.0f, 0.95f, 10, treeTrunkMat, attr);
-        Model canopyMain = mb.createSphere(7.5f, 5.2f, 7.5f, 14, 12, foliageMat, attr);
-        Model canopySide = mb.createSphere(5.6f, 4.2f, 5.6f, 12, 10, foliageMat, attr);
-        models.add(trunk);
-        models.add(canopyMain);
-        models.add(canopySide);
+        // 4. REALISTIC DHAKA UNIVERSITY CAMPUS TREES (Rain Trees, Krishnachura & Palms)
+        // Rain Tree: Thick dark gnarled trunk + spreading branches + multi-tiered broad canopy
+        Model rainTrunk = mb.createCylinder(1.15f, 6.4f, 1.15f, 12, treeTrunkMat, attr);
+        Model rainBranch = mb.createBox(0.42f, 2.6f, 0.42f, treeTrunkMat, attr);
+        Model rainCanopyMain = mb.createSphere(10.2f, 4.2f, 10.2f, 16, 12, foliageMat, attr);
+        Model rainCanopySide = mb.createSphere(7.2f, 3.4f, 7.2f, 14, 10, foliageMat, attr);
+        models.add(rainTrunk);
+        models.add(rainBranch);
+        models.add(rainCanopyMain);
+        models.add(rainCanopySide);
+
+        // Krishnachura Tree: Feathery canopy with vibrant scarlet blossom petals
+        Model krishnaTrunk = mb.createCylinder(0.85f, 5.6f, 0.85f, 10, treeTrunkMat, attr);
+        Model krishnaCanopy = mb.createSphere(8.8f, 3.8f, 8.8f, 16, 12, krishnachuraMat, attr);
+        Model krishnaSide = mb.createSphere(6.2f, 3.0f, 6.2f, 14, 10, krishnachuraMat, attr);
+        models.add(krishnaTrunk);
+        models.add(krishnaCanopy);
+        models.add(krishnaSide);
+
+        // Royal Palm Tree: Slender ringed trunk + radiating crown
+        Model palmTrunk = mb.createCylinder(0.40f, 9.6f, 0.40f, 10, treeTrunkMat, attr);
+        Model palmCrown = mb.createSphere(5.2f, 2.0f, 5.2f, 14, 8, foliageMat, attr);
+        models.add(palmTrunk);
+        models.add(palmCrown);
 
         float[][] treeLocations = {
-            {-11f, -4f}, {11f, -4f},
-            {-12f, 14f}, {12f, 14f},
-            {-13f, 32f}, {13f, 32f},
-            {-14f, 50f}, {14f, 50f},
-            {-28f, 16f}, {28f, 16f},
-            {-48f, 6f}, {48f, 6f},
-            {-62f, 30f}, {62f, 30f},
-            {-32f, -12f}, {32f, -12f},
-            {-22f, 68f}, {22f, 68f},
-            {0f, 78f}
+            // Avenue flanks: Alternating Rain Trees & Krishnachura
+            {-11.5f, -4f, 0}, {11.5f, -4f, 1},
+            {-12.5f, 14f, 1}, {12.5f, 14f, 0},
+            {-13.5f, 32f, 0}, {13.5f, 32f, 1},
+            {-14.5f, 50f, 1}, {14.5f, 50f, 0},
+            {-28.0f, 16f, 0}, {28.0f, 16f, 1},
+            {-48.0f, 6f, 1},  {48.0f, 6f, 0},
+            {-62.0f, 30f, 0}, {62.0f, 30f, 1},
+            {-32.0f, -12f, 1}, {32.0f, -12f, 0},
+            {-22.0f, 68f, 0}, {22.0f, 68f, 1},
+            {0.0f, 78f, 0},
+
+            // Royal Palms along perimeter
+            {-18f, 2f, 2}, {18f, 2f, 2},
+            {-20f, 40f, 2}, {20f, 40f, 2}
         };
 
         for (float[] loc : treeLocations) {
             float tx = loc[0];
             float tz = loc[1];
+            int type = (int) loc[2];
 
-            ModelInstance tInst = new ModelInstance(trunk);
-            tInst.transform.setTranslation(tx, 3.0f, tz);
-            instances.add(tInst);
+            if (type == 0) {
+                // Rain Tree (Majestic spreading umbrella)
+                ModelInstance tInst = new ModelInstance(rainTrunk);
+                tInst.transform.setTranslation(tx, 3.2f, tz);
+                instances.add(tInst);
 
-            // Main center foliage
-            ModelInstance cMain = new ModelInstance(canopyMain);
-            cMain.transform.setTranslation(tx, 6.6f, tz);
-            instances.add(cMain);
+                // Spreading branch limbs
+                ModelInstance b1 = new ModelInstance(rainBranch);
+                b1.transform.setTranslation(tx - 1.4f, 5.2f, tz);
+                b1.transform.rotate(Vector3.Z, 35f);
+                instances.add(b1);
 
-            // Asymmetric side clusters for organic feel
-            ModelInstance cL = new ModelInstance(canopySide);
-            cL.transform.setTranslation(tx - 2.0f, 6.0f, tz + 1.2f);
-            instances.add(cL);
+                ModelInstance b2 = new ModelInstance(rainBranch);
+                b2.transform.setTranslation(tx + 1.4f, 5.2f, tz);
+                b2.transform.rotate(Vector3.Z, -35f);
+                instances.add(b2);
 
-            ModelInstance cR = new ModelInstance(canopySide);
-            cR.transform.setTranslation(tx + 2.0f, 6.2f, tz - 1.2f);
-            instances.add(cR);
+                // Broad flattened canopy
+                ModelInstance cMain = new ModelInstance(rainCanopyMain);
+                cMain.transform.setTranslation(tx, 7.2f, tz);
+                instances.add(cMain);
+
+                ModelInstance cL = new ModelInstance(rainCanopySide);
+                cL.transform.setTranslation(tx - 2.8f, 6.4f, tz + 1.4f);
+                instances.add(cL);
+
+                ModelInstance cR = new ModelInstance(rainCanopySide);
+                cR.transform.setTranslation(tx + 2.8f, 6.5f, tz - 1.4f);
+                instances.add(cR);
+            } else if (type == 1) {
+                // Krishnachura Tree (Scarlet red blossom canopy)
+                ModelInstance tInst = new ModelInstance(krishnaTrunk);
+                tInst.transform.setTranslation(tx, 2.8f, tz);
+                instances.add(tInst);
+
+                ModelInstance cMain = new ModelInstance(krishnaCanopy);
+                cMain.transform.setTranslation(tx, 6.6f, tz);
+                instances.add(cMain);
+
+                ModelInstance cL = new ModelInstance(krishnaSide);
+                cL.transform.setTranslation(tx - 2.2f, 5.9f, tz + 1.2f);
+                instances.add(cL);
+
+                ModelInstance cR = new ModelInstance(krishnaSide);
+                cR.transform.setTranslation(tx + 2.2f, 6.0f, tz - 1.2f);
+                instances.add(cR);
+            } else {
+                // Royal Palm Tree
+                ModelInstance pInst = new ModelInstance(palmTrunk);
+                pInst.transform.setTranslation(tx, 4.8f, tz);
+                instances.add(pInst);
+
+                ModelInstance crInst = new ModelInstance(palmCrown);
+                crInst.transform.setTranslation(tx, 9.8f, tz);
+                instances.add(crInst);
+            }
         }
 
-        // 5. Vintage Cast-Iron Lampposts with Student Movement Banners
-        Model postModel = mb.createCylinder(0.18f, 4.0f, 0.18f, 8, castIron, attr);
+        // 5. APARAJEYO BANGLA (অপরাজেয় বাংলা — Iconic 3-Student Sculpture)
+        // Positioned on south-west campus lawn at (-36, 0, 26)
+        float aX = -36.0f, aZ = 26.0f;
+        Model apStep1 = mb.createBox(6.2f, 0.4f, 6.2f, stoneCurb, attr);
+        Model apStep2 = mb.createBox(5.0f, 0.5f, 5.0f, stoneCurb, attr);
+        Model apPedestal = mb.createBox(3.8f, 0.9f, 3.8f, aparajeyoMat, attr);
+        models.add(apStep1);
+        models.add(apStep2);
+        models.add(apPedestal);
+
+        ModelInstance as1 = new ModelInstance(apStep1);
+        as1.transform.setTranslation(aX, 0.2f, aZ);
+        instances.add(as1);
+
+        ModelInstance as2 = new ModelInstance(apStep2);
+        as2.transform.setTranslation(aX, 0.65f, aZ);
+        instances.add(as2);
+
+        ModelInstance apP = new ModelInstance(apPedestal);
+        apP.transform.setTranslation(aX, 1.35f, aZ);
+        instances.add(apP);
+
+        // Three Heroic Student Statues
+        Model statTorso = mb.createBox(0.68f, 2.2f, 0.50f, aparajeyoMat, attr);
+        Model statHead = mb.createSphere(0.40f, 0.48f, 0.40f, 10, 8, aparajeyoMat, attr);
+        Model statRifle = mb.createBox(0.12f, 1.9f, 0.12f, castIron, attr);
+        models.add(statTorso);
+        models.add(statHead);
+        models.add(statRifle);
+
+        // Central Student Freedom Fighter
+        ModelInstance scTorso = new ModelInstance(statTorso);
+        scTorso.transform.setTranslation(aX, 2.9f, aZ);
+        instances.add(scTorso);
+
+        ModelInstance scHead = new ModelInstance(statHead);
+        scHead.transform.setTranslation(aX, 4.2f, aZ);
+        instances.add(scHead);
+
+        ModelInstance scRifle = new ModelInstance(statRifle);
+        scRifle.transform.setTranslation(aX + 0.38f, 3.3f, aZ - 0.2f);
+        scRifle.transform.rotate(Vector3.Z, -15f);
+        instances.add(scRifle);
+
+        // Left Student (Female Medic Volunteer)
+        ModelInstance slTorso = new ModelInstance(statTorso);
+        slTorso.transform.setTranslation(aX - 0.9f, 2.75f, aZ - 0.1f);
+        instances.add(slTorso);
+
+        ModelInstance slHead = new ModelInstance(statHead);
+        slHead.transform.setTranslation(aX - 0.9f, 4.05f, aZ - 0.1f);
+        instances.add(slHead);
+
+        // Right Student (Youth Movement Activist)
+        ModelInstance srTorso = new ModelInstance(statTorso);
+        srTorso.transform.setTranslation(aX + 0.9f, 2.85f, aZ + 0.1f);
+        instances.add(srTorso);
+
+        ModelInstance srHead = new ModelInstance(statHead);
+        srHead.transform.setTranslation(aX + 0.9f, 4.15f, aZ + 0.1f);
+        instances.add(srHead);
+
+        // 6. TSC (Teacher-Student Centre — Modernist Circular Pavilion)
+        // Positioned on western campus sector at (-58, 0, -8)
+        float tscX = -58.0f, tscZ = -8.0f;
+        Model tscDrum = mb.createCylinder(18.0f, 7.5f, 18.0f, 24, curzonBrickMat, attr);
+        Model tscRoof = mb.createCylinder(21.0f, 0.8f, 21.0f, 24, curzonTrimMat, attr);
+        Model tscWindows = mb.createCylinder(18.2f, 3.0f, 18.2f, 24, waterMat, attr);
+        models.add(tscDrum);
+        models.add(tscRoof);
+        models.add(tscWindows);
+
+        ModelInstance tscDrumInst = new ModelInstance(tscDrum);
+        tscDrumInst.transform.setTranslation(tscX, 3.75f, tscZ);
+        instances.add(tscDrumInst);
+
+        ModelInstance tscRoofInst = new ModelInstance(tscRoof);
+        tscRoofInst.transform.setTranslation(tscX, 7.9f, tscZ);
+        instances.add(tscRoofInst);
+
+        ModelInstance tscWinInst = new ModelInstance(tscWindows);
+        tscWinInst.transform.setTranslation(tscX, 4.0f, tscZ);
+        instances.add(tscWinInst);
+
+        // 7. Vintage Cast-Iron Lampposts with Student Movement Banners
+        Model postModel = mb.createCylinder(0.18f, 4.2f, 0.18f, 8, castIron, attr);
         Model lanternModel = mb.createBox(0.48f, 0.52f, 0.48f, lanternGlow, attr);
         Model bannerModel = mb.createBox(0.75f, 1.5f, 0.04f, bannerMat, attr);
         models.add(postModel);
@@ -383,23 +528,23 @@ public class DhakaCampusWorld implements Disposable {
             float lz = lampZ[i];
             for (float lx : new float[]{-5.4f, 5.4f}) {
                 ModelInstance pInst = new ModelInstance(postModel);
-                pInst.transform.setTranslation(lx, 2.0f, lz);
+                pInst.transform.setTranslation(lx, 2.1f, lz);
                 instances.add(pInst);
 
                 ModelInstance lInst = new ModelInstance(lanternModel);
-                lInst.transform.setTranslation(lx, 4.0f, lz);
+                lInst.transform.setTranslation(lx, 4.2f, lz);
                 instances.add(lInst);
 
                 // Hanging July 2024 movement banner
                 if (i % 2 == 0) {
                     ModelInstance bInst = new ModelInstance(bannerModel);
-                    bInst.transform.setTranslation(lx + (lx < 0 ? -0.55f : 0.55f), 2.8f, lz);
+                    bInst.transform.setTranslation(lx + (lx < 0 ? -0.55f : 0.55f), 2.9f, lz);
                     instances.add(bInst);
                 }
             }
         }
 
-        // 6. Park Benches & Student Bicycles
+        // 8. Park Benches & Student Bicycles
         Model benchModel = mb.createBox(2.2f, 0.8f, 0.7f, woodBench, attr);
         Model bikeFrame = mb.createBox(1.6f, 1.0f, 0.35f, bicycleMetal, attr);
         models.add(benchModel);
