@@ -743,10 +743,10 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.rect(kBaseX + 140f, kBaseY + 54f, 48f, 26f);
 
         // [J] (Jump / Double Jump)
-        shapeRenderer.rect(kBaseX + 36f, kBaseY + 26f, 28f, 22f);
+        shapeRenderer.rect(kBaseX + 16f, kBaseY + 26f, 26f, 22f);
 
         // [E]
-        shapeRenderer.rect(kBaseX + 130f, kBaseY + 26f, 28f, 22f);
+        shapeRenderer.rect(kBaseX + 140f, kBaseY + 26f, 26f, 22f);
 
         // [M]
         shapeRenderer.rect(kBaseX + 44f, kBaseY, 26f, 20f);
@@ -772,10 +772,10 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.rect(kBaseX + 140f, kBaseY + 54f, 48f, 26f);
 
         // [J] (Jump / Double Jump)
-        shapeRenderer.rect(kBaseX + 36f, kBaseY + 26f, 28f, 22f);
+        shapeRenderer.rect(kBaseX + 16f, kBaseY + 26f, 26f, 22f);
 
         // [E]
-        shapeRenderer.rect(kBaseX + 130f, kBaseY + 26f, 28f, 22f);
+        shapeRenderer.rect(kBaseX + 140f, kBaseY + 26f, 26f, 22f);
 
         // [M]
         shapeRenderer.rect(kBaseX + 44f, kBaseY, 26f, 20f);
@@ -796,8 +796,8 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.keyFont.draw(spriteBatch, "D", kBaseX + 108f, kBaseY + 72f);
 
         fonts.keyFont.draw(spriteBatch, "SHIFT", kBaseX + 146f, kBaseY + 72f);
-        fonts.keyFont.draw(spriteBatch, "J", kBaseX + 46f, kBaseY + 42f);
-        fonts.keyFont.draw(spriteBatch, "E", kBaseX + 139f, kBaseY + 42f);
+        fonts.keyFont.draw(spriteBatch, "J", kBaseX + 25f, kBaseY + 42f);
+        fonts.keyFont.draw(spriteBatch, "E", kBaseX + 149f, kBaseY + 42f);
         fonts.keyFont.draw(spriteBatch, "M", kBaseX + 51f, kBaseY + 15f);
         fonts.keyFont.draw(spriteBatch, "ESC", kBaseX + 118f, kBaseY + 15f);
 
@@ -805,8 +805,8 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.setColor(Color.WHITE);
         fonts.smallFont.draw(spriteBatch, "MOVE", kBaseX - 6f, kBaseY + 72f);
         fonts.smallFont.draw(spriteBatch, "SPRINT", kBaseX + 194f, kBaseY + 72f);
-        fonts.smallFont.draw(spriteBatch, "JUMP (2X AIR)", kBaseX + 68f, kBaseY + 42f);
-        fonts.smallFont.draw(spriteBatch, "INTERACT", kBaseX + 164f, kBaseY + 42f);
+        fonts.smallFont.draw(spriteBatch, "JUMP (2X)", kBaseX + 48f, kBaseY + 42f);
+        fonts.smallFont.draw(spriteBatch, "INTERACT", kBaseX + 172f, kBaseY + 42f);
         fonts.smallFont.draw(spriteBatch, "MAP", kBaseX + 75f, kBaseY + 15f);
         fonts.smallFont.draw(spriteBatch, "PAUSE", kBaseX + 156f, kBaseY + 15f);
     }
