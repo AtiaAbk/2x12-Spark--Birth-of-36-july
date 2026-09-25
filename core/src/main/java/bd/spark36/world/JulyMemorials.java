@@ -63,11 +63,11 @@ public class JulyMemorials implements Disposable {
 
         entries.add(new MemorialEntry(
             2,
-            "THE OATH OF REFORM",
+            "VOICE OF THE INVINCIBLE",
             "July 7, 2024",
-            "Language Monument Plaza",
-            "Gathering beneath the soaring arches of the Shaheed Minar, thousands of university students took a collective pledge of non-violent resistance. The iconic slogan resonated across the campus: 'Amar Shonar Bangla, Boishammo Mukto Bangla' (My Golden Bengal, Free of Discrimination).",
-            new Vector3(-45f, 0f, 18f)
+            "Aparajeyo Bangla (Arts Plaza)",
+            "Beneath the iconic three freedom fighters of Aparajeyo Bangla, thousands gathered for the mass oath of non-violent resistance. The chant resonated across the campus: 'Amar Shonar Bangla, Boishammo Mukto Bangla' (My Golden Bengal, Free of Discrimination).",
+            new Vector3(-32f, 0f, 26f)
         ));
 
         entries.add(new MemorialEntry(
@@ -75,26 +75,26 @@ public class JulyMemorials implements Disposable {
             "RESISTANCE AGAINST INJUSTICE",
             "July 15, 2024",
             "TSC Raju Anti-Terrorism Sculpture",
-            "Named after martyr Moin Hossain Raju, this intersection became the heartbeat of student resistance. When peaceful protesters faced brutal crackdowns by ruling party cadres, students held hands, faced water cannons, and stood unshaken for their fundamental rights.",
-            new Vector3(-6.5f, 0f, 48f)
+            "Named after martyr Moin Hossain Raju, this roundabout became the pulsing heartbeat of student resistance. When peaceful protesters faced brutal crackdowns, students locked arms, stood together, and held the line for democracy.",
+            new Vector3(44f, 0f, 42f)
         ));
 
         entries.add(new MemorialEntry(
             4,
-            "COURAGE OF FEMALE LEADERS",
-            "July 16, 2024",
-            "Women's Hall Quadrangle",
-            "In the face of nighttime intimidation, female students from Shamsunnahar and Rokeya Halls broke university hall locks, marched into the dark streets, and led mass chanting. Their fearless leadership turned a student movement into an unstoppable nationwide revolution.",
-            new Vector3(48f, 0f, 18f)
+            "INTELLECTUAL RESISTANCE",
+            "July 18, 2024",
+            "Central Library & Hakim Chattar",
+            "At the iconic gathering hub of Hakim Chattar and the steps of the Central Library, students coordinated medical relief, food distribution, and digital dispatches during communications blackouts, proving truth cannot be silenced.",
+            new Vector3(-58f, 0f, 36f)
         ));
 
         entries.add(new MemorialEntry(
             5,
             "THE 36 JULY TRIUMPH",
             "August 5, 2024 (36 July)",
-            "Central Campus Gateway",
-            "After weeks of immense sacrifice and unwavering unity, millions marched to Dhaka on August 5. Protesters famously called this historic day '36 July' to signify that the calendar could not advance until justice was won. Authoritarian rule collapsed, heralding a new dawn of freedom.",
-            new Vector3(28f, 0f, -10f)
+            "Teacher-Student Centre (TSC)",
+            "Here at the historic Teacher-Student Centre, generations of student movements culminated into the July Revolution. Protesters famously marked the day '36 July' to declare that justice had rewritten time and restored the people's sovereignty.",
+            new Vector3(66f, 0f, 20f)
         ));
     }
 

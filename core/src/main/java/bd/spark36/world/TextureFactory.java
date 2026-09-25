@@ -24,11 +24,20 @@ public class TextureFactory implements Disposable {
     public final Texture treeBark;
     public final Texture foliage;
     public final Texture krishnachuraBlossom;
+    public final Texture bambooCulm;
+    public final Texture bambooFoliage;
+    public final Texture bushFoliage;
+    public final Texture weatheredStone;
+    public final Texture curzonWater;
     public final Texture backpackFabric;
     public final Texture studentJacket;
     public final Texture movementBanner;
     public final Texture bdFlag;
     public final Texture aparajeyoStone;
+    public final Texture asphaltRoad;
+    public final Texture modernistConcrete;
+    public final Texture canteenTinRoof;
+    public final Texture mapVisualTarget;
 
     public TextureFactory() {
         brickPavement = createBrickPavement();
@@ -37,15 +46,26 @@ public class TextureFactory implements Disposable {
         treeBark = createTreeBark();
         foliage = createFoliage();
         krishnachuraBlossom = createKrishnachuraBlossom();
+        bambooCulm = createBambooCulm();
+        bambooFoliage = createBambooFoliage();
+        bushFoliage = createBushFoliage();
+        weatheredStone = createWeatheredStone();
+        curzonWater = createCurzonWater();
         backpackFabric = createBackpackFabric();
         studentJacket = createStudentJacket();
         movementBanner = createMovementBanner();
         bdFlag = createBdFlag();
         aparajeyoStone = createAparajeyoStone();
+        asphaltRoad = createAsphaltRoad();
+        modernistConcrete = createModernistConcrete();
+        canteenTinRoof = createCanteenTinRoof();
+        mapVisualTarget = createMapVisualTarget();
 
         textures.addAll(brickPavement, curzonBrick, lawnGrass, treeBark,
-                        foliage, krishnachuraBlossom, backpackFabric, studentJacket,
-                        movementBanner, bdFlag, aparajeyoStone);
+                        foliage, krishnachuraBlossom, bambooCulm, bambooFoliage,
+                        bushFoliage, weatheredStone, curzonWater,
+                        backpackFabric, studentJacket, movementBanner, bdFlag, aparajeyoStone,
+                        asphaltRoad, modernistConcrete, canteenTinRoof, mapVisualTarget);
     }
 
     private Texture createBrickPavement() {
@@ -200,22 +220,313 @@ public class TextureFactory implements Disposable {
     private Texture createFoliage() {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill(); // Fully transparent background for crisp alpha cutout
 
-        // Rich tropical leaf green base
-        pix.setColor(0.12f, 0.32f, 0.12f, 1f);
-        pix.fill();
+        // Central woody branch network
+        pix.setColor(0.28f, 0.18f, 0.12f, 1f);
+        drawBranchLine(pix, 256, 512, 256, 320, 8);
+        drawBranchLine(pix, 256, 320, 160, 200, 5);
+        drawBranchLine(pix, 256, 320, 350, 190, 5);
+        drawBranchLine(pix, 160, 200, 90, 120, 3);
+        drawBranchLine(pix, 160, 200, 220, 110, 3);
+        drawBranchLine(pix, 350, 190, 420, 100, 3);
+        drawBranchLine(pix, 350, 190, 290, 90, 3);
 
-        for (int x = 0; x < size; x++) {
-            for (int y = 0; y < size; y++) {
-                float leaf = MathUtils.sin(x * 0.22f) * MathUtils.sin(y * 0.22f)
-                           + MathUtils.cos((x - y) * 0.16f) * 0.45f
-                           + MathUtils.sin((x + y) * 0.35f) * 0.25f;
-                float r = MathUtils.clamp(0.13f + leaf * 0.08f, 0.06f, 0.24f);
-                float g = MathUtils.clamp(0.38f + leaf * 0.16f, 0.20f, 0.58f);
-                float b = MathUtils.clamp(0.12f + leaf * 0.06f, 0.05f, 0.20f);
+        // Clustered dense tropical leaf sprays with natural light gaps
+        float[][] clusters = {
+            {256, 120, 95}, {160, 180, 80}, {350, 170, 80},
+            {100, 120, 65}, {410, 100, 65}, {220, 90, 70},
+            {290, 80, 70}, {180, 250, 75}, {330, 240, 75},
+            {256, 260, 85}
+        };
 
+        for (float[] cl : clusters) {
+            float cx = cl[0], cy = cl[1], rad = cl[2];
+            int leafCount = (int)(rad * 1.3f);
+            for (int i = 0; i < leafCount; i++) {
+                float angle = MathUtils.random(0f, 360f);
+                float dist = MathUtils.random(0f, rad);
+                float lx = cx + MathUtils.cosDeg(angle) * dist;
+                float ly = cy + MathUtils.sinDeg(angle) * dist;
+                float leafLen = MathUtils.random(22f, 42f);
+                float leafAngle = angle + MathUtils.random(-35f, 35f);
+
+                float var = MathUtils.random(0f, 1f);
+                Color blade = new Color(
+                    0.14f + var * 0.14f,
+                    0.42f + var * 0.26f,
+                    0.12f + var * 0.10f,
+                    1f
+                );
+                Color vein = new Color(0.48f, 0.78f, 0.28f, 1f);
+                drawBambooBlade(pix, lx, ly, leafLen, leafAngle, 9f, blade, vein);
+            }
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createKrishnachuraBlossom() {
+        int size = 512;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill(); // Fully transparent background
+
+        // Delicate woody branchlets
+        pix.setColor(0.30f, 0.20f, 0.12f, 1f);
+        drawBranchLine(pix, 256, 512, 256, 300, 7);
+        drawBranchLine(pix, 256, 300, 140, 180, 4);
+        drawBranchLine(pix, 256, 300, 370, 170, 4);
+
+        // Feathery bipinnate green fronds
+        for (int b = 0; b < 24; b++) {
+            float fx = MathUtils.random(80, 432);
+            float fy = MathUtils.random(60, 380);
+            float fLen = MathUtils.random(60, 110);
+            float fAngle = MathUtils.random(-80, 80);
+            Color fernCol = new Color(0.16f, 0.52f, 0.14f, 1f);
+            Color fernVein = new Color(0.40f, 0.72f, 0.22f, 1f);
+            drawBambooBlade(pix, fx, fy, fLen, fAngle, 7f, fernCol, fernVein);
+        }
+
+        // Iconic blazing scarlet-orange Krishnachura 5-petaled flowers
+        int flowerCount = 75;
+        for (int i = 0; i < flowerCount; i++) {
+            float fx = MathUtils.random(60, 452);
+            float fy = MathUtils.random(50, 400);
+            int petLen = MathUtils.random(10, 20);
+
+            // 5 fiery petals radiating outward
+            for (int p = 0; p < 5; p++) {
+                float pAngle = p * 72f + MathUtils.random(-12f, 12f);
+                float px = fx + MathUtils.cosDeg(pAngle) * petLen;
+                float py = fy + MathUtils.sinDeg(pAngle) * petLen;
+
+                // Scarlet red petal with orange flame highlight
+                float shade = MathUtils.random(0.85f, 1.0f);
+                pix.setColor(0.96f * shade, 0.18f + MathUtils.random(-0.04f, 0.08f), 0.08f, 1f);
+                pix.fillCircle((int)px, (int)py, Math.max(3, petLen / 3));
+            }
+
+            // Golden-yellow central stamens
+            pix.setColor(1.0f, 0.88f, 0.24f, 1f);
+            pix.fillCircle((int)fx, (int)fy, 4);
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createBambooCulm() {
+        int width = 256;
+        int height = 512;
+        Pixmap pix = new Pixmap(width, height, Format.RGBA8888);
+
+        // Authentic bamboo cane base color (olive-yellowish green)
+        for (int x = 0; x < width; x++) {
+            float xNorm = (float) x / (float) width;
+            // Cylindrical lighting shading across cane width
+            float cylLight = MathUtils.sin(xNorm * MathUtils.PI);
+            float vertFiber = MathUtils.sin(x * 0.85f) * 0.04f;
+
+            for (int y = 0; y < height; y++) {
+                float r = MathUtils.clamp((0.44f + vertFiber) * (0.6f + 0.4f * cylLight), 0.22f, 0.65f);
+                float g = MathUtils.clamp((0.68f + vertFiber) * (0.6f + 0.4f * cylLight), 0.38f, 0.88f);
+                float b = MathUtils.clamp((0.24f + vertFiber * 0.5f) * (0.6f + 0.4f * cylLight), 0.12f, 0.40f);
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
+            }
+        }
+
+        // Horizontal bamboo joints / nodal rings every 64 pixels
+        int nodeInterval = 64;
+        for (int y = nodeInterval; y < height; y += nodeInterval) {
+            // Upper swollen highlight line (pale ivory-gold)
+            pix.setColor(0.78f, 0.84f, 0.45f, 0.95f);
+            pix.drawLine(0, y - 2, width, y - 2);
+
+            // Dark joint ring indentation (woody brownish olive)
+            pix.setColor(0.20f, 0.24f, 0.10f, 1f);
+            pix.drawLine(0, y - 1, width, y - 1);
+            pix.drawLine(0, y, width, y);
+
+            // Subtle lower shadow line
+            pix.setColor(0.28f, 0.34f, 0.14f, 0.75f);
+            pix.drawLine(0, y + 1, width, y + 1);
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createBambooFoliage() {
+        int size = 512;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill(); // 100% transparent background
+
+        // Slender bamboo twigs
+        pix.setColor(0.38f, 0.46f, 0.18f, 1f);
+        drawBranchLine(pix, 256, 512, 256, 320, 5);
+        drawBranchLine(pix, 256, 320, 160, 210, 3);
+        drawBranchLine(pix, 256, 320, 360, 200, 3);
+        drawBranchLine(pix, 160, 210, 80, 140, 2);
+        drawBranchLine(pix, 160, 210, 230, 130, 2);
+        drawBranchLine(pix, 360, 200, 440, 120, 2);
+        drawBranchLine(pix, 360, 200, 290, 110, 2);
+
+        // Nodes from which bamboo leaf sprays radiate
+        float[][] sprayNodes = {
+            {256, 320}, {160, 210}, {360, 200},
+            {80, 140}, {230, 130}, {440, 120}, {290, 110},
+            {120, 90}, {200, 70}, {320, 70}, {400, 80},
+            {256, 160}
+        };
+
+        for (float[] node : sprayNodes) {
+            float nx = node[0], ny = node[1];
+            int leavesInSpray = MathUtils.random(5, 8);
+            for (int l = 0; l < leavesInSpray; l++) {
+                float len = MathUtils.random(65f, 135f);
+                float angle = MathUtils.random(-80f, 80f);
+                float halfW = MathUtils.random(6.5f, 9.5f);
+
+                float tint = MathUtils.random(0f, 1f);
+                Color bladeCol = new Color(
+                    0.20f + tint * 0.16f,
+                    0.60f + tint * 0.22f,
+                    0.15f + tint * 0.10f,
+                    1f
+                );
+                Color veinCol = new Color(0.60f, 0.88f, 0.32f, 1f);
+                drawBambooBlade(pix, nx, ny, len, angle, halfW, bladeCol, veinCol);
+            }
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createBushFoliage() {
+        int size = 512;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill(); // Transparent background
+
+        // Ground-hugging shrub dome with radiating rosettes of serrated leaves
+        float[][] bushCenters = {
+            {256, 320, 130}, {160, 360, 100}, {350, 350, 100},
+            {200, 220, 95}, {310, 210, 95}, {256, 140, 80}
+        };
+
+        for (float[] bc : bushCenters) {
+            float cx = bc[0], cy = bc[1], rad = bc[2];
+            int leafCount = (int)(rad * 0.9f);
+            for (int i = 0; i < leafCount; i++) {
+                float angle = MathUtils.random(0f, 360f);
+                float dist = MathUtils.random(0f, rad);
+                float lx = cx + MathUtils.cosDeg(angle) * dist;
+                float ly = cy + MathUtils.sinDeg(angle) * dist;
+                float len = MathUtils.random(24f, 48f);
+                float w = MathUtils.random(8f, 13f);
+
+                float tint = MathUtils.random(0f, 1f);
+                Color blade = new Color(
+                    0.16f + tint * 0.14f,
+                    0.46f + tint * 0.28f,
+                    0.14f + tint * 0.10f,
+                    1f
+                );
+                Color vein = new Color(0.52f, 0.82f, 0.28f, 1f);
+                drawBambooBlade(pix, lx, ly, len, angle, w, blade, vein);
+            }
+        }
+
+        // Tiny white and scarlet wildflowers matching reference image
+        int flowerCount = 38;
+        for (int i = 0; i < flowerCount; i++) {
+            float fx = MathUtils.random(90, 420);
+            float fy = MathUtils.random(110, 420);
+            boolean isWhite = (i % 2 == 0);
+
+            if (isWhite) {
+                pix.setColor(0.96f, 0.96f, 0.94f, 1f);
+            } else {
+                pix.setColor(0.92f, 0.18f, 0.22f, 1f);
+            }
+            pix.fillCircle((int)fx, (int)fy, MathUtils.random(3, 6));
+
+            // Gold floral center
+            pix.setColor(1.0f, 0.88f, 0.20f, 1f);
+            pix.fillCircle((int)fx, (int)fy, 2);
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createWeatheredStone() {
+        int size = 512;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+
+        // Granite base with mineral flecks
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                float n = MathUtils.sin(x * 0.15f) * MathUtils.cos(y * 0.18f)
+                        + MathUtils.sin((x + y) * 0.32f) * 0.3f;
+                float noise = (MathUtils.random(-0.06f, 0.06f));
+                float stone = MathUtils.clamp(0.50f + n * 0.08f + noise, 0.35f, 0.68f);
+
+                // Natural cool slate grey
+                pix.setColor(stone, stone * 0.98f, stone * 0.95f, 1f);
+                pix.drawPixel(x, y);
+            }
+        }
+
+        // Natural dark stone fissures and chisel cracks
+        pix.setColor(0.22f, 0.20f, 0.18f, 0.85f);
+        int[] cracksY = {90, 180, 275, 380};
+        for (int cy : cracksY) {
+            int curX = 0;
+            int curY = cy;
+            while (curX < size) {
+                int nextX = curX + MathUtils.random(12, 28);
+                int nextY = curY + MathUtils.random(-6, 6);
+                pix.drawLine(curX, curY, nextX, nextY);
+                // Subtle bright highlight edge underneath crack
+                pix.setColor(0.72f, 0.70f, 0.68f, 0.5f);
+                pix.drawLine(curX, curY + 1, nextX, nextY + 1);
+                pix.setColor(0.22f, 0.20f, 0.18f, 0.85f);
+                curX = nextX;
+                curY = nextY;
+            }
+        }
+
+        // Velvety green moss and lichen creeping along crevices and base
+        for (int x = 0; x < size; x++) {
+            for (int y = 280; y < size; y++) {
+                float mossProb = (float)(y - 280) / (float)(size - 280);
+                float patch = (MathUtils.sin(x * 0.08f) + MathUtils.cos(y * 0.08f)) * 0.5f;
+                if (mossProb + patch * 0.4f > 0.65f) {
+                    float mg = MathUtils.random(0.36f, 0.52f);
+                    float mr = mg * 0.62f;
+                    float mb = mg * 0.35f;
+                    pix.setColor(mr, mg, mb, 0.85f);
+                    pix.drawPixel(x, y);
+                }
             }
         }
 
@@ -226,43 +537,34 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    private Texture createKrishnachuraBlossom() {
-        int size = 512;
+    private Texture createCurzonWater() {
+        int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Foliage base
-        pix.setColor(0.12f, 0.30f, 0.10f, 1f);
-        pix.fill();
-
+        // Deep serene turquoise-blue pool water
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
-                float leaf = MathUtils.sin(x * 0.25f) * MathUtils.sin(y * 0.25f)
-                           + MathUtils.cos((x + y) * 0.18f) * 0.4f;
-                float r = MathUtils.clamp(0.12f + leaf * 0.06f, 0.07f, 0.20f);
-                float g = MathUtils.clamp(0.34f + leaf * 0.14f, 0.20f, 0.50f);
-                float b = MathUtils.clamp(0.10f + leaf * 0.05f, 0.05f, 0.18f);
-
-                pix.setColor(r, g, b, 1f);
+                float wave = (MathUtils.sin(x * 0.14f + y * 0.12f) + MathUtils.cos((x - y) * 0.18f)) * 0.5f;
+                float r = MathUtils.clamp(0.12f + wave * 0.05f, 0.08f, 0.22f);
+                float g = MathUtils.clamp(0.38f + wave * 0.10f, 0.28f, 0.52f);
+                float b = MathUtils.clamp(0.48f + wave * 0.12f, 0.36f, 0.65f);
+                pix.setColor(r, g, b, 0.92f);
                 pix.drawPixel(x, y);
             }
         }
 
-        // Clusters of iconic scarlet Krishnachura petals
-        for (int i = 0; i < 110; i++) {
-            int cx = (int)(MathUtils.random() * size);
-            int cy = (int)(MathUtils.random() * size);
-            int rad = MathUtils.random(6, 18);
-            for (int dx = -rad; dx <= rad; dx++) {
-                for (int dy = -rad; dy <= rad; dy++) {
-                    if (dx * dx + dy * dy <= rad * rad) {
-                        float pr = MathUtils.clamp(0.88f + MathUtils.random(-0.08f, 0.10f), 0.75f, 1f);
-                        float pg = MathUtils.clamp(0.22f + MathUtils.random(-0.06f, 0.12f), 0.12f, 0.36f);
-                        float pb = 0.08f;
-                        pix.setColor(pr, pg, pb, 1f);
-                        pix.drawPixel(Math.floorMod(cx + dx, size), Math.floorMod(cy + dy, size));
-                    }
-                }
-            }
+        // Floating green water lily pads
+        pix.setColor(0.18f, 0.48f, 0.16f, 0.95f);
+        int[][] pads = {{45, 60, 14}, {180, 95, 18}, {90, 190, 16}, {210, 180, 15}, {130, 140, 12}};
+        for (int[] p : pads) {
+            pix.fillCircle(p[0], p[1], p[2]);
+            // Lily notch
+            pix.setColor(0.14f, 0.36f, 0.46f, 1f);
+            pix.fillTriangle(p[0], p[1], p[0] + p[2], p[1] - 4, p[0] + p[2], p[1] + 4);
+            // Delicate pink lotus bloom
+            pix.setColor(0.96f, 0.62f, 0.78f, 1f);
+            pix.fillCircle(p[0], p[1], 4);
+            pix.setColor(0.18f, 0.48f, 0.16f, 0.95f);
         }
 
         Texture tex = new Texture(pix);
@@ -270,6 +572,51 @@ public class TextureFactory implements Disposable {
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
         pix.dispose();
         return tex;
+    }
+
+    private void drawBranchLine(Pixmap pix, int x0, int y0, int x1, int y1, int thickness) {
+        int half = thickness / 2;
+        for (int dx = -half; dx <= half; dx++) {
+            for (int dy = -half; dy <= half; dy++) {
+                pix.drawLine(x0 + dx, y0 + dy, x1 + dx, y1 + dy);
+            }
+        }
+    }
+
+    private void drawBambooBlade(Pixmap pix, float startX, float startY, float length, float angleDeg,
+                                float maxHalfWidth, Color bladeCol, Color veinCol) {
+        float rad = angleDeg * MathUtils.degreesToRadians;
+        float dirX = MathUtils.cos(rad);
+        float dirY = MathUtils.sin(rad);
+        float normX = -dirY;
+        float normY = dirX;
+
+        int steps = (int)(length * 1.5f);
+        for (int s = 0; s <= steps; s++) {
+            float t = (float) s / (float) steps;
+            float px = startX + dirX * length * t;
+            float py = startY + dirY * length * t;
+
+            // Bamboo leaf profile: slender, widest at t ~ 0.30, tapers to acute tip at t = 1.0
+            float w = maxHalfWidth * MathUtils.sin(t * MathUtils.PI) * (1.1f - 0.35f * t);
+
+            int span = (int) Math.ceil(w);
+            for (int d = -span; d <= span; d++) {
+                if (Math.abs(d) <= w) {
+                    int ix = Math.round(px + normX * d);
+                    int iy = Math.round(py + normY * d);
+                    if (ix >= 0 && ix < pix.getWidth() && iy >= 0 && iy < pix.getHeight()) {
+                        if (Math.abs(d) < 1.0f) {
+                            pix.setColor(veinCol);
+                        } else {
+                            float edgeDarken = 1.0f - 0.22f * (Math.abs(d) / (w + 0.01f));
+                            pix.setColor(bladeCol.r * edgeDarken, bladeCol.g * edgeDarken, bladeCol.b * edgeDarken, 1f);
+                        }
+                        pix.drawPixel(ix, iy);
+                    }
+                }
+            }
+        }
     }
 
     private Texture createBdFlag() {
@@ -418,6 +765,177 @@ public class TextureFactory implements Disposable {
         pix.setColor(0.12f, 0.12f, 0.15f, 1f);
         pix.fillRectangle(40, 380, 176, 14);
         pix.fillRectangle(50, 410, 156, 12);
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createAsphaltRoad() {
+        int size = 512;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+
+        // Bitumen dark charcoal base
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                float noise = (MathUtils.sin(x * 12.3f + y * 7.9f) + MathUtils.cos(x * 5.1f - y * 14.2f)) * 0.5f;
+                float base = 0.18f + noise * 0.04f;
+                pix.setColor(base, base * 1.02f, base * 1.05f, 1f);
+                pix.drawPixel(x, y);
+            }
+        }
+
+        // White dashed center line down the middle
+        int stripeW = 12;
+        int stripeH = 64;
+        int gapH = 48;
+        int centerX = size / 2 - stripeW / 2;
+
+        pix.setColor(0.92f, 0.90f, 0.85f, 0.92f);
+        for (int y = 0; y < size; y += stripeH + gapH) {
+            pix.fillRectangle(centerX, y, stripeW, stripeH);
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createModernistConcrete() {
+        int size = 512;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+
+        // Warm light-grey architectural concrete (Doxiadis modernist style)
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                float n = (MathUtils.sin(x * 18.2f + y * 9.1f) + MathUtils.cos(x * 7.5f - y * 19.3f)) * 0.5f;
+                float c = 0.78f + n * 0.035f;
+                pix.setColor(c * 1.02f, c, c * 0.96f, 1f);
+                pix.drawPixel(x, y);
+            }
+        }
+
+        // Shuttering panel seams every 128 pixels
+        pix.setColor(0.62f, 0.60f, 0.58f, 0.7f);
+        for (int p = 0; p < size; p += 128) {
+            pix.drawLine(0, p, size - 1, p);
+            pix.drawLine(p, 0, p, size - 1);
+            // Formwork tie-rod holes
+            pix.setColor(0.45f, 0.42f, 0.40f, 0.9f);
+            pix.fillCircle(p + 16, p + 16, 3);
+            pix.fillCircle(p + 112, p + 16, 3);
+            pix.fillCircle(p + 16, p + 112, 3);
+            pix.fillCircle(p + 112, p + 112, 3);
+            pix.setColor(0.62f, 0.60f, 0.58f, 0.7f);
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createCanteenTinRoof() {
+        int size = 512;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+
+        // Weathered reddish terracotta-tin roof base
+        pix.setColor(0.62f, 0.28f, 0.22f, 1f);
+        pix.fill();
+
+        // Corrugated vertical ridges
+        int ridgeWidth = 16;
+        for (int x = 0; x < size; x += ridgeWidth) {
+            // Highlight left edge
+            pix.setColor(0.74f, 0.36f, 0.28f, 0.85f);
+            pix.fillRectangle(x, 0, ridgeWidth / 2, size);
+            // Shadow right edge
+            pix.setColor(0.48f, 0.18f, 0.14f, 0.85f);
+            pix.fillRectangle(x + ridgeWidth / 2, 0, ridgeWidth / 2, size);
+            // Subtle horizontal weathering streaks
+            for (int y = 0; y < size; y += 32) {
+                pix.setColor(0.40f, 0.20f, 0.16f, 0.3f);
+                pix.drawLine(x, y, x + ridgeWidth, y);
+            }
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    private Texture createMapVisualTarget() {
+        int w = 512;
+        int h = 256;
+        Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
+
+        // Sky background gradient (warm golden morning)
+        for (int y = 0; y < h; y++) {
+            float t = (float) y / h;
+            pix.setColor(0.92f - t * 0.12f, 0.88f - t * 0.15f, 0.78f - t * 0.25f, 1f);
+            pix.drawLine(0, y, w, y);
+        }
+
+        // Lush green trees backdrop
+        pix.setColor(0.18f, 0.42f, 0.16f, 1f);
+        for (int x = 20; x < w - 20; x += 40) {
+            pix.fillCircle(x, 140, 45);
+        }
+
+        // Curzon Hall Facade Red Terracotta Block
+        int bY = 110;
+        int bH = 95;
+        pix.setColor(0.74f, 0.24f, 0.18f, 1f);
+        pix.fillRectangle(60, bY, w - 120, bH);
+
+        // White domes & finials
+        pix.setColor(0.95f, 0.94f, 0.90f, 1f);
+        pix.fillCircle(w / 2, bY - 15, 38);
+        pix.setColor(1.0f, 0.84f, 0.30f, 1f);
+        pix.fillRectangle(w / 2 - 2, bY - 65, 4, 30); // Finial spire
+
+        // Side domes
+        pix.setColor(0.95f, 0.94f, 0.90f, 1f);
+        pix.fillCircle(120, bY, 18);
+        pix.fillCircle(w - 120, bY, 18);
+
+        // Arched windows and white cusped portico
+        pix.setColor(0.96f, 0.94f, 0.90f, 1f);
+        pix.fillRectangle(w / 2 - 35, bY + 15, 70, bH - 15);
+        pix.setColor(0.20f, 0.12f, 0.08f, 1f);
+        pix.fillRectangle(w / 2 - 22, bY + 30, 44, bH - 30);
+
+        // Flanking arched windows
+        for (int i = 0; i < 4; i++) {
+            int wxL = 80 + i * 28;
+            int wxR = w - 80 - i * 28;
+            pix.setColor(0.96f, 0.94f, 0.90f, 1f);
+            pix.fillRectangle(wxL - 2, bY + 35, 18, 42);
+            pix.fillRectangle(wxR - 16, bY + 35, 18, 42);
+            pix.setColor(0.22f, 0.12f, 0.08f, 1f);
+            pix.fillRectangle(wxL, bY + 38, 14, 38);
+            pix.fillRectangle(wxR - 14, bY + 38, 14, 38);
+        }
+
+        // Green lawn in front
+        pix.setColor(0.24f, 0.55f, 0.20f, 1f);
+        pix.fillRectangle(0, bY + bH, w, h - (bY + bH));
+
+        // Central brick walkway
+        pix.setColor(0.72f, 0.32f, 0.22f, 1f);
+        pix.fillTriangle(w / 2 - 30, bY + bH, w / 2 + 30, bY + bH, w / 2 + 75, h);
+        pix.fillTriangle(w / 2 - 30, bY + bH, w / 2 - 75, h, w / 2 + 75, h);
+
+        // Gold border framing
+        pix.setColor(0.85f, 0.70f, 0.30f, 1f);
+        pix.drawRectangle(0, 0, w, h);
+        pix.drawRectangle(1, 1, w - 2, h - 2);
 
         Texture tex = new Texture(pix);
         tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);

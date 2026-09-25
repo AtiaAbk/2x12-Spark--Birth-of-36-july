@@ -14,6 +14,7 @@ import com.badlogic.gdx.utils.Disposable;
 import bd.spark36.character.PlayerController;
 import bd.spark36.world.JulyMemorials;
 import bd.spark36.world.JulyMemorials.MemorialEntry;
+import bd.spark36.world.TextureFactory;
 
 /**
  * 1:1 Recreation of the Where Winds Meet HUD matching game_exact_ui_design_1790197130736.jpg:
@@ -56,20 +57,100 @@ public class WhereWindsMeetHUD implements Disposable {
     // Exit actions: 0=none, 1=return to main menu, 2=quit game, 3=replay level
     private int exitAction = 0;
 
+    // Boundary Stone (1921) Heritage Marker
+    private final MemorialEntry boundaryStoneEntry = new MemorialEntry(
+        99,
+        "HISTORIC DU BOUNDARY STONE (1921)",
+        "Founding Era — July 1, 1921",
+        "Curzon Hall Heritage Precinct",
+        "This weathered granite boundary marker demarcates the historic eastern perimeter of Dhaka University, established in 1921. For over a century, these grounds have witnessed generations of courageous students defending truth, freedom, and equal rights—culminating in the July 2024 Mass Uprising and the birth of 36 July.",
+        bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS
+    );
+
+    private TextureFactory textures = null;
+
+    // ── AAA Visual FX Fields ──────────────────────────────────────────────────
+    // Checkpoint flash: brief full-screen gold flash when a memorial is inspected
+    private float checkpointFlashAlpha = 0f;
+    private float checkpointFlashDecay = 3.5f;    // alpha/sec decay rate
+
+    // Sprint side-trail: subtle screen-edge blur/darkening while sprinting
+    private float sprintTrailIntensity = 0f;
+
+    // Objective ring spin angle
+    private float objectiveRingAngle = 0f;
+
+    // Crosshair breath pulse
+    private float breathPhase = 0f;
+
+
     public WhereWindsMeetHUD(FontRenderer fontRenderer) {
         this.fonts = fontRenderer;
     }
 
+    public void setTextures(TextureFactory textures) {
+        this.textures = textures;
+    }
+
+    public boolean isMapOpen() {
+        return isMapOpen;
+    }
+
+    public void openMapForTest() {
+        this.isMapOpen = true;
+    }
+
     public void update(float delta, PlayerController player, JulyMemorials memorials) {
         animTime += delta;
-        // Only count down toast banner when modal is NOT blocking view!
+
+        // ── VFX Animations ─────────────────────────────────────────────────
+        // Checkpoint flash decay
+        if (checkpointFlashAlpha > 0f) {
+            checkpointFlashAlpha -= checkpointFlashDecay * delta;
+            if (checkpointFlashAlpha < 0f) checkpointFlashAlpha = 0f;
+        }
+        // Sprint trail: build up when sprinting, fade when not
+        float sprintTarget = player.isSprinting() && player.isMoving() ? 1f : 0f;
+        sprintTrailIntensity += (sprintTarget - sprintTrailIntensity) * Math.min(1f, 5f * delta);
+        // Objective ring spin
+        objectiveRingAngle = (objectiveRingAngle + 35f * delta) % 360f;
+        // Breath pulse
+        breathPhase += delta * 1.8f;
+
+
         if (missionBannerTime > 0f && activeModalEntry == null) {
             missionBannerTime -= delta;
         }
 
+        // Mouse click navigation for Tactical Map button and Close buttons
+        float backbufferW = (float) Gdx.graphics.getBackBufferWidth();
+        float backbufferH = (float) Gdx.graphics.getBackBufferHeight();
+        float virtW = 1600f;
+        float virtH = 1600f * (backbufferH / backbufferW);
+        float mouseX = ((float) Gdx.input.getX() / backbufferW) * virtW;
+        float mouseY = (1.0f - (float) Gdx.input.getY() / backbufferH) * virtH;
+
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            if (isMapOpen) {
+                // Click close button on map
+                float cbX = virtW - 200f;
+                float cbY = virtH - 65f;
+                if (mouseX >= cbX && mouseX <= cbX + 170f && mouseY >= cbY && mouseY <= cbY + 45f) {
+                    isMapOpen = false;
+                }
+            } else if (activeModalEntry == null && !isPauseMenuOpen && !isVictoryOpen) {
+                // Click tactical map HUD button
+                float mbX = virtW - 215f;
+                float mbY = virtH - 230f;
+                if (mouseX >= mbX && mouseX <= mbX + 195f && mouseY >= mbY && mouseY <= mbY + 38f) {
+                    isMapOpen = true;
+                }
+            }
+        }
+
         // Handle Victory Screen input
         if (isVictoryOpen) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.J)) {
                 exitAction = 1; // Return to Main Menu
                 isVictoryOpen = false;
             }
@@ -99,6 +180,9 @@ public class WhereWindsMeetHUD implements Disposable {
         }
 
         MemorialEntry nearby = memorials.getNearbyMemorial(player.getPosition());
+        if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
+            nearby = boundaryStoneEntry;
+        }
 
         if (nearby != null && (Gdx.input.isKeyJustPressed(Input.Keys.E) || Gdx.input.isKeyJustPressed(Input.Keys.ENTER))) {
             if (activeModalEntry == null) {
@@ -108,7 +192,10 @@ public class WhereWindsMeetHUD implements Disposable {
                 missionBannerCount = memorials.getInspectedCount();
             } else {
                 activeModalEntry = null;
-                missionBannerTime = 6.0f; // Start 6-second mission complete celebration!
+                missionBannerTime = 6.0f;
+                // Trigger checkpoint gold flash!
+                checkpointFlashAlpha = 1.0f;
+
                 // If all memorials inspected and victory hasn't triggered yet, open Victory Screen!
                 if (memorials.isAllInspected() && !victoryShown) {
                     isVictoryOpen = true;
@@ -132,7 +219,9 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        if (activeModalEntry == null && !isMapOpen && !isVictoryOpen && Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+        if (isMapOpen && Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            isMapOpen = false;
+        } else if (activeModalEntry == null && !isMapOpen && !isVictoryOpen && Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             isPauseMenuOpen = !isPauseMenuOpen;
         }
 
@@ -185,14 +274,49 @@ public class WhereWindsMeetHUD implements Disposable {
             draw3DObjectivePin(nearest, player, camera, w, h);
         }
 
+        // ── AAA VFX: Sprint Motion Trail + Checkpoint Flash ──────────────────
+        shapeRenderer.begin(ShapeType.Filled);
+
+        // Sprint vignette: dark edges when sprinting for speed blur effect
+        if (sprintTrailIntensity > 0.01f) {
+            float trailAlpha = sprintTrailIntensity * 0.36f;
+            // Left edge
+            shapeRenderer.setColor(0.02f, 0.02f, 0.04f, trailAlpha);
+            shapeRenderer.rect(0, 0, w * 0.12f, h);
+            // Right edge
+            shapeRenderer.rect(w * 0.88f, 0, w * 0.12f, h);
+            // Bottom edge
+            shapeRenderer.setColor(0.02f, 0.02f, 0.04f, trailAlpha * 0.6f);
+            shapeRenderer.rect(0, 0, w, h * 0.08f);
+            // Top edge
+            shapeRenderer.rect(0, h * 0.92f, w, h * 0.08f);
+        }
+
+        // Checkpoint gold flash: brief full-screen warm golden pulse
+        if (checkpointFlashAlpha > 0.01f) {
+            float alpha = checkpointFlashAlpha * 0.48f;
+            shapeRenderer.setColor(1.0f, 0.82f, 0.25f, alpha);
+            shapeRenderer.rect(0, 0, w, h);
+        }
+
+        shapeRenderer.end();
+        // ── End VFX ───────────────────────────────────────────────────────────
+
         // 1. Draw HUD Background Shapes & Ornate Geometry
         shapeRenderer.begin(ShapeType.Filled);
+
         drawMissionCardBg(memorials, w, h);
         drawMissionChecklistBg(player, memorials, w, h);
         drawAntiqueCompassRoseFilled(w, h, cameraYaw);
         drawKeycapsBg(w, h);
+        if (!isMapOpen && !isPauseMenuOpen && !isVictoryOpen && activeModalEntry == null) {
+            drawTacticalMapButtonBg(w, h);
+        }
 
         MemorialEntry nearby = memorials.getNearbyMemorial(player.getPosition());
+        if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
+            nearby = boundaryStoneEntry;
+        }
         if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
             drawSpeechBubblePromptBg(w, h);
         }
@@ -204,6 +328,9 @@ public class WhereWindsMeetHUD implements Disposable {
         drawMissionChecklistBorders(player, memorials, w, h);
         drawAntiqueCompassRoseLines(w, h, cameraYaw);
         drawKeycapsBorders(w, h);
+        if (!isMapOpen && !isPauseMenuOpen && !isVictoryOpen && activeModalEntry == null) {
+            drawTacticalMapButtonBorder(w, h);
+        }
 
         if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
             drawSpeechBubblePromptBorders(w, h);
@@ -216,6 +343,9 @@ public class WhereWindsMeetHUD implements Disposable {
         drawMissionChecklistText(player, memorials, w, h);
         drawAntiqueCompassRoseText(w, h, cameraYaw);
         drawKeycapsText(w, h);
+        if (!isMapOpen && !isPauseMenuOpen && !isVictoryOpen && activeModalEntry == null) {
+            drawTacticalMapButtonText(w, h);
+        }
 
         if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
             drawSpeechBubblePromptText(nearby, w, h);
@@ -507,7 +637,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // Degree readout beneath
         int displayYaw = (int) ((yaw % 360 + 360) % 360);
         fonts.smallFont.setColor(goldAccent);
-        fonts.smallFont.draw(spriteBatch, displayYaw + "°", cx - 10f, cy - r - 8f);
+        fonts.smallFont.draw(spriteBatch, displayYaw + " deg", cx - 18f, cy - r - 8f);
 
         // Waypoint Ticker Text ("CURZON HALL   W")
         float pillW = 165f;
@@ -586,18 +716,20 @@ public class WhereWindsMeetHUD implements Disposable {
         int ins = memorials.getInspectedCount();
         int tot = memorials.getTotalCount();
 
-        // 1. Header: "◆ MISSION PARAMETERS: 01 / 05"
+        // 1. Header: "* MISSION PARAMETERS: 01 / 05"
+        String headerTitle = String.format("* MISSION PARAMETERS: %02d / %02d", ins, tot);
+        fonts.keyFont.setColor(0f, 0f, 0f, 0.90f);
+        fonts.keyFont.draw(spriteBatch, headerTitle, bx + 17f, by + bh - 11f);
         fonts.keyFont.setColor(ins >= tot ? Color.GREEN : goldAccent);
-        String headerTitle = String.format("◆ MISSION PARAMETERS: %02d / %02d", ins, tot);
         fonts.keyFont.draw(spriteBatch, headerTitle, bx + 16f, by + bh - 10f);
 
         // 2. Checklist of the 5 Memorial checkpoints
         String[] shortNames = {
             "1. Curzon Hall Central Arcade",
-            "2. Language Monument Plaza",
+            "2. Aparajeyo Bangla (Arts Plaza)",
             "3. TSC Raju Anti-Terrorism Sculpture",
-            "4. Women's Hall Quadrangle",
-            "5. 36 July Gateway"
+            "4. Central Library & Hakim Chattar",
+            "5. Teacher-Student Centre (TSC)"
         };
 
         Array<MemorialEntry> entries = memorials.getEntries();
@@ -609,26 +741,35 @@ public class WhereWindsMeetHUD implements Disposable {
             MemorialEntry entry = entries.get(i);
             float y = startY - i * itemSpacing;
             if (entry.inspected) {
-                // Completed: green checkmark!
+                // Completed: green [OK]
+                fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+                fonts.smallFont.draw(spriteBatch, "[OK] " + shortNames[i], bx + 17f, y - 1f);
                 fonts.smallFont.setColor(Color.GREEN);
-                fonts.smallFont.draw(spriteBatch, "[✓]  " + shortNames[i], bx + 16f, y);
+                fonts.smallFont.draw(spriteBatch, "[OK] " + shortNames[i], bx + 16f, y);
             } else if (entry == nextObj) {
                 // Active objective: pulsing gold with pointer arrow and distance!
                 float pulse = 0.8f + 0.2f * MathUtils.sin(animTime * 5f);
-                fonts.smallFont.setColor(1f, 0.85f * pulse, 0.35f, 1f);
                 float dst = player.getPosition().dst(entry.position);
-                fonts.smallFont.draw(spriteBatch, String.format("[►]  %s (%.0fm)", shortNames[i], dst), bx + 16f, y);
+                String line = String.format("[>]  %s (%.0fm)", shortNames[i], dst);
+                fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+                fonts.smallFont.draw(spriteBatch, line, bx + 17f, y - 1f);
+                fonts.smallFont.setColor(1f, 0.85f * pulse, 0.35f, 1f);
+                fonts.smallFont.draw(spriteBatch, line, bx + 16f, y);
             } else {
                 // Upcoming
-                fonts.smallFont.setColor(new Color(0.85f, 0.85f, 0.88f, 0.60f));
-                fonts.smallFont.draw(spriteBatch, "[  ]  " + shortNames[i], bx + 16f, y);
+                fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+                fonts.smallFont.draw(spriteBatch, "[  ] " + shortNames[i], bx + 17f, y - 1f);
+                fonts.smallFont.setColor(new Color(0.95f, 0.95f, 0.98f, 0.95f));
+                fonts.smallFont.draw(spriteBatch, "[  ] " + shortNames[i], bx + 16f, y);
             }
         }
 
         // 3. Progress percentage
         int pct = tot > 0 ? (ins * 100 / tot) : 0;
-        fonts.smallFont.setColor(ins >= tot ? Color.GREEN : goldAccent);
         String pctStr = String.format("PROGRESS: %d%% (%d/5 COMPLETE)", pct, ins);
+        fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+        fonts.smallFont.draw(spriteBatch, pctStr, bx + bw - 194f, by + 29f);
+        fonts.smallFont.setColor(ins >= tot ? Color.GREEN : goldAccent);
         fonts.smallFont.draw(spriteBatch, pctStr, bx + bw - 195f, by + 30f);
     }
 
@@ -661,7 +802,7 @@ public class WhereWindsMeetHUD implements Disposable {
             shapeRenderer.end();
 
             spriteBatch.begin();
-            String pinText = String.format("◆ %s (%.0fm)", target.title, dst);
+            String pinText = String.format("> %s (%.0fm)", target.title, dst);
             fonts.keyFont.setColor(0f, 0f, 0f, 0.90f);
             fonts.keyFont.draw(spriteBatch, pinText, px - 78f, py + 24f);
             fonts.keyFont.setColor(goldAccent);
@@ -674,18 +815,7 @@ public class WhereWindsMeetHUD implements Disposable {
     // 4. CENTER SPEECH-BUBBLE INTERACTION PROMPT (Matching Mockup)
     // ========================================================
     private void drawSpeechBubblePromptBg(float w, float h) {
-        float promptW = 460f;
-        float promptH = 58f;
-        float px = (w - promptW) / 2f + 140f; // Offset slightly right, pointing towards central memorial
-        float py = h * 0.44f;
-
-        // Transparent dark glass rounded box
-        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.20f);
-        shapeRenderer.rect(px, py, promptW, promptH);
-
-        // Left Pointer Beak (Speech bubble triangle pointing to Curzon archive)
-        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.20f);
-        shapeRenderer.triangle(px, py + 34f, px, py + 18f, px - 16f, py + 26f);
+        // Zero solid background: completely transparent campus view!
     }
 
     private void drawSpeechBubblePromptBorders(float w, float h) {
@@ -710,12 +840,29 @@ public class WhereWindsMeetHUD implements Disposable {
         float px = (w - promptW) / 2f + 140f;
         float py = h * 0.44f;
 
-        // Exact text from mockup!
-        fonts.headerFont.setColor(goldAccent);
-        fonts.headerFont.draw(spriteBatch, "[E]  INSPECT HISTORICAL ARCHIVE", px + 22f, py + 42f);
+        if (nearby != null && nearby.id == 99) {
+            // Boundary Stone Prompt (Matching reference image [RT] Boundary Stone)
+            fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.headerFont.draw(spriteBatch, "[E]  INSPECT BOUNDARY STONE (1921)", px + 18f, py + 41f);
+            fonts.headerFont.setColor(goldAccent);
+            fonts.headerFont.draw(spriteBatch, "[E]  INSPECT BOUNDARY STONE (1921)", px + 17f, py + 42f);
 
-        fonts.smallFont.setColor(new Color(0.92f, 0.92f, 0.95f, 1f));
-        fonts.smallFont.draw(spriteBatch, "— 36 JULY STUDENT MASS MOVEMENT", px + 62f, py + 20f);
+            fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.smallFont.draw(spriteBatch, "-- HISTORIC DHAKA UNIVERSITY HERITAGE", px + 48f, py + 19f);
+            fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.80f, 1f));
+            fonts.smallFont.draw(spriteBatch, "-- HISTORIC DHAKA UNIVERSITY HERITAGE", px + 47f, py + 20f);
+        } else {
+            // Text with drop shadows
+            fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.headerFont.draw(spriteBatch, "[E]  INSPECT HISTORICAL ARCHIVE", px + 23f, py + 41f);
+            fonts.headerFont.setColor(goldAccent);
+            fonts.headerFont.draw(spriteBatch, "[E]  INSPECT HISTORICAL ARCHIVE", px + 22f, py + 42f);
+
+            fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.smallFont.draw(spriteBatch, "-- 36 JULY STUDENT MASS MOVEMENT", px + 63f, py + 19f);
+            fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.80f, 1f));
+            fonts.smallFont.draw(spriteBatch, "-- 36 JULY STUDENT MASS MOVEMENT", px + 62f, py + 20f);
+        }
     }
 
     // ========================================================
@@ -738,11 +885,11 @@ public class WhereWindsMeetHUD implements Disposable {
         // [SHIFT]
         shapeRenderer.rect(kBaseX + 140f, kBaseY + 54f, 48f, 26f);
 
-        // [SPACE]
-        shapeRenderer.rect(kBaseX + 16f, kBaseY + 26f, 62f, 22f);
+        // [J] (Jump / Double Jump)
+        shapeRenderer.rect(kBaseX + 16f, kBaseY + 26f, 26f, 22f);
 
         // [E]
-        shapeRenderer.rect(kBaseX + 130f, kBaseY + 26f, 28f, 22f);
+        shapeRenderer.rect(kBaseX + 140f, kBaseY + 26f, 26f, 22f);
 
         // [M]
         shapeRenderer.rect(kBaseX + 44f, kBaseY, 26f, 20f);
@@ -767,11 +914,11 @@ public class WhereWindsMeetHUD implements Disposable {
         // [SHIFT]
         shapeRenderer.rect(kBaseX + 140f, kBaseY + 54f, 48f, 26f);
 
-        // [SPACE]
-        shapeRenderer.rect(kBaseX + 16f, kBaseY + 26f, 62f, 22f);
+        // [J] (Jump / Double Jump)
+        shapeRenderer.rect(kBaseX + 16f, kBaseY + 26f, 26f, 22f);
 
         // [E]
-        shapeRenderer.rect(kBaseX + 130f, kBaseY + 26f, 28f, 22f);
+        shapeRenderer.rect(kBaseX + 140f, kBaseY + 26f, 26f, 22f);
 
         // [M]
         shapeRenderer.rect(kBaseX + 44f, kBaseY, 26f, 20f);
@@ -792,17 +939,17 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.keyFont.draw(spriteBatch, "D", kBaseX + 108f, kBaseY + 72f);
 
         fonts.keyFont.draw(spriteBatch, "SHIFT", kBaseX + 146f, kBaseY + 72f);
-        fonts.keyFont.draw(spriteBatch, "SPACE", kBaseX + 24f, kBaseY + 42f);
-        fonts.keyFont.draw(spriteBatch, "E", kBaseX + 139f, kBaseY + 42f);
+        fonts.keyFont.draw(spriteBatch, "J", kBaseX + 25f, kBaseY + 42f);
+        fonts.keyFont.draw(spriteBatch, "E", kBaseX + 149f, kBaseY + 42f);
         fonts.keyFont.draw(spriteBatch, "M", kBaseX + 51f, kBaseY + 15f);
         fonts.keyFont.draw(spriteBatch, "ESC", kBaseX + 118f, kBaseY + 15f);
 
         // Action sub-labels matching updated keybinds:
         fonts.smallFont.setColor(Color.WHITE);
         fonts.smallFont.draw(spriteBatch, "MOVE", kBaseX - 6f, kBaseY + 72f);
-        fonts.smallFont.draw(spriteBatch, "SPRINT / JUMP", kBaseX + 194f, kBaseY + 72f);
-        fonts.smallFont.draw(spriteBatch, "JUMP / RUN", kBaseX + 74f, kBaseY + 42f);
-        fonts.smallFont.draw(spriteBatch, "INTERACT", kBaseX + 164f, kBaseY + 42f);
+        fonts.smallFont.draw(spriteBatch, "SPRINT", kBaseX + 194f, kBaseY + 72f);
+        fonts.smallFont.draw(spriteBatch, "JUMP (2X)", kBaseX + 48f, kBaseY + 42f);
+        fonts.smallFont.draw(spriteBatch, "INTERACT", kBaseX + 172f, kBaseY + 42f);
         fonts.smallFont.draw(spriteBatch, "MAP", kBaseX + 75f, kBaseY + 15f);
         fonts.smallFont.draw(spriteBatch, "PAUSE", kBaseX + 156f, kBaseY + 15f);
     }
@@ -817,12 +964,8 @@ public class WhereWindsMeetHUD implements Disposable {
         float mx = (w - mw) / 2f;
         float my = 48f; // Floating in lower area of screen
 
-        // Ultra-transparent glass backing (0.05 opacity - virtually transparent, zero black screen)
-        shapeRenderer.begin(ShapeType.Filled);
-        shapeRenderer.setColor(0.01f, 0.02f, 0.03f, 0.05f);
-        shapeRenderer.rect(mx, my, mw, mh);
-
         // Thin golden top line
+        shapeRenderer.begin(ShapeType.Filled);
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(mx, my + mh - 2f, mw, 2f);
         shapeRenderer.end();
@@ -872,60 +1015,468 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
+    // ========================================================
+    // TACTICAL MAP HUD BUTTON (Top-Right under Compass)
+    // ========================================================
+    private void drawTacticalMapButtonBg(float w, float h) {
+        float mbX = w - 215f;
+        float mbY = h - 230f;
+        float mbW = 195f;
+        float mbH = 34f;
+        shapeRenderer.setColor(glassBg);
+        shapeRenderer.rect(mbX, mbY, mbW, mbH);
+    }
+
+    private void drawTacticalMapButtonBorder(float w, float h) {
+        float mbX = w - 215f;
+        float mbY = h - 230f;
+        float mbW = 195f;
+        float mbH = 34f;
+        shapeRenderer.setColor(goldBorder);
+        shapeRenderer.rect(mbX, mbY, mbW, mbH);
+
+        float cLen = 7f;
+        shapeRenderer.setColor(goldAccent);
+        shapeRenderer.line(mbX - 2, mbY + mbH + 2, mbX + cLen, mbY + mbH + 2);
+        shapeRenderer.line(mbX - 2, mbY + mbH + 2, mbX - 2, mbY + mbH - cLen);
+        shapeRenderer.line(mbX + mbW + 2, mbY + mbH + 2, mbX + mbW - cLen, mbY + mbH + 2);
+        shapeRenderer.line(mbX + mbW + 2, mbY + mbH + 2, mbX + mbW + 2, mbY + mbH - cLen);
+        shapeRenderer.line(mbX - 2, mbY - 2, mbX + cLen, mbY - 2);
+        shapeRenderer.line(mbX - 2, mbY - 2, mbX - 2, mbY + cLen);
+        shapeRenderer.line(mbX + mbW + 2, mbY - 2, mbX + mbW - cLen, mbY - 2);
+        shapeRenderer.line(mbX + mbW + 2, mbY - 2, mbX + mbW + 2, mbY + cLen);
+    }
+
+    private void drawTacticalMapButtonText(float w, float h) {
+        float mbX = w - 215f;
+        float mbY = h - 230f;
+        fonts.keyFont.setColor(0f, 0f, 0f, 0.90f);
+        fonts.keyFont.draw(spriteBatch, "[M]  CAMPUS MAP", mbX + 21f, mbY + 23f);
+        fonts.keyFont.setColor(goldAccent);
+        fonts.keyFont.draw(spriteBatch, "[M]  CAMPUS MAP", mbX + 20f, mbY + 24f);
+    }
+
     // ==========================================
-    // CAMPUS TACTICAL MAP OVERLAY
+    // CAMPUS TACTICAL MAP OVERLAY (MATCHING MEDIA_1790270627121)
     // ==========================================
     private void renderCampusMap(PlayerController player, JulyMemorials memorials, float cameraYaw, float w, float h) {
+        float mapW = 1520f;
+        float mapH = h - 50f;
+        float mx = (w - mapW) / 2f;
+        float my = 25f;
+
+        float centerMapX = mx + mapW / 2f;
+        float centerMapY = my + mapH / 2f + 16f;
+        float scale = 4.8f; // 4.8 pixels per meter
+        // screenX = centerMapX + worldX * scale
+        // screenY = centerMapY - (worldZ - 18) * scale  [north=negZ=higher Y]
+
+        // ============================================================
+        // FILLED PASS
+        // ============================================================
         shapeRenderer.begin(ShapeType.Filled);
-        shapeRenderer.setColor(0f, 0f, 0f, 0.84f);
+
+        // Full dark backdrop
+        shapeRenderer.setColor(0f, 0f, 0f, 0.92f);
         shapeRenderer.rect(0, 0, w, h);
 
-        float mapW = 640f;
-        float mapH = 520f;
-        float mx = (w - mapW) / 2f;
-        float my = (h - mapH) / 2f;
-
-        shapeRenderer.setColor(glassBg);
+        // Map canvas
+        shapeRenderer.setColor(0.07f, 0.09f, 0.11f, 0.97f);
         shapeRenderer.rect(mx, my, mapW, mapH);
 
-        shapeRenderer.setColor(new Color(0.68f, 0.22f, 0.16f, 0.85f));
-        float centerMapX = mx + mapW / 2f;
-        float centerMapY = my + mapH / 2f + 40f;
-        float scale = 2.6f;
+        // Campus lawn (reference: rich green base)
+        shapeRenderer.setColor(0.13f, 0.20f, 0.12f, 0.95f);
+        shapeRenderer.rect(centerMapX - 100f * scale, centerMapY - 62f * scale, 200f * scale, 124f * scale);
 
-        shapeRenderer.rect(centerMapX - 45f * scale / 2f, centerMapY + 32f * scale - 14f * scale / 2f, 45f * scale, 14f * scale);
+        // Fuller Road (north, top of map)
+        shapeRenderer.setColor(0.16f, 0.16f, 0.18f, 0.96f);
+        shapeRenderer.rect(centerMapX - 110f * scale, centerMapY + 62f * scale, 220f * scale, 10f * scale);
 
-        shapeRenderer.setColor(goldMuted);
-        shapeRenderer.rect(centerMapX - 3.5f * scale / 2f, centerMapY - 50f * scale, 3.5f * scale, 82f * scale);
-        shapeRenderer.rect(centerMapX - 60f * scale, centerMapY - 18f * scale - 2.5f * scale / 2f, 120f * scale, 2.5f * scale);
+        // Doel Chattar Road (south, bottom of map)
+        shapeRenderer.rect(centerMapX - 110f * scale, centerMapY - 72f * scale, 220f * scale, 14f * scale);
 
-        for (MemorialEntry entry : memorials.getEntries()) {
-            float pointX = centerMapX + entry.position.x * scale;
-            float pointY = centerMapY - entry.position.z * scale;
-            shapeRenderer.setColor(entry.inspected ? Color.GREEN : goldAccent);
-            shapeRenderer.circle(pointX, pointY, 6.5f, 16);
+        // South boundary wall (red brick, gap at Main Gate)
+        shapeRenderer.setColor(0.52f, 0.18f, 0.14f, 0.96f);
+        shapeRenderer.rect(centerMapX - 110f * scale, centerMapY - 62f * scale, 105f * scale, 2.0f * scale);
+        shapeRenderer.rect(centerMapX + 5.5f * scale, centerMapY - 62f * scale, 104.5f * scale, 2.0f * scale);
+
+        // ============================================================
+        // WALKWAY NETWORK
+        // ============================================================
+        shapeRenderer.setColor(0.70f, 0.63f, 0.50f, 0.92f);
+
+        // Central Promenade: X=0, Z=+78 (gate) to Z=-40 (behind Curzon Hall)
+        shapeRenderer.rect(centerMapX - 3.6f * scale, centerMapY - 62f * scale, 7.2f * scale, 118f * scale);
+
+        // East branch path (runs along RIGHT side of pukur): X=+22m, Z=-16 to Z=+14
+        shapeRenderer.rect(centerMapX + 19.5f * scale, centerMapY - (14f - 18f) * scale - 4.8f * scale, 5.0f * scale, 30f * scale);
+
+        // North cross-path (Z=-16, X=0 to X=+22) connecting promenade to east branch
+        shapeRenderer.rect(centerMapX, centerMapY - (-16f - 18f) * scale - 2.4f * scale, 22f * scale, 4.8f * scale);
+
+        // South cross-path (Z=+14, X=0 to X=+22) connecting promenade to east branch
+        shapeRenderer.rect(centerMapX, centerMapY - (14f - 18f) * scale - 2.4f * scale, 22f * scale, 4.8f * scale);
+
+        // West Cross-Avenue: Z=+26, X=0 to X=-74
+        shapeRenderer.rect(centerMapX - 74f * scale, centerMapY - (26f - 18f) * scale - 2.4f * scale, 74f * scale, 4.8f * scale);
+
+        // West North Branch to Madhur Canteen: X=-56, Z=+26 to Z=-20
+        shapeRenderer.rect(centerMapX - 58.4f * scale, centerMapY - (26f - 18f) * scale, 4.8f * scale, 46f * scale);
+
+        // West South Branch to Hakim Chattar: X=-58, Z=+26 to Z=+54
+        shapeRenderer.rect(centerMapX - 60.4f * scale, centerMapY - (54f - 18f) * scale, 4.8f * scale, 28f * scale);
+
+        // East Cross-Avenue: Z=+26, X=0 to X=+74
+        shapeRenderer.rect(centerMapX, centerMapY - (26f - 18f) * scale - 2.4f * scale, 74f * scale, 4.8f * scale);
+
+        // East North Branch to Swadhinata: X=+56, Z=+26 to Z=-18
+        shapeRenderer.rect(centerMapX + 53.6f * scale, centerMapY - (26f - 18f) * scale, 4.8f * scale, 44f * scale);
+
+        // East South Branch to Raju: X=+44, Z=+26 to Z=+42
+        shapeRenderer.rect(centerMapX + 41.6f * scale, centerMapY - (42f - 18f) * scale, 4.8f * scale, 16f * scale);
+
+        // Curzon Hall front verandah path: Z=-17, X=-48 to X=+48
+        shapeRenderer.rect(centerMapX - 48f * scale, centerMapY - (-17f - 18f) * scale - 3f * scale, 96f * scale, 6f * scale);
+
+        // ============================================================
+        // CURZON HALL PUKUR
+        // Reference map: pond is EAST of central promenade (~+12m east)
+        // The central promenade passes to the LEFT (west) of the pond
+        // ============================================================
+        float pukurWorldX = 12f;
+        float pukurWorldZ = -2f;
+        float pukurWm     = 20f;
+        float pukurHm     = 16f;
+
+        float pX = centerMapX + pukurWorldX * scale;
+        float pY = centerMapY - (pukurWorldZ - 18f) * scale;
+        float pW = pukurWm * scale;
+        float pH = pukurHm * scale;
+
+        // Stone curb border
+        shapeRenderer.setColor(0.82f, 0.79f, 0.74f, 1f);
+        shapeRenderer.rect(pX - pW / 2f - 4f, pY - pH / 2f - 4f, pW + 8f, pH + 8f);
+        // Water
+        shapeRenderer.setColor(0.20f, 0.55f, 0.64f, 0.96f);
+        shapeRenderer.rect(pX - pW / 2f, pY - pH / 2f, pW, pH);
+        // Shimmer
+        shapeRenderer.setColor(0.35f, 0.72f, 0.80f, 0.50f);
+        shapeRenderer.rect(pX - pW / 2f + 4f, pY - pH / 2f + 3f, pW * 0.6f, pH * 0.25f);
+
+        // ============================================================
+        // BUILDINGS
+        // ============================================================
+
+        // 1. CURZON HALL (north/top-center)
+        float chX = centerMapX;
+        float chY = centerMapY - (-32f - 18f) * scale;
+        shapeRenderer.setColor(0.66f, 0.21f, 0.15f, 0.97f);
+        shapeRenderer.rect(chX - 19f * scale, chY - 8.5f * scale, 38f * scale, 17f * scale);
+        shapeRenderer.rect(chX - 46f * scale, chY - 7.5f * scale, 27f * scale, 15f * scale);
+        shapeRenderer.rect(chX + 19f * scale, chY - 7.5f * scale, 27f * scale, 15f * scale);
+        shapeRenderer.rect(chX - 7.5f * scale, chY - 12.5f * scale, 15f * scale, 4f * scale);
+        shapeRenderer.setColor(0.94f, 0.92f, 0.88f, 1f);
+        shapeRenderer.circle(chX, chY, 5.2f * scale, 24);
+        shapeRenderer.circle(chX - 18.5f * scale, chY - 2.5f * scale, 2.2f * scale, 16);
+        shapeRenderer.circle(chX + 18.5f * scale, chY - 2.5f * scale, 2.2f * scale, 16);
+        shapeRenderer.circle(chX - 44.5f * scale, chY - 2.5f * scale, 2.1f * scale, 16);
+        shapeRenderer.circle(chX + 44.5f * scale, chY - 2.5f * scale, 2.1f * scale, 16);
+
+        // 2. CENTRAL LIBRARY BUILDING (far west)
+        float clMapX = centerMapX - 68f * scale;
+        float clMapY = centerMapY - (22f - 18f) * scale;
+        shapeRenderer.setColor(0.63f, 0.23f, 0.17f, 0.97f);
+        shapeRenderer.rect(clMapX - 18f * scale, clMapY - 16f * scale, 36f * scale, 32f * scale);
+        shapeRenderer.setColor(0.13f, 0.20f, 0.12f, 0.96f);
+        shapeRenderer.rect(clMapX - 8f * scale, clMapY - 8f * scale, 16f * scale, 16f * scale);
+        shapeRenderer.setColor(0.75f, 0.73f, 0.70f, 0.96f);
+        shapeRenderer.rect(clMapX + 14f * scale, clMapY - 8f * scale, 4f * scale, 16f * scale);
+
+        // 3. HAKIM CHATTAR (bottom-left, octagonal)
+        float hkMapX = centerMapX - 58f * scale;
+        float hkMapY = centerMapY - (54f - 18f) * scale;
+        shapeRenderer.setColor(0.70f, 0.30f, 0.20f, 0.96f);
+        shapeRenderer.circle(hkMapX, hkMapY, 5.2f * scale, 8);
+        shapeRenderer.setColor(goldAccent);
+        shapeRenderer.circle(hkMapX, hkMapY, 1.3f * scale, 8);
+
+        // 4. MADHUR CANTEEN (top-left)
+        float mcMapX = centerMapX - 56f * scale;
+        float mcMapY = centerMapY - (-16f - 18f) * scale;
+        shapeRenderer.setColor(0.56f, 0.22f, 0.18f, 0.97f);
+        shapeRenderer.rect(mcMapX - 9f * scale, mcMapY - 7f * scale, 18f * scale, 14f * scale);
+        shapeRenderer.setColor(0.82f, 0.76f, 0.68f, 0.96f);
+        shapeRenderer.rect(mcMapX - 8f * scale, mcMapY - 7f * scale, 16f * scale, 3.5f * scale);
+
+        // 5. BOOK STALLS (west of promenade, north of Arts Plaza)
+        shapeRenderer.setColor(0.36f, 0.26f, 0.16f, 0.96f);
+        for (float bsz : new float[]{6f, 12f, 18f}) {
+            float bsMapY = centerMapY - (bsz - 18f) * scale;
+            shapeRenderer.rect(centerMapX - 44f * scale, bsMapY - 1.4f * scale, 2.8f * scale, 2.8f * scale);
         }
 
+        // 6. ARTS PLAZA + APARAJEYO BANGLA (west of promenade)
+        float abMapX = centerMapX - 36f * scale;
+        float abMapY = centerMapY - (26f - 18f) * scale;
+        shapeRenderer.setColor(0.78f, 0.76f, 0.72f, 0.96f);
+        shapeRenderer.rect(abMapX - 4f * scale, abMapY - 4f * scale, 8f * scale, 8f * scale);
+        shapeRenderer.setColor(0.24f, 0.27f, 0.30f, 0.97f);
+        shapeRenderer.circle(abMapX, abMapY, 2.0f * scale, 12);
+
+        // 7. FLANK BUILDINGS around pukur (small red-brick blocks in reference)
+        shapeRenderer.setColor(0.66f, 0.22f, 0.16f, 0.90f);
+        // West of pukur, north
+        shapeRenderer.rect(centerMapX + 4f * scale, centerMapY - (-16f - 18f) * scale - 5f * scale, 6f * scale, 10f * scale);
+        // East of pukur, north
+        shapeRenderer.rect(centerMapX + 24f * scale, centerMapY - (-16f - 18f) * scale - 5f * scale, 6f * scale, 10f * scale);
+        // South-east block
+        shapeRenderer.rect(centerMapX + 22f * scale, centerMapY - (10f - 18f) * scale - 4f * scale, 5f * scale, 8f * scale);
+
+        // 8. TEACHER-STUDENT CENTRE (far right, modernist)
+        float tscMapX = centerMapX + 68f * scale;
+        float tscMapY = centerMapY - (20f - 18f) * scale;
+        shapeRenderer.setColor(0.74f, 0.73f, 0.70f, 0.97f);
+        shapeRenderer.rect(tscMapX - 19f * scale, tscMapY - 15f * scale, 38f * scale, 30f * scale);
+        shapeRenderer.setColor(0.60f, 0.26f, 0.20f, 0.97f);
+        shapeRenderer.rect(tscMapX - 9f * scale, tscMapY - 9f * scale, 18f * scale, 18f * scale);
+        shapeRenderer.setColor(0.82f, 0.80f, 0.76f, 0.70f);
+        for (int f = -4; f <= 4; f++) {
+            shapeRenderer.rect(tscMapX - 19.5f * scale, tscMapY + f * 1.8f * scale - 0.4f * scale, 1.5f * scale, 0.8f * scale);
+        }
+
+        // 9. RAJU MEMORIAL ROUNDABOUT (south-east)
+        float rjMapX = centerMapX + 44f * scale;
+        float rjMapY = centerMapY - (42f - 18f) * scale;
+        shapeRenderer.setColor(0.16f, 0.16f, 0.18f, 0.96f);
+        shapeRenderer.circle(rjMapX, rjMapY, 9.5f * scale, 28);
+        shapeRenderer.setColor(0.17f, 0.30f, 0.15f, 0.96f);
+        shapeRenderer.circle(rjMapX, rjMapY, 7.5f * scale, 28);
+        shapeRenderer.setColor(0.90f, 0.88f, 0.84f, 0.97f);
+        shapeRenderer.rect(rjMapX - 2.4f * scale, rjMapY - 2.4f * scale, 4.8f * scale, 4.8f * scale);
+
+        // 10. SWADHINATA SANGRAM SCULPTURE GARDEN (top-right)
+        float ssMapX = centerMapX + 56f * scale;
+        float ssMapY = centerMapY - (-16f - 18f) * scale;
+        shapeRenderer.setColor(0.68f, 0.66f, 0.62f, 0.96f);
+        shapeRenderer.rect(ssMapX - 11f * scale, ssMapY - 9f * scale, 22f * scale, 18f * scale);
+        shapeRenderer.setColor(0.24f, 0.27f, 0.30f, 0.96f);
+        shapeRenderer.circle(ssMapX - 4.5f * scale, ssMapY + 3f * scale, 1.2f * scale, 8);
+        shapeRenderer.circle(ssMapX + 4.5f * scale, ssMapY + 3f * scale, 1.2f * scale, 8);
+        shapeRenderer.circle(ssMapX, ssMapY - 3f * scale, 1.2f * scale, 8);
+
+        // 11. MAIN GATE (south/bottom-center)
+        float mgMapY = centerMapY - (78f - 18f) * scale;
+        shapeRenderer.setColor(0.70f, 0.22f, 0.16f, 0.97f);
+        shapeRenderer.rect(centerMapX - 4.8f * scale, mgMapY - 1.5f * scale, 9.6f * scale, 3.5f * scale);
+        shapeRenderer.setColor(0.82f, 0.76f, 0.68f, 1f);
+        shapeRenderer.rect(centerMapX - 5.2f * scale, mgMapY - 2.5f * scale, 2.0f * scale, 5.5f * scale);
+        shapeRenderer.rect(centerMapX + 3.2f * scale, mgMapY - 2.5f * scale, 2.0f * scale, 5.5f * scale);
+        shapeRenderer.setColor(0.16f, 0.84f, 0.38f, 1f);
+        shapeRenderer.triangle(centerMapX, mgMapY + 5f * scale,
+            centerMapX - 2.2f * scale, mgMapY + 1.5f * scale,
+            centerMapX + 2.2f * scale, mgMapY + 1.5f * scale);
+
+        // 12. TREE CANOPIES
+        float[][] treeMapLocs = {
+            {-12f, -4f}, {12f, -4f},
+            {-50f, -28f}, {-62f, -28f}, {50f, -28f}, {62f, -28f},
+            {-14f, 12f}, {14f, 12f},
+            {-28f, 14f}, {-48f, 4f}, {-62f, 28f},
+            {28f, 14f}, {48f, 4f}, {62f, 28f},
+            {-14f, 48f}, {14f, 48f},
+            {-22f, 64f}, {22f, 64f},
+            {-28f, 70f}, {28f, 70f},
+            {-85f, -36f}, {85f, -36f}, {-85f, 60f}, {85f, 60f},
+        };
+        shapeRenderer.setColor(0.16f, 0.38f, 0.14f, 0.86f);
+        for (float[] t : treeMapLocs) {
+            shapeRenderer.circle(centerMapX + t[0] * scale, centerMapY - (t[1] - 18f) * scale, 4.0f * scale, 14);
+        }
+        shapeRenderer.setColor(0.11f, 0.28f, 0.10f, 0.70f);
+        for (float[] t : treeMapLocs) {
+            shapeRenderer.circle(centerMapX + t[0] * scale, centerMapY - (t[1] - 18f) * scale, 2.0f * scale, 10);
+        }
+
+        // 13. OBJECTIVE & MEMORIAL PINS
+        MemorialEntry nextObj = memorials.getNextObjective(player.getPosition());
+        for (MemorialEntry entry : memorials.getEntries()) {
+            float pointX = centerMapX + entry.position.x * scale;
+            float pointY = centerMapY - (entry.position.z - 18f) * scale;
+            if (entry.inspected) {
+                shapeRenderer.setColor(Color.GREEN);
+                shapeRenderer.circle(pointX, pointY, 8f, 16);
+            } else if (entry == nextObj) {
+                float pulse = 0.82f + 0.28f * MathUtils.sin(animTime * 6f);
+                shapeRenderer.setColor(1.0f, 0.82f * pulse, 0.25f, 1f);
+                float ds = 10f * pulse;
+                shapeRenderer.triangle(pointX, pointY + ds, pointX + ds, pointY, pointX, pointY - ds);
+                shapeRenderer.triangle(pointX, pointY + ds, pointX - ds, pointY, pointX, pointY - ds);
+            } else {
+                shapeRenderer.setColor(goldAccent);
+                shapeRenderer.circle(pointX, pointY, 7f, 16);
+            }
+        }
+
+        // 14. LIVE PLAYER MARKER
         Vector3 ppos = player.getPosition();
         float pMapX = centerMapX + ppos.x * scale;
-        float pMapY = centerMapY - ppos.z * scale;
+        float pMapY = centerMapY - (ppos.z - 18f) * scale;
+        shapeRenderer.setColor(0.2f, 0.9f, 1.0f, 0.30f + 0.18f * MathUtils.sin(animTime * 4f));
+        shapeRenderer.circle(pMapX, pMapY, 13f, 20);
         shapeRenderer.setColor(Color.CYAN);
         shapeRenderer.circle(pMapX, pMapY, 5.5f, 16);
+        float pHeadRad = (player.getHeadingDegrees() - 90f) * MathUtils.degreesToRadians;
+        float tipX = pMapX - 16f * MathUtils.cos(pHeadRad);
+        float tipY = pMapY + 16f * MathUtils.sin(pHeadRad);
+        float baseLeftX = pMapX - 6f * MathUtils.cos(pHeadRad + 2.2f);
+        float baseLeftY = pMapY + 6f * MathUtils.sin(pHeadRad + 2.2f);
+        float baseRightX = pMapX - 6f * MathUtils.cos(pHeadRad - 2.2f);
+        float baseRightY = pMapY + 6f * MathUtils.sin(pHeadRad - 2.2f);
+        shapeRenderer.setColor(Color.WHITE);
+        shapeRenderer.triangle(tipX, tipY, baseLeftX, baseLeftY, baseRightX, baseRightY);
+
+        // 15. UI PANEL BACKGROUNDS
+        float vtX = mx + 20f, vtY = my + 20f, vtW = 270f, vtH = 185f;
+        shapeRenderer.setColor(0.04f, 0.06f, 0.08f, 0.93f);
+        shapeRenderer.rect(vtX, vtY, vtW, vtH);
+
+        float legX = mx + mapW - 260f, legY = my + 20f, legW = 240f, legH = 230f;
+        shapeRenderer.setColor(0.04f, 0.06f, 0.08f, 0.93f);
+        shapeRenderer.rect(legX, legY, legW, legH);
+
+        float cbX = mx + mapW - 175f, cbY = my + mapH - 48f, cbW = 155f, cbH = 34f;
+        shapeRenderer.setColor(0.10f, 0.14f, 0.20f, 0.93f);
+        shapeRenderer.rect(cbX, cbY, cbW, cbH);
+
+        // LEGEND ICONS
+        shapeRenderer.setColor(goldAccent);
+        shapeRenderer.rect(legX + 16f, legY + legH - 48f, 11f, 11f);
+        shapeRenderer.setColor(1.0f, 0.85f, 0.25f, 1f);
+        float ldy = legY + legH - 72f;
+        shapeRenderer.triangle(legX + 21f, ldy + 7f, legX + 28f, ldy, legX + 14f, ldy);
+        shapeRenderer.triangle(legX + 21f, ldy - 7f, legX + 28f, ldy, legX + 14f, ldy);
+        shapeRenderer.setColor(0.35f, 0.82f, 1.0f, 1f);
+        float lpy = legY + legH - 96f;
+        shapeRenderer.triangle(legX + 21f, lpy + 6f, legX + 27f, lpy, legX + 15f, lpy);
+        shapeRenderer.triangle(legX + 21f, lpy - 6f, legX + 27f, lpy, legX + 15f, lpy);
+        shapeRenderer.setColor(1.0f, 0.55f, 0.20f, 1f);
+        shapeRenderer.circle(legX + 21f, legY + legH - 118f, 5.5f, 12);
+        shapeRenderer.triangle(legX + 21f, legY + legH - 128f, legX + 18f, legY + legH - 118f, legX + 24f, legY + legH - 118f);
+        shapeRenderer.setColor(0.30f, 0.55f, 1.0f, 1f);
+        shapeRenderer.circle(legX + 21f, legY + legH - 148f, 5.5f, 12);
+        shapeRenderer.setColor(0.90f, 0.20f, 0.20f, 1f);
+        shapeRenderer.circle(legX + 21f, legY + legH - 168f, 5.5f, 12);
+        shapeRenderer.setColor(0.2f, 0.9f, 1.0f, 0.50f);
+        shapeRenderer.circle(legX + 21f, legY + legH - 190f, 7f, 12);
+        shapeRenderer.setColor(Color.CYAN);
+        shapeRenderer.circle(legX + 21f, legY + legH - 190f, 3.5f, 12);
+
         shapeRenderer.end();
 
+        // ============================================================
+        // LINE BORDERS PASS
+        // ============================================================
         shapeRenderer.begin(ShapeType.Line);
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.rect(mx, my, mapW, mapH);
+        shapeRenderer.rect(mx + 3f, my + 3f, mapW - 6f, mapH - 6f);
+        float cLen = 30f;
+        shapeRenderer.setColor(goldAccent);
+        shapeRenderer.line(mx, my + mapH - cLen, mx, my + mapH);
+        shapeRenderer.line(mx, my + mapH, mx + cLen, my + mapH);
+        shapeRenderer.line(mx + mapW - cLen, my + mapH, mx + mapW, my + mapH);
+        shapeRenderer.line(mx + mapW, my + mapH, mx + mapW, my + mapH - cLen);
+        shapeRenderer.line(mx, my, mx + cLen, my);
+        shapeRenderer.line(mx, my, mx, my + cLen);
+        shapeRenderer.line(mx + mapW - cLen, my, mx + mapW, my);
+        shapeRenderer.line(mx + mapW, my, mx + mapW, my + cLen);
+        shapeRenderer.setColor(goldBorder);
+        shapeRenderer.rect(vtX, vtY, vtW, vtH);
+        shapeRenderer.rect(legX, legY, legW, legH);
+        shapeRenderer.setColor(new Color(0.30f, 0.42f, 0.56f, 0.90f));
+        shapeRenderer.rect(cbX, cbY, cbW, cbH);
+
+        // Compass Rose
+        float crX = mx + 90f, crY = my + mapH - 90f, crR = 52f;
+        shapeRenderer.setColor(goldBorder);
+        shapeRenderer.circle(crX, crY, crR, 36);
+        shapeRenderer.circle(crX, crY, crR - 5f, 32);
+        shapeRenderer.setColor(goldAccent);
+        shapeRenderer.line(crX, crY - crR, crX, crY + crR);
+        shapeRenderer.line(crX - crR, crY, crX + crR, crY);
+        shapeRenderer.setColor(goldBorder);
+        shapeRenderer.line(crX - crR * 0.7f, crY - crR * 0.7f, crX + crR * 0.7f, crY + crR * 0.7f);
+        shapeRenderer.line(crX + crR * 0.7f, crY - crR * 0.7f, crX - crR * 0.7f, crY + crR * 0.7f);
         shapeRenderer.end();
 
+        // ============================================================
+        // TEXT PASS
+        // ============================================================
         spriteBatch.begin();
-        fonts.titleFont.setColor(goldAccent);
-        fonts.titleFont.draw(spriteBatch, "DHAKA UNIVERSITY CAMPUS MAP", mx + 30f, my + mapH - 24f);
 
-        fonts.smallFont.setColor(Color.WHITE);
-        fonts.smallFont.draw(spriteBatch, "[Green] Unlocked Archive    [Gold] Active Objective    [Cyan] Player", mx + 30f, my + 38f);
+        // Title
+        fonts.titleFont.setColor(0f, 0f, 0f, 0.90f);
+        fonts.titleFont.draw(spriteBatch, "LEVEL 1: DHAKA UNIVERSITY", centerMapX - 218f + 2f, my + mapH - 18f);
+        fonts.titleFont.setColor(goldAccent);
+        fonts.titleFont.draw(spriteBatch, "LEVEL 1: DHAKA UNIVERSITY", centerMapX - 218f, my + mapH - 16f);
+        fonts.smallFont.setColor(new Color(0.88f, 0.84f, 0.68f, 1f));
+        fonts.smallFont.draw(spriteBatch, "Mall Chattar Corridor  \u2022  Curzon Hall Precinct  \u2022  Est. 1921", centerMapX - 240f, my + mapH - 42f);
+
+        // Compass
+        fonts.headerFont.setColor(healthRed);
+        fonts.headerFont.draw(spriteBatch, "N", crX - 6f, crY + crR + 22f);
+        fonts.smallFont.setColor(goldAccent);
+        fonts.smallFont.draw(spriteBatch, "S", crX - 4f, crY - crR - 5f);
+        fonts.smallFont.draw(spriteBatch, "W", crX - crR - 18f, crY + 5f);
+        fonts.smallFont.draw(spriteBatch, "E", crX + crR + 6f, crY + 5f);
+
+        // Close button
         fonts.promptFont.setColor(goldAccent);
-        fonts.promptFont.draw(spriteBatch, "[M] Close Map", mx + mapW - 140f, my + 38f);
+        fonts.promptFont.draw(spriteBatch, "[M] / [ESC]  Close  X", cbX + 12f, cbY + 23f);
+
+        // Landmark labels
+        fonts.smallFont.setColor(Color.WHITE);
+        fonts.smallFont.draw(spriteBatch, "Fuller Road Corridor", centerMapX - 60f, centerMapY + 64f * scale);
+        fonts.smallFont.draw(spriteBatch, "Curzon Hall", chX - 32f, chY + 2.5f * scale);
+        fonts.smallFont.setColor(new Color(0.88f, 0.96f, 1.0f, 1f));
+        fonts.smallFont.draw(spriteBatch, "Curzon Hall", pX - 36f, pY + 4f);
+        fonts.smallFont.draw(spriteBatch, "Pukur", pX - 18f, pY - 8f);
+        fonts.smallFont.setColor(Color.WHITE);
+        fonts.smallFont.draw(spriteBatch, "Central Library Building", clMapX - 56f, clMapY + 20f * scale);
+        fonts.smallFont.draw(spriteBatch, "Hakim Chattar", hkMapX - 42f, hkMapY - 9f * scale);
+        fonts.smallFont.draw(spriteBatch, "Madhur Canteen", mcMapX - 44f, mcMapY + 11f * scale);
+        fonts.smallFont.draw(spriteBatch, "Book Stalls", centerMapX - 50f * scale, centerMapY - (12f - 18f) * scale + 6f);
+        fonts.smallFont.draw(spriteBatch, "Arts Plaza", abMapX - 28f, abMapY + 5f * scale);
+        fonts.smallFont.draw(spriteBatch, "Aparajeyo Bangla", abMapX - 48f, abMapY - 7f * scale);
+        fonts.smallFont.draw(spriteBatch, "Teacher-Student Centre (TSC)", tscMapX - 72f, tscMapY + 18f * scale);
+        fonts.smallFont.draw(spriteBatch, "Raju Memorial Sculpture", rjMapX - 60f, rjMapY - 12f * scale);
+        fonts.smallFont.draw(spriteBatch, "Swadhinata Sangram", ssMapX - 56f, ssMapY + 12f * scale);
+        fonts.smallFont.draw(spriteBatch, "Sculpture Garden", ssMapX - 46f, ssMapY + 10f * scale - 14f);
+        fonts.smallFont.draw(spriteBatch, "Main Gate", centerMapX - 28f, mgMapY - 10f);
+
+        // Visual Target Card
+        if (textures != null && textures.mapVisualTarget != null) {
+            spriteBatch.draw(textures.mapVisualTarget, vtX + 12f, vtY + 38f, vtW - 24f, 110f);
+        }
+        fonts.promptFont.setColor(goldAccent);
+        fonts.promptFont.draw(spriteBatch, "LEVEL 1 VISUAL TARGET", vtX + 14f, vtY + vtH - 12f);
+        fonts.smallFont.setColor(Color.WHITE);
+        fonts.smallFont.draw(spriteBatch, "Curzon Hall (Science Faculty)", vtX + 14f, vtY + 24f);
+
+        // Map Legend Card
+        fonts.promptFont.setColor(goldAccent);
+        fonts.promptFont.draw(spriteBatch, "MAP LEGEND", legX + 16f, legY + legH - 14f);
+        fonts.smallFont.setColor(Color.WHITE);
+        fonts.smallFont.draw(spriteBatch, "Buildings", legX + 36f, legY + legH - 39f);
+        fonts.smallFont.draw(spriteBatch, "POI objective", legX + 36f, legY + legH - 63f);
+        fonts.smallFont.draw(spriteBatch, "Teacher-Student Centre", legX + 36f, legY + legH - 87f);
+        fonts.smallFont.draw(spriteBatch, "Arts Plaza", legX + 36f, legY + legH - 109f);
+        fonts.smallFont.draw(spriteBatch, "Quest Pin", legX + 36f, legY + legH - 139f);
+        fonts.smallFont.draw(spriteBatch, "Quest Pins", legX + 36f, legY + legH - 159f);
+        fonts.smallFont.draw(spriteBatch, "High objective Markers", legX + 36f, legY + legH - 181f);
+        fonts.smallFont.setColor(new Color(0.70f, 0.82f, 0.90f, 1f));
+        fonts.smallFont.draw(spriteBatch, String.format("%.1fE  %.1fN", ppos.x, -ppos.z), legX + 16f, legY + 24f);
+
         spriteBatch.end();
     }
 
@@ -972,7 +1523,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.headerFont.draw(spriteBatch, "[X]    Quit Game", px + 80f, py + 120f);
 
         fonts.smallFont.setColor(goldMuted);
-        fonts.smallFont.draw(spriteBatch, "2x12: Spark — Birth of 36 July", px + 108f, py + 52f);
+        fonts.smallFont.draw(spriteBatch, "2x12: Spark -- Birth of 36 July", px + 108f, py + 52f);
         spriteBatch.end();
     }
 
@@ -1024,12 +1575,12 @@ public class WhereWindsMeetHUD implements Disposable {
         // Text with drop shadows
         spriteBatch.begin();
         fonts.titleFont.setColor(0f, 0f, 0f, 0.85f * alpha);
-        fonts.titleFont.draw(spriteBatch, "★ MISSION COMPLETE! ★", bx + 50f + 2f, by + bh - 16f);
+        fonts.titleFont.draw(spriteBatch, "* MISSION COMPLETE! *", bx + 50f + 2f, by + bh - 16f);
         fonts.titleFont.setColor(1.0f, 0.88f, 0.40f, alpha);
-        fonts.titleFont.draw(spriteBatch, "★ MISSION COMPLETE! ★", bx + 50f, by + bh - 14f);
+        fonts.titleFont.draw(spriteBatch, "* MISSION COMPLETE! *", bx + 50f, by + bh - 14f);
 
         fonts.headerFont.setColor(0f, 0f, 0f, 0.85f * alpha);
-        String sub = String.format("%s  •  [ %d / 5 Archives Secured ]", missionBannerTitle, missionBannerCount);
+        String sub = String.format("%s  |  [ %d / 5 Archives Secured ]", missionBannerTitle, missionBannerCount);
         fonts.headerFont.draw(spriteBatch, sub, bx + 50f + 1.5f, by + 26f);
         fonts.headerFont.setColor(1f, 1f, 1f, 0.95f * alpha);
         fonts.headerFont.draw(spriteBatch, sub, bx + 50f, by + 28f);
@@ -1102,7 +1653,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.titleFont.draw(spriteBatch, "CONGRATULATIONS!", vx + 40f, vy + vh - 22f);
 
         fonts.headerFont.setColor(new Color(0.95f, 0.90f, 0.80f, 1f));
-        fonts.headerFont.draw(spriteBatch, "LEVEL 1 COMPLETED — 36 JULY: THE SPARK OF FREEDOM", vx + 40f, vy + vh - 48f);
+        fonts.headerFont.draw(spriteBatch, "LEVEL 1 COMPLETED -- 36 JULY: THE SPARK OF FREEDOM", vx + 40f, vy + vh - 48f);
 
         // Historical Tribute Narrative
         fonts.bodyFont.setColor(Color.WHITE);

@@ -35,8 +35,13 @@ public class PlayerController {
     public static final float WALK_SPEED = 4.8f;
     public static final float SPRINT_SPEED = 9.2f;
     public static final float ACCELERATION = 14f;
-    public static final float JUMP_VELOCITY = 7.0f;
-    public static final float GRAVITY = -22.0f;
+    public static final float JUMP_VELOCITY = 13.5f;        // High single jump reaches ~4.6m (half a tree!)
+    public static final float DOUBLE_JUMP_VELOCITY = 14.5f; // Second mid-air jump reaches ~9.5-10.5m!
+    public static final float GRAVITY = -20.0f;
+
+    // Jump mechanics (Double-tap for double height)
+    private int jumpCount = 0;
+    private static final int MAX_JUMPS = 2;
 
     // Collision Dimensions
     public static final float PLAYER_RADIUS = 0.32f;
@@ -144,6 +149,81 @@ public class PlayerController {
         // Memorial 5 at (28, 0, -10) — 36 July Gateway
         {26.9f, 0f, -11.1f, 29.1f, 0.4f, -8.9f},
         {27.5f, 0.4f, -10.5f, 28.5f, 3.0f, -9.5f},
+
+        // ======== HISTORICAL BOUNDARY STONE (1921) & BOULDERS (Mountable!) ========
+        {7.1f, 0f, 35.8f, 8.5f, 0.35f, 37.2f},  // Plinth base (0.35m)
+        {7.3f, 0f, 36.1f, 8.3f, 1.85f, 36.9f},  // Monolith pillar (1.85m - Jump & land on top!)
+        {8.6f, 0f, 34.8f, 10.5f, 0.95f, 36.4f}, // Boulder East (0.95m)
+        {5.6f, 0f, 37.0f, 7.0f, 0.85f, 38.4f},  // Boulder West (0.85m)
+        {8.2f, 0f, 37.1f, 10.4f, 1.25f, 39.0f}, // Boulder South (1.25m)
+        {9.7f, 0f, 32.5f, 12.1f, 1.40f, 34.6f}, // Boulder North-East (1.40m)
+
+        // ======== CURZON HALL PUKUR PERIMETER CURBS (0.45m - Step-up & jumpable!) ========
+        // Pukur center: X=+12m, Z=-2m  |  size: 20m wide (X) x 16m deep (Z)
+        // West curb (along promenade east edge):  X=+1.7 to +2.3, Z=-10 to +6
+        {1.7f, 0f, -10.3f, 2.3f, 0.45f, 6.3f},
+        // East curb:  X=+21.7 to +22.3, Z=-10 to +6
+        {21.7f, 0f, -10.3f, 22.3f, 0.45f, 6.3f},
+        // North curb: X=+2 to +22, Z=-10.3 to -9.7
+        {2.0f, 0f, -10.3f, 22.0f, 0.45f, -9.7f},
+        // South curb: X=+2 to +22, Z=+5.7 to +6.3
+        {2.0f, 0f, 5.7f, 22.0f, 0.45f, 6.3f},
+
+        // ======== SOUTH BOUNDARY WALL & MAIN GATE ========
+        {-110f, 0f, 77.2f, -4.2f, 2.8f, 78.8f},   // West perimeter wall
+        {4.2f, 0f, 77.2f, 110f, 2.8f, 78.8f},     // East perimeter wall
+        {-4.4f, 0f, 76.6f, -2.2f, 7.2f, 79.4f},   // Main Gate Left Arch Pillar
+        {2.2f, 0f, 76.6f, 4.4f, 7.2f, 79.4f},     // Main Gate Right Arch Pillar
+        {7.0f, 0f, 74.0f, 10.0f, 3.2f, 77.0f},    // Security Guard Kiosk
+
+        // ======== NORTH BOUNDARY WALL (FULLER ROAD) ========
+        {-100f, 0f, -45.0f, 100f, 2.8f, -43.8f},
+
+        // ======== CENTRAL LIBRARY BUILDING (X=-68m, Z=22m) ========
+        {-86f, 0f, 29.8f, -50f, 11.5f, 38.2f},    // South wing
+        {-86f, 0f, 5.8f, -50f, 11.5f, 14.2f},     // North wing
+        {-86.2f, 0f, 14.0f, -77.8f, 11.5f, 30.0f},// West wing
+        {-58.2f, 0f, 14.0f, -49.8f, 11.5f, 30.0f},// East wing
+        {-52f, 0f, 17f, -46f, 0.6f, 27f},          // Entrance steps (0.6m, jumpable!)
+
+        // ======== HAKIM CHATTAR PAVILION (X=-58m, Z=54m) ========
+        {-62.5f, 0f, 49.5f, -53.5f, 0.6f, 58.5f}, // Stepped base plinth (0.6m, jumpable!)
+        {-58.8f, 0.6f, 53.2f, -57.2f, 3.2f, 54.8f},// Center table/column
+
+        // ======== MADHUR CANTEEN (X=-56m, Z=-16m) ========
+        {-65f, 0f, -23f, -47f, 0.6f, -9f},         // Verandah plinth (0.6m, jumpable!)
+        {-64.2f, 0.6f, -22.2f, -49.8f, 4.2f, -11.8f},// Main canteen walls
+
+        // ======== BOOK STALLS (X=-42m, Z=38m) ========
+        {-43.5f, 0f, 32.5f, -40.5f, 2.6f, 35.5f},
+        {-43.5f, 0f, 36.5f, -40.5f, 2.6f, 39.5f},
+        {-43.5f, 0f, 40.5f, -40.5f, 2.6f, 43.5f},
+
+        // ======== ARTS PLAZA & APARAJEYO BANGLA (X=-32m, Z=26m) ========
+        {-35.1f, 0f, 22.9f, -28.9f, 0.4f, 29.1f}, // Step 1 (0.4m, jumpable!)
+        {-34.5f, 0f, 23.5f, -29.5f, 0.65f, 28.5f},// Step 2 (0.65m, jumpable!)
+        {-33.9f, 0f, 24.1f, -30.1f, 1.35f, 27.9f},// Pedestal (1.35m, jumpable!)
+
+        // ======== WEST ACADEMIC BUILDING (X=-26m, Z=52m) ========
+        {-36.2f, 0f, 45.8f, -15.8f, 9.0f, 58.2f},
+
+        // ======== EAST ACADEMIC BUILDING (X=+26m, Z=52m) ========
+        {15.8f, 0f, 45.8f, 36.2f, 9.0f, 58.2f},
+
+        // ======== RAJU MEMORIAL SCULPTURE (X=+44m, Z=42m) ========
+        {36.5f, 0f, 34.5f, 51.5f, 0.35f, 49.5f},   // Roundabout curb (0.35m, jumpable!)
+        {41.6f, 0f, 39.6f, 46.4f, 1.15f, 44.4f},   // Base pedestal (1.15m, jumpable!)
+        {43.2f, 1.15f, 41.2f, 44.8f, 6.2f, 42.8f}, // Central monument column
+
+        // ======== TEACHER-STUDENT CENTRE (TSC) (X=+68m, Z=20m) ========
+        {49.0f, 0f, 4.8f, 87.0f, 10.5f, 35.2f},    // Main modernist complex
+        {44.8f, 0f, 12.0f, 49.0f, 0.5f, 28.0f},   // Terrace steps (0.5m, jumpable!)
+
+        // ======== SWADHINATA SANGRAM SCULPTURE GARDEN (X=+56m, Z=-16m) ========
+        {44.8f, 0f, -25.2f, 67.2f, 0.5f, -6.8f},  // Low perimeter wall (0.5m, jumpable!)
+        {52.5f, 0f, -18.5f, 54.5f, 1.2f, -16.5f}, // Pedestal 1 (1.2m, jumpable!)
+        {57.5f, 0f, -18.5f, 59.5f, 1.0f, -16.5f}, // Pedestal 2 (1.0m, jumpable!)
+        {54.5f, 0f, -14.5f, 57.5f, 1.5f, -11.5f}, // Pedestal 3 (1.5m, jumpable!)
     };
 
     public PlayerController() {
@@ -170,19 +250,15 @@ public class PlayerController {
             boolean left = Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT);
             boolean right = Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT);
 
-            // SPRINT / RUN: SHIFT, CONTROL, or holding SPACE while moving
-            boolean spaceHeld = Gdx.input.isKeyPressed(Input.Keys.SPACE);
-            boolean spaceJustPressed = Gdx.input.isKeyJustPressed(Input.Keys.SPACE);
+            // SPRINT / RUN: SHIFT, CONTROL, or R key
             boolean shiftHeld = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT);
-            boolean shiftJustPressed = Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_RIGHT);
-
             sprintKey = shiftHeld ||
                         Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) ||
-                        (spaceHeld && !spaceJustPressed && isMoving);
+                        Gdx.input.isKeyPressed(Input.Keys.R);
 
-            // JUMP / LONG JUMP: SPACE tap, SHIFT tap, C, V, or Right-Click
-            jumpKey = spaceJustPressed ||
-                      shiftJustPressed ||
+            // JUMP / DOUBLE JUMP: 'J' (Primary key, replacing SPACE completely as requested!)
+            // Also supports C, V, or Right-Click as alternative gamer inputs
+            jumpKey = Gdx.input.isKeyJustPressed(Input.Keys.J) ||
                       Gdx.input.isKeyJustPressed(Input.Keys.C) ||
                       Gdx.input.isKeyJustPressed(Input.Keys.V) ||
                       Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT);
@@ -225,9 +301,17 @@ public class PlayerController {
             targetHeadingDegrees = MathUtils.atan2(worldMoveX, worldMoveZ) * MathUtils.radiansToDegrees;
         }
 
-        // Smooth horizontal acceleration
-        velocity.x = MathUtils.lerp(velocity.x, targetVx, ACCELERATION * delta);
-        velocity.z = MathUtils.lerp(velocity.z, targetVz, ACCELERATION * delta);
+        // Smooth horizontal acceleration with mid-air steering control
+        if (isGrounded) {
+            velocity.x = MathUtils.lerp(velocity.x, targetVx, ACCELERATION * delta);
+            velocity.z = MathUtils.lerp(velocity.z, targetVz, ACCELERATION * delta);
+        } else {
+            // Mid-air air control: maintain forward velocity while allowing steering
+            if (isMoving) {
+                velocity.x = MathUtils.lerp(velocity.x, targetVx * 1.25f, (ACCELERATION * 0.6f) * delta);
+                velocity.z = MathUtils.lerp(velocity.z, targetVz * 1.25f, (ACCELERATION * 0.6f) * delta);
+            }
+        }
 
         // Smooth character heading turn
         if (isMoving) {
@@ -237,23 +321,43 @@ public class PlayerController {
             headingDegrees += diff * Math.min(1f, 15f * delta);
         }
 
-        // 4. Jump & Athletic LONG JUMP Physics
-        if (isGrounded && jumpKey && inputEnabled) {
-            if ((isSprinting || sprintKey) && isMoving) {
-                // Running / Sprinting LONG JUMP (high athletic forward leap!)
-                verticalVelocity = 9.8f; // High upward leap to easily clear and land on platforms
-                velocity.x *= 1.50f;     // Forward trajectory boost
-                velocity.z *= 1.50f;
-            } else if (isMoving) {
-                // Moving forward jump
-                verticalVelocity = 8.5f;
-                velocity.x *= 1.30f;
-                velocity.z *= 1.30f;
-            } else {
-                // Standing vertical hop
-                verticalVelocity = 7.5f;
+        // 4. Jump & Athletic DOUBLE JUMP Physics (Primary Key: 'J')
+        if (jumpKey && inputEnabled) {
+            if (isGrounded) {
+                // First Jump (reaches ~4.6m, half a tree!)
+                jumpCount = 1;
+                isGrounded = false;
+                verticalVelocity = JUMP_VELOCITY;
+
+                if (isSprinting && isMoving) {
+                    // Running / Sprinting Long Jump forward (boost trajectory!)
+                    velocity.x *= 1.45f;
+                    velocity.z *= 1.45f;
+                } else if (isMoving) {
+                    // Moving Jump forward
+                    velocity.x *= 1.30f;
+                    velocity.z *= 1.30f;
+                }
+            } else if (jumpCount < MAX_JUMPS) {
+                // Mid-air DOUBLE JUMP (Double Tap = Double Height, reaching ~9.5-10.5m!)
+                jumpCount = 2;
+                verticalVelocity = DOUBLE_JUMP_VELOCITY; // Explosive second vertical boost!
+
+                if (isMoving) {
+                    // Re-energize forward velocity in current camera direction
+                    float yawRad = cameraYawDegrees * MathUtils.degreesToRadians;
+                    float forwardX = -MathUtils.sin(yawRad);
+                    float forwardZ = -MathUtils.cos(yawRad);
+                    float rightX = MathUtils.cos(yawRad);
+                    float rightZ = -MathUtils.sin(yawRad);
+
+                    float worldMoveX = forwardX * moveDir.y + rightX * moveDir.x;
+                    float worldMoveZ = forwardZ * moveDir.y + rightZ * moveDir.x;
+
+                    velocity.x = worldMoveX * SPRINT_SPEED * 1.35f;
+                    velocity.z = worldMoveZ * SPRINT_SPEED * 1.35f;
+                }
             }
-            isGrounded = false;
         }
 
         // 5. Physics and Collision Resolution
@@ -313,6 +417,7 @@ public class PlayerController {
             position.y = highestGround;
             verticalVelocity = 0f;
             isGrounded = true;
+            jumpCount = 0; // Reset jumps upon landing on any surface!
         } else {
             position.y = proposedY;
             isGrounded = false;
@@ -338,12 +443,11 @@ public class PlayerController {
             // Check if proposed X enters the box
             boolean overlapX = (proposedX + PLAYER_RADIUS > bMinX) && (proposedX - PLAYER_RADIUS < bMaxX);
             if (overlapX) {
-                // Jumpable surface check (benches, bicycles, memorial bases, stairs <= 1.5m)
-                boolean isJumpableSurface = (bMaxY <= 1.5f);
+                // Check if within step-up height
                 if (bMaxY <= position.y + STEP_UP_HEIGHT && (bMaxY - bMinY) <= STEP_UP_HEIGHT) {
                     // Allowed to enter; vertical step-up will elevate player
-                } else if (isJumpableSurface && (!isGrounded && (position.y + 0.65f >= bMaxY || verticalVelocity > 0f))) {
-                    // Player is in mid-air leaping onto or over the obstacle! Allow entry to land on top
+                } else if (!isGrounded && (position.y + 0.65f >= bMaxY || (verticalVelocity > 0f && position.y + (verticalVelocity * verticalVelocity / (2 * -GRAVITY)) >= bMaxY))) {
+                    // Airborne and jumping high enough to clear or land on top of surface! Allow horizontal entry
                 } else {
                     // Firm wall collision! Push outside box along X
                     if (position.x <= (bMinX + bMaxX) / 2f) {
@@ -377,12 +481,11 @@ public class PlayerController {
             // Check if proposed Z enters the box
             boolean overlapZ = (proposedZ + PLAYER_RADIUS > bMinZ) && (proposedZ - PLAYER_RADIUS < bMaxZ);
             if (overlapZ) {
-                // Jumpable surface check (benches, bicycles, memorial bases, stairs <= 1.5m)
-                boolean isJumpableSurface = (bMaxY <= 1.5f);
+                // Check if within step-up height
                 if (bMaxY <= position.y + STEP_UP_HEIGHT && (bMaxY - bMinY) <= STEP_UP_HEIGHT) {
                     // Allowed to enter; vertical step-up will elevate player
-                } else if (isJumpableSurface && (!isGrounded && (position.y + 0.65f >= bMaxY || verticalVelocity > 0f))) {
-                    // Player is in mid-air leaping onto or over the obstacle! Allow entry to land on top
+                } else if (!isGrounded && (position.y + 0.65f >= bMaxY || (verticalVelocity > 0f && position.y + (verticalVelocity * verticalVelocity / (2 * -GRAVITY)) >= bMaxY))) {
+                    // Airborne and jumping high enough to clear or land on top of surface! Allow horizontal entry
                 } else {
                     // Firm wall collision! Push outside box along Z
                     if (position.z <= (bMinZ + bMaxZ) / 2f) {
@@ -424,6 +527,7 @@ public class PlayerController {
             position.y = surfaceUnderFoot;
             verticalVelocity = 0f;
             isGrounded = true;
+            jumpCount = 0;
         }
 
         // Edge detection: if standing on an elevated surface and walked off

@@ -19,6 +19,8 @@ import bd.spark36.hud.WhereWindsMeetHUD;
 import bd.spark36.world.AtmosphereRenderer;
 import bd.spark36.world.DhakaCampusWorld;
 import bd.spark36.world.JulyMemorials;
+import bd.spark36.world.ParticleSystem;
+import bd.spark36.world.PostProcessor;
 import bd.spark36.world.TextureFactory;
 
 /**
@@ -64,7 +66,10 @@ public class SparkGame extends ApplicationAdapter {
     private TextureFactory textures;
     private AtmosphereRenderer atmosphere;
     private WhereWindsMeetHUD hud;
+    private PostProcessor postProcessor;
+    private ParticleSystem particleSystem;
     private boolean gameplayInitialized = false;
+
 
     // Auto-screenshot support
     private float testTimer = 0f;
@@ -96,6 +101,13 @@ public class SparkGame extends ApplicationAdapter {
         camera = new CinematicCamera(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
         atmosphere = new AtmosphereRenderer(fontRenderer);
         hud = new WhereWindsMeetHUD(fontRenderer);
+        hud.setTextures(textures);
+
+        // AAA post-processing pipeline (bloom + color grade + vignette + grain)
+        postProcessor = new PostProcessor(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
+
+        // Environmental particle system (leaves, dust, water ripples)
+        particleSystem = new ParticleSystem();
 
         gameplayInitialized = true;
     }
@@ -151,7 +163,7 @@ public class SparkGame extends ApplicationAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) || Gdx.input.isKeyJustPressed(Input.Keys.S)) {
             menuSelection = 1;
         }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.J)) {
             if (menuSelection == 0) {
                 startGameplay();
                 return;
@@ -308,7 +320,7 @@ public class SparkGame extends ApplicationAdapter {
 
         // Navigation hint
         fontRenderer.smallFont.setColor(new Color(0.55f, 0.52f, 0.48f, 0.8f));
-        String navHint = "W/S or Arrow Keys Navigate    ENTER Select";
+        String navHint = "W/S or Arrow Keys Navigate    ENTER or J Select";
         glyphLayout.setText(fontRenderer.smallFont, navHint);
         fontRenderer.smallFont.draw(menuBatch, navHint,
             centerX - glyphLayout.width / 2f, exitBtnY - 30f);
@@ -364,17 +376,32 @@ public class SparkGame extends ApplicationAdapter {
         // 1. Update Game Logic
         boolean canMove = !hud.isModalOpen();
         player.update(delta, camera.getYaw(), canMove);
-        camera.update(delta, player.getPosition(), canMove);
+        // Enhanced camera: pass movement state for bob + FOV push + shake
+        camera.update(delta, player.getPosition(), canMove,
+            player.isMoving(), player.isSprinting(), player.getHeadingDegrees());
+        world.update(delta);
         memorials.update(delta);
         hud.update(delta, player, memorials);
 
-        // 2. Render Atmospheric Dawn Sky Background (Golden Morning)
-        atmosphere.renderSkyBackground(screenW, screenH);
+        // Update particles
+        if (particleSystem != null) {
+            particleSystem.update(delta, camera.getCamera());
+        }
 
-        // 3. Clear Depth Buffer for 3D Scene
-        Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
+        // 2. POST-PROCESSING: Begin FBO capture (replaces direct sky render)
+        boolean ppActive = postProcessor != null && postProcessor.isValid();
+        if (ppActive) {
+            postProcessor.beginCapture();
+            // Sky renders INSIDE the FBO so bloom can affect it
+            atmosphere.renderSkyBackground(screenW, screenH);
+            Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
+        } else {
+            // Fallback: render sky directly to screen
+            atmosphere.renderSkyBackground(screenW, screenH);
+            Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
+        }
 
-        // 4. Render 3D World Pass
+        // 3. Render 3D World Pass (inside FBO if post-processing active)
         camera.resize(screenW, screenH);
         modelBatch.begin(camera.getCamera());
         world.render(modelBatch);
@@ -390,11 +417,23 @@ public class SparkGame extends ApplicationAdapter {
         );
         modelBatch.end();
 
-        // 5. Render Atmospheric Crepuscular God Rays & In-World 3D Labels
+        // 4. Atmospheric overlays (labels, god rays) — inside FBO for bloom
         atmosphere.renderAtmosphereOverlays(camera.getCamera(), delta, screenW, screenH);
 
-        // 6. Render 2D Where Winds Meet HUD Pass with 3D Waypoint Pin projection
+        // 5. End FBO capture and apply post-processing chain to screen
+        if (ppActive) {
+            postProcessor.endCapture();
+            postProcessor.render(delta);
+        }
+
+        // 6. Particle System (leaves, dust, water ripples) — AFTER post-processing, BEFORE HUD
+        if (particleSystem != null) {
+            particleSystem.render();
+        }
+
+        // 7. 2D HUD (always crisp, rendered AFTER post-processing)
         hud.render(player, memorials, camera.getYaw(), camera.getCamera());
+
     }
 
     private void handleGameplayInputs(float delta) {
@@ -453,6 +492,18 @@ public class SparkGame extends ApplicationAdapter {
                     Gdx.app.exit();
                 }
             }
+        } else if (System.getProperty("bd.spark36.testMapScreenshot") != null) {
+            testTimer += delta;
+            if (testTimer >= 1.0f && !hud.isMapOpen()) {
+                hud.openMapForTest();
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("spark36_map_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
         } else if (System.getProperty("bd.spark36.testScreenshot") != null) {
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
@@ -495,6 +546,12 @@ public class SparkGame extends ApplicationAdapter {
         if (gameplayInitialized && camera != null) {
             camera.resize(width, height);
         }
+        if (postProcessor != null) {
+            postProcessor.resize(width, height);
+        }
+        if (particleSystem != null) {
+            particleSystem.resize(width, height);
+        }
     }
 
     @Override
@@ -509,5 +566,8 @@ public class SparkGame extends ApplicationAdapter {
         if (fontRenderer != null) fontRenderer.dispose();
         if (atmosphere != null) atmosphere.dispose();
         if (textures != null) textures.dispose();
+        if (postProcessor != null) postProcessor.dispose();
+        if (particleSystem != null) particleSystem.dispose();
     }
 }
+
