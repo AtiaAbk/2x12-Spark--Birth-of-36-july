@@ -38,6 +38,15 @@ public class DhakaCampusWorld implements Disposable {
     private final Array<ModelInstance> boundarySparkles = new Array<>();
     private float animTime = 0f;
 
+    // Animated water shimmer (pukur)
+    private ModelInstance waterSurface;      // main water plane (animated tint)
+    private ModelInstance waterShimmer;      // secondary specular highlight plane
+    private final com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute waterDiffuse =
+        ColorAttribute.createDiffuse(new com.badlogic.gdx.graphics.Color(0.20f, 0.55f, 0.72f, 1f));
+    private final com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute shimmerDiffuse =
+        ColorAttribute.createDiffuse(new com.badlogic.gdx.graphics.Color(0.55f, 0.82f, 0.95f, 0f));
+
+
     public DhakaCampusWorld(TextureFactory textures) {
         environment = new Environment();
 
@@ -732,12 +741,29 @@ public class DhakaCampusWorld implements Disposable {
         pcE.transform.setTranslation(pukurX + pukurW * 0.5f, 0.22f, pukurZ);
         instances.add(pcE);
 
-        // Water surface plane with lilies
-        Model pukurWater = mb.createBox(pukurW - 0.2f, 0.04f, pukurL - 0.2f, curzonPukurWaterMat, attr);
+        // Water surface plane — animated tint stored for runtime shimmer
+        Material waterAnimMat = new Material(
+            TextureAttribute.createDiffuse(textures.curzonWater),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.88f),
+            ColorAttribute.createDiffuse(new Color(0.20f, 0.55f, 0.72f, 1f))
+        );
+        Model pukurWater = mb.createBox(pukurW - 0.2f, 0.04f, pukurL - 0.2f, waterAnimMat, attr);
         models.add(pukurWater);
-        ModelInstance pwInst = new ModelInstance(pukurWater);
-        pwInst.transform.setTranslation(pukurX, 0.12f, pukurZ);
-        instances.add(pwInst);
+        waterSurface = new ModelInstance(pukurWater);
+        waterSurface.transform.setTranslation(pukurX, 0.12f, pukurZ);
+        instances.add(waterSurface);
+
+        // Specular shimmer plane (semi-transparent, pulsing alpha for light glint)
+        Material shimmerMat = new Material(
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0f),
+            ColorAttribute.createDiffuse(new Color(0.75f, 0.92f, 1.0f, 0f))
+        );
+        Model pukurShimmer = mb.createBox(pukurW * 0.6f, 0.01f, pukurL * 0.5f, shimmerMat, attr);
+        models.add(pukurShimmer);
+        waterShimmer = new ModelInstance(pukurShimmer);
+        waterShimmer.transform.setTranslation(pukurX - 2f, 0.14f, pukurZ - 1.5f);
+        instances.add(waterShimmer);
+
 
         // End Foliage batch generation & register models
         Model combinedFoliage = mbFoliage.end();
@@ -1307,7 +1333,31 @@ public class DhakaCampusWorld implements Disposable {
 
     public void update(float delta) {
         animTime += delta;
-        // Gently orbit and hover boundary stone sparkles
+
+        // ── Animated Pukur Water Shimmer ──────────────────────────────────────
+        if (waterSurface != null) {
+            // Oscillate water colour between deep teal and lighter aqua
+            float wave = 0.5f + 0.5f * MathUtils.sin(animTime * 0.8f);
+            float r = 0.16f + wave * 0.10f;
+            float g = 0.50f + wave * 0.12f;
+            float b = 0.68f + wave * 0.10f;
+            com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute ca =
+                (com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute)
+                waterSurface.materials.get(0).get(com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute.Diffuse);
+            if (ca != null) ca.color.set(r, g, b, 1f);
+        }
+        if (waterShimmer != null) {
+            // Pulse shimmer highlight — faster sine for sparkling glint
+            float shimmer = 0.08f + 0.28f * Math.max(0f, MathUtils.sin(animTime * 2.4f));
+            float shimmer2 = 0.05f + 0.20f * Math.max(0f, MathUtils.sin(animTime * 3.8f + 1.2f));
+            float combined = shimmer + shimmer2;
+            com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute ba =
+                (com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute)
+                waterShimmer.materials.get(0).get(com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute.Type);
+            if (ba != null) ba.opacity = combined;
+        }
+
+
         for (int i = 0; i < boundarySparkles.size; i++) {
             ModelInstance sp = boundarySparkles.get(i);
             float angle = animTime * 1.8f + i * (MathUtils.PI2 / boundarySparkles.size);

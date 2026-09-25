@@ -69,6 +69,21 @@ public class WhereWindsMeetHUD implements Disposable {
 
     private TextureFactory textures = null;
 
+    // ── AAA Visual FX Fields ──────────────────────────────────────────────────
+    // Checkpoint flash: brief full-screen gold flash when a memorial is inspected
+    private float checkpointFlashAlpha = 0f;
+    private float checkpointFlashDecay = 3.5f;    // alpha/sec decay rate
+
+    // Sprint side-trail: subtle screen-edge blur/darkening while sprinting
+    private float sprintTrailIntensity = 0f;
+
+    // Objective ring spin angle
+    private float objectiveRingAngle = 0f;
+
+    // Crosshair breath pulse
+    private float breathPhase = 0f;
+
+
     public WhereWindsMeetHUD(FontRenderer fontRenderer) {
         this.fonts = fontRenderer;
     }
@@ -87,7 +102,22 @@ public class WhereWindsMeetHUD implements Disposable {
 
     public void update(float delta, PlayerController player, JulyMemorials memorials) {
         animTime += delta;
-        // Only count down toast banner when modal is NOT blocking view!
+
+        // ── VFX Animations ─────────────────────────────────────────────────
+        // Checkpoint flash decay
+        if (checkpointFlashAlpha > 0f) {
+            checkpointFlashAlpha -= checkpointFlashDecay * delta;
+            if (checkpointFlashAlpha < 0f) checkpointFlashAlpha = 0f;
+        }
+        // Sprint trail: build up when sprinting, fade when not
+        float sprintTarget = player.isSprinting() && player.isMoving() ? 1f : 0f;
+        sprintTrailIntensity += (sprintTarget - sprintTrailIntensity) * Math.min(1f, 5f * delta);
+        // Objective ring spin
+        objectiveRingAngle = (objectiveRingAngle + 35f * delta) % 360f;
+        // Breath pulse
+        breathPhase += delta * 1.8f;
+
+
         if (missionBannerTime > 0f && activeModalEntry == null) {
             missionBannerTime -= delta;
         }
@@ -162,7 +192,10 @@ public class WhereWindsMeetHUD implements Disposable {
                 missionBannerCount = memorials.getInspectedCount();
             } else {
                 activeModalEntry = null;
-                missionBannerTime = 6.0f; // Start 6-second mission complete celebration!
+                missionBannerTime = 6.0f;
+                // Trigger checkpoint gold flash!
+                checkpointFlashAlpha = 1.0f;
+
                 // If all memorials inspected and victory hasn't triggered yet, open Victory Screen!
                 if (memorials.isAllInspected() && !victoryShown) {
                     isVictoryOpen = true;
@@ -241,8 +274,37 @@ public class WhereWindsMeetHUD implements Disposable {
             draw3DObjectivePin(nearest, player, camera, w, h);
         }
 
+        // ── AAA VFX: Sprint Motion Trail + Checkpoint Flash ──────────────────
+        shapeRenderer.begin(ShapeType.Filled);
+
+        // Sprint vignette: dark edges when sprinting for speed blur effect
+        if (sprintTrailIntensity > 0.01f) {
+            float trailAlpha = sprintTrailIntensity * 0.36f;
+            // Left edge
+            shapeRenderer.setColor(0.02f, 0.02f, 0.04f, trailAlpha);
+            shapeRenderer.rect(0, 0, w * 0.12f, h);
+            // Right edge
+            shapeRenderer.rect(w * 0.88f, 0, w * 0.12f, h);
+            // Bottom edge
+            shapeRenderer.setColor(0.02f, 0.02f, 0.04f, trailAlpha * 0.6f);
+            shapeRenderer.rect(0, 0, w, h * 0.08f);
+            // Top edge
+            shapeRenderer.rect(0, h * 0.92f, w, h * 0.08f);
+        }
+
+        // Checkpoint gold flash: brief full-screen warm golden pulse
+        if (checkpointFlashAlpha > 0.01f) {
+            float alpha = checkpointFlashAlpha * 0.48f;
+            shapeRenderer.setColor(1.0f, 0.82f, 0.25f, alpha);
+            shapeRenderer.rect(0, 0, w, h);
+        }
+
+        shapeRenderer.end();
+        // ── End VFX ───────────────────────────────────────────────────────────
+
         // 1. Draw HUD Background Shapes & Ornate Geometry
         shapeRenderer.begin(ShapeType.Filled);
+
         drawMissionCardBg(memorials, w, h);
         drawMissionChecklistBg(player, memorials, w, h);
         drawAntiqueCompassRoseFilled(w, h, cameraYaw);
