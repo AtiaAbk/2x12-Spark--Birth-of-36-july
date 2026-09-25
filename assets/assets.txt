@@ -4,3 +4,7 @@ fonts/LiberationSans-Regular.ttf
 libgdx.png
 screenshots/spark36_map_verified.png
 screenshots/spark36_verified.png
+shaders/bloom_blur.frag
+shaders/bloom_extract.frag
+shaders/postprocess.frag
+shaders/postprocess.vert
