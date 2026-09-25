@@ -70,9 +70,9 @@ public class PostProcessor implements Disposable {
             return;
         }
 
-        bloomExtractShader = loadShader("assets/shaders/postprocess.vert", "assets/shaders/bloom_extract.frag");
-        bloomBlurShader    = loadShader("assets/shaders/postprocess.vert", "assets/shaders/bloom_blur.frag");
-        compositeShader    = loadShader("assets/shaders/postprocess.vert", "assets/shaders/postprocess.frag");
+        bloomExtractShader = loadShader("shaders/postprocess.vert", "shaders/bloom_extract.frag");
+        bloomBlurShader    = loadShader("shaders/postprocess.vert", "shaders/bloom_blur.frag");
+        compositeShader    = loadShader("shaders/postprocess.vert", "shaders/postprocess.frag");
 
         if (bloomExtractShader == null || bloomBlurShader == null || compositeShader == null) {
             valid = false;
