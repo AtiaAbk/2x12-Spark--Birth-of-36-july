@@ -25,7 +25,9 @@ float rand(vec2 co) {
 // ─────────────────────────────────────────────
 // ACES filmic tone mapping
 // ─────────────────────────────────────────────
+// ACES filmic tone mapping
 vec3 aces(vec3 x) {
+    x = max(x, 0.0);
     float a = 2.51;
     float b = 0.03;
     float c = 2.43;
@@ -35,62 +37,68 @@ vec3 aces(vec3 x) {
 }
 
 // ─────────────────────────────────────────────
-// Color Grading — warm golden-hour LUT simulation
-// shadows → blue-teal lift, highlights → warm amber
+// Photographic Realistic Color Grading
+// - Neutral white point: whites stay crisp & pristine (Curzon cornices, domes, student attire)
+// - True blacks and clean neutral shadows (no muddy green or teal cast)
+// - Chlorophyll & Foliage Balancing: tames fluorescent chartreuse/yellow-greens into natural lush botanical greens
 // ─────────────────────────────────────────────
-vec3 colorGrade(vec3 col) {
-    // Shadows: lift toward cool blue-teal (cinematic look)
-    vec3 shadowLift = vec3(0.01, 0.02, 0.04);
-    // Highlights: push toward warm amber
-    vec3 highlightTint = vec3(1.06, 0.98, 0.88);
+vec3 realisticColorGrade(vec3 col) {
+    float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
 
-    float lum = dot(col, vec3(0.299, 0.587, 0.114));
-    vec3 shadows = mix(col + shadowLift, col, smoothstep(0.0, 0.4, lum));
-    vec3 highlights = mix(shadows, shadows * highlightTint, smoothstep(0.5, 1.0, lum));
+    // Foliage & Green Cast Neutralization:
+    // Rebalance excess green dominance into natural, rich botanical tones.
+    if (col.g > col.r && col.g > col.b) {
+        float excessGreen = col.g - max(col.r, col.b);
+        col.g -= excessGreen * 0.28; // soften electric green spike
+        col.r += excessGreen * 0.09; // add warm earthy chlorophyll warmth
+        col.b += excessGreen * 0.04; // slight cool balancing
+    }
 
-    return highlights;
+    // Crisp Neutral Highlights (retains clean whites, prevents yellowing)
+    vec3 neutralHighlight = vec3(lum);
+    col = mix(col, mix(col, neutralHighlight, 0.06), smoothstep(0.70, 1.0, lum));
+
+    return clamp(col, 0.0, 1.0);
 }
 
 void main() {
     vec2 uv = v_texCoord;
 
-    // ── 1. Scene colour ──────────────────────
-    vec4 scene = texture2D(u_texture, uv);
-    vec3 col = scene.rgb;
+    // ── 1. Symmetrical Chromatic Aberration at sample level ──
+    vec2 caDir = uv - 0.5;
+    float distSq = dot(caDir, caDir);
+    vec2 caOffset = caDir * (0.0016 * distSq);
 
-    // ── 2. Bloom additive composite ──────────
-    vec3 bloom = texture2D(u_bloomTexture, uv).rgb;
+    float r = texture2D(u_texture, clamp(uv - caOffset, 0.0, 1.0)).r;
+    float g = texture2D(u_texture, uv).g;
+    float b = texture2D(u_texture, clamp(uv + caOffset, 0.0, 1.0)).b;
+    vec3 col = max(vec3(r, g, b), 0.0);
+
+    // ── 2. Natural Bloom composite ──────────────────────────
+    vec3 bloom = max(texture2D(u_bloomTexture, uv).rgb, 0.0);
     col += bloom * u_bloomStrength;
 
-    // ── 3. Exposure ──────────────────────────
+    // ── 3. Exposure ──────────────────────────────────────────
     col *= u_exposure;
 
-    // ── 4. Saturation ────────────────────────
-    float gray = dot(col, vec3(0.299, 0.587, 0.114));
+    // ── 4. Natural Saturation ────────────────────────────────
+    float gray = dot(col, vec3(0.2126, 0.7152, 0.0722));
     col = mix(vec3(gray), col, u_saturation);
 
-    // ── 5. Color Grade ───────────────────────
-    col = colorGrade(col);
-
-    // ── 6. ACES Tone Mapping ─────────────────
+    // ── 5. ACES Filmic Tone Mapping ──────────────────────────
     col = aces(col);
 
-    // ── 7. Vignette ──────────────────────────
-    vec2 center = uv - 0.5;
-    float dist = length(center) / u_vignetteRadius;
-    float vignette = 1.0 - smoothstep(0.65, 1.0, dist) * u_vignetteStrength;
+    // ── 6. Photographic Realistic Color Grade ────────────────
+    col = realisticColorGrade(col);
+
+    // ── 7. Soft Natural Vignette ─────────────────────────────
+    float vDist = length(caDir) / max(u_vignetteRadius, 0.01);
+    float vignette = 1.0 - smoothstep(0.60, 1.0, vDist) * u_vignetteStrength;
     col *= vignette;
 
-    // ── 8. Subtle Chromatic Aberration ───────
-    float aberration = 0.0008;
-    float r = texture2D(u_texture, uv + vec2( aberration,  0.0)).r;
-    float b = texture2D(u_texture, uv + vec2(-aberration,  0.0)).b;
-    col.r = mix(col.r, r, 0.45);
-    col.b = mix(col.b, b, 0.45);
-
-    // ── 9. Film Grain ─────────────────────────
-    float grain = (rand(uv + vec2(u_time * 0.1, u_time * 0.07)) - 0.5) * 0.022;
+    // ── 8. Subtle Organic Film Grain ─────────────────────────
+    float grain = (rand(uv + vec2(u_time * 0.05, u_time * 0.03)) - 0.5) * 0.012;
     col += grain;
 
-    gl_FragColor = vec4(col, 1.0);
+    gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }

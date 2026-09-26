@@ -36,11 +36,11 @@ public class PostProcessor implements Disposable {
     private int bloomW, bloomH;
 
     // Parameters
-    public float bloomStrength   = 0.30f;
-    public float bloomThreshold  = 0.70f;
-    public float vignetteStrength = 0.50f;
-    public float vignetteRadius  = 0.75f;
-    public float exposure        = 1.05f;
+    public float bloomStrength   = 0.20f;
+    public float bloomThreshold  = 0.85f;
+    public float vignetteStrength = 0.40f;
+    public float vignetteRadius  = 0.78f;
+    public float exposure        = 1.00f;
     public float saturation      = 1.00f;
     private float time = 0f;
 

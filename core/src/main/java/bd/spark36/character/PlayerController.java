@@ -45,14 +45,17 @@ public class PlayerController {
 
     // Collision Dimensions
     public static final float PLAYER_RADIUS = 0.38f; // wide enough that the backpack never enters a wall
-    public static final float PLAYER_HEIGHT = 1.70f;
+    public static final float STANDING_HEIGHT = 1.70f;
+    public static final float CROUCH_HEIGHT = 0.85f;
     public static final float STEP_UP_HEIGHT = 0.65f; // Auto step-up for obstacles <= this height (stairs, curbs)
 
-    // The pukur curb can be stepped onto, but the water inside it is not walkable.
-    private static final float POND_MIN_X = -8.9f;
-    private static final float POND_MAX_X = 8.9f;
-    private static final float POND_MIN_Z = -5.9f;
-    private static final float POND_MAX_Z = 17.9f;
+    // The pukur curb and stepped ghats can be stepped onto, but deep water is clamped.
+    // Grand Pukur bounds (26m x 36m): X: [-13, 13], Z: [-12, 24]
+    // Walkable curb / ghat outer edge allows player up to water line:
+    private static final float POND_MIN_X = -12.4f;
+    private static final float POND_MAX_X = 12.4f;
+    private static final float POND_MIN_Z = -9.0f;
+    private static final float POND_MAX_Z = 21.0f;
 
     // Stamina & Vitality
     private float health = 100f;
@@ -69,6 +72,21 @@ public class PlayerController {
     private boolean isSprinting = false;
     private float walkCycle = 0f;
 
+    // Crouch / Ducking under low obstacles (e.g. Bamboo Trellis, clearance 1.22m)
+    private boolean isCrouching = false;
+
+    // Combat Combo System (1: Jab, 2: Cross Hook, 3: Spinning Roundhouse Kick)
+    private boolean isAttacking = false;
+    private int attackCombo = 0;
+    private float attackTimer = 0f;
+    private float comboWindowTimer = 0f;
+    private static final float ATTACK_DURATION = 0.36f;
+    private static final float COMBO_WINDOW = 0.55f;
+
+    // Sitting on Grand Pukur Ghat / Water Edge
+    private boolean isSittingWater = false;
+    private float sitProgress = 0f;
+
     // Temp vectors for math
     private final Vector2 moveDir = new Vector2();
     private final Vector3 prevPosition = new Vector3();
@@ -76,21 +94,26 @@ public class PlayerController {
     /**
      * Complete AABB collision boxes covering ALL solid geometry in the campus.
      * Each box: {minX, minY, minZ, maxX, maxY, maxZ}.
-     * Total: 50 boxes covering Curzon Hall, benches, bicycles, trees, lampposts, and memorials.
      */
     private static final float[][] COLLISION_BOXES = {
 
         // ======== CURZON HALL INDO-SARACENIC COMPLEX ========
-        // Main Central Block: (0, 7, -32), size (38, 14, 17)
-        {-19f, 0f, -40.5f, 19f, 14f, -23.5f},
-        // East Wing: (32, 5.75, -31), size (28, 11.5, 15)
-        {18f, 0f, -38.5f, 46f, 11.5f, -23.5f},
-        // West Wing: (-32, 5.75, -31), size (28, 11.5, 15)
-        {-46f, 0f, -38.5f, -18f, 11.5f, -23.5f},
-        // Central Facade Portico Projection: (0, 7.8, -22.5), size (15, 15.6, 3.8)
-        {-7.5f, 0f, -24.4f, 7.5f, 15.6f, -20.6f},
-        // Grand Access Steps: (0, 0.3, -19.5), size (16, 0.6, 4.2)
+        // Main Central Block back wall: (0, 7, -34.25), size (38, 14, 12.5)
+        // Historic arched verandah (Z: -28.0 to -23.5) is left OPEN and 100% walkable!
+        {-19f, 0f, -40.5f, 19f, 14f, -28.0f},
+        // East Wing back wall:
+        {18f, 0f, -38.5f, 46f, 11.5f, -28.0f},
+        // West Wing back wall:
+        {-46f, 0f, -38.5f, -18f, 11.5f, -28.0f},
+        // Central Facade Portico Projection back wall:
+        {-7.5f, 0f, -28.0f, 7.5f, 15.6f, -25.5f},
+        // Grand Access Steps: (0, 0.3, -19.5), size (16, 0.6, 4.2) (jumpable/step-up!)
         {-8f, 0f, -21.6f, 8f, 0.6f, -17.4f},
+
+        // ======== BAMBOO TRELLIS OBSTACLE OVER GARDEN PATH ========
+        // Crossbar: X: [19.8, 24.2], Y: [1.22, 1.48], Z: [27.8, 28.2]
+        // Standing player (1.70m) collides; Crouching player (0.85m) passes underneath!
+        {19.8f, 1.22f, 27.8f, 24.2f, 1.48f, 28.2f},
 
         // ======== BENCHES (3) — height 0.8m (JUMPABLE!) ========
         {-17.95f, 0f, 4.9f, -17.25f, 0.8f, 7.1f},
@@ -268,24 +291,85 @@ public class PlayerController {
         boolean sprintKey = false;
         boolean jumpKey = false;
 
+        // Reset or decrement combat combo timer
+        if (isAttacking) {
+            attackTimer += delta;
+            if (attackTimer >= ATTACK_DURATION) {
+                isAttacking = false;
+                attackTimer = 0f;
+                comboWindowTimer = COMBO_WINDOW;
+            }
+        } else if (comboWindowTimer > 0f) {
+            comboWindowTimer -= delta;
+            if (comboWindowTimer <= 0f) {
+                attackCombo = 0; // Combo window expired
+            }
+        }
+
+        // Sitting interaction logic
+        boolean nearGhat = (position.x >= -14.5f && position.x <= 14.5f &&
+                           ((position.z >= -14.0f && position.z <= -9.5f) || (position.z >= 21.0f && position.z <= 25.5f)));
+
         if (inputEnabled) {
+            // Sit by the water toggle [E]
+            if (nearGhat && Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+                isSittingWater = !isSittingWater;
+                velocity.setZero();
+            }
+
+            // If sitting, any movement or jump will make character stand up
+            if (isSittingWater) {
+                sitProgress = Math.min(1f, sitProgress + delta * 3.5f);
+                boolean breakSit = Gdx.input.isKeyJustPressed(Input.Keys.W) ||
+                                  Gdx.input.isKeyJustPressed(Input.Keys.S) ||
+                                  Gdx.input.isKeyJustPressed(Input.Keys.A) ||
+                                  Gdx.input.isKeyJustPressed(Input.Keys.D) ||
+                                  Gdx.input.isKeyJustPressed(Input.Keys.J) ||
+                                  Gdx.input.isKeyJustPressed(Input.Keys.SPACE);
+                if (breakSit) {
+                    isSittingWater = false;
+                    sitProgress = 0f;
+                } else {
+                    // Locked in sit pose
+                    velocity.setZero();
+                    verticalVelocity = 0f;
+                    isGrounded = true;
+                    return;
+                }
+            } else {
+                sitProgress = Math.max(0f, sitProgress - delta * 4f);
+            }
+
+            // Crouch / Ducking [C] or [Ctrl]
+            boolean crouchKeyHeld = Gdx.input.isKeyPressed(Input.Keys.C) ||
+                                   Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) ||
+                                   Gdx.input.isKeyPressed(Input.Keys.CONTROL_RIGHT);
+            isCrouching = crouchKeyHeld;
+
+            // Combat combo attacks: Left Click, 'K', or 'F'
+            boolean attackTrigger = Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) ||
+                                    Gdx.input.isKeyJustPressed(Input.Keys.K) ||
+                                    Gdx.input.isKeyJustPressed(Input.Keys.F);
+            if (attackTrigger && !isSittingWater && !isAttacking) {
+                isAttacking = true;
+                attackTimer = 0f;
+                attackCombo = (attackCombo % 3) + 1; // 1 -> 2 -> 3 -> 1
+            }
+
             boolean up = Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP);
             boolean down = Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN);
             boolean left = Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT);
             boolean right = Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT);
 
-            // SPRINT / RUN: SHIFT, CONTROL, or R key
+            // SPRINT / RUN: SHIFT or R key (or double-speed when moving)
             boolean shiftHeld = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT);
-            sprintKey = shiftHeld ||
-                        Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) ||
-                        Gdx.input.isKeyPressed(Input.Keys.R);
+            sprintKey = (shiftHeld || Gdx.input.isKeyPressed(Input.Keys.R)) && !isCrouching;
 
-            // JUMP / DOUBLE JUMP: 'J' (Primary key, replacing SPACE completely as requested!)
-            // Also supports C, V, or Right-Click as alternative gamer inputs
-            jumpKey = Gdx.input.isKeyJustPressed(Input.Keys.J) ||
-                      Gdx.input.isKeyJustPressed(Input.Keys.C) ||
+            // JUMP / DOUBLE JUMP: 'J' or SPACE or 'V' or Right-Click
+            jumpKey = (Gdx.input.isKeyJustPressed(Input.Keys.J) ||
+                      Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
                       Gdx.input.isKeyJustPressed(Input.Keys.V) ||
-                      Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT);
+                      Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) && !isCrouching;
 
             if (up) moveDir.y += 1f;
             if (down) moveDir.y -= 1f;
@@ -305,7 +389,7 @@ public class PlayerController {
         isSprinting = isMoving && sprintKey;
 
         // 3. Movement direction relative to camera angle
-        float currentSpeed = isSprinting ? SPRINT_SPEED : WALK_SPEED;
+        float currentSpeed = isCrouching ? (WALK_SPEED * 0.52f) : (isSprinting ? SPRINT_SPEED : WALK_SPEED);
         float targetVx = 0f;
         float targetVz = 0f;
 
@@ -390,7 +474,7 @@ public class PlayerController {
 
         // 6. Walk cycle animation progression
         if (isMoving) {
-            float cycleSpeed = isSprinting ? 14f : 8.5f;
+            float cycleSpeed = isSprinting ? 14f : (isCrouching ? 6f : 8.5f);
             walkCycle += cycleSpeed * delta;
         } else {
             walkCycle = 0f;
@@ -447,6 +531,8 @@ public class PlayerController {
             isGrounded = false;
         }
 
+        float currentHeight = isCrouching ? CROUCH_HEIGHT : STANDING_HEIGHT;
+
         // --- B. Horizontal Movement: X Axis Resolution ---
         float moveX = velocity.x * delta;
         float proposedX = position.x + moveX;
@@ -457,8 +543,8 @@ public class PlayerController {
 
             // If player's feet are completely on top of this box, ignore horizontal wall collision
             if (position.y >= bMaxY - 0.05f) continue;
-            // If player is completely below this box, ignore
-            if (position.y + PLAYER_HEIGHT <= bMinY) continue;
+            // If player is completely below this box (e.g. ducking under low trellis!), ignore collision!
+            if (position.y + currentHeight <= bMinY) continue;
 
             // Check if current Z overlaps
             boolean overlapZ = (position.z + PLAYER_RADIUS > bMinZ) && (position.z - PLAYER_RADIUS < bMaxZ);
@@ -504,8 +590,8 @@ public class PlayerController {
 
             // If player's feet are completely on top of this box, ignore horizontal wall collision
             if (position.y >= bMaxY - 0.05f) continue;
-            // If player is completely below this box, ignore
-            if (position.y + PLAYER_HEIGHT <= bMinY) continue;
+            // If player is completely below this box (e.g. ducking under low trellis!), ignore collision!
+            if (position.y + currentHeight <= bMinY) continue;
 
             // Check if current X overlaps
             boolean overlapX = (position.x + PLAYER_RADIUS > bMinX) && (position.x - PLAYER_RADIUS < bMaxX);
@@ -628,7 +714,36 @@ public class PlayerController {
         return walkCycle;
     }
 
+    public boolean isCrouching() {
+        return isCrouching;
+    }
+
+    public boolean isAttacking() {
+        return isAttacking;
+    }
+
+    public int getAttackCombo() {
+        return attackCombo;
+    }
+
+    public float getAttackProgress() {
+        return ATTACK_DURATION > 0f ? (attackTimer / ATTACK_DURATION) : 0f;
+    }
+
+    public boolean isSittingWater() {
+        return isSittingWater;
+    }
+
+    public float getSitProgress() {
+        return sitProgress;
+    }
+
     public void setPosition(float x, float y, float z) {
         position.set(x, y, z);
+    }
+
+    public void setHeadingDegrees(float deg) {
+        this.headingDegrees = deg;
+        this.targetHeadingDegrees = deg;
     }
 }

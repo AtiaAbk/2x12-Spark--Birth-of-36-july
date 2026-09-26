@@ -1,0 +1,1 @@
+/Users/atiaoishi/.gradle/caches/modules-2/files-2.1/com.badlogicgames.gdx/gdx/1.14.2/919153aed4ce12001e86c38ac3dc5cdfe1954898/gdx-1.14.2.jar:/Users/atiaoishi/.gradle/caches/modules-2/files-2.1/com.badlogicgames.gdx/gdx-freetype/1.14.2/801b423a6640ca06604f9262160ebc9a8b741a94/gdx-freetype-1.14.2.jar

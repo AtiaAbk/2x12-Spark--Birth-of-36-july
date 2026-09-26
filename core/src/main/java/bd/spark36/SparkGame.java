@@ -78,6 +78,7 @@ public class SparkGame extends ApplicationAdapter {
     // Auto-screenshot support
     private float testTimer = 0f;
     private boolean autoScreenshotTaken = false;
+    private int gameplayFrameCount = 0;
 
     @Override
     public void create() {
@@ -131,6 +132,8 @@ public class SparkGame extends ApplicationAdapter {
     public void startGameplay() {
         initGameplay();
         hud.reset();
+        testTimer = 0f;
+        gameplayFrameCount = 0;
         gameState = GameState.PLAYING;
         Gdx.input.setCursorCatched(true);
     }
@@ -367,6 +370,7 @@ public class SparkGame extends ApplicationAdapter {
     // ==========================================
     private void renderGameplay() {
         float delta = Gdx.graphics.getDeltaTime();
+        if (delta > 0.1f) delta = 0.1f;
         int screenW = Gdx.graphics.getBackBufferWidth();
         int screenH = Gdx.graphics.getBackBufferHeight();
 
@@ -415,7 +419,13 @@ public class SparkGame extends ApplicationAdapter {
             player.getHeadingDegrees(),
             player.getWalkCycle(),
             player.isMoving(),
-            player.isSprinting()
+            player.isSprinting(),
+            player.isCrouching(),
+            player.isAttacking(),
+            player.getAttackCombo(),
+            player.getAttackProgress(),
+            player.isSittingWater(),
+            player.getSitProgress()
         );
         shadowBatch.end();
         world.endShadowPass();
@@ -447,7 +457,13 @@ public class SparkGame extends ApplicationAdapter {
             player.getHeadingDegrees(),
             player.getWalkCycle(),
             player.isMoving(),
-            player.isSprinting()
+            player.isSprinting(),
+            player.isCrouching(),
+            player.isAttacking(),
+            player.getAttackCombo(),
+            player.getAttackProgress(),
+            player.isSittingWater(),
+            player.getSitProgress()
         );
         modelBatch.end();
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
@@ -467,8 +483,11 @@ public class SparkGame extends ApplicationAdapter {
         }
 
         // 7. 2D HUD (always crisp, rendered AFTER post-processing)
-        hud.render(player, memorials, camera.getYaw(), camera.getCamera());
+        hud.render(player, memorials, camera.getYaw(), camera.getCamera(), camera.getPitch(), camera.getCurrentFov());
 
+        // 8. Automated verification screenshot trigger (only after frame rendering has fully finished)
+        gameplayFrameCount++;
+        handleTestScreenshots(delta);
     }
 
     private void handleGameplayInputs(float delta) {
@@ -498,6 +517,10 @@ public class SparkGame extends ApplicationAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.F12)) {
             takeScreenshot("spark36_" + System.currentTimeMillis());
         }
+    }
+
+    private void handleTestScreenshots(float delta) {
+        if (gameplayFrameCount < 10) return;
 
         // Automated visual verification support
         if (System.getProperty("bd.spark36.testVictory") != null) {
@@ -539,6 +562,46 @@ public class SparkGame extends ApplicationAdapter {
                     Gdx.app.exit();
                 }
             }
+        } else if (System.getProperty("bd.spark36.testSitScreenshot") != null) {
+            testTimer += delta;
+            if (testTimer >= 0.8f && !player.isSittingWater()) {
+                player.setPosition(0f, 0.40f, 22.0f); // Teleport right to South Ghat
+                // Turn player north toward Curzon Hall & pukur
+                player.setPosition(0f, 0.40f, 21.6f);
+            }
+            if (testTimer >= 1.2f && !player.isSittingWater()) {
+                // Trigger sitting pose via reflection/simulated key
+                try {
+                    java.lang.reflect.Field f = PlayerController.class.getDeclaredField("isSittingWater");
+                    f.setAccessible(true);
+                    f.set(player, true);
+                    java.lang.reflect.Field fp = PlayerController.class.getDeclaredField("sitProgress");
+                    fp.setAccessible(true);
+                    fp.set(player, 1.0f);
+                } catch (Exception ignored) {}
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.5f) {
+                takeScreenshot("spark36_pond_sitting_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testHeroScreenshot") != null) {
+            testTimer += delta;
+            player.setHeadingDegrees(0f); // Face towards camera (South: +Z)
+            if (testTimer >= 0.5f) {
+                camera.setYaw(0f);
+                camera.setPitch(6f);
+                camera.setDistance(2.2f);
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("spark36_hero_character_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
         } else if (System.getProperty("bd.spark36.testScreenshot") != null) {
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
@@ -566,6 +629,7 @@ public class SparkGame extends ApplicationAdapter {
             if (!file.parent().exists()) {
                 file = Gdx.files.local("assets/screenshots/" + name + ".png");
             }
+            file.parent().mkdirs();
             com.badlogic.gdx.graphics.PixmapIO.writePNG(file, flipped);
             pixmap.dispose();
             flipped.dispose();

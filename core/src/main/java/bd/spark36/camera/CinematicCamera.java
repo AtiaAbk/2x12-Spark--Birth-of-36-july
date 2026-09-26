@@ -258,7 +258,11 @@ public class CinematicCamera {
 
     public PerspectiveCamera getCamera() { return camera; }
     public float getYaw() { return yaw; }
+    public void setYaw(float yaw) { this.yaw = yaw; }
     public float getPitch() { return pitch; }
+    public void setPitch(float pitch) { this.pitch = pitch; }
+    public float getDistance() { return distance; }
+    public void setDistance(float distance) { this.distance = distance; }
     public float getCurrentFov() { return currentFov; }
     public void setMouseLookActive(boolean active) { mouseLookActive = active; }
     public boolean isMouseLookActive() { return mouseLookActive; }
