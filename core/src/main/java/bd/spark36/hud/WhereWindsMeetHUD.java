@@ -129,8 +129,10 @@ public class WhereWindsMeetHUD implements Disposable {
             missionBannerTime -= delta;
         }
 
-        // Toggle Parameter HUD on F1 or TAB
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F1) || Gdx.input.isKeyJustPressed(Input.Keys.TAB)) {
+        // Toggle Parameter HUD on F1, TAB, or H
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F1) ||
+            Gdx.input.isKeyJustPressed(Input.Keys.TAB) ||
+            Gdx.input.isKeyJustPressed(Input.Keys.H)) {
             showParameterHud = !showParameterHud;
         }
 
@@ -377,7 +379,11 @@ public class WhereWindsMeetHUD implements Disposable {
         if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
             nearby = boundaryStoneEntry;
         }
-        if (nearby != null && hudActive) {
+        boolean nearGhat = (player.getPosition().x >= -14.5f && player.getPosition().x <= 14.5f &&
+                           ((player.getPosition().z >= -14.0f && player.getPosition().z <= -9.5f) || (player.getPosition().z >= 21.0f && player.getPosition().z <= 25.5f)));
+        boolean showPrompt = (nearby != null || nearGhat || player.isSittingWater()) && hudActive;
+
+        if (showPrompt) {
             drawSpeechBubblePromptBg(w, h);
         }
         shapeRenderer.end();
@@ -392,7 +398,7 @@ public class WhereWindsMeetHUD implements Disposable {
             drawTacticalMapButtonBorder(w, h);
         }
 
-        if (nearby != null && hudActive) {
+        if (showPrompt) {
             drawSpeechBubblePromptBorders(w, h);
         }
         shapeRenderer.end();
@@ -407,8 +413,8 @@ public class WhereWindsMeetHUD implements Disposable {
             drawTacticalMapButtonText(w, h);
         }
 
-        if (nearby != null && hudActive) {
-            drawSpeechBubblePromptText(nearby, w, h);
+        if (showPrompt) {
+            drawSpeechBubblePromptText(player, nearby, w, h);
         }
         spriteBatch.end();
 
@@ -828,7 +834,7 @@ public class WhereWindsMeetHUD implements Disposable {
             float bx = 36f;
             float by = 36f;
             fonts.smallFont.setColor(goldAccent);
-            fonts.smallFont.draw(spriteBatch, "[F1 / TAB]  SHOW HUD", bx + 12f, by + 19f);
+            fonts.smallFont.draw(spriteBatch, "[F1 / TAB / H]  SHOW TELEMETRY", bx + 12f, by + 19f);
             return;
         }
 
@@ -846,7 +852,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.keyFont.setColor(goldAccent);
         fonts.keyFont.draw(spriteBatch, "CAMPUS TELEMETRY", bx + 16f, by + bh - 8f);
         fonts.smallFont.setColor(new Color(0.85f, 0.85f, 0.88f, 0.9f));
-        fonts.smallFont.draw(spriteBatch, "[F1/TAB] HIDE", bx + bw - 98f, by + bh - 9f);
+        fonts.smallFont.draw(spriteBatch, "[F1/TAB/H] HIDE", bx + bw - 110f, by + bh - 9f);
 
         // ── SECTION 1: LOCATION ──
         float s1Y = by + bh - 32f;
@@ -998,12 +1004,33 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.line(px - 16f, py + 26f, px, py + 18f);
     }
 
-    private void drawSpeechBubblePromptText(MemorialEntry nearby, float w, float h) {
+    private void drawSpeechBubblePromptText(PlayerController player, MemorialEntry nearby, float w, float h) {
         float promptW = 460f;
         float px = (w - promptW) / 2f + 140f;
         float py = h * 0.44f;
 
-        if (nearby != null && nearby.id == 99) {
+        if (player.isSittingWater()) {
+            fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.headerFont.draw(spriteBatch, "[WASD / E]  STAND UP FROM GHAT", px + 52f, py + 41f);
+            fonts.headerFont.setColor(goldAccent);
+            fonts.headerFont.draw(spriteBatch, "[WASD / E]  STAND UP FROM GHAT", px + 51f, py + 42f);
+
+            fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.smallFont.draw(spriteBatch, "-- CURZON HALL REFLECTION PUKUR GHAT", px + 52f, py + 19f);
+            fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.80f, 1f));
+            fonts.smallFont.draw(spriteBatch, "-- CURZON HALL REFLECTION PUKUR GHAT", px + 51f, py + 20f);
+        } else if (nearby == null && (player.getPosition().x >= -14.5f && player.getPosition().x <= 14.5f &&
+                  ((player.getPosition().z >= -14.0f && player.getPosition().z <= -9.5f) || (player.getPosition().z >= 21.0f && player.getPosition().z <= 25.5f)))) {
+            fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.headerFont.draw(spriteBatch, "[E]  SIT BY THE POND GHAT", px + 68f, py + 41f);
+            fonts.headerFont.setColor(goldAccent);
+            fonts.headerFont.draw(spriteBatch, "[E]  SIT BY THE POND GHAT", px + 67f, py + 42f);
+
+            fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.smallFont.draw(spriteBatch, "-- DIP FEET & CONTEMPLATE BY THE WATER", px + 44f, py + 19f);
+            fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.80f, 1f));
+            fonts.smallFont.draw(spriteBatch, "-- DIP FEET & CONTEMPLATE BY THE WATER", px + 43f, py + 20f);
+        } else if (nearby != null && nearby.id == 99) {
             // Boundary Stone Prompt (Matching reference image [RT] Boundary Stone)
             fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
             fonts.headerFont.draw(spriteBatch, "[E]  INSPECT BOUNDARY STONE (1921)", px + 18f, py + 41f);
@@ -1051,6 +1078,12 @@ public class WhereWindsMeetHUD implements Disposable {
         // [J] (Jump / Double Jump)
         shapeRenderer.rect(kBaseX + 16f, kBaseY + 26f, 26f, 22f);
 
+        // [C] (Crouch / Duck)
+        shapeRenderer.rect(kBaseX + 54f, kBaseY + 26f, 26f, 22f);
+
+        // [F] (Combat Strike Combo)
+        shapeRenderer.rect(kBaseX + 96f, kBaseY + 26f, 26f, 22f);
+
         // [E]
         shapeRenderer.rect(kBaseX + 140f, kBaseY + 26f, 26f, 22f);
 
@@ -1083,6 +1116,12 @@ public class WhereWindsMeetHUD implements Disposable {
         // [J] (Jump / Double Jump)
         shapeRenderer.rect(kBaseX + 16f, kBaseY + 26f, 26f, 22f);
 
+        // [C] (Crouch / Duck)
+        shapeRenderer.rect(kBaseX + 54f, kBaseY + 26f, 26f, 22f);
+
+        // [F] (Combat Strike Combo)
+        shapeRenderer.rect(kBaseX + 96f, kBaseY + 26f, 26f, 22f);
+
         // [E]
         shapeRenderer.rect(kBaseX + 140f, kBaseY + 26f, 26f, 22f);
 
@@ -1109,6 +1148,8 @@ public class WhereWindsMeetHUD implements Disposable {
 
         fonts.keyFont.draw(spriteBatch, "SHIFT", kBaseX + 146f, kBaseY + 72f);
         fonts.keyFont.draw(spriteBatch, "J", kBaseX + 25f, kBaseY + 42f);
+        fonts.keyFont.draw(spriteBatch, "C", kBaseX + 63f, kBaseY + 42f);
+        fonts.keyFont.draw(spriteBatch, "F", kBaseX + 105f, kBaseY + 42f);
         fonts.keyFont.draw(spriteBatch, "E", kBaseX + 149f, kBaseY + 42f);
         fonts.keyFont.draw(spriteBatch, "F1", kBaseX + 11f, kBaseY + 15f);
         fonts.keyFont.draw(spriteBatch, "M", kBaseX + 77f, kBaseY + 15f);
@@ -1118,9 +1159,11 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.setColor(Color.WHITE);
         fonts.smallFont.draw(spriteBatch, "MOVE", kBaseX - 6f, kBaseY + 72f);
         fonts.smallFont.draw(spriteBatch, "SPRINT", kBaseX + 194f, kBaseY + 72f);
-        fonts.smallFont.draw(spriteBatch, "JUMP (2X)", kBaseX + 48f, kBaseY + 42f);
-        fonts.smallFont.draw(spriteBatch, "INTERACT", kBaseX + 172f, kBaseY + 42f);
-        fonts.smallFont.draw(spriteBatch, "HUD", kBaseX + 36f, kBaseY + 15f);
+        fonts.smallFont.draw(spriteBatch, "JUMP", kBaseX + 13f, kBaseY + 50f);
+        fonts.smallFont.draw(spriteBatch, "DUCK", kBaseX + 51f, kBaseY + 50f);
+        fonts.smallFont.draw(spriteBatch, "FIGHT", kBaseX + 93f, kBaseY + 50f);
+        fonts.smallFont.draw(spriteBatch, "ACTION", kBaseX + 172f, kBaseY + 42f);
+        fonts.smallFont.draw(spriteBatch, "HUD [H]", kBaseX + 32f, kBaseY + 15f);
         fonts.smallFont.draw(spriteBatch, "MAP", kBaseX + 100f, kBaseY + 15f);
         fonts.smallFont.draw(spriteBatch, "PAUSE", kBaseX + 172f, kBaseY + 15f);
     }

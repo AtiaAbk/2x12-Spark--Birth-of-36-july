@@ -200,55 +200,55 @@ public class StudentMesh implements Disposable {
 
         // ---------- 4. Head & Face (Origin: head centre, y = 1.55) ----------
         // Cranium & Cheekbones
-        put(headParts, ellipsoidModel(0.195f, 0.23f, 0.215f, skin), 0f, 0.01f, 0.005f);
-        // Tapered South Asian Jawline & Sculpted Chin
-        put(headParts, ellipsoidModel(0.155f, 0.13f, 0.155f, skin), 0f, -0.085f, 0.035f);
-        put(headParts, ellipsoidModel(0.065f, 0.055f, 0.065f, skin), 0f, -0.135f, 0.070f); // Defined chin
+        put(headParts, ellipsoidModel(0.185f, 0.22f, 0.20f, skin), 0f, 0.01f, 0f);
+        // Tapered South Asian Jawline & Sculpted Chin (defined, handsome jaw)
+        put(headParts, ellipsoidModel(0.145f, 0.13f, 0.145f, skin), 0f, -0.075f, 0.035f);
+        put(headParts, ellipsoidModel(0.060f, 0.050f, 0.060f, skin), 0f, -0.125f, 0.075f); // Defined chin
 
         // Sculpted Ears
-        Model ear = ellipsoidModel(0.028f, 0.055f, 0.042f, skinShade);
-        put(headParts, ear, -0.098f, -0.005f, 0f, 0f, -12f, 0f);
-        put(headParts, ear, 0.098f, -0.005f, 0f, 0f, 12f, 0f);
+        Model ear = ellipsoidModel(0.026f, 0.050f, 0.038f, skinShade);
+        put(headParts, ear, -0.095f, -0.005f, 0f, 0f, -12f, 0f);
+        put(headParts, ear, 0.095f, -0.005f, 0f, 0f, 12f, 0f);
 
-        // Expressive Eyes: Sclera + Iris + Pupil
-        Model eyeWhiteMesh = ellipsoidModel(0.030f, 0.020f, 0.018f, eyeWhite);
-        Model eyeIrisMesh = ellipsoidModel(0.018f, 0.018f, 0.012f, iris);
-        Model eyePupilMesh = ellipsoidModel(0.008f, 0.008f, 0.008f, pupil);
+        // Expressive Eyes: Sclera + Iris + Pupil (crisp, prominent, handsome)
+        Model eyeWhiteMesh = ellipsoidModel(0.034f, 0.022f, 0.018f, eyeWhite);
+        Model eyeIrisMesh = ellipsoidModel(0.022f, 0.022f, 0.014f, iris);
+        Model eyePupilMesh = ellipsoidModel(0.010f, 0.010f, 0.010f, pupil);
 
         // Left Eye
-        put(headParts, eyeWhiteMesh, -0.042f, 0.016f, 0.092f, 0f, -6f, 0f);
-        put(headParts, eyeIrisMesh, -0.042f, 0.016f, 0.100f, 0f, -6f, 0f);
-        put(headParts, eyePupilMesh, -0.042f, 0.016f, 0.104f, 0f, -6f, 0f);
+        put(headParts, eyeWhiteMesh, -0.042f, 0.016f, 0.102f, 0f, -6f, 0f);
+        put(headParts, eyeIrisMesh, -0.042f, 0.016f, 0.110f, 0f, -6f, 0f);
+        put(headParts, eyePupilMesh, -0.042f, 0.016f, 0.115f, 0f, -6f, 0f);
 
         // Right Eye
-        put(headParts, eyeWhiteMesh, 0.042f, 0.016f, 0.092f, 0f, 6f, 0f);
-        put(headParts, eyeIrisMesh, 0.042f, 0.016f, 0.100f, 0f, 6f, 0f);
-        put(headParts, eyePupilMesh, 0.042f, 0.016f, 0.104f, 0f, 6f, 0f);
+        put(headParts, eyeWhiteMesh, 0.042f, 0.016f, 0.102f, 0f, 6f, 0f);
+        put(headParts, eyeIrisMesh, 0.042f, 0.016f, 0.110f, 0f, 6f, 0f);
+        put(headParts, eyePupilMesh, 0.042f, 0.016f, 0.115f, 0f, 6f, 0f);
 
-        // Eyebrows (Arched & Determined)
-        Model browL = boxModel(0.048f, 0.010f, 0.014f, brow);
-        put(headParts, browL, -0.043f, 0.038f, 0.098f, -4f, 0f, 7f);
-        put(headParts, browL, 0.043f, 0.038f, 0.098f, -4f, 0f, -7f);
+        // Eyebrows (Arched & Determined, dark contrast)
+        Model browL = boxModel(0.052f, 0.012f, 0.016f, brow);
+        put(headParts, browL, -0.043f, 0.040f, 0.110f, -4f, 0f, 7f);
+        put(headParts, browL, 0.043f, 0.040f, 0.110f, -4f, 0f, -7f);
 
         // Defined Nose Bridge and Tip
-        put(headParts, capsuleModel(0.015f, 0.065f, skin), 0f, -0.012f, 0.102f, 15f, 0f, 0f); // Bridge
-        put(headParts, ellipsoidModel(0.026f, 0.022f, 0.026f, skinShade), 0f, -0.042f, 0.114f); // Tip & nostrils
+        put(headParts, capsuleModel(0.016f, 0.065f, skin), 0f, -0.010f, 0.112f, 15f, 0f, 0f); // Bridge
+        put(headParts, ellipsoidModel(0.028f, 0.022f, 0.026f, skinShade), 0f, -0.038f, 0.125f); // Tip & nostrils
 
-        // Sculpted Proportional Lips
-        put(headParts, ellipsoidModel(0.044f, 0.012f, 0.014f, lips), 0f, -0.078f, 0.096f); // Upper
-        put(headParts, ellipsoidModel(0.042f, 0.014f, 0.016f, lips), 0f, -0.092f, 0.094f); // Lower
+        // Sculpted Proportional Lips (warm natural tone)
+        put(headParts, ellipsoidModel(0.046f, 0.014f, 0.016f, lips), 0f, -0.072f, 0.108f); // Upper
+        put(headParts, ellipsoidModel(0.044f, 0.016f, 0.018f, lips), 0f, -0.086f, 0.106f); // Lower
 
         // Modern Layered Side-Parted Hairstyle (Where Winds Meet Style, Section 11)
         // Main hair volume over crown and back
-        put(headParts, ellipsoidModel(0.220f, 0.190f, 0.235f, hair), 0f, 0.045f, -0.015f);
+        put(headParts, ellipsoidModel(0.210f, 0.180f, 0.220f, hair), 0f, 0.050f, -0.025f);
         // Styled Side-Sweep volume (parted on left, sweeping across right)
-        put(headParts, ellipsoidModel(0.180f, 0.085f, 0.180f, hairHighlight), 0.025f, 0.115f, 0.020f, -10f, 15f, -8f);
-        // Front fringe locks
-        put(headParts, ellipsoidModel(0.140f, 0.055f, 0.080f, hair), 0.035f, 0.080f, 0.082f, -15f, 10f, -12f);
-        put(headParts, ellipsoidModel(0.080f, 0.045f, 0.060f, hair), -0.055f, 0.075f, 0.078f, -10f, -15f, 8f);
+        put(headParts, ellipsoidModel(0.170f, 0.080f, 0.170f, hairHighlight), 0.025f, 0.115f, 0.010f, -10f, 15f, -8f);
+        // Front fringe locks - neatly framing the forehead without covering eyes
+        put(headParts, ellipsoidModel(0.130f, 0.050f, 0.070f, hair), 0.035f, 0.085f, 0.080f, -15f, 10f, -12f);
+        put(headParts, ellipsoidModel(0.075f, 0.040f, 0.055f, hair), -0.055f, 0.080f, 0.075f, -10f, -15f, 8f);
         // Sideburns and temple tapers
-        put(headParts, capsuleModel(0.014f, 0.070f, hair), -0.095f, 0.015f, 0.040f, 10f, 0f, 0f);
-        put(headParts, capsuleModel(0.014f, 0.070f, hair), 0.095f, 0.015f, 0.040f, 10f, 0f, 0f);
+        put(headParts, capsuleModel(0.014f, 0.070f, hair), -0.092f, 0.015f, 0.035f, 10f, 0f, 0f);
+        put(headParts, capsuleModel(0.014f, 0.070f, hair), 0.092f, 0.015f, 0.035f, 10f, 0f, 0f);
 
         // ---------- 5. Arms & Hands ----------
         // Shoulder Joint

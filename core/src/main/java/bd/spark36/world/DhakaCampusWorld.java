@@ -468,17 +468,17 @@ public class DhakaCampusWorld implements Disposable {
             instances.add(cwInst);
         }
 
-        // Pukur ring paths: run either side of the pond (X=+-14m) and link to the promenade
-        // at the north (Z=-10.8m) and south (Z=24m) ends.
-        for (float sx : new float[]{-14f, 14f}) {
-            for (float z = -10.8f; z <= 24f; z += 5.4f) {
+        // Pukur ring paths: run either side of the enlarged pond (X=+-16.5m) and link to the promenade
+        // at the north (Z=-14.4f) and south (Z=27f) ends.
+        for (float sx : new float[]{-16.5f, 16.5f}) {
+            for (float z = -14.4f; z <= 27f; z += 5.4f) {
                 ModelInstance ring = new ModelInstance(crossWalkNorthSouth);
                 ring.transform.setTranslation(sx, 0.03f, z);
                 instances.add(ring);
             }
-            for (float z : new float[]{-10.8f, 24f}) {
+            for (float z : new float[]{-14.4f, 27f}) {
                 float dir = Math.signum(sx);
-                for (float x = 6.0f; x <= 11.5f; x += 5.4f) {
+                for (float x = 6.0f; x <= 14.5f; x += 5.4f) {
                     ModelInstance link = new ModelInstance(crossWalkEastWest);
                     link.transform.setTranslation(dir * x, 0.03f, z);
                     instances.add(link);
@@ -820,15 +820,15 @@ public class DhakaCampusWorld implements Disposable {
         // Standing players (1.70m) must duck/crouch [C] to pass underneath!
         // ==========================================
         Material trellisMat = new Material(
-            TextureAttribute.createDiffuse(textures.bambooBark),
+            TextureAttribute.createDiffuse(textures.bambooCulm),
             ColorAttribute.createDiffuse(new Color(0.48f, 0.42f, 0.28f, 1f))
         );
-        Model postModel = mb.createCylinder(0.12f, 1.6f, 0.12f, 8, trellisMat, attr);
-        models.add(postModel);
-        ModelInstance postL = new ModelInstance(postModel);
+        Model trellisPostModel = mb.createCylinder(0.12f, 1.6f, 0.12f, 8, trellisMat, attr);
+        models.add(trellisPostModel);
+        ModelInstance postL = new ModelInstance(trellisPostModel);
         postL.transform.setTranslation(20.8f, 0.8f, 28.0f);
         instances.add(postL);
-        ModelInstance postR = new ModelInstance(postModel);
+        ModelInstance postR = new ModelInstance(trellisPostModel);
         postR.transform.setTranslation(23.2f, 0.8f, 28.0f);
         instances.add(postR);
 
@@ -1550,9 +1550,8 @@ public class DhakaCampusWorld implements Disposable {
     public void update(float delta) {
         animTime += delta;
 
-        // Light shafts breathe slowly, as if clouds and leaves drift across the sun
-        if (beamBlend != null) {
-            beamBlend.opacity = BEAM_BASE_OPACITY * (0.80f + 0.20f * MathUtils.sin(animTime * 0.45f));
+        if (fishSystem != null) {
+            fishSystem.update(delta);
         }
 
         // ── Animated Pukur Water Shimmer ──────────────────────────────────────
@@ -1643,6 +1642,9 @@ public class DhakaCampusWorld implements Disposable {
         for (ModelInstance fx : effects) {
             batch.render(fx, environment);
         }
+        if (fishSystem != null) {
+            fishSystem.render(batch, environment);
+        }
     }
 
     /** Starts the sun's depth pass, centred on the player. Pair with {@link #endShadowPass()}. */
@@ -1681,5 +1683,8 @@ public class DhakaCampusWorld implements Disposable {
         instances.clear();
         boundarySparkles.clear();
         sunLight.dispose();
+        if (fishSystem != null) {
+            fishSystem.dispose();
+        }
     }
 }

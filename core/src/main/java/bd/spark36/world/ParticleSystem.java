@@ -63,14 +63,23 @@ public class ParticleSystem implements Disposable {
     private float time = 0f;
     private int screenW, screenH;
 
-    // Leaf color palette (autumn warm)
-    private static final Color[] LEAF_COLORS = {
-        new Color(0.72f, 0.42f, 0.12f, 1f), // amber
-        new Color(0.82f, 0.56f, 0.08f, 1f), // gold
-        new Color(0.55f, 0.32f, 0.10f, 1f), // brown
-        new Color(0.25f, 0.52f, 0.18f, 1f), // dark green
-        new Color(0.35f, 0.60f, 0.22f, 1f), // fresh green
-        new Color(0.78f, 0.28f, 0.12f, 1f), // red-orange
+    // Dynamic Wind Gust Engine (July monsoon/summer breezes)
+    private float windCycleTimer = 0f;
+    private float windStrength = 1.0f; // Current wind multiplier
+    private float gustHeading = 45f;   // degrees
+
+    // 3D Leaf aerodynamic roll & flutter
+    private final float[] leafRoll = new float[MAX_LEAVES];
+    private final float[] leafRollVel = new float[MAX_LEAVES];
+
+    // Summer lush leaf color palette (July monsoon/summer: vibrant Krishnachura orange, fresh emerald, golden green)
+    private static final Color[] SUMMER_LEAF_COLORS = {
+        new Color(0.92f, 0.32f, 0.12f, 1f), // Krishnachura flame red/orange
+        new Color(0.98f, 0.46f, 0.15f, 1f), // Radhachura orange-gold
+        new Color(0.22f, 0.68f, 0.28f, 1f), // Lush summer neem green
+        new Color(0.35f, 0.78f, 0.32f, 1f), // Fresh rain tree green
+        new Color(0.55f, 0.82f, 0.20f, 1f), // Sunlit lime leaf
+        new Color(0.85f, 0.65f, 0.18f, 1f)  // Golden summer blossom
     };
 
     public ParticleSystem() {
@@ -78,7 +87,7 @@ public class ParticleSystem implements Disposable {
         // Initialize all leaves as dead (life = 0)
         for (int i = 0; i < MAX_LEAVES; i++) {
             leafLife[i] = 0f;
-            leafColor[i] = LEAF_COLORS[i % LEAF_COLORS.length].cpy();
+            leafColor[i] = SUMMER_LEAF_COLORS[i % SUMMER_LEAF_COLORS.length].cpy();
         }
         for (int i = 0; i < MAX_DUST; i++) dustLife[i] = 0f;
         for (int i = 0; i < MAX_RIPPLES; i++) rippleLife[i] = 0f;
@@ -92,18 +101,26 @@ public class ParticleSystem implements Disposable {
     }
 
     private void spawnLeaf(int i) {
-        // Spawn across upper 30% of screen, biased toward center (promenade)
-        leafX[i] = screenW * (0.25f + MathUtils.random() * 0.55f);
+        // Spawn across screen width with wind directional offset
+        leafX[i] = screenW * (0.10f + MathUtils.random() * 0.80f);
         leafY[i] = screenH * (0.85f + MathUtils.random() * 0.18f);
-        leafVX[i] = (MathUtils.random() - 0.5f) * 28f;  // gentle sideways drift
-        leafVY[i] = -(22f + MathUtils.random() * 18f);   // fall downward
+
+        // Wind directional initial velocity
+        float windRad = gustHeading * MathUtils.degreesToRadians;
+        float baseSpeed = 24f + MathUtils.random() * 32f;
+        leafVX[i] = MathUtils.cos(windRad) * baseSpeed * windStrength;
+        leafVY[i] = -(18f + MathUtils.random() * 22f);   // fall downward
+
         leafAngle[i] = MathUtils.random() * 360f;
-        leafAngVel[i] = (MathUtils.random() - 0.5f) * 80f;
-        leafMaxLife[i] = 4.5f + MathUtils.random() * 3.5f;
+        leafAngVel[i] = (MathUtils.random() - 0.5f) * 140f;
+        leafRoll[i] = MathUtils.random() * MathUtils.PI2;
+        leafRollVel[i] = 2.5f + MathUtils.random() * 5.0f;
+
+        leafMaxLife[i] = 5.0f + MathUtils.random() * 3.5f;
         leafLife[i] = leafMaxLife[i];
-        leafSize[i] = 5f + MathUtils.random() * 5f;
+        leafSize[i] = 5.5f + MathUtils.random() * 6.5f;
         leafSway[i] = MathUtils.random() * MathUtils.PI2;
-        leafColor[i] = LEAF_COLORS[MathUtils.random(LEAF_COLORS.length - 1)].cpy();
+        leafColor[i] = SUMMER_LEAF_COLORS[MathUtils.random(SUMMER_LEAF_COLORS.length - 1)].cpy();
     }
 
     private void spawnDust(int i) {
@@ -122,6 +139,17 @@ public class ParticleSystem implements Disposable {
         screenW = Gdx.graphics.getBackBufferWidth();
         screenH = Gdx.graphics.getBackBufferHeight();
 
+        // ── Wind Gust Simulation ────────────────────────────────────
+        windCycleTimer += delta;
+        // Gust cycle every 6-8 seconds: wind accelerates violently, then calms
+        float gustWave = MathUtils.sin(windCycleTimer * 0.9f);
+        if (gustWave > 0.4f) {
+            // Sudden summer wind gust! (up to 42 km/h)
+            windStrength = 1.0f + (gustWave - 0.4f) * 3.5f;
+        } else {
+            windStrength = 0.85f;
+        }
+
         // Project pukur world pos to screen
         screenProj.set(pukurWorldPos);
         camera.project(screenProj);
@@ -138,18 +166,28 @@ public class ParticleSystem implements Disposable {
         for (int i = 0; i < MAX_LEAVES; i++) {
             if (leafLife[i] <= 0f) { deadLeaves++; continue; }
             leafLife[i] -= delta;
-            // Sine sway in X
-            float swayForce = MathUtils.sin(time * 1.8f + leafSway[i]) * 18f;
-            leafX[i] += (leafVX[i] + swayForce) * delta;
-            leafY[i] += leafVY[i] * delta;
-            leafAngle[i] += leafAngVel[i] * delta;
-            // Kill if below screen
-            if (leafY[i] < -30) leafLife[i] = 0f;
+
+            // 3D Aerodynamic Flutter: leaf rolls in 3D perspective as it tumbles
+            leafRoll[i] += leafRollVel[i] * delta * (0.8f + windStrength * 0.5f);
+            float flutter = MathUtils.cos(leafRoll[i]);
+
+            // Sudden wind gust sweeps leaves across the sky
+            float windDriftX = 35f * (windStrength - 0.8f) + MathUtils.sin(time * 2.2f + leafSway[i]) * 24f;
+            float windDriftY = -12f * (windStrength - 0.8f);
+
+            leafX[i] += (leafVX[i] + windDriftX) * delta;
+            leafY[i] += (leafVY[i] + windDriftY + flutter * 8f) * delta;
+            leafAngle[i] += (leafAngVel[i] * windStrength) * delta;
+
+            // Kill if below screen or way off edges
+            if (leafY[i] < -30 || leafX[i] < -60 || leafX[i] > screenW + 80) {
+                leafLife[i] = 0f;
+            }
         }
         // Spawn replacements
         if (deadLeaves > 0) {
             for (int i = 0; i < MAX_LEAVES; i++) {
-                if (leafLife[i] <= 0f && MathUtils.random() < delta * 8f) {
+                if (leafLife[i] <= 0f && MathUtils.random() < delta * 12f) {
                     spawnLeaf(i);
                     break;
                 }
@@ -157,7 +195,7 @@ public class ParticleSystem implements Disposable {
         }
         // Seed initial population
         for (int i = 0; i < MAX_LEAVES; i++) {
-            if (leafLife[i] <= 0f && MathUtils.random() < 0.015f) spawnLeaf(i);
+            if (leafLife[i] <= 0f && MathUtils.random() < 0.02f) spawnLeaf(i);
         }
 
         // ── Dust Motes ──────────────────────────────────────────────
@@ -223,13 +261,16 @@ public class ParticleSystem implements Disposable {
             float cosA = MathUtils.cos(ang);
             float sinA = MathUtils.sin(ang);
 
-            // Leaf shape: two triangles forming a small pointed oval
+            // 3D perspective foreshortening across the roll axis
+            float rollAspect = Math.max(0.12f, Math.abs(MathUtils.cos(leafRoll[i])));
+
+            // Leaf shape: aerodynamic pointed oval tumbling in 3D
             float tx = leafX[i], ty = leafY[i];
             // Tip points
             float tx1 = tx + cosA * s,        ty1 = ty + sinA * s;
             float tx2 = tx - cosA * s,        ty2 = ty - sinA * s;
-            float tx3 = tx - sinA * s * 0.4f, ty3 = ty + cosA * s * 0.4f;
-            float tx4 = tx + sinA * s * 0.4f, ty4 = ty - cosA * s * 0.4f;
+            float tx3 = tx - sinA * s * 0.45f * rollAspect, ty3 = ty + cosA * s * 0.45f * rollAspect;
+            float tx4 = tx + sinA * s * 0.45f * rollAspect, ty4 = ty - cosA * s * 0.45f * rollAspect;
             sr.triangle(tx1, ty1, tx3, ty3, tx2, ty2);
             sr.triangle(tx1, ty1, tx4, ty4, tx2, ty2);
         }

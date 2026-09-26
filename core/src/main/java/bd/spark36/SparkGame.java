@@ -419,7 +419,13 @@ public class SparkGame extends ApplicationAdapter {
             player.getHeadingDegrees(),
             player.getWalkCycle(),
             player.isMoving(),
-            player.isSprinting()
+            player.isSprinting(),
+            player.isCrouching(),
+            player.isAttacking(),
+            player.getAttackCombo(),
+            player.getAttackProgress(),
+            player.isSittingWater(),
+            player.getSitProgress()
         );
         shadowBatch.end();
         world.endShadowPass();
@@ -451,7 +457,13 @@ public class SparkGame extends ApplicationAdapter {
             player.getHeadingDegrees(),
             player.getWalkCycle(),
             player.isMoving(),
-            player.isSprinting()
+            player.isSprinting(),
+            player.isCrouching(),
+            player.isAttacking(),
+            player.getAttackCombo(),
+            player.getAttackProgress(),
+            player.isSittingWater(),
+            player.getSitProgress()
         );
         modelBatch.end();
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
@@ -545,6 +557,46 @@ public class SparkGame extends ApplicationAdapter {
             }
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
                 takeScreenshot("spark36_map_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testSitScreenshot") != null) {
+            testTimer += delta;
+            if (testTimer >= 0.8f && !player.isSittingWater()) {
+                player.setPosition(0f, 0.40f, 22.0f); // Teleport right to South Ghat
+                // Turn player north toward Curzon Hall & pukur
+                player.setPosition(0f, 0.40f, 21.6f);
+            }
+            if (testTimer >= 1.2f && !player.isSittingWater()) {
+                // Trigger sitting pose via reflection/simulated key
+                try {
+                    java.lang.reflect.Field f = PlayerController.class.getDeclaredField("isSittingWater");
+                    f.setAccessible(true);
+                    f.set(player, true);
+                    java.lang.reflect.Field fp = PlayerController.class.getDeclaredField("sitProgress");
+                    fp.setAccessible(true);
+                    fp.set(player, 1.0f);
+                } catch (Exception ignored) {}
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.5f) {
+                takeScreenshot("spark36_pond_sitting_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testHeroScreenshot") != null) {
+            testTimer += delta;
+            player.setHeadingDegrees(0f); // Face towards camera (South: +Z)
+            if (testTimer >= 0.5f) {
+                camera.setYaw(0f);
+                camera.setPitch(6f);
+                camera.setDistance(2.2f);
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("spark36_hero_character_verified");
                 autoScreenshotTaken = true;
                 if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
                     Gdx.app.exit();
