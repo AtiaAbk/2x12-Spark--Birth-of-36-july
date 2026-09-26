@@ -49,10 +49,8 @@ public class DhakaCampusWorld implements Disposable {
     // Instances that must never block: ground, water, sparkles and the merged foliage meshes
     private final java.util.Set<ModelInstance> nonSolid = new java.util.HashSet<>();
 
-    // Translucent effects (light shafts): drawn after the scene, never cast shadows or collide
+    // Translucent effects: drawn after the scene, never cast shadows or collide
     private final Array<ModelInstance> effects = new Array<>();
-    private BlendingAttribute beamBlend;
-    private static final float BEAM_BASE_OPACITY = 0.27f;
 
     // Animated water shimmer (pukur)
     private ModelInstance waterSurface;      // main water plane (animated tint)
@@ -62,21 +60,26 @@ public class DhakaCampusWorld implements Disposable {
     private final com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute shimmerDiffuse =
         ColorAttribute.createDiffuse(new com.badlogic.gdx.graphics.Color(0.55f, 0.82f, 0.95f, 0f));
 
+    // Procedural school of swimming fish in the reflection pond
+    private final PondFishSystem fishSystem;
 
     public DhakaCampusWorld(TextureFactory textures) {
         environment = new Environment();
 
-        // Natural daylight sun (upper-right, casting realistic crisp shadows)
+        // Vibrant tropical summer sun (radiant warm golden sunlight)
         sunLight = new DirectionalShadowLight(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 120f, 120f, 1f, 140f);
-        sunLight.set(new Color(1.00f, 0.98f, 0.95f, 1f), new Vector3(-0.55f, -0.60f, -0.58f).nor());
+        sunLight.set(new Color(1.05f, 0.98f, 0.90f, 1f), new Vector3(-0.55f, -0.60f, -0.58f).nor());
         environment.add(sunLight);
         environment.shadowMap = sunLight;
 
-        // Clean neutral sky-fill ambient for crisp realistic outdoor lighting
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.38f, 0.42f, 0.48f, 1f));
+        // Warm summer sky-fill ambient for crisp lush outdoor lighting
+        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.42f, 0.46f, 0.52f, 1f));
 
-        // Atmospheric aerial perspective fog (natural clean pale blue-white horizon)
-        environment.set(new ColorAttribute(ColorAttribute.Fog, 0.80f, 0.85f, 0.92f, 1f));
+        // Atmospheric aerial perspective fog (crisp summer daylight haze)
+        environment.set(new ColorAttribute(ColorAttribute.Fog, 0.84f, 0.88f, 0.95f, 1f));
+
+        fishSystem = new PondFishSystem();
+        fishSystem.setPondBounds(-12f, 12f, -10f, 22f, 0.12f);
 
         buildCampus(textures);
         buildColliders();
@@ -812,32 +815,34 @@ public class DhakaCampusWorld implements Disposable {
         GladeGeometry.ribbon(pathBatch.part(200),
             new float[][]{{6.9f, 40.3f}, {8.2f, 39.2f}, {9.2f, 38.0f}}, 0.7f, 0.021f, 2.6f);
 
-        // Shafts of sunlight slanting through the canopy along the paths
-        beamBlend = new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE, BEAM_BASE_OPACITY);
-        Material beamMat = new Material(
-            TextureAttribute.createDiffuse(textures.lightBeam),
-            beamBlend,
-            IntAttribute.createCullFace(0),
-            new DepthTestAttribute(GL20.GL_LEQUAL, false),   // read depth, don't write it
-            ColorAttribute.createDiffuse(new Color(0f, 0f, 0f, 1f)),
-            ColorAttribute.createEmissive(new Color(1f, 0.94f, 0.78f, 1f))
+        // ==========================================
+        // LOW BAMBOO TRELLIS / AWNING (Obstacle Clearance: 1.22m)
+        // Standing players (1.70m) must duck/crouch [C] to pass underneath!
+        // ==========================================
+        Material trellisMat = new Material(
+            TextureAttribute.createDiffuse(textures.bambooBark),
+            ColorAttribute.createDiffuse(new Color(0.48f, 0.42f, 0.28f, 1f))
         );
-        ModelBuilder beamBuilder = new ModelBuilder();
-        beamBuilder.begin();
-        MeshPartBuilder beamPart = beamBuilder.part("lightShafts", GL20.GL_TRIANGLES, attr, beamMat);
-        Vector3 towardSun = new Vector3(0.55f, 0.60f, 0.58f).nor();
-        // {baseX, baseZ, width, length}
-        float[][] shafts = {
-            {14f, 38f, 3.0f, 19f}, {19f, 41f, 2.4f, 22f}, {24.5f, 39f, 3.4f, 18f},
-            {30f, 40f, 2.6f, 20f}, {11f, 44f, 2.2f, 17f}
-        };
-        for (float[] s : shafts) {
-            addLightShaft(beamPart, s[0], s[1], s[2], s[3], towardSun);
-            addLightShaft(beamPart, -s[0] - 2f, s[1] + 1f, s[2] * 0.9f, s[3], towardSun);
-        }
-        Model beamModel = beamBuilder.end();
+        Model postModel = mb.createCylinder(0.12f, 1.6f, 0.12f, 8, trellisMat, attr);
+        models.add(postModel);
+        ModelInstance postL = new ModelInstance(postModel);
+        postL.transform.setTranslation(20.8f, 0.8f, 28.0f);
+        instances.add(postL);
+        ModelInstance postR = new ModelInstance(postModel);
+        postR.transform.setTranslation(23.2f, 0.8f, 28.0f);
+        instances.add(postR);
+
+        Model beamModel = mb.createBox(2.6f, 0.15f, 0.18f, trellisMat, attr);
         models.add(beamModel);
-        effects.add(new ModelInstance(beamModel));
+        ModelInstance crossbar = new ModelInstance(beamModel);
+        crossbar.transform.setTranslation(22.0f, 1.20f, 28.0f); // 1.20m clearance
+        instances.add(crossbar);
+
+        // Add explicit obstacle collider for crossbar
+        colliders.add(new float[]{20.6f, 1.10f, 27.8f, 23.4f, 1.45f, 28.2f});
+        colliders.add(new float[]{20.6f, 0f, 27.8f, 21.0f, 1.6f, 28.2f});
+        colliders.add(new float[]{23.0f, 0f, 27.8f, 23.4f, 1.6f, 28.2f});
+
         // ==========================================
         // HISTORICAL BOUNDARY STONE (1921) & MOSSY BOULDERS
         // (Directly echoing [RT] Boundary Stone from reference image)
@@ -889,24 +894,15 @@ public class DhakaCampusWorld implements Disposable {
         }
 
         // ==========================================
-        // CURZON HALL PUKUR (Historic Campus Reflection Pond)
+        // CURZON HALL GRAND PUKUR (Historic Campus Reflection Pond)
+        // Scaled to majestic 26m × 36m with stepped brick/stone ghats!
         // ==========================================
         float pukurX = 0f, pukurZ = 6f;
-        float pukurW = 18.0f, pukurL = 24.0f;
+        float pukurW = 26.0f, pukurL = 36.0f;
 
-        // Perimeter stone curb border
-        Model pukurCurbX = mb.createBox(pukurW + 0.8f, 0.45f, 0.6f, stoneCurb, attr);
-        Model pukurCurbZ = mb.createBox(0.6f, 0.45f, pukurL + 0.8f, stoneCurb, attr);
-        models.add(pukurCurbX);
+        // Perimeter stone curb borders (West and East flanks)
+        Model pukurCurbZ = mb.createBox(0.8f, 0.45f, pukurL + 0.8f, stoneCurb, attr);
         models.add(pukurCurbZ);
-
-        ModelInstance pcN = new ModelInstance(pukurCurbX);
-        pcN.transform.setTranslation(pukurX, 0.22f, pukurZ - pukurL * 0.5f);
-        instances.add(pcN);
-
-        ModelInstance pcS = new ModelInstance(pukurCurbX);
-        pcS.transform.setTranslation(pukurX, 0.22f, pukurZ + pukurL * 0.5f);
-        instances.add(pcS);
 
         ModelInstance pcW = new ModelInstance(pukurCurbZ);
         pcW.transform.setTranslation(pukurX - pukurW * 0.5f, 0.22f, pukurZ);
@@ -916,11 +912,49 @@ public class DhakaCampusWorld implements Disposable {
         pcE.transform.setTranslation(pukurX + pukurW * 0.5f, 0.22f, pukurZ);
         instances.add(pcE);
 
-        // Water surface plane — animated tint stored for runtime shimmer
+        // Multi-tiered Stepped Brick Ghats (North and South banks)
+        // Students sit on the steps and dangle their feet into the water!
+        float ghatW = 18.0f;
+        Model ghatStep1 = mb.createBox(ghatW, 0.16f, 1.5f, stoneCurb, attr);
+        Model ghatStep2 = mb.createBox(ghatW, 0.16f, 1.5f, stoneCurb, attr);
+        Model ghatStep3 = mb.createBox(ghatW, 0.16f, 1.5f, stoneCurb, attr);
+        models.add(ghatStep1);
+        models.add(ghatStep2);
+        models.add(ghatStep3);
+
+        // South Ghat (Facing Promenade)
+        ModelInstance sg1 = new ModelInstance(ghatStep1);
+        sg1.transform.setTranslation(pukurX, 0.36f, pukurZ + pukurL * 0.5f + 0.6f);
+        instances.add(sg1);
+        nonSolid.add(sg1);
+        ModelInstance sg2 = new ModelInstance(ghatStep2);
+        sg2.transform.setTranslation(pukurX, 0.22f, pukurZ + pukurL * 0.5f - 0.8f);
+        instances.add(sg2);
+        nonSolid.add(sg2);
+        ModelInstance sg3 = new ModelInstance(ghatStep3);
+        sg3.transform.setTranslation(pukurX, 0.10f, pukurZ + pukurL * 0.5f - 2.2f);
+        instances.add(sg3);
+        nonSolid.add(sg3);
+
+        // North Ghat (Facing Curzon Hall)
+        ModelInstance ng1 = new ModelInstance(ghatStep1);
+        ng1.transform.setTranslation(pukurX, 0.36f, pukurZ - pukurL * 0.5f - 0.6f);
+        instances.add(ng1);
+        nonSolid.add(ng1);
+        ModelInstance ng2 = new ModelInstance(ghatStep2);
+        ng2.transform.setTranslation(pukurX, 0.22f, pukurZ - pukurL * 0.5f + 0.8f);
+        instances.add(ng2);
+        nonSolid.add(ng2);
+        ModelInstance ng3 = new ModelInstance(ghatStep3);
+        ng3.transform.setTranslation(pukurX, 0.10f, pukurZ - pukurL * 0.5f + 2.2f);
+        instances.add(ng3);
+        nonSolid.add(ng3);
+
+        // Grand Water Surface Plane
         Material waterAnimMat = new Material(
             TextureAttribute.createDiffuse(textures.curzonWater),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.88f),
-            ColorAttribute.createDiffuse(new Color(0.20f, 0.55f, 0.72f, 1f))
+            ColorAttribute.createDiffuse(new Color(0.18f, 0.52f, 0.70f, 1f))
         );
         Model pukurWater = mb.createBox(pukurW - 0.2f, 0.04f, pukurL - 0.2f, waterAnimMat, attr);
         models.add(pukurWater);
@@ -928,12 +962,12 @@ public class DhakaCampusWorld implements Disposable {
         waterSurface.transform.setTranslation(pukurX, 0.12f, pukurZ);
         instances.add(waterSurface);
 
-        // Specular shimmer plane (semi-transparent, pulsing alpha for light glint)
+        // Specular summer shimmer plane (translucent sun glints)
         Material shimmerMat = new Material(
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0f),
-            ColorAttribute.createDiffuse(new Color(0.75f, 0.92f, 1.0f, 0f))
+            ColorAttribute.createDiffuse(new Color(0.85f, 0.95f, 1.0f, 0f))
         );
-        Model pukurShimmer = mb.createBox(pukurW * 0.6f, 0.01f, pukurL * 0.5f, shimmerMat, attr);
+        Model pukurShimmer = mb.createBox(pukurW * 0.75f, 0.01f, pukurL * 0.65f, shimmerMat, attr);
         models.add(pukurShimmer);
         waterShimmer = new ModelInstance(pukurShimmer);
         waterShimmer.transform.setTranslation(pukurX - 2f, 0.14f, pukurZ - 1.5f);

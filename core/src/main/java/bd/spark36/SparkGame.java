@@ -78,6 +78,7 @@ public class SparkGame extends ApplicationAdapter {
     // Auto-screenshot support
     private float testTimer = 0f;
     private boolean autoScreenshotTaken = false;
+    private int gameplayFrameCount = 0;
 
     @Override
     public void create() {
@@ -131,6 +132,8 @@ public class SparkGame extends ApplicationAdapter {
     public void startGameplay() {
         initGameplay();
         hud.reset();
+        testTimer = 0f;
+        gameplayFrameCount = 0;
         gameState = GameState.PLAYING;
         Gdx.input.setCursorCatched(true);
     }
@@ -367,6 +370,7 @@ public class SparkGame extends ApplicationAdapter {
     // ==========================================
     private void renderGameplay() {
         float delta = Gdx.graphics.getDeltaTime();
+        if (delta > 0.1f) delta = 0.1f;
         int screenW = Gdx.graphics.getBackBufferWidth();
         int screenH = Gdx.graphics.getBackBufferHeight();
 
@@ -469,6 +473,9 @@ public class SparkGame extends ApplicationAdapter {
         // 7. 2D HUD (always crisp, rendered AFTER post-processing)
         hud.render(player, memorials, camera.getYaw(), camera.getCamera(), camera.getPitch(), camera.getCurrentFov());
 
+        // 8. Automated verification screenshot trigger (only after frame rendering has fully finished)
+        gameplayFrameCount++;
+        handleTestScreenshots(delta);
     }
 
     private void handleGameplayInputs(float delta) {
@@ -498,6 +505,10 @@ public class SparkGame extends ApplicationAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.F12)) {
             takeScreenshot("spark36_" + System.currentTimeMillis());
         }
+    }
+
+    private void handleTestScreenshots(float delta) {
+        if (gameplayFrameCount < 10) return;
 
         // Automated visual verification support
         if (System.getProperty("bd.spark36.testVictory") != null) {
@@ -566,6 +577,7 @@ public class SparkGame extends ApplicationAdapter {
             if (!file.parent().exists()) {
                 file = Gdx.files.local("assets/screenshots/" + name + ".png");
             }
+            file.parent().mkdirs();
             com.badlogic.gdx.graphics.PixmapIO.writePNG(file, flipped);
             pixmap.dispose();
             flipped.dispose();

@@ -1,5 +1,6 @@
 package bd.spark36.character;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g3d.Environment;
@@ -18,21 +19,24 @@ import com.badlogic.gdx.utils.Disposable;
 import bd.spark36.world.TextureFactory;
 
 /**
- * 3D student protagonist: a Bangladeshi university student during the July 2024 uprising.
+ * High-fidelity 3D Student Protagonist for 2x12: Spark.
+ * Faithfully reimagined from the official "Where Winds Meet Style" Concept Design Board (Section 11 Male Student):
+ * - Handsome, expressive South Asian facial structure (tapered jaw, sculpted chin, expressive eyes with sclera & pupil, defined nose, natural lips)
+ * - Layered wavy modern side-parted textured hairstyle
+ * - Earthy khaki/brown utility jacket over a white/cream crewneck t-shirt
+ * - Sculpted hands with knuckles and thumb joints for combat strikes
+ * - Indigo denim jeans with leather belt and silver buckle
+ * - Leather trail sneakers with rubber soles
+ * - Canvas rucksack with dual shoulder straps and utility pouches
+ * - Seamless procedural animation for Idle, Walk, Sprint, Crouch, Combat Attacks, and Sitting by the Water.
  *
- * Built from rounded, deliberately overlapping parts (ellipsoids and capsules) grouped by body
- * segment, so limbs pivot at real joints: hip, knee, shoulder, elbow. Detail that tells the story:
- * a red protest headband with its knot tails hanging behind, a khaki jacket with collar and cuffs,
- * a canvas backpack with straps, flap and side pouches, jeans with a belt, and sneakers.
- *
- * Facing: local +Z is forward, so the backpack and headband tails sit on -Z.
+ * Local orientation: +Z is forward, -Z is rear (backpack), +X is character right, -X is character left.
  */
 public class StudentMesh implements Disposable {
 
-    private static final int DIV = 14;
+    private static final int DIV = 16;
 
-    /** One rounded part, positioned (and optionally tilted) in its body segment's local frame. */
-    private static final class Part {
+    public static final class Part {
         final ModelInstance inst;
         final float x, y, z, rx, ry, rz;
 
@@ -51,9 +55,10 @@ public class StudentMesh implements Disposable {
     private final Array<Model> models = new Array<>();
     private long attr;
 
-    // Body segments; each part list is drawn relative to that segment's transform
+    // Body segments
     private final Array<Part> pelvisParts = new Array<>();
     private final Array<Part> chestParts = new Array<>();
+    private final Array<Part> neckParts = new Array<>();
     private final Array<Part> headParts = new Array<>();
     private final Array<Part>[] upperArmParts = newPartArrays();
     private final Array<Part>[] foreArmParts = newPartArrays();
@@ -76,7 +81,7 @@ public class StudentMesh implements Disposable {
         createMeshes(textures);
     }
 
-    // ----- building helpers -----
+    // ----- Primitive creation helpers -----
 
     private Model ellipsoidModel(float w, float h, float d, Material mat) {
         Model m = modelBuilder.createSphere(w, h, d, DIV, DIV - 2, mat, attr);
@@ -96,6 +101,12 @@ public class StudentMesh implements Disposable {
         return m;
     }
 
+    private Model boxModel(float w, float h, float d, Material mat) {
+        Model m = modelBuilder.createBox(w, h, d, mat, attr);
+        models.add(m);
+        return m;
+    }
+
     private void put(Array<Part> list, Model m, float x, float y, float z) {
         list.add(new Part(new ModelInstance(m), x, y, z, 0f, 0f, 0f));
     }
@@ -104,10 +115,14 @@ public class StudentMesh implements Disposable {
         list.add(new Part(new ModelInstance(m), x, y, z, rx, ry, rz));
     }
 
-    /** Adds a part on both sides of the body: side 0 = left (-X), side 1 = right (+X). */
     private void putPair(Array<Part>[] lists, Model m, float x, float y, float z) {
         put(lists[0], m, -x, y, z);
         put(lists[1], m, x, y, z);
+    }
+
+    private void putPair(Array<Part>[] lists, Model m, float x, float y, float z, float rx, float ry, float rz) {
+        put(lists[0], m, -x, y, z, rx, -ry, -rz);
+        put(lists[1], m, x, y, z, rx, ry, rz);
     }
 
     private static Material flat(float r, float g, float b) {
@@ -117,96 +132,154 @@ public class StudentMesh implements Disposable {
     private void createMeshes(TextureFactory textures) {
         attr = Usage.Position | Usage.Normal | Usage.TextureCoordinates;
 
-        Material jacketMat = new Material(
-            TextureAttribute.createDiffuse(textures.studentJacket),
-            ColorAttribute.createDiffuse(new Color(0.95f, 0.92f, 0.88f, 1f)));
-        Material backpackMat = new Material(
-            TextureAttribute.createDiffuse(textures.backpackFabric),
-            ColorAttribute.createDiffuse(new Color(0.95f, 0.92f, 0.88f, 1f)));
+        // ---------- Sophisticated Palette matching Concept Board (Section 11) ----------
+        // Skin & Features
+        Material skin = flat(0.74f, 0.54f, 0.40f);         // Warm golden South Asian tone
+        Material skinShade = flat(0.62f, 0.44f, 0.32f);    // Jawline, nostrils, ear concha
+        Material eyeWhite = flat(0.96f, 0.96f, 0.98f);     // Realistic sclera
+        Material iris = flat(0.12f, 0.08f, 0.06f);         // Dark warm brown iris
+        Material pupil = flat(0.02f, 0.02f, 0.02f);        // Deep pupil
+        Material brow = flat(0.09f, 0.06f, 0.05f);         // Natural dark brow
+        Material lips = flat(0.55f, 0.34f, 0.30f);         // Natural warm lips
+        Material hair = flat(0.07f, 0.05f, 0.045f);        // Wavy espresso-black hair
+        Material hairHighlight = flat(0.12f, 0.09f, 0.08f);
 
-        Material skin = flat(0.66f, 0.48f, 0.35f);
-        Material skinShade = flat(0.58f, 0.41f, 0.29f);   // ears, nose: a touch deeper
-        Material hair = flat(0.06f, 0.045f, 0.04f);
-        Material headband = flat(0.86f, 0.09f, 0.12f);    // July red
-        Material sleeve = flat(0.60f, 0.56f, 0.40f);
-        Material cuff = flat(0.50f, 0.46f, 0.32f);
-        Material collarMat = flat(0.56f, 0.52f, 0.37f);
-        Material denim = flat(0.19f, 0.25f, 0.36f);
-        Material belt = flat(0.20f, 0.13f, 0.09f);
-        Material strap = flat(0.32f, 0.30f, 0.24f);
-        Material pouch = flat(0.24f, 0.26f, 0.20f);
-        Material sneaker = flat(0.86f, 0.85f, 0.82f);
-        Material sole = flat(0.12f, 0.11f, 0.11f);
-        Material eye = flat(0.04f, 0.03f, 0.03f);
-        Material mouth = flat(0.40f, 0.20f, 0.18f);
+        // Attire
+        Material innerShirt = flat(0.92f, 0.90f, 0.86f);   // Clean white/cream crewneck t-shirt
+        Material jacketBody = flat(0.48f, 0.38f, 0.26f);   // Earthy khaki/brown utility jacket
+        Material jacketTrim = flat(0.38f, 0.30f, 0.20f);   // Lapels, cuffs, shoulder flaps
+        Material denim = flat(0.18f, 0.24f, 0.35f);        // Indigo washed denim
+        Material beltLeather = flat(0.18f, 0.11f, 0.08f);  // Leather belt
+        Material buckle = flat(0.85f, 0.85f, 0.90f);       // Metallic belt buckle
+        Material sneakerLeather = flat(0.30f, 0.20f, 0.14f);// Brown leather trail shoe
+        Material sole = flat(0.88f, 0.88f, 0.85f);         // Clean rubber sneaker sole
+        Material backpackCanvas = flat(0.35f, 0.30f, 0.22f);
+        Material backpackStrap = flat(0.22f, 0.18f, 0.14f);
 
-        // ---------- Pelvis (segment origin: hips, y = 0.87) ----------
-        put(pelvisParts, ellipsoidModel(0.34f, 0.22f, 0.22f, denim), 0f, 0f, 0f);
-        put(pelvisParts, cylinderModel(0.325f, 0.035f, 0.215f, belt), 0f, 0.085f, 0f);
+        // ---------- 1. Pelvis & Waist (Origin: y = 0.87) ----------
+        put(pelvisParts, ellipsoidModel(0.33f, 0.22f, 0.22f, denim), 0f, 0f, 0f);
+        put(pelvisParts, cylinderModel(0.325f, 0.040f, 0.215f, beltLeather), 0f, 0.085f, 0f);
+        // Belt buckle
+        put(pelvisParts, boxModel(0.045f, 0.038f, 0.015f, buckle), 0f, 0.085f, 0.110f);
 
-        // ---------- Chest (segment origin: torso centre, y = 1.13) ----------
-        put(chestParts, ellipsoidModel(0.44f, 0.60f, 0.27f, jacketMat), 0f, 0f, 0f);
-        put(chestParts, ellipsoidModel(0.17f, 0.06f, 0.15f, collarMat), 0f, 0.295f, 0.012f);
-        // Backpack: body, top flap, front pocket, side pouches
-        put(chestParts, ellipsoidModel(0.34f, 0.44f, 0.22f, backpackMat), 0f, 0.03f, -0.20f);
-        put(chestParts, ellipsoidModel(0.32f, 0.12f, 0.24f, pouch), 0f, 0.20f, -0.215f);
-        put(chestParts, ellipsoidModel(0.24f, 0.18f, 0.10f, backpackMat), 0f, -0.10f, -0.31f);
-        Model sidePouch = ellipsoidModel(0.09f, 0.20f, 0.11f, pouch);
-        put(chestParts, sidePouch, -0.185f, -0.09f, -0.20f);
-        put(chestParts, sidePouch, 0.185f, -0.09f, -0.20f);
-        // Shoulder straps: over the shoulder, then down the chest front
-        Model strapTop = ellipsoidModel(0.05f, 0.035f, 0.30f, strap);
-        put(chestParts, strapTop, -0.115f, 0.262f, -0.02f);
-        put(chestParts, strapTop, 0.115f, 0.262f, -0.02f);
-        Model strapFront = ellipsoidModel(0.045f, 0.30f, 0.02f, strap);
-        put(chestParts, strapFront, -0.12f, 0.08f, 0.118f);
-        put(chestParts, strapFront, 0.12f, 0.08f, 0.118f);
+        // ---------- 2. Chest & Torso (Origin: y = 1.13) ----------
+        // Inner white crewneck shirt (visible at open jacket front)
+        put(chestParts, ellipsoidModel(0.38f, 0.56f, 0.24f, innerShirt), 0f, 0.02f, 0.01f);
+        put(chestParts, ellipsoidModel(0.16f, 0.06f, 0.14f, innerShirt), 0f, 0.285f, 0.02f);
 
-        // ---------- Head (segment origin: head centre, y = 1.55) ----------
-        put(headParts, ellipsoidModel(0.21f, 0.25f, 0.23f, skin), 0f, 0f, 0f);
-        Model ear = ellipsoidModel(0.03f, 0.055f, 0.04f, skinShade);
-        put(headParts, ear, -0.104f, -0.005f, 0f);
-        put(headParts, ear, 0.104f, -0.005f, 0f);
-        put(headParts, ellipsoidModel(0.032f, 0.05f, 0.045f, skinShade), 0f, -0.022f, 0.114f);   // nose
-        Model eyeModel = ellipsoidModel(0.024f, 0.017f, 0.014f, eye);
-        put(headParts, eyeModel, -0.04f, 0.018f, 0.099f);
-        put(headParts, eyeModel, 0.04f, 0.018f, 0.099f);
-        Model brow = ellipsoidModel(0.052f, 0.010f, 0.014f, hair);
-        put(headParts, brow, -0.041f, 0.044f, 0.103f, 0f, 0f, 6f);
-        put(headParts, brow, 0.041f, 0.044f, 0.103f, 0f, 0f, -6f);
-        put(headParts, ellipsoidModel(0.05f, 0.011f, 0.012f, mouth), 0f, -0.062f, 0.104f);
-        // Hair: cap over the crown and back, plus a fringe above the headband
-        put(headParts, ellipsoidModel(0.235f, 0.22f, 0.255f, hair), 0f, 0.028f, -0.02f);
-        put(headParts, ellipsoidModel(0.20f, 0.06f, 0.10f, hair), 0f, 0.083f, 0.06f);
-        // Red headband with its knot tails hanging behind
-        put(headParts, cylinderModel(0.226f, 0.038f, 0.238f, headband), 0f, 0.038f, 0.003f);
-        put(headParts, ellipsoidModel(0.05f, 0.05f, 0.05f, headband), 0f, 0.030f, -0.128f);
-        Model tail = capsuleModel(0.013f, 0.17f, headband);
-        put(headParts, tail, -0.022f, -0.055f, -0.142f, -10f, 0f, -8f);
-        put(headParts, tail, 0.022f, -0.05f, -0.146f, -14f, 0f, 9f);
+        // Open Jacket Side Panels (Khaki/Brown Utility Jacket)
+        // Left & right jacket bodies draping open across chest
+        Model jacketPanel = ellipsoidModel(0.17f, 0.58f, 0.25f, jacketBody);
+        put(chestParts, jacketPanel, -0.145f, 0.01f, 0.012f, 0f, 8f, 0f);
+        put(chestParts, jacketPanel, 0.145f, 0.01f, 0.012f, 0f, -8f, 0f);
+        // Jacket back cover
+        put(chestParts, ellipsoidModel(0.40f, 0.58f, 0.14f, jacketBody), 0f, 0.01f, -0.07f);
+        // Jacket lapel collars
+        Model lapel = boxModel(0.04f, 0.22f, 0.02f, jacketTrim);
+        put(chestParts, lapel, -0.09f, 0.18f, 0.115f, -8f, 12f, 15f);
+        put(chestParts, lapel, 0.09f, 0.18f, 0.115f, -8f, -12f, -15f);
 
-        // ---------- Arms ----------
-        // Upper arm segment origin: shoulder joint
-        Model shoulderBall = ellipsoidModel(0.14f, 0.14f, 0.14f, sleeve);
+        // Canvas Backpack & Utility Pouches
+        put(chestParts, ellipsoidModel(0.32f, 0.42f, 0.21f, backpackCanvas), 0f, 0.03f, -0.20f);
+        put(chestParts, ellipsoidModel(0.30f, 0.12f, 0.22f, backpackStrap), 0f, 0.19f, -0.21f); // Top flap
+        put(chestParts, ellipsoidModel(0.22f, 0.17f, 0.09f, backpackCanvas), 0f, -0.09f, -0.30f); // Lower pocket
+        Model sidePouch = ellipsoidModel(0.08f, 0.18f, 0.10f, backpackCanvas);
+        put(chestParts, sidePouch, -0.175f, -0.08f, -0.19f);
+        put(chestParts, sidePouch, 0.175f, -0.08f, -0.19f);
+        // Ergonomic Shoulder Straps curving over front
+        Model strapTop = ellipsoidModel(0.045f, 0.035f, 0.28f, backpackStrap);
+        put(chestParts, strapTop, -0.11f, 0.26f, -0.02f);
+        put(chestParts, strapTop, 0.11f, 0.26f, -0.02f);
+        Model strapFront = ellipsoidModel(0.040f, 0.28f, 0.02f, backpackStrap);
+        put(chestParts, strapFront, -0.115f, 0.08f, 0.115f);
+        put(chestParts, strapFront, 0.115f, 0.08f, 0.115f);
+
+        // ---------- 3. Neck (Origin: y = 1.42) ----------
+        put(neckParts, cylinderModel(0.11f, 0.14f, 0.11f, skin), 0f, 0f, 0.015f);
+        put(neckParts, ellipsoidModel(0.03f, 0.04f, 0.025f, skinShade), 0f, -0.01f, 0.075f); // Adam's apple
+
+        // ---------- 4. Head & Face (Origin: head centre, y = 1.55) ----------
+        // Cranium & Cheekbones
+        put(headParts, ellipsoidModel(0.195f, 0.23f, 0.215f, skin), 0f, 0.01f, 0.005f);
+        // Tapered South Asian Jawline & Sculpted Chin
+        put(headParts, ellipsoidModel(0.155f, 0.13f, 0.155f, skin), 0f, -0.085f, 0.035f);
+        put(headParts, ellipsoidModel(0.065f, 0.055f, 0.065f, skin), 0f, -0.135f, 0.070f); // Defined chin
+
+        // Sculpted Ears
+        Model ear = ellipsoidModel(0.028f, 0.055f, 0.042f, skinShade);
+        put(headParts, ear, -0.098f, -0.005f, 0f, 0f, -12f, 0f);
+        put(headParts, ear, 0.098f, -0.005f, 0f, 0f, 12f, 0f);
+
+        // Expressive Eyes: Sclera + Iris + Pupil
+        Model eyeWhiteMesh = ellipsoidModel(0.030f, 0.020f, 0.018f, eyeWhite);
+        Model eyeIrisMesh = ellipsoidModel(0.018f, 0.018f, 0.012f, iris);
+        Model eyePupilMesh = ellipsoidModel(0.008f, 0.008f, 0.008f, pupil);
+
+        // Left Eye
+        put(headParts, eyeWhiteMesh, -0.042f, 0.016f, 0.092f, 0f, -6f, 0f);
+        put(headParts, eyeIrisMesh, -0.042f, 0.016f, 0.100f, 0f, -6f, 0f);
+        put(headParts, eyePupilMesh, -0.042f, 0.016f, 0.104f, 0f, -6f, 0f);
+
+        // Right Eye
+        put(headParts, eyeWhiteMesh, 0.042f, 0.016f, 0.092f, 0f, 6f, 0f);
+        put(headParts, eyeIrisMesh, 0.042f, 0.016f, 0.100f, 0f, 6f, 0f);
+        put(headParts, eyePupilMesh, 0.042f, 0.016f, 0.104f, 0f, 6f, 0f);
+
+        // Eyebrows (Arched & Determined)
+        Model browL = boxModel(0.048f, 0.010f, 0.014f, brow);
+        put(headParts, browL, -0.043f, 0.038f, 0.098f, -4f, 0f, 7f);
+        put(headParts, browL, 0.043f, 0.038f, 0.098f, -4f, 0f, -7f);
+
+        // Defined Nose Bridge and Tip
+        put(headParts, capsuleModel(0.015f, 0.065f, skin), 0f, -0.012f, 0.102f, 15f, 0f, 0f); // Bridge
+        put(headParts, ellipsoidModel(0.026f, 0.022f, 0.026f, skinShade), 0f, -0.042f, 0.114f); // Tip & nostrils
+
+        // Sculpted Proportional Lips
+        put(headParts, ellipsoidModel(0.044f, 0.012f, 0.014f, lips), 0f, -0.078f, 0.096f); // Upper
+        put(headParts, ellipsoidModel(0.042f, 0.014f, 0.016f, lips), 0f, -0.092f, 0.094f); // Lower
+
+        // Modern Layered Side-Parted Hairstyle (Where Winds Meet Style, Section 11)
+        // Main hair volume over crown and back
+        put(headParts, ellipsoidModel(0.220f, 0.190f, 0.235f, hair), 0f, 0.045f, -0.015f);
+        // Styled Side-Sweep volume (parted on left, sweeping across right)
+        put(headParts, ellipsoidModel(0.180f, 0.085f, 0.180f, hairHighlight), 0.025f, 0.115f, 0.020f, -10f, 15f, -8f);
+        // Front fringe locks
+        put(headParts, ellipsoidModel(0.140f, 0.055f, 0.080f, hair), 0.035f, 0.080f, 0.082f, -15f, 10f, -12f);
+        put(headParts, ellipsoidModel(0.080f, 0.045f, 0.060f, hair), -0.055f, 0.075f, 0.078f, -10f, -15f, 8f);
+        // Sideburns and temple tapers
+        put(headParts, capsuleModel(0.014f, 0.070f, hair), -0.095f, 0.015f, 0.040f, 10f, 0f, 0f);
+        put(headParts, capsuleModel(0.014f, 0.070f, hair), 0.095f, 0.015f, 0.040f, 10f, 0f, 0f);
+
+        // ---------- 5. Arms & Hands ----------
+        // Shoulder Joint
+        Model shoulderBall = ellipsoidModel(0.135f, 0.135f, 0.135f, jacketBody);
         putPair(upperArmParts, shoulderBall, 0f, 0f, 0f);
-        putPair(upperArmParts, capsuleModel(0.058f, 0.32f, sleeve), 0f, -0.15f, 0f);
-        // Forearm segment origin: elbow
-        putPair(foreArmParts, capsuleModel(0.050f, 0.31f, sleeve), 0f, -0.14f, 0f);
-        putPair(foreArmParts, cylinderModel(0.10f, 0.035f, 0.10f, cuff), 0f, -0.235f, 0f);
-        putPair(foreArmParts, ellipsoidModel(0.10f, 0.115f, 0.10f, skin), 0f, -0.30f, 0f);
+        putPair(upperArmParts, capsuleModel(0.056f, 0.30f, jacketBody), 0f, -0.14f, 0f);
 
-        // ---------- Legs ----------
-        // Thigh segment origin: hip joint
-        putPair(thighParts, capsuleModel(0.090f, 0.44f, denim), 0f, -0.20f, 0f);
-        // Shin segment origin: knee
-        putPair(shinParts, ellipsoidModel(0.15f, 0.15f, 0.15f, denim), 0f, 0f, 0f);
-        putPair(shinParts, capsuleModel(0.070f, 0.43f, denim), 0f, -0.20f, 0f);
-        // Foot segment origin: ankle
-        putPair(footParts, ellipsoidModel(0.12f, 0.09f, 0.28f, sneaker), 0f, -0.012f, 0.05f);
-        putPair(footParts, ellipsoidModel(0.125f, 0.04f, 0.29f, sole), 0f, -0.048f, 0.05f);
+        // Forearm & Wrist Cuff
+        putPair(foreArmParts, capsuleModel(0.048f, 0.29f, jacketBody), 0f, -0.13f, 0f);
+        putPair(foreArmParts, cylinderModel(0.095f, 0.035f, 0.095f, jacketTrim), 0f, -0.225f, 0f);
+
+        // Sculpted Hands (Palm + Thumb + Knuckles for combat punches)
+        Model palm = ellipsoidModel(0.075f, 0.085f, 0.055f, skin);
+        putPair(foreArmParts, palm, 0f, -0.285f, 0f);
+        Model knuckles = boxModel(0.065f, 0.025f, 0.045f, skinShade);
+        putPair(foreArmParts, knuckles, 0f, -0.320f, 0.010f);
+
+        // ---------- 6. Legs & Feet ----------
+        // Thigh (Indigo Denim)
+        putPair(thighParts, capsuleModel(0.088f, 0.44f, denim), 0f, -0.20f, 0f);
+
+        // Shin (Denim knee & calf)
+        putPair(shinParts, ellipsoidModel(0.14f, 0.14f, 0.14f, denim), 0f, 0f, 0f);
+        putPair(shinParts, capsuleModel(0.068f, 0.42f, denim), 0f, -0.20f, 0f);
+
+        // Sturdy Trail Sneakers (Brown leather upper, white athletic rubber sole)
+        putPair(footParts, ellipsoidModel(0.115f, 0.085f, 0.27f, sneakerLeather), 0f, -0.012f, 0.05f);
+        putPair(footParts, ellipsoidModel(0.122f, 0.038f, 0.28f, sole), 0f, -0.046f, 0.05f);
     }
 
-    // ----- drawing -----
+    // ----- Drawing Helpers -----
 
     private void drawParts(ModelBatch batch, Environment env, Array<Part> parts, Matrix4 base) {
         for (int i = 0; i < parts.size; i++) {
@@ -220,62 +293,226 @@ public class StudentMesh implements Disposable {
     }
 
     /**
-     * Updates and renders the student with animated locomotion: legs swing at the hip and bend at
-     * the knee (foot stays level-ish), arms swing at the shoulder and bend at the elbow, the torso
-     * counter-twists, and the head bobs slightly. When idle the chest gently breathes.
+     * Backward-compatible render call.
      */
     public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
                        float walkCycle, boolean isMoving, boolean isSprinting) {
+        render(batch, env, pos, headingDegrees, walkCycle, isMoving, isSprinting,
+               false, false, 0, 0f, false, 0f);
+    }
 
+    /**
+     * Master procedural rendering method supporting:
+     * - Idle breathing & alert stance
+     * - Athletic Walk & Sprint cycles
+     * - Tactical Crouch & Ducking under low clearance
+     * - 3-Hit Combat Martial Arts combo (Jab, Cross Hook, Spin Kick)
+     * - Contemplative Sitting by the Water on the grand pukur ghat with feet dipped
+     */
+    public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
+                       float walkCycle, boolean isMoving, boolean isSprinting,
+                       boolean isCrouching, boolean isAttacking, int attackCombo, float attackProgress,
+                       boolean isSittingWater, float sitProgress) {
+
+        float delta = Gdx.graphics != null ? Gdx.graphics.getDeltaTime() : 0.016f;
+        idleTime += delta;
+
+        // Base procedural animation channels
         float bobOffset = 0f;
         float swing = 0f;
-        idleTime += com.badlogic.gdx.Gdx.graphics != null ? com.badlogic.gdx.Gdx.graphics.getDeltaTime() : 0f;
-        if (isMoving) {
-            float swingScale = isSprinting ? 38f : 24f;
-            swing = MathUtils.sin(walkCycle) * swingScale;
-            bobOffset = Math.abs(MathUtils.sin(walkCycle * 2f)) * (isSprinting ? 0.04f : 0.025f);
-        }
-        float breathe = isMoving ? 0f : MathUtils.sin(idleTime * 2.2f) * 0.006f;
+        float pelvisHeight = 0.87f;
+        float torsoPitch = 0f;
+        float headPitch = 0f;
+        float torsoTwist = 0f;
 
+        if (isMoving && !isSittingWater) {
+            float swingScale = isSprinting ? 38f : (isCrouching ? 16f : 24f);
+            swing = MathUtils.sin(walkCycle) * swingScale;
+            bobOffset = Math.abs(MathUtils.sin(walkCycle * 2f)) * (isSprinting ? 0.04f : 0.022f);
+        }
+
+        float breathe = (!isMoving && !isAttacking) ? MathUtils.sin(idleTime * 2.2f) * 0.007f : 0f;
+
+        // ---------- Stance Adjustments ----------
+        if (isCrouching) {
+            // Low tactical crouch: drop pelvis, lean torso forward, tilt head up
+            pelvisHeight = 0.46f;
+            torsoPitch = 32f;
+            headPitch = -20f;
+        }
+
+        if (isSittingWater) {
+            // Seated on the stone curb / ghat steps
+            pelvisHeight = 0.38f;
+            torsoPitch = -8f; // Relaxed recline onto hands
+        }
+
+        // ---------- Combat Strike Overrides ----------
+        float attackArmR = 0f, attackForeArmR = 0f;
+        float attackArmL = 0f, attackForeArmL = 0f;
+        float attackLegR = 0f, attackKneeR = 0f;
+
+        if (isAttacking) {
+            float t = MathUtils.clamp(attackProgress, 0f, 1f);
+            float strikePower = MathUtils.sin(t * MathUtils.PI); // 0 -> 1 -> 0 peak at midway
+
+            if (attackCombo == 1) {
+                // Combo 1: Fast Right Straight Jab
+                torsoTwist = -28f * strikePower;
+                attackArmR = -85f * strikePower;
+                attackForeArmR = -12f * strikePower;
+                // Guard left hand
+                attackArmL = -45f * strikePower;
+                attackForeArmL = -85f * strikePower;
+            } else if (attackCombo == 2) {
+                // Combo 2: Powerful Left Cross Hook
+                torsoTwist = 36f * strikePower;
+                attackArmL = -75f * strikePower;
+                attackForeArmL = -80f * strikePower;
+                // Guard right hand
+                attackArmR = -50f * strikePower;
+                attackForeArmR = -75f * strikePower;
+            } else if (attackCombo == 3) {
+                // Combo 3: Athletic Spinning Roundhouse Kick
+                torsoPitch = -15f * strikePower;
+                torsoTwist = -45f * strikePower;
+                attackLegR = -90f * strikePower;
+                attackKneeR = 25f * strikePower;
+            }
+        }
+
+        // ---------- Root Transformation ----------
         rootTransform.idt();
         rootTransform.translate(pos.x, pos.y + bobOffset, pos.z);
         rootTransform.rotate(Vector3.Y, headingDegrees);
 
-        float twist = swing * 0.12f;
+        // Twist from movement swing or combat strike
+        float twist = isAttacking ? torsoTwist : (swing * 0.12f);
 
-        segment.set(rootTransform).translate(0f, 0.87f, 0f).rotate(Vector3.Y, twist);
+        // Pelvis
+        segment.set(rootTransform).translate(0f, pelvisHeight, 0f).rotate(Vector3.Y, twist);
         drawParts(batch, env, pelvisParts, segment);
 
-        segment.set(rootTransform).translate(0f, 1.13f + breathe, 0f).rotate(Vector3.Y, -twist);
+        // Chest & Torso (Spine pivots from pelvis)
+        float chestY = isCrouching ? 0.72f : (isSittingWater ? 0.65f : 1.13f);
+        float chestZ = isCrouching ? 0.12f : 0f;
+        segment.set(rootTransform).translate(0f, chestY + breathe, chestZ)
+            .rotate(Vector3.Y, -twist)
+            .rotate(Vector3.X, torsoPitch);
         drawParts(batch, env, chestParts, segment);
 
-        // Head: slight forward lean when sprinting, tiny counter-bob so it doesn't move rigidly
-        float headLean = isSprinting && isMoving ? 6f : 0f;
-        segment.set(rootTransform).translate(0f, 1.55f + breathe - bobOffset * 0.3f, 0.005f)
-            .rotate(Vector3.X, headLean).rotate(Vector3.Y, -twist * 0.5f);
+        // Neck
+        float neckY = isCrouching ? 0.94f : (isSittingWater ? 0.88f : 1.42f);
+        float neckZ = isCrouching ? 0.22f : 0f;
+        segment.set(rootTransform).translate(0f, neckY + breathe, neckZ)
+            .rotate(Vector3.Y, -twist * 0.5f)
+            .rotate(Vector3.X, torsoPitch * 0.7f);
+        drawParts(batch, env, neckParts, segment);
+
+        // Head (Head look pitch & lean)
+        float sprintHeadLean = isSprinting && isMoving ? 8f : 0f;
+        float headY = isCrouching ? 1.05f : (isSittingWater ? 0.99f : 1.55f);
+        float headZ = isCrouching ? 0.28f : 0f;
+        segment.set(rootTransform).translate(0f, headY + breathe - bobOffset * 0.3f, headZ)
+            .rotate(Vector3.X, headPitch + sprintHeadLean)
+            .rotate(Vector3.Y, -twist * 0.3f);
         drawParts(batch, env, headParts, segment);
 
+        // ---------- Limbs (Arms & Legs) ----------
         for (int side = 0; side < 2; side++) {
             float sx = side == 0 ? -1f : 1f;
-            float legAngle = side == 0 ? swing : -swing;
-            float armAngle = side == 0 ? -swing : swing;
 
-            // Leg: hip swing, knee flexes the shin backward as the thigh comes forward
-            float knee = isMoving ? (legAngle < 0f ? -legAngle * 1.4f : legAngle * 0.3f) + 4f : 0f;
-            segment.set(rootTransform).translate(sx * 0.10f, 0.85f, 0f).rotate(Vector3.X, legAngle);
-            drawParts(batch, env, thighParts[side], segment);
-            segment.translate(0f, -0.40f, 0f).rotate(Vector3.X, knee);
-            drawParts(batch, env, shinParts[side], segment);
-            // Ankle: keep the sneaker close to flat against the ground as the leg swings
-            tmp.set(segment).translate(0f, -0.40f, 0f).rotate(Vector3.X, -(legAngle + knee) * 0.75f);
-            drawParts(batch, env, footParts[side], tmp);
+            if (isSittingWater) {
+                // ----- Seated Pose: Dangle and splash feet in water -----
+                // Thighs extended forward over the curb
+                float sitThighAngle = -85f;
+                segment.set(rootTransform).translate(sx * 0.11f, pelvisHeight - 0.04f, 0.08f)
+                    .rotate(Vector3.X, sitThighAngle);
+                drawParts(batch, env, thighParts[side], segment);
 
-            // Arm: shoulder swing, elbow bends forward while moving
-            float elbow = isMoving ? -(8f + Math.abs(armAngle) * 0.5f) : -4f;
-            segment.set(rootTransform).translate(sx * 0.235f, 1.33f + breathe, 0f).rotate(Vector3.X, armAngle);
-            drawParts(batch, env, upperArmParts[side], segment);
-            segment.translate(0f, -0.29f, 0f).rotate(Vector3.X, elbow);
-            drawParts(batch, env, foreArmParts[side], segment);
+                // Shins hanging down into the water
+                float shinDangleAngle = 82f;
+                // Alternate water splashing kick
+                float kickPhase = idleTime * 2.8f + (side == 0 ? 0f : MathUtils.PI);
+                float footKick = MathUtils.sin(kickPhase) * 12f;
+                segment.translate(0f, -0.40f, 0f).rotate(Vector3.X, shinDangleAngle + footKick);
+                drawParts(batch, env, shinParts[side], segment);
+
+                // Feet dipped in water
+                tmp.set(segment).translate(0f, -0.40f, 0f).rotate(Vector3.X, -10f);
+                drawParts(batch, env, footParts[side], tmp);
+
+                // Arms resting gently at sides on the curb
+                segment.set(rootTransform).translate(sx * 0.23f, chestY + 0.10f, -0.06f)
+                    .rotate(Vector3.X, 15f)
+                    .rotate(Vector3.Z, sx * -12f);
+                drawParts(batch, env, upperArmParts[side], segment);
+                segment.translate(0f, -0.28f, 0f).rotate(Vector3.X, -25f);
+                drawParts(batch, env, foreArmParts[side], segment);
+
+            } else if (isCrouching) {
+                // ----- Crouch Pose: Knees flexed deep, hands ready -----
+                float crouchLegSwing = isMoving ? swing * 0.7f : 0f;
+                float legAngle = (side == 0 ? crouchLegSwing : -crouchLegSwing) + 48f;
+                float kneeFlex = -78f;
+
+                segment.set(rootTransform).translate(sx * 0.12f, pelvisHeight - 0.03f, 0.04f)
+                    .rotate(Vector3.X, legAngle);
+                drawParts(batch, env, thighParts[side], segment);
+                segment.translate(0f, -0.38f, 0f).rotate(Vector3.X, kneeFlex);
+                drawParts(batch, env, shinParts[side], segment);
+                tmp.set(segment).translate(0f, -0.38f, 0f).rotate(Vector3.X, -(legAngle + kneeFlex));
+                drawParts(batch, env, footParts[side], tmp);
+
+                // Low tactical arm carry
+                float armAngle = (side == 0 ? -swing : swing) * 0.5f - 24f;
+                segment.set(rootTransform).translate(sx * 0.22f, chestY + 0.12f, chestZ)
+                    .rotate(Vector3.X, armAngle + torsoPitch * 0.5f);
+                drawParts(batch, env, upperArmParts[side], segment);
+                segment.translate(0f, -0.28f, 0f).rotate(Vector3.X, -45f);
+                drawParts(batch, env, foreArmParts[side], segment);
+
+            } else {
+                // ----- Standard Locomotion & Combat Strikes -----
+                float legAngle = side == 0 ? swing : -swing;
+                float armAngle = side == 0 ? -swing : swing;
+
+                if (isAttacking) {
+                    if (side == 1 && attackLegR != 0f) {
+                        legAngle = attackLegR;
+                    }
+                    if (side == 1 && attackArmR != 0f) {
+                        armAngle = attackArmR;
+                    } else if (side == 0 && attackArmL != 0f) {
+                        armAngle = attackArmL;
+                    }
+                }
+
+                // Leg swing & knee flexion
+                float knee = isMoving ? (legAngle < 0f ? -legAngle * 1.4f : legAngle * 0.3f) + 4f : 0f;
+                if (isAttacking && side == 1 && attackKneeR != 0f) {
+                    knee = attackKneeR;
+                }
+
+                segment.set(rootTransform).translate(sx * 0.10f, 0.85f, 0f).rotate(Vector3.X, legAngle);
+                drawParts(batch, env, thighParts[side], segment);
+                segment.translate(0f, -0.40f, 0f).rotate(Vector3.X, knee);
+                drawParts(batch, env, shinParts[side], segment);
+                tmp.set(segment).translate(0f, -0.40f, 0f).rotate(Vector3.X, -(legAngle + knee) * 0.75f);
+                drawParts(batch, env, footParts[side], tmp);
+
+                // Arm swing and elbow bend
+                float elbow = isMoving ? -(8f + Math.abs(armAngle) * 0.5f) : -4f;
+                if (isAttacking) {
+                    if (side == 1 && attackForeArmR != 0f) elbow = attackForeArmR;
+                    else if (side == 0 && attackForeArmL != 0f) elbow = attackForeArmL;
+                }
+
+                segment.set(rootTransform).translate(sx * 0.235f, 1.33f + breathe, 0f).rotate(Vector3.X, armAngle);
+                drawParts(batch, env, upperArmParts[side], segment);
+                segment.translate(0f, -0.29f, 0f).rotate(Vector3.X, elbow);
+                drawParts(batch, env, foreArmParts[side], segment);
+            }
         }
     }
 
