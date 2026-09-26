@@ -180,8 +180,8 @@ public class TextureFactory implements Disposable {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Base emerald green
-        pix.setColor(0.22f, 0.44f, 0.18f, 1f);
+        // Base rich turf green
+        pix.setColor(0.18f, 0.32f, 0.14f, 1f);
         pix.fill();
 
         // Multi-frequency organic turf variation
@@ -189,11 +189,11 @@ public class TextureFactory implements Disposable {
             for (int y = 0; y < size; y++) {
                 float n = (MathUtils.sin(x * 0.22f) * MathUtils.cos(y * 0.25f)
                          + MathUtils.sin((x + y) * 0.45f) * 0.5f);
-                // Muted olive grass with fine per-pixel speckle so it doesn't read as flat paint
-                float speckle = MathUtils.random(-0.03f, 0.03f);
-                float r = MathUtils.clamp(0.29f + n * 0.05f + speckle, 0.20f, 0.38f);
-                float g = MathUtils.clamp(0.41f + n * 0.09f + speckle, 0.30f, 0.52f);
-                float b = MathUtils.clamp(0.19f + n * 0.04f + speckle * 0.5f, 0.12f, 0.26f);
+                // Muted natural turf grass with fine per-pixel speckle
+                float speckle = MathUtils.random(-0.025f, 0.025f);
+                float r = MathUtils.clamp(0.20f + n * 0.04f + speckle, 0.14f, 0.28f);
+                float g = MathUtils.clamp(0.32f + n * 0.06f + speckle, 0.22f, 0.40f);
+                float b = MathUtils.clamp(0.14f + n * 0.03f + speckle * 0.5f, 0.10f, 0.20f);
 
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
@@ -216,7 +216,7 @@ public class TextureFactory implements Disposable {
         // cards, so it stays dark and low-contrast.
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
-        pix.setColor(0.09f, 0.20f, 0.06f, 1f);
+        pix.setColor(0.08f, 0.16f, 0.06f, 1f);
         pix.fill();
 
         for (int i = 0; i < 1100; i++) {
@@ -228,7 +228,7 @@ public class TextureFactory implements Disposable {
             if (blossoms && MathUtils.random() < 0.08f) {
                 pix.setColor(0.55f + 0.12f * t, 0.10f + 0.08f * t, 0.06f, 1f);
             } else {
-                pix.setColor(0.12f + 0.10f * t, 0.26f + 0.16f * t, 0.07f + 0.05f * t, 1f);
+                pix.setColor(0.10f + 0.08f * t, 0.20f + 0.12f * t, 0.06f + 0.04f * t, 1f);
             }
             // Draw at every wrap offset so the tile has no visible seam
             for (int ox = -size; ox <= size; ox += size) {
@@ -259,12 +259,12 @@ public class TextureFactory implements Disposable {
 
         // Cell 0: one broad ovate leaf
         drawLeaf(pix, 0, 0, 128, 244, 226, 74, up,
-            0.09f, 0.27f, 0.07f, 0.34f, 0.58f, 0.16f);
+            0.08f, 0.18f, 0.06f, 0.18f, 0.34f, 0.12f);
 
         // Cell 1: fan of three leaves of different lengths and greens
-        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up - 0.62f, 0.10f, 0.30f, 0.08f, 0.30f, 0.54f, 0.14f);
-        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up + 0.62f, 0.12f, 0.32f, 0.09f, 0.36f, 0.58f, 0.16f);
-        drawLeaf(pix, cell, 0, 128, 246, 214, 54, up, 0.08f, 0.26f, 0.06f, 0.28f, 0.52f, 0.13f);
+        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up - 0.62f, 0.08f, 0.18f, 0.06f, 0.18f, 0.32f, 0.10f);
+        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up + 0.62f, 0.09f, 0.20f, 0.07f, 0.20f, 0.35f, 0.12f);
+        drawLeaf(pix, cell, 0, 128, 246, 214, 54, up, 0.07f, 0.16f, 0.05f, 0.17f, 0.30f, 0.10f);
 
         // Cell 2: feathery compound leaf: a central rachis with pairs of small leaflets
         int ox = 0, oy = cell;
@@ -274,16 +274,16 @@ public class TextureFactory implements Disposable {
             float rx = 128f + MathUtils.sin(t * 2.2f) * 10f;
             float len = 78f * (1f - 0.45f * t);
             float hw = 13f * (1f - 0.25f * t);
-            drawLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f, 0.14f, 0.36f, 0.08f, 0.40f, 0.62f, 0.14f);
-            drawLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f, 0.14f, 0.36f, 0.08f, 0.40f, 0.62f, 0.14f);
+            drawLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f, 0.10f, 0.22f, 0.06f, 0.20f, 0.36f, 0.12f);
+            drawLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f, 0.10f, 0.22f, 0.06f, 0.20f, 0.36f, 0.12f);
         }
-        drawLeaf(pix, ox, oy, 128, 250, 236, 4, up, 0.20f, 0.30f, 0.09f, 0.26f, 0.38f, 0.10f);
+        drawLeaf(pix, ox, oy, 128, 250, 236, 4, up, 0.14f, 0.20f, 0.07f, 0.18f, 0.26f, 0.08f);
 
         // Cell 3: blossom clusters, each five petals around a golden centre, over a few leaves
         ox = cell;
         oy = cell;
-        drawLeaf(pix, ox, oy, 128, 250, 150, 40, up - 0.5f, 0.10f, 0.30f, 0.08f, 0.30f, 0.54f, 0.14f);
-        drawLeaf(pix, ox, oy, 128, 250, 150, 40, up + 0.5f, 0.10f, 0.30f, 0.08f, 0.30f, 0.54f, 0.14f);
+        drawLeaf(pix, ox, oy, 128, 250, 150, 40, up - 0.5f, 0.08f, 0.18f, 0.06f, 0.18f, 0.32f, 0.10f);
+        drawLeaf(pix, ox, oy, 128, 250, 150, 40, up + 0.5f, 0.08f, 0.18f, 0.06f, 0.18f, 0.32f, 0.10f);
         float[][] flowers = {{92, 96}, {168, 86}, {124, 140}, {70, 168}, {180, 158}, {132, 62}};
         for (float[] f : flowers) {
             for (int p = 0; p < 5; p++) {
@@ -316,23 +316,23 @@ public class TextureFactory implements Disposable {
         float[] fan = {-1.15f, -0.85f, -0.55f, -0.25f, 0f, 0.25f, 0.55f, 0.85f, 1.15f};
         float[] fanLen = {150f, 175f, 200f, 215f, 225f, 215f, 200f, 175f, 150f};
         for (int i = 0; i < fan.length; i++) {
-            float shade = (i % 2 == 0) ? 0f : 0.03f;
+            float shade = (i % 2 == 0) ? 0f : 0.02f;
             drawLeaf(pix, 0, 0, 128, 10, fanLen[i], 11f, down + fan[i],
-                0.20f + shade, 0.38f + shade, 0.09f, 0.42f + shade, 0.64f, 0.18f);
+                0.12f + shade, 0.24f + shade, 0.07f, 0.20f + shade, 0.36f, 0.12f);
         }
 
         // Cell 1: airy spray of seven long thin leaves
         for (int i = 0; i < 7; i++) {
             float a = -0.9f + i * 0.3f;
             drawLeaf(pix, cell, 0, 128, 10, 205f + 20f * (1f - Math.abs(a)), 8f, down + a,
-                0.16f, 0.34f, 0.08f, 0.36f, 0.58f, 0.15f);
+                0.10f, 0.22f, 0.06f, 0.18f, 0.32f, 0.10f);
         }
 
         // Cell 2: short bright sprig of five leaves
         for (int i = 0; i < 5; i++) {
             float a = -0.6f + i * 0.3f;
             drawLeaf(pix, 0, cell, 128, 10, 120f + 25f * (1f - Math.abs(a)), 10f, down + a,
-                0.28f, 0.48f, 0.11f, 0.52f, 0.72f, 0.22f);
+                0.15f, 0.28f, 0.08f, 0.22f, 0.38f, 0.12f);
         }
 
         // Cell 3: spray with a few dry, yellowing leaves mixed in
@@ -340,9 +340,9 @@ public class TextureFactory implements Disposable {
             float a = -1.0f + i * 0.285f;
             boolean dry = i % 3 == 1;
             if (dry) {
-                drawLeaf(pix, cell, cell, 128, 10, 185f, 10f, down + a, 0.42f, 0.36f, 0.12f, 0.62f, 0.55f, 0.20f);
+                drawLeaf(pix, cell, cell, 128, 10, 185f, 10f, down + a, 0.34f, 0.30f, 0.12f, 0.46f, 0.40f, 0.15f);
             } else {
-                drawLeaf(pix, cell, cell, 128, 10, 200f, 10f, down + a, 0.20f, 0.38f, 0.09f, 0.42f, 0.64f, 0.18f);
+                drawLeaf(pix, cell, cell, 128, 10, 200f, 10f, down + a, 0.12f, 0.24f, 0.07f, 0.20f, 0.36f, 0.12f);
             }
         }
 
@@ -552,12 +552,12 @@ public class TextureFactory implements Disposable {
 
                 float var = MathUtils.random(0f, 1f);
                 Color blade = new Color(
-                    0.14f + var * 0.14f,
-                    0.42f + var * 0.26f,
-                    0.12f + var * 0.10f,
+                    0.10f + var * 0.08f,
+                    0.24f + var * 0.12f,
+                    0.08f + var * 0.05f,
                     1f
                 );
-                Color vein = new Color(0.48f, 0.78f, 0.28f, 1f);
+                Color vein = new Color(0.22f, 0.38f, 0.14f, 1f);
                 drawBambooBlade(pix, lx, ly, leafLen, leafAngle, 9f, blade, vein);
             }
         }
@@ -634,9 +634,9 @@ public class TextureFactory implements Disposable {
             float vertFiber = MathUtils.sin(x * 0.85f) * 0.04f;
 
             for (int y = 0; y < height; y++) {
-                float r = MathUtils.clamp((0.44f + vertFiber) * (0.6f + 0.4f * cylLight), 0.22f, 0.65f);
-                float g = MathUtils.clamp((0.68f + vertFiber) * (0.6f + 0.4f * cylLight), 0.38f, 0.88f);
-                float b = MathUtils.clamp((0.24f + vertFiber * 0.5f) * (0.6f + 0.4f * cylLight), 0.12f, 0.40f);
+                float r = MathUtils.clamp((0.34f + vertFiber) * (0.6f + 0.4f * cylLight), 0.16f, 0.48f);
+                float g = MathUtils.clamp((0.42f + vertFiber) * (0.6f + 0.4f * cylLight), 0.20f, 0.54f);
+                float b = MathUtils.clamp((0.18f + vertFiber * 0.5f) * (0.6f + 0.4f * cylLight), 0.10f, 0.28f);
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
             }
@@ -700,12 +700,12 @@ public class TextureFactory implements Disposable {
 
                 float tint = MathUtils.random(0f, 1f);
                 Color bladeCol = new Color(
-                    0.20f + tint * 0.16f,
-                    0.60f + tint * 0.22f,
-                    0.15f + tint * 0.10f,
+                    0.12f + tint * 0.10f,
+                    0.26f + tint * 0.14f,
+                    0.08f + tint * 0.06f,
                     1f
                 );
-                Color veinCol = new Color(0.60f, 0.88f, 0.32f, 1f);
+                Color veinCol = new Color(0.24f, 0.40f, 0.14f, 1f);
                 drawBambooBlade(pix, nx, ny, len, angle, halfW, bladeCol, veinCol);
             }
         }
@@ -741,12 +741,12 @@ public class TextureFactory implements Disposable {
 
                 float tint = MathUtils.random(0f, 1f);
                 Color blade = new Color(
-                    0.16f + tint * 0.14f,
-                    0.46f + tint * 0.28f,
-                    0.14f + tint * 0.10f,
+                    0.12f + tint * 0.08f,
+                    0.24f + tint * 0.12f,
+                    0.08f + tint * 0.05f,
                     1f
                 );
-                Color vein = new Color(0.52f, 0.82f, 0.28f, 1f);
+                Color vein = new Color(0.24f, 0.38f, 0.14f, 1f);
                 drawBambooBlade(pix, lx, ly, len, angle, w, blade, vein);
             }
         }

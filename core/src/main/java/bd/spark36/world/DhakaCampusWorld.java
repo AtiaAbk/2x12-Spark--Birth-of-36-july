@@ -66,18 +66,17 @@ public class DhakaCampusWorld implements Disposable {
     public DhakaCampusWorld(TextureFactory textures) {
         environment = new Environment();
 
-        // Warm golden-hour sun (upper-right, behind the player at spawn) that also casts real
-        // shadows: a 120m x 120m shadow window that follows the player.
+        // Natural daylight sun (upper-right, casting realistic crisp shadows)
         sunLight = new DirectionalShadowLight(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 120f, 120f, 1f, 140f);
-        sunLight.set(new Color(1.05f, 0.97f, 0.84f, 1f), new Vector3(-0.55f, -0.60f, -0.58f).nor());
+        sunLight.set(new Color(1.00f, 0.98f, 0.95f, 1f), new Vector3(-0.55f, -0.60f, -0.58f).nor());
         environment.add(sunLight);
         environment.shadowMap = sunLight;
 
-        // Cool sky-fill ambient so shadowed areas read as blue-ish shade, not flat grey
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.42f, 0.45f, 0.52f, 1f));
+        // Clean neutral sky-fill ambient for crisp realistic outdoor lighting
+        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.38f, 0.42f, 0.48f, 1f));
 
-        // Atmospheric depth fog (warm golden dawn mist)
-        environment.set(new ColorAttribute(ColorAttribute.Fog, 0.92f, 0.86f, 0.74f, 1f));
+        // Atmospheric aerial perspective fog (natural clean pale blue-white horizon)
+        environment.set(new ColorAttribute(ColorAttribute.Fog, 0.80f, 0.85f, 0.92f, 1f));
 
         buildCampus(textures);
         buildColliders();
@@ -235,15 +234,13 @@ public class DhakaCampusWorld implements Disposable {
         Material leafClumpMat = new Material(
             TextureAttribute.createDiffuse(textures.leafClump),
             IntAttribute.createCullFace(0),
-            ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.92f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.05f, 0.09f, 0.03f, 1f))
+            ColorAttribute.createDiffuse(new Color(0.92f, 0.95f, 0.90f, 1f))
         );
 
         Material blossomClumpMat = new Material(
             TextureAttribute.createDiffuse(textures.blossomClump),
             IntAttribute.createCullFace(0),
-            ColorAttribute.createDiffuse(new Color(1f, 0.97f, 0.94f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.05f, 0.08f, 0.03f, 1f))
+            ColorAttribute.createDiffuse(new Color(0.96f, 0.95f, 0.92f, 1f))
         );
 
         // Individual leaf cards: cut out by alpha (no blending, so no sorting artefacts) and seen
@@ -255,16 +252,14 @@ public class DhakaCampusWorld implements Disposable {
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.5f),
             IntAttribute.createCullFace(0),
-            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            // Sunlight shining through leaves: a soft green glow so shaded foliage isn't black
-            ColorAttribute.createEmissive(new Color(0.10f, 0.17f, 0.05f, 1f))
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.95f, 0.95f, 1f))
         );
 
         // Bamboo canes are built as open tubes, so draw both sides
         Material bambooBarkMat = new Material(
             TextureAttribute.createDiffuse(textures.bambooCulm),
             IntAttribute.createCullFace(0),
-            ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.90f, 1f))
+            ColorAttribute.createDiffuse(new Color(0.92f, 0.94f, 0.88f, 1f))
         );
 
         Material bambooLeafCardMat = new Material(
@@ -272,8 +267,7 @@ public class DhakaCampusWorld implements Disposable {
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.5f),
             IntAttribute.createCullFace(0),
-            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.10f, 0.16f, 0.05f, 1f))
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.95f, 0.95f, 1f))
         );
 
         Material rockMat = new Material(
@@ -363,7 +357,7 @@ public class DhakaCampusWorld implements Disposable {
         Material waterMat = new Material(ColorAttribute.createDiffuse(new Color(0.24f, 0.52f, 0.62f, 1f)));
         Material woodBench = new Material(ColorAttribute.createDiffuse(new Color(0.42f, 0.28f, 0.16f, 1f)));
         Material bicycleMetal = new Material(ColorAttribute.createDiffuse(new Color(0.22f, 0.24f, 0.28f, 1f)));
-        Material hedgeMat = new Material(ColorAttribute.createDiffuse(new Color(0.20f, 0.33f, 0.16f, 1f)));
+        Material hedgeMat = new Material(ColorAttribute.createDiffuse(new Color(0.14f, 0.24f, 0.12f, 1f)));
         Material flowerRed = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.16f, 0.18f, 1f)));
 
         // 1. Central Campus Lawn (Spanning entire precinct)

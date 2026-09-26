@@ -181,10 +181,10 @@ public class WhereWindsMeetHUD implements Disposable {
                 float dy = (virtH - dh) / 2f + 8f;
 
                 // Dedicated close button box in top-right
-                float cbX = dx + dw - 172f;
-                float cbY = dy + dh - 44f;
                 float cbW = 160f;
-                float cbH = 34f;
+                float cbH = 40f;
+                float cbX = dx + dw - cbW - 12f;
+                float cbY = dy + dh - cbH - 10f;
 
                 boolean clickedCloseBtn = (mouseX >= cbX && mouseX <= cbX + cbW && mouseY >= cbY && mouseY <= cbY + cbH);
                 boolean clickedBottomClose = (mouseX >= dx + dw - 220f && mouseX <= dx + dw && mouseY >= dy - 30f && mouseY <= dy + 15f);
@@ -362,13 +362,14 @@ public class WhereWindsMeetHUD implements Disposable {
         // ── End VFX ───────────────────────────────────────────────────────────
 
         // 1. Draw HUD Background Shapes & Ornate Geometry
-        shapeRenderer.begin(ShapeType.Filled);
+        boolean hudActive = (activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen);
 
-        drawMissionCardBg(memorials, w, h);
-        drawParameterHudBg(player, memorials, w, h);
-        drawAntiqueCompassRoseFilled(w, h, cameraYaw);
-        drawKeycapsBg(w, h);
-        if (!isMapOpen && !isPauseMenuOpen && !isVictoryOpen && activeModalEntry == null) {
+        shapeRenderer.begin(ShapeType.Filled);
+        if (hudActive) {
+            drawMissionCardBg(memorials, w, h);
+            drawParameterHudBg(player, memorials, w, h);
+            drawAntiqueCompassRoseFilled(w, h, cameraYaw);
+            drawKeycapsBg(w, h);
             drawTacticalMapButtonBg(w, h);
         }
 
@@ -376,43 +377,43 @@ public class WhereWindsMeetHUD implements Disposable {
         if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
             nearby = boundaryStoneEntry;
         }
-        if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
+        if (nearby != null && hudActive) {
             drawSpeechBubblePromptBg(w, h);
         }
         shapeRenderer.end();
 
         // 2. Draw HUD Outlines, Accents & Filigree
         shapeRenderer.begin(ShapeType.Line);
-        drawMissionCardBorders(player, memorials, cameraYaw, w, h);
-        drawParameterHudBorders(player, memorials, w, h);
-        drawAntiqueCompassRoseLines(w, h, cameraYaw);
-        drawKeycapsBorders(w, h);
-        if (!isMapOpen && !isPauseMenuOpen && !isVictoryOpen && activeModalEntry == null) {
+        if (hudActive) {
+            drawMissionCardBorders(player, memorials, cameraYaw, w, h);
+            drawParameterHudBorders(player, memorials, w, h);
+            drawAntiqueCompassRoseLines(w, h, cameraYaw);
+            drawKeycapsBorders(w, h);
             drawTacticalMapButtonBorder(w, h);
         }
 
-        if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
+        if (nearby != null && hudActive) {
             drawSpeechBubblePromptBorders(w, h);
         }
         shapeRenderer.end();
 
         // 3. Draw Typography & Glyphs
         spriteBatch.begin();
-        drawMissionCardText(memorials, nearest, dstToNearest, w, h);
-        drawParameterHudText(player, memorials, cameraYaw, cameraPitch, cameraFov, w, h);
-        drawAntiqueCompassRoseText(player, memorials, nearest, dstToNearest, w, h, cameraYaw);
-        drawKeycapsText(w, h);
-        if (!isMapOpen && !isPauseMenuOpen && !isVictoryOpen && activeModalEntry == null) {
+        if (hudActive) {
+            drawMissionCardText(memorials, nearest, dstToNearest, w, h);
+            drawParameterHudText(player, memorials, cameraYaw, cameraPitch, cameraFov, w, h);
+            drawAntiqueCompassRoseText(player, memorials, nearest, dstToNearest, w, h, cameraYaw);
+            drawKeycapsText(w, h);
             drawTacticalMapButtonText(w, h);
         }
 
-        if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
+        if (nearby != null && hudActive) {
             drawSpeechBubblePromptText(nearby, w, h);
         }
         spriteBatch.end();
 
         // 4. Toast Notification Banner (renders on top of HUD when active)
-        if (!isVictoryOpen && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
+        if (hudActive) {
             renderMissionCompleteBanner(w, h);
         }
 
@@ -843,7 +844,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Header
         fonts.keyFont.setColor(goldAccent);
-        fonts.keyFont.draw(spriteBatch, "✦ CAMPUS TELEMETRY", bx + 16f, by + bh - 8f);
+        fonts.keyFont.draw(spriteBatch, "CAMPUS TELEMETRY", bx + 16f, by + bh - 8f);
         fonts.smallFont.setColor(new Color(0.85f, 0.85f, 0.88f, 0.9f));
         fonts.smallFont.draw(spriteBatch, "[F1/TAB] HIDE", bx + bw - 98f, by + bh - 9f);
 
@@ -1752,12 +1753,12 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Header bar backing plate
         float cbW = 160f;
-        float cbH = 34f;
+        float cbH = 40f;
         float cbX = dx + dw - cbW - 12f;
-        float cbY = dy + dh - cbH - 12f;
+        float cbY = dy + dh - cbH - 10f;
 
         shapeRenderer.setColor(0.03f, 0.05f, 0.08f, 0.88f);
-        shapeRenderer.rect(dx + 12f, dy + dh - 46f, dw - cbW - 32f, 36f);
+        shapeRenderer.rect(dx + 12f, dy + dh - 50f, dw - cbW - 32f, 40f);
 
         // Close button box backing plate
         shapeRenderer.setColor(0.06f, 0.08f, 0.12f, 0.90f);
@@ -1819,7 +1820,7 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.rect(dx, dy, dw, dh);
         // Header & close button outlines
-        shapeRenderer.rect(dx + 12f, dy + dh - 46f, dw - cbW - 32f, 36f);
+        shapeRenderer.rect(dx + 12f, dy + dh - 50f, dw - cbW - 32f, 40f);
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(cbX, cbY, cbW, cbH);
         // Corner brackets on close button
@@ -1838,13 +1839,13 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.begin();
         // Header Text
         fonts.headerFont.setColor(goldAccent);
-        fonts.headerFont.draw(spriteBatch, "✦ DHAKA UNIVERSITY TACTICAL MAP", dx + 26f, dy + dh - 22f);
+        fonts.headerFont.draw(spriteBatch, "DHAKA UNIVERSITY TACTICAL MAP", dx + 24f, dy + dh - 16f);
         fonts.smallFont.setColor(new Color(0.85f, 0.90f, 0.95f, 0.95f));
-        fonts.smallFont.draw(spriteBatch, "JULY 2024 MASS MOVEMENT HISTORICAL PRECINCT", dx + 380f, dy + dh - 24f);
+        fonts.smallFont.draw(spriteBatch, "JULY 2024 MASS MOVEMENT HISTORICAL PRECINCT", dx + 24f, dy + dh - 34f);
 
         // Close button text
         fonts.promptFont.setColor(goldAccent);
-        fonts.promptFont.draw(spriteBatch, "[X] CLOSE MAP", cbX + 16f, cbY + 24f);
+        fonts.promptFont.draw(spriteBatch, "[X] CLOSE MAP", cbX + 18f, cbY + 27f);
 
         if (nextObj != null) {
             worldToMapImage(nextObj.position.x, nextObj.position.z, pt);
@@ -2114,7 +2115,7 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.begin();
         // Header Title
         fonts.titleFont.setColor(goldAccent);
-        fonts.titleFont.draw(spriteBatch, "✦ MISSION ACCOMPLISHED ✦", vx + 40f, vy + vh - 22f);
+        fonts.titleFont.draw(spriteBatch, "MISSION ACCOMPLISHED", vx + 40f, vy + vh - 22f);
 
         fonts.headerFont.setColor(new Color(0.96f, 0.92f, 0.82f, 1f));
         fonts.headerFont.draw(spriteBatch, "LEVEL 1 COMPLETE — 36 JULY: THE SPARK OF FREEDOM", vx + 40f, vy + vh - 52f);
@@ -2153,7 +2154,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.headerFont.setColor(goldAccent);
         fonts.headerFont.draw(spriteBatch, "GOLD TIER", btn3X + 16f, statY + statH - 38f);
         fonts.smallFont.setColor(new Color(0.85f, 0.85f, 0.90f, 0.9f));
-        fonts.smallFont.draw(spriteBatch, "★ ★ ★ ★ ★ PERFECT", btn3X + 16f, statY + 24f);
+        fonts.smallFont.draw(spriteBatch, "HONOR ROLL • PERFECT", btn3X + 16f, statY + 24f);
 
         // Action Buttons Text
         fonts.promptFont.setColor(hoverBtn1 ? Color.WHITE : goldAccent);

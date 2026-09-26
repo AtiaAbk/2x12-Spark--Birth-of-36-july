@@ -24,11 +24,11 @@ public class AtmosphereRenderer implements Disposable {
     private final SpriteBatch spriteBatch = new SpriteBatch();
     private final FontRenderer fonts;
 
-    // ── Sky Colors (Golden Morning) ────────────────────────────────────
-    private final Color skyZenith    = new Color(0.28f, 0.50f, 0.78f, 1f); // deep morning blue
-    private final Color skyMidBlue   = new Color(0.52f, 0.70f, 0.88f, 1f); // mid blue
-    private final Color skyHorizon   = new Color(0.90f, 0.80f, 0.62f, 1f); // warm dawn gold
-    private final Color skyLowHaze   = new Color(0.96f, 0.88f, 0.74f, 1f); // lower haze band
+    // ── Sky Colors (Natural Daylight Sky) ────────────────────────────────────
+    private final Color skyZenith    = new Color(0.18f, 0.44f, 0.82f, 1f); // deep clear sky blue
+    private final Color skyMidBlue   = new Color(0.42f, 0.66f, 0.90f, 1f); // mid sky blue
+    private final Color skyHorizon   = new Color(0.78f, 0.86f, 0.94f, 1f); // natural airy horizon
+    private final Color skyLowHaze   = new Color(0.85f, 0.90f, 0.96f, 1f); // soft clean horizon mist
 
     // ── Cloud layers ──────────────────────────────────────────────────
     // 3 layers: high thin, mid fluffy, low haze strips
