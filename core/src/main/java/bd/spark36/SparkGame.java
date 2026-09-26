@@ -467,7 +467,7 @@ public class SparkGame extends ApplicationAdapter {
         }
 
         // 7. 2D HUD (always crisp, rendered AFTER post-processing)
-        hud.render(player, memorials, camera.getYaw(), camera.getCamera());
+        hud.render(player, memorials, camera.getYaw(), camera.getCamera(), camera.getPitch(), camera.getCurrentFov());
 
     }
 
