@@ -44,9 +44,15 @@ public class PlayerController {
     private static final int MAX_JUMPS = 2;
 
     // Collision Dimensions
-    public static final float PLAYER_RADIUS = 0.32f;
+    public static final float PLAYER_RADIUS = 0.38f; // wide enough that the backpack never enters a wall
     public static final float PLAYER_HEIGHT = 1.70f;
     public static final float STEP_UP_HEIGHT = 0.65f; // Auto step-up for obstacles <= this height (stairs, curbs)
+
+    // The pukur curb can be stepped onto, but the water inside it is not walkable.
+    private static final float POND_MIN_X = -8.9f;
+    private static final float POND_MAX_X = 8.9f;
+    private static final float POND_MIN_Z = -5.9f;
+    private static final float POND_MAX_Z = 17.9f;
 
     // Stamina & Vitality
     private float health = 100f;
@@ -87,20 +93,20 @@ public class PlayerController {
         {-8f, 0f, -21.6f, 8f, 0.6f, -17.4f},
 
         // ======== BENCHES (3) — height 0.8m (JUMPABLE!) ========
-        {-7.4f, 0f, 4.9f, -6.6f, 0.8f, 7.1f},
+        {-17.95f, 0f, 4.9f, -17.25f, 0.8f, 7.1f},
         {-7.4f, 0f, 22.9f, -6.6f, 0.8f, 25.1f},
         {-7.4f, 0f, 40.9f, -6.6f, 0.8f, 43.1f},
 
         // ======== BICYCLES (3) — height 1.0m (JUMPABLE!) ========
-        {-8.8f, 0f, 6.6f, -7.6f, 1.0f, 7.8f},
+        {-19.4f, 0f, 6.6f, -18.2f, 1.0f, 7.8f},
         {-8.8f, 0f, 24.6f, -7.6f, 1.0f, 25.8f},
         {-8.8f, 0f, 42.6f, -7.6f, 1.0f, 43.8f},
 
         // ======== 19 RAIN TREE TRUNKS — solid trunks height 6.0m ========
-        {-11.5f, 0f, -4.5f, -10.5f, 6f, -3.5f},
-        {10.5f, 0f, -4.5f, 11.5f, 6f, -3.5f},
-        {-12.5f, 0f, 13.5f, -11.5f, 6f, 14.5f},
-        {11.5f, 0f, 13.5f, 12.5f, 6f, 14.5f},
+        {-20f, 0f, -2.5f, -19f, 6f, -1.5f},
+        {19f, 0f, -2.5f, 20f, 6f, -1.5f},
+        {-20f, 0f, 13.5f, -19f, 6f, 14.5f},
+        {19f, 0f, 13.5f, 20f, 6f, 14.5f},
         {-13.5f, 0f, 31.5f, -12.5f, 6f, 32.5f},
         {12.5f, 0f, 31.5f, 13.5f, 6f, 32.5f},
         {-14.5f, 0f, 49.5f, -13.5f, 6f, 50.5f},
@@ -120,8 +126,8 @@ public class PlayerController {
         // ======== 10 CAST-IRON LAMPPOSTS — solid posts height 4.0m ========
         {-5.55f, 0f, -10.15f, -5.25f, 4.0f, -9.85f},
         {5.25f, 0f, -10.15f, 5.55f, 4.0f, -9.85f},
-        {-5.55f, 0f, 7.85f, -5.25f, 4.0f, 8.15f},
-        {5.25f, 0f, 7.85f, 5.55f, 4.0f, 8.15f},
+        {-16.65f, 0f, 7.85f, -16.35f, 4.0f, 8.15f},
+        {16.35f, 0f, 7.85f, 16.65f, 4.0f, 8.15f},
         {-5.55f, 0f, 25.85f, -5.25f, 4.0f, 26.15f},
         {5.25f, 0f, 25.85f, 5.55f, 4.0f, 26.15f},
         {-5.55f, 0f, 43.85f, -5.25f, 4.0f, 44.15f},
@@ -159,15 +165,15 @@ public class PlayerController {
         {9.7f, 0f, 32.5f, 12.1f, 1.40f, 34.6f}, // Boulder North-East (1.40m)
 
         // ======== CURZON HALL PUKUR PERIMETER CURBS (0.45m - Step-up & jumpable!) ========
-        // Pukur center: X=+12m, Z=-2m  |  size: 20m wide (X) x 16m deep (Z)
-        // West curb (along promenade east edge):  X=+1.7 to +2.3, Z=-10 to +6
-        {1.7f, 0f, -10.3f, 2.3f, 0.45f, 6.3f},
-        // East curb:  X=+21.7 to +22.3, Z=-10 to +6
-        {21.7f, 0f, -10.3f, 22.3f, 0.45f, 6.3f},
-        // North curb: X=+2 to +22, Z=-10.3 to -9.7
-        {2.0f, 0f, -10.3f, 22.0f, 0.45f, -9.7f},
-        // South curb: X=+2 to +22, Z=+5.7 to +6.3
-        {2.0f, 0f, 5.7f, 22.0f, 0.45f, 6.3f},
+        // Pukur center: X=0m, Z=+6m  |  size: 18m wide (X) x 24m deep (Z)
+        // West curb: X=-9.3 to -8.7, Z=-6.3 to +18.3
+        {-9.3f, 0f, -6.3f, -8.7f, 0.45f, 18.3f},
+        // East curb: X=+8.7 to +9.3
+        {8.7f, 0f, -6.3f, 9.3f, 0.45f, 18.3f},
+        // North curb: Z=-6.3 to -5.7
+        {-9.3f, 0f, -6.3f, 9.3f, 0.45f, -5.7f},
+        // South curb: Z=+17.7 to +18.3
+        {-9.3f, 0f, 17.7f, 9.3f, 0.45f, 18.3f},
 
         // ======== SOUTH BOUNDARY WALL & MAIN GATE ========
         {-110f, 0f, 77.2f, -4.2f, 2.8f, 78.8f},   // West perimeter wall
@@ -226,7 +232,25 @@ public class PlayerController {
         {54.5f, 0f, -14.5f, 57.5f, 1.5f, -11.5f}, // Pedestal 3 (1.5m, jumpable!)
     };
 
+    /** Hand-authored boxes plus everything the world generated; what the collision loops read. */
+    private float[][] boxes = COLLISION_BOXES;
+
     public PlayerController() {
+    }
+
+    /** Adds world-generated solids ({minX, minY, minZ, maxX, maxY, maxZ}) to the hand-authored ones. */
+    public void setExtraColliders(java.util.List<float[]> extra) {
+        float[][] all = new float[COLLISION_BOXES.length + extra.size()][];
+        System.arraycopy(COLLISION_BOXES, 0, all, 0, COLLISION_BOXES.length);
+        for (int i = 0; i < extra.size(); i++) {
+            all[COLLISION_BOXES.length + i] = extra.get(i);
+        }
+        boxes = all;
+    }
+
+    /** Every collision box in use, for systems that must not pass through solids (the camera). */
+    public float[][] getColliders() {
+        return boxes;
     }
 
     /**
@@ -394,7 +418,7 @@ public class PlayerController {
         // Find the highest solid ground surface directly beneath player's footprint
         float highestGround = 0f; // Default ground plane Y=0
 
-        for (float[] box : COLLISION_BOXES) {
+        for (float[] box : boxes) {
             float bMinX = box[0], bMinZ = box[2];
             float bMaxX = box[3], bMaxY = box[4], bMaxZ = box[5];
 
@@ -427,7 +451,7 @@ public class PlayerController {
         float moveX = velocity.x * delta;
         float proposedX = position.x + moveX;
 
-        for (float[] box : COLLISION_BOXES) {
+        for (float[] box : boxes) {
             float bMinX = box[0], bMinY = box[1], bMinZ = box[2];
             float bMaxX = box[3], bMaxY = box[4], bMaxZ = box[5];
 
@@ -459,13 +483,22 @@ public class PlayerController {
                 }
             }
         }
+        if (position.z + PLAYER_RADIUS > POND_MIN_Z && position.z - PLAYER_RADIUS < POND_MAX_Z) {
+            if (position.x <= POND_MIN_X - PLAYER_RADIUS && proposedX > POND_MIN_X - PLAYER_RADIUS) {
+                proposedX = POND_MIN_X - PLAYER_RADIUS;
+                velocity.x = 0f;
+            } else if (position.x >= POND_MAX_X + PLAYER_RADIUS && proposedX < POND_MAX_X + PLAYER_RADIUS) {
+                proposedX = POND_MAX_X + PLAYER_RADIUS;
+                velocity.x = 0f;
+            }
+        }
         position.x = proposedX;
 
         // --- C. Horizontal Movement: Z Axis Resolution ---
         float moveZ = velocity.z * delta;
         float proposedZ = position.z + moveZ;
 
-        for (float[] box : COLLISION_BOXES) {
+        for (float[] box : boxes) {
             float bMinX = box[0], bMinY = box[1], bMinZ = box[2];
             float bMaxX = box[3], bMaxY = box[4], bMaxZ = box[5];
 
@@ -497,11 +530,20 @@ public class PlayerController {
                 }
             }
         }
+        if (position.x + PLAYER_RADIUS > POND_MIN_X && position.x - PLAYER_RADIUS < POND_MAX_X) {
+            if (position.z <= POND_MIN_Z - PLAYER_RADIUS && proposedZ > POND_MIN_Z - PLAYER_RADIUS) {
+                proposedZ = POND_MIN_Z - PLAYER_RADIUS;
+                velocity.z = 0f;
+            } else if (position.z >= POND_MAX_Z + PLAYER_RADIUS && proposedZ < POND_MAX_Z + PLAYER_RADIUS) {
+                proposedZ = POND_MAX_Z + PLAYER_RADIUS;
+                velocity.z = 0f;
+            }
+        }
         position.z = proposedZ;
 
         // --- D. Post-Move Step-Up & Edge Detection ---
         float surfaceUnderFoot = 0f;
-        for (float[] box : COLLISION_BOXES) {
+        for (float[] box : boxes) {
             float bMinX = box[0], bMinZ = box[2];
             float bMaxX = box[3], bMaxY = box[4], bMaxZ = box[5];
 

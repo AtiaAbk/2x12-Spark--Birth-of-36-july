@@ -56,7 +56,7 @@ public class ParticleSystem implements Disposable {
     private float pukurScreenX = -999f;
     private float pukurScreenY = -999f;
     private boolean pukurVisible = false;
-    private final Vector3 pukurWorldPos = new Vector3(12f, 0.02f, -2f);
+    private final Vector3 pukurWorldPos = new Vector3(0f, 0.02f, 6f);
     private final Vector3 screenProj = new Vector3();
 
     private final ShapeRenderer sr;

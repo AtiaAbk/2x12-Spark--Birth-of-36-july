@@ -24,6 +24,13 @@ public class TextureFactory implements Disposable {
     public final Texture treeBark;
     public final Texture foliage;
     public final Texture krishnachuraBlossom;
+    public final Texture leafClump;
+    public final Texture blossomClump;
+    public final Texture leafAtlas;
+    public final Texture bambooAtlas;
+    public final Texture dirtPath;
+    public final Texture lightBeam;
+    public final Texture rockSurface;
     public final Texture bambooCulm;
     public final Texture bambooFoliage;
     public final Texture bushFoliage;
@@ -46,6 +53,13 @@ public class TextureFactory implements Disposable {
         treeBark = createTreeBark();
         foliage = createFoliage();
         krishnachuraBlossom = createKrishnachuraBlossom();
+        leafClump = createLeafClump(false);
+        blossomClump = createLeafClump(true);
+        leafAtlas = createLeafAtlas();
+        bambooAtlas = createBambooAtlas();
+        dirtPath = createDirtPath();
+        lightBeam = createLightBeam();
+        rockSurface = createRockSurface();
         bambooCulm = createBambooCulm();
         bambooFoliage = createBambooFoliage();
         bushFoliage = createBushFoliage();
@@ -62,7 +76,7 @@ public class TextureFactory implements Disposable {
         mapVisualTarget = createMapVisualTarget();
 
         textures.addAll(brickPavement, curzonBrick, lawnGrass, treeBark,
-                        foliage, krishnachuraBlossom, bambooCulm, bambooFoliage,
+                        foliage, krishnachuraBlossom, leafClump, blossomClump, leafAtlas, bambooAtlas, dirtPath, lightBeam, rockSurface, bambooCulm, bambooFoliage,
                         bushFoliage, weatheredStone, curzonWater,
                         backpackFabric, studentJacket, movementBanner, bdFlag, aparajeyoStone,
                         asphaltRoad, modernistConcrete, canteenTinRoof, mapVisualTarget);
@@ -90,10 +104,12 @@ public class TextureFactory implements Disposable {
                 int x = b * brickWidth + xOffset;
 
                 // Subtle brick color variation (warm terracotta red to brownish amber)
+                // Weathered clay brick: muted terracotta with per-brick tone shifts
                 float var = (MathUtils.sin(r * 3.7f + b * 5.3f) + 1f) * 0.5f;
-                float red = 0.68f + var * 0.12f;
-                float green = 0.28f + var * 0.08f;
-                float blue = 0.20f + var * 0.06f;
+                float wear = (MathUtils.sin(r * 12.9f + b * 7.1f) + 1f) * 0.5f;
+                float red = 0.52f + var * 0.12f - wear * 0.05f;
+                float green = 0.29f + var * 0.07f + wear * 0.02f;
+                float blue = 0.23f + var * 0.05f + wear * 0.02f;
 
                 pix.setColor(red, green, blue, 1f);
                 pix.fillRectangle(x + 2, y + 2, brickWidth - 4, rowHeight - 4);
@@ -144,9 +160,9 @@ public class TextureFactory implements Disposable {
                 int x = b * brickW + xOffset;
                 float v = (MathUtils.sin(r * 4.1f + b * 7.9f) + 1f) * 0.5f;
 
-                float rCol = 0.64f + v * 0.14f;
-                float gCol = 0.18f + v * 0.08f;
-                float bCol = 0.14f + v * 0.05f;
+                float rCol = 0.54f + v * 0.13f;
+                float gCol = 0.24f + v * 0.07f;
+                float bCol = 0.19f + v * 0.05f;
 
                 pix.setColor(rCol, gCol, bCol, 1f);
                 pix.fillRectangle(x + 1, y + 1, brickW - 2, rowH - 2);
@@ -173,9 +189,11 @@ public class TextureFactory implements Disposable {
             for (int y = 0; y < size; y++) {
                 float n = (MathUtils.sin(x * 0.22f) * MathUtils.cos(y * 0.25f)
                          + MathUtils.sin((x + y) * 0.45f) * 0.5f);
-                float r = MathUtils.clamp(0.20f + n * 0.06f, 0.14f, 0.28f);
-                float g = MathUtils.clamp(0.44f + n * 0.12f, 0.32f, 0.56f);
-                float b = MathUtils.clamp(0.18f + n * 0.05f, 0.12f, 0.24f);
+                // Muted olive grass with fine per-pixel speckle so it doesn't read as flat paint
+                float speckle = MathUtils.random(-0.03f, 0.03f);
+                float r = MathUtils.clamp(0.29f + n * 0.05f + speckle, 0.20f, 0.38f);
+                float g = MathUtils.clamp(0.41f + n * 0.09f + speckle, 0.30f, 0.52f);
+                float b = MathUtils.clamp(0.19f + n * 0.04f + speckle * 0.5f, 0.12f, 0.26f);
 
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
@@ -187,6 +205,286 @@ public class TextureFactory implements Disposable {
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
         pix.dispose();
         return tex;
+    }
+
+    /**
+     * Opaque, tileable canopy texture for the leaf-clump meshes: a dark shaded base overlaid with
+     * hundreds of small leaves in varied greens, and (for the flame tree) scarlet blossoms.
+     */
+    private Texture createLeafClump(boolean blossoms) {
+        // This is the shaded inner core of each canopy, seen only through gaps between the leaf
+        // cards, so it stays dark and low-contrast.
+        int size = 256;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+        pix.setColor(0.09f, 0.20f, 0.06f, 1f);
+        pix.fill();
+
+        for (int i = 0; i < 1100; i++) {
+            int x = MathUtils.random(size - 1);
+            int y = MathUtils.random(size - 1);
+            float t = MathUtils.random();
+            int r = MathUtils.random(3, 6);
+
+            if (blossoms && MathUtils.random() < 0.08f) {
+                pix.setColor(0.55f + 0.12f * t, 0.10f + 0.08f * t, 0.06f, 1f);
+            } else {
+                pix.setColor(0.12f + 0.10f * t, 0.26f + 0.16f * t, 0.07f + 0.05f * t, 1f);
+            }
+            // Draw at every wrap offset so the tile has no visible seam
+            for (int ox = -size; ox <= size; ox += size) {
+                for (int oy = -size; oy <= size; oy += size) {
+                    pix.fillCircle(x + ox, y + oy, r);
+                }
+            }
+        }
+
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    /**
+     * 2x2 atlas of alpha-cut foliage cards (each cell 256px): [0] one broad leaf, [1] a fan of
+     * three leaves, [2] a feathery compound leaf (flame tree), [3] a cluster of scarlet blossoms.
+     * Cells are addressed by TreeGeometry via UV quarters; the row order is top-down.
+     */
+    private Texture createLeafAtlas() {
+        int cell = 256;
+        Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill();
+        final float up = -MathUtils.HALF_PI; // pixmap y points down, so "up" is -90 degrees
+
+        // Cell 0: one broad ovate leaf
+        drawLeaf(pix, 0, 0, 128, 244, 226, 74, up,
+            0.09f, 0.27f, 0.07f, 0.34f, 0.58f, 0.16f);
+
+        // Cell 1: fan of three leaves of different lengths and greens
+        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up - 0.62f, 0.10f, 0.30f, 0.08f, 0.30f, 0.54f, 0.14f);
+        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up + 0.62f, 0.12f, 0.32f, 0.09f, 0.36f, 0.58f, 0.16f);
+        drawLeaf(pix, cell, 0, 128, 246, 214, 54, up, 0.08f, 0.26f, 0.06f, 0.28f, 0.52f, 0.13f);
+
+        // Cell 2: feathery compound leaf: a central rachis with pairs of small leaflets
+        int ox = 0, oy = cell;
+        for (int i = 0; i < 15; i++) {
+            float t = 0.10f + i * 0.058f;
+            float ry = 246f - t * 232f;
+            float rx = 128f + MathUtils.sin(t * 2.2f) * 10f;
+            float len = 78f * (1f - 0.45f * t);
+            float hw = 13f * (1f - 0.25f * t);
+            drawLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f, 0.14f, 0.36f, 0.08f, 0.40f, 0.62f, 0.14f);
+            drawLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f, 0.14f, 0.36f, 0.08f, 0.40f, 0.62f, 0.14f);
+        }
+        drawLeaf(pix, ox, oy, 128, 250, 236, 4, up, 0.20f, 0.30f, 0.09f, 0.26f, 0.38f, 0.10f);
+
+        // Cell 3: blossom clusters, each five petals around a golden centre, over a few leaves
+        ox = cell;
+        oy = cell;
+        drawLeaf(pix, ox, oy, 128, 250, 150, 40, up - 0.5f, 0.10f, 0.30f, 0.08f, 0.30f, 0.54f, 0.14f);
+        drawLeaf(pix, ox, oy, 128, 250, 150, 40, up + 0.5f, 0.10f, 0.30f, 0.08f, 0.30f, 0.54f, 0.14f);
+        float[][] flowers = {{92, 96}, {168, 86}, {124, 140}, {70, 168}, {180, 158}, {132, 62}};
+        for (float[] f : flowers) {
+            for (int p = 0; p < 5; p++) {
+                float ang = p * MathUtils.PI2 / 5f + f[0] * 0.1f;
+                drawLeaf(pix, ox, oy, f[0], f[1], 40f, 15f, ang, 0.74f, 0.08f, 0.05f, 0.97f, 0.32f, 0.10f);
+            }
+            pix.setColor(1f, 0.82f, 0.28f, 1f);
+            pix.fillCircle(ox + (int) f[0], oy + (int) f[1], 4);
+        }
+
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
+        pix.dispose();
+        return tex;
+    }
+
+    /**
+     * 2x2 atlas of hanging bamboo leaf sprays (each cell 256px, hung from the top-centre): long
+     * narrow lanceolate leaves fanning downward in a few densities and greens.
+     */
+    private Texture createBambooAtlas() {
+        int cell = 256;
+        Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill();
+        final float down = MathUtils.HALF_PI; // pixmap y points down
+
+        // Cell 0: full spray, nine leaves fanning from the pivot
+        float[] fan = {-1.15f, -0.85f, -0.55f, -0.25f, 0f, 0.25f, 0.55f, 0.85f, 1.15f};
+        float[] fanLen = {150f, 175f, 200f, 215f, 225f, 215f, 200f, 175f, 150f};
+        for (int i = 0; i < fan.length; i++) {
+            float shade = (i % 2 == 0) ? 0f : 0.03f;
+            drawLeaf(pix, 0, 0, 128, 10, fanLen[i], 11f, down + fan[i],
+                0.20f + shade, 0.38f + shade, 0.09f, 0.42f + shade, 0.64f, 0.18f);
+        }
+
+        // Cell 1: airy spray of seven long thin leaves
+        for (int i = 0; i < 7; i++) {
+            float a = -0.9f + i * 0.3f;
+            drawLeaf(pix, cell, 0, 128, 10, 205f + 20f * (1f - Math.abs(a)), 8f, down + a,
+                0.16f, 0.34f, 0.08f, 0.36f, 0.58f, 0.15f);
+        }
+
+        // Cell 2: short bright sprig of five leaves
+        for (int i = 0; i < 5; i++) {
+            float a = -0.6f + i * 0.3f;
+            drawLeaf(pix, 0, cell, 128, 10, 120f + 25f * (1f - Math.abs(a)), 10f, down + a,
+                0.28f, 0.48f, 0.11f, 0.52f, 0.72f, 0.22f);
+        }
+
+        // Cell 3: spray with a few dry, yellowing leaves mixed in
+        for (int i = 0; i < 8; i++) {
+            float a = -1.0f + i * 0.285f;
+            boolean dry = i % 3 == 1;
+            if (dry) {
+                drawLeaf(pix, cell, cell, 128, 10, 185f, 10f, down + a, 0.42f, 0.36f, 0.12f, 0.62f, 0.55f, 0.20f);
+            } else {
+                drawLeaf(pix, cell, cell, 128, 10, 200f, 10f, down + a, 0.20f, 0.38f, 0.09f, 0.42f, 0.64f, 0.18f);
+            }
+        }
+
+        // No mipmaps: sprays are mostly empty space, and averaging that space into smaller mip
+        // levels pushes alpha over the cutout threshold, turning distant sprays into solid blocks.
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
+        pix.dispose();
+        return tex;
+    }
+
+    /**
+     * Worn dirt path, tileable along its length (V) and feathered to transparent at both sides
+     * (U) so a strip of it blends into the grass instead of showing a hard edge.
+     */
+    private Texture createDirtPath() {
+        int size = 128;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                float u = x / (float) (size - 1);
+                float side = Math.abs(u * 2f - 1f);
+                float wobble = 0.10f * MathUtils.sin(y * 0.21f + 1.3f) + 0.06f * MathUtils.sin(y * 0.57f);
+                float alpha = 1f - MathUtils.clamp((side + wobble - 0.62f) / 0.34f, 0f, 1f);
+
+                float n = MathUtils.random(-0.05f, 0.05f)
+                    + 0.05f * MathUtils.sin(x * 0.4f) * MathUtils.cos(y * 0.33f);
+                float r = 0.52f + n, g = 0.40f + n * 0.9f, b = 0.27f + n * 0.7f;
+                if (MathUtils.random() < 0.02f) { r += 0.14f; g += 0.13f; b += 0.11f; } // pebbles
+                pix.setColor(MathUtils.clamp(r, 0f, 1f), MathUtils.clamp(g, 0f, 1f),
+                    MathUtils.clamp(b, 0f, 1f), alpha);
+                pix.drawPixel(x, y);
+            }
+        }
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    /**
+     * Smooth, low-frequency weathered rock: broad tonal clouds with a few darker streaks and pale
+     * speckle. Kept soft on purpose; the tiling stone texture read as a wire mesh on round boulders.
+     */
+    private Texture createRockSurface() {
+        int size = 256;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                float fx = x / (float) size * MathUtils.PI2, fy = y / (float) size * MathUtils.PI2;
+                // Periodic in both axes so the tile has no seam
+                float n = 0.5f * MathUtils.sin(fx * 2f + MathUtils.sin(fy * 3f) * 1.2f)
+                    + 0.3f * MathUtils.sin(fy * 3f + MathUtils.cos(fx * 2f) * 1.5f)
+                    + 0.2f * MathUtils.sin((fx + fy) * 5f);
+                float streak = 0.5f + 0.5f * MathUtils.sin(fx * 7f + MathUtils.sin(fy * 2f) * 3f);
+                float v = 0.50f + n * 0.07f - streak * 0.05f + MathUtils.random(-0.02f, 0.02f);
+                if (MathUtils.random() < 0.01f) v += 0.12f;
+                pix.setColor(v * 1.00f, v * 0.98f, v * 0.94f, 1f);
+                pix.drawPixel(x, y);
+            }
+        }
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    /** Soft white gradient for volumetric light shafts: feathered across, fading at both ends. */
+    private Texture createLightBeam() {
+        int w = 64, h = 256;
+        Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
+        for (int y = 0; y < h; y++) {
+            float v = y / (float) (h - 1);
+            float along = MathUtils.clamp(v / 0.15f, 0f, 1f) * (1f - MathUtils.clamp((v - 0.70f) / 0.30f, 0f, 1f));
+            for (int x = 0; x < w; x++) {
+                float u = x / (float) (w - 1);
+                float across = MathUtils.sin(u * MathUtils.PI);
+                float a = across * across * along;
+                pix.setColor(1f, 0.95f, 0.80f, a);
+                pix.drawPixel(x, y);
+            }
+        }
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
+        pix.dispose();
+        return tex;
+    }
+
+    /**
+     * Rasterises one pointed leaf into the atlas cell at (ox, oy). The leaf starts at the base
+     * point (bx, by) and runs {@code length} pixels toward {@code angle}; colour grades from the
+     * base colour to the tip colour, with a lighter midrib, faint side veins and a darker rim.
+     */
+    private void drawLeaf(Pixmap pix, int ox, int oy, float bx, float by, float length, float halfWidth,
+                          float angle, float br, float bg, float bb, float tr, float tg, float tb) {
+        float dx = MathUtils.cos(angle), dy = MathUtils.sin(angle);
+        float px = -dy, py = dx; // perpendicular
+
+        float reach = length + halfWidth + 2f;
+        // Clip to this leaf's own 256px atlas cell so it can't bleed into its neighbours
+        int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(255, (int) (bx + reach));
+        int minY = Math.max(0, (int) (by - reach)), maxY = Math.min(255, (int) (by + reach));
+
+        for (int y = minY; y <= maxY; y++) {
+            for (int x = minX; x <= maxX; x++) {
+                float rx = x + 0.5f - bx, ry = y + 0.5f - by;
+                float along = rx * dx + ry * dy;
+                float t = along / length;
+                if (t < 0f || t > 1f) continue;
+                float across = Math.abs(rx * px + ry * py);
+                float w = halfWidth * (float) Math.pow(Math.sin(Math.PI * Math.pow(t, 0.72)), 0.8);
+                if (across > w + 0.5f) continue;
+
+                float alpha = MathUtils.clamp(w - across + 0.5f, 0f, 1f);
+                float edge = w > 0.5f ? across / w : 1f;
+
+                // Greens are lifted so sunlit foliage reads fresh; the red blossoms are left as drawn
+                float gain = br > 0.5f ? 1.05f : 1.45f;
+                float r = MathUtils.lerp(br, tr, t) * gain;
+                float g = MathUtils.lerp(bg, tg, t) * gain;
+                float b = MathUtils.lerp(bb, tb, t) * gain;
+
+                // Midrib and lateral veins lighten; the rim darkens
+                float vein = 0f;
+                if (across < 1.6f) vein = 0.10f;
+                else {
+                    float phase = (t * 9f - edge * 1.6f) % 1f;
+                    if (phase < 0f) phase += 1f;
+                    if (phase < 0.10f) vein = 0.05f;
+                }
+                float rim = 1f - 0.30f * MathUtils.clamp((edge - 0.72f) / 0.28f, 0f, 1f);
+
+                pix.setColor(MathUtils.clamp((r + vein) * rim, 0f, 1f),
+                             MathUtils.clamp((g + vein) * rim, 0f, 1f),
+                             MathUtils.clamp((b + vein * 0.5f) * rim, 0f, 1f), alpha);
+                pix.drawPixel(ox + x, oy + y);
+            }
+        }
     }
 
     private Texture createTreeBark() {

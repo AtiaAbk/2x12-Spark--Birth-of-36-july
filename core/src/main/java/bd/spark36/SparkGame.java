@@ -10,7 +10,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
+import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector3;
 import bd.spark36.camera.CinematicCamera;
 import bd.spark36.character.PlayerController;
 import bd.spark36.character.StudentMesh;
@@ -58,6 +60,8 @@ public class SparkGame extends ApplicationAdapter {
     // 3D GAMEPLAY SUBSYSTEMS (lazy init on first play)
     // ==========================================
     private ModelBatch modelBatch;
+    private ModelBatch shadowBatch;
+    private final Vector3 shadowForward = new Vector3();
     private DhakaCampusWorld world;
     private JulyMemorials memorials;
     private StudentMesh studentMesh;
@@ -93,12 +97,23 @@ public class SparkGame extends ApplicationAdapter {
         if (gameplayInitialized) return;
 
         modelBatch = new ModelBatch();
+        shadowBatch = new ModelBatch(new DepthShaderProvider());
         textures = new TextureFactory();
         world = new DhakaCampusWorld(textures);
         memorials = new JulyMemorials();
         studentMesh = new StudentMesh(textures);
         player = new PlayerController();
+        player.setExtraColliders(world.getColliders());
+        // Test hook: start somewhere other than the gate, e.g. -Dbd.spark36.startPos=4,41
+        String startPos = System.getProperty("bd.spark36.startPos");
+        if (startPos != null) {
+            String[] xz = startPos.split(",");
+            player.setPosition(Float.parseFloat(xz[0].trim()), 0f, Float.parseFloat(xz[1].trim()));
+        }
         camera = new CinematicCamera(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
+        camera.setColliders(player.getColliders());
+        Gdx.app.log("SparkGame", "Collision boxes: " + player.getColliders().length
+            + " (" + world.getColliders().size() + " generated from world geometry)");
         atmosphere = new AtmosphereRenderer(fontRenderer);
         hud = new WhereWindsMeetHUD(fontRenderer);
         hud.setTextures(textures);
@@ -388,6 +403,25 @@ public class SparkGame extends ApplicationAdapter {
             particleSystem.update(delta, camera.getCamera());
         }
 
+        // 1b. SUN SHADOW PASS: depth-only render from the sun, centred a little ahead of the player
+        shadowForward.set(camera.getCamera().direction.x, 0f, camera.getCamera().direction.z).nor();
+        world.beginShadowPass(player.getPosition(), shadowForward);
+        shadowBatch.begin(world.getShadowCamera());
+        world.renderShadowCasters(shadowBatch);
+        studentMesh.render(
+            shadowBatch,
+            null,
+            player.getPosition(),
+            player.getHeadingDegrees(),
+            player.getWalkCycle(),
+            player.isMoving(),
+            player.isSprinting()
+        );
+        shadowBatch.end();
+        world.endShadowPass();
+        // ModelBatch leaves a higher texture unit active; SpriteBatch (HUD text) assumes unit 0
+        Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
+
         // 2. POST-PROCESSING: Begin FBO capture (replaces direct sky render)
         boolean ppActive = postProcessor != null && postProcessor.isValid();
         if (ppActive) {
@@ -416,6 +450,7 @@ public class SparkGame extends ApplicationAdapter {
             player.isSprinting()
         );
         modelBatch.end();
+        Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
 
         // 4. Atmospheric overlays (labels, god rays) — inside FBO for bloom
         atmosphere.renderAtmosphereOverlays(camera.getCamera(), delta, screenW, screenH);
@@ -559,6 +594,7 @@ public class SparkGame extends ApplicationAdapter {
         if (shapeRenderer != null) shapeRenderer.dispose();
         if (menuBatch != null) menuBatch.dispose();
         if (modelBatch != null) modelBatch.dispose();
+        if (shadowBatch != null) shadowBatch.dispose();
         if (world != null) world.dispose();
         if (memorials != null) memorials.dispose();
         if (studentMesh != null) studentMesh.dispose();

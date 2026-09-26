@@ -15,6 +15,11 @@ public class CinematicCamera {
 
     private final PerspectiveCamera camera;
 
+    // Camera-vs-world collision
+    private static final float CAMERA_MARGIN = 0.30f;
+    private static final float MIN_ARM_FRACTION = 0.12f;
+    private float[][] colliders;
+
     // Follow target config
     private float distance = 3.3f;
     private final float minDistance = 2.2f;
@@ -65,6 +70,9 @@ public class CinematicCamera {
     private final Vector3 shakeOffset = new Vector3();
 
     public CinematicCamera(int viewportWidth, int viewportHeight) {
+        // Debug/test hooks so automated screenshots can inspect the player from any side and range
+        yaw = Float.parseFloat(System.getProperty("bd.spark36.cameraYaw", "0"));
+        distance = Float.parseFloat(System.getProperty("bd.spark36.cameraDistance", String.valueOf(distance)));
         camera = new PerspectiveCamera(baseFov, viewportWidth, viewportHeight);
         camera.near = 0.2f;
         camera.far = 350f;
@@ -178,6 +186,8 @@ public class CinematicCamera {
 
         if (desiredCameraPos.y < 0.45f) desiredCameraPos.y = 0.45f;
 
+        pullInFromSolids(targetFocus, desiredCameraPos);
+
         // 8. Smooth cinematic lerp
         float followSpeed = 12f;
         currentCameraPos.lerp(desiredCameraPos, Math.min(1f, followSpeed * delta));
@@ -187,6 +197,51 @@ public class CinematicCamera {
         camera.up.set(Vector3.Y);
         camera.lookAt(currentLookAt);
         camera.update();
+    }
+
+    /** Solid boxes ({minX, minY, minZ, maxX, maxY, maxZ}) the camera must not end up inside. */
+    public void setColliders(float[][] boxes) {
+        this.colliders = boxes;
+    }
+
+    /**
+     * Shortens the focus-to-camera arm so the camera stops in front of the first solid it would
+     * pass through, instead of poking through walls and showing the inside of buildings.
+     * Boxes are grown by CAMERA_MARGIN so the near plane never clips a wall face.
+     */
+    private void pullInFromSolids(Vector3 focus, Vector3 camPos) {
+        if (colliders == null) return;
+
+        float dx = camPos.x - focus.x, dy = camPos.y - focus.y, dz = camPos.z - focus.z;
+        float nearest = 1f;
+
+        for (float[] b : colliders) {
+            float tEnter = 0f, tExit = 1f;
+            boolean hit = true;
+            for (int axis = 0; axis < 3 && hit; axis++) {
+                float o = axis == 0 ? focus.x : (axis == 1 ? focus.y : focus.z);
+                float d = axis == 0 ? dx : (axis == 1 ? dy : dz);
+                float lo = b[axis] - CAMERA_MARGIN;
+                float hi = b[axis + 3] + CAMERA_MARGIN;
+                if (Math.abs(d) < 1e-6f) {
+                    if (o < lo || o > hi) hit = false;
+                } else {
+                    float t1 = (lo - o) / d, t2 = (hi - o) / d;
+                    if (t1 > t2) { float tmp = t1; t1 = t2; t2 = tmp; }
+                    tEnter = Math.max(tEnter, t1);
+                    tExit = Math.min(tExit, t2);
+                    if (tEnter > tExit) hit = false;
+                }
+            }
+            // tEnter == 0 means the focus is already inside the grown box (hugging a wall);
+            // leave the arm alone rather than shove the camera into the player's head.
+            if (hit && tEnter > 0f && tEnter < nearest) nearest = tEnter;
+        }
+
+        if (nearest < 1f) {
+            float t = Math.max(nearest, MIN_ARM_FRACTION);
+            camPos.set(focus.x + dx * t, focus.y + dy * t, focus.z + dz * t);
+        }
     }
 
     /** Trigger a screen shake impulse. magnitude in world units (0.05 = subtle, 0.2 = strong). */
