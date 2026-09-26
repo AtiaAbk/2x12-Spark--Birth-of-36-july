@@ -3,7 +3,11 @@ fonts/LiberationSans-Bold.ttf
 fonts/LiberationSans-Regular.ttf
 libgdx.png
 maps/campus_map.png
+screenshots/spark36_female_sitting_verified.png
+screenshots/spark36_female_verified.png
+screenshots/spark36_hero_character_verified.png
 screenshots/spark36_map_verified.png
+screenshots/spark36_pond_sitting_verified.png
 screenshots/spark36_verified.png
 shaders/bloom_blur.frag
 shaders/bloom_extract.frag

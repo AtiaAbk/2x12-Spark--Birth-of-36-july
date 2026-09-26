@@ -35,14 +35,13 @@ vec3 aces(vec3 x) {
 }
 
 // ─────────────────────────────────────────────
-// Color Grading — warm golden-hour LUT simulation
-// shadows → blue-teal lift, highlights → warm amber
+// Color Grading — Clean realistic daylight
+// Pure neutral shadow definition and clean natural highlights
 // ─────────────────────────────────────────────
 vec3 colorGrade(vec3 col) {
-    // Shadows: lift toward cool blue-teal (cinematic look)
-    vec3 shadowLift = vec3(0.01, 0.02, 0.04);
-    // Highlights: push toward warm amber
-    vec3 highlightTint = vec3(1.06, 0.98, 0.88);
+    // Zero greenish/teal tint: completely clean neutral tones
+    vec3 shadowLift = vec3(0.005, 0.005, 0.008);
+    vec3 highlightTint = vec3(1.02, 1.01, 1.00);
 
     float lum = dot(col, vec3(0.299, 0.587, 0.114));
     vec3 shadows = mix(col + shadowLift, col, smoothstep(0.0, 0.4, lum));
