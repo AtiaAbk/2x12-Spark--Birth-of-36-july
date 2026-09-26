@@ -159,12 +159,11 @@ public class AtmosphereRenderer implements Disposable {
             float cy = c[1] * h;
             float cw = c[2] * w;
             float ch = c[3] * h;
-            // Soft elongated ellipse approximation (multiple overlapping rects)
-            for (int s = 0; s < 4; s++) {
-                float sf = 1f - s * 0.18f;
-                float ay = s * ch * 0.20f;
-                shapeRenderer.setColor(0.98f, 0.95f, 0.88f, c[5] * sf);
-                shapeRenderer.rect(cx - cw * sf / 2f, cy - ch / 2f + ay, cw * sf, ch * 0.6f);
+            // Soft haze bank: concentric ellipses, each smaller and fainter, so the edge feathers out
+            for (int s = 0; s < 5; s++) {
+                float sf = 1f - s * 0.16f;
+                shapeRenderer.setColor(0.98f, 0.95f, 0.88f, c[5] * 0.35f);
+                shapeRenderer.ellipse(cx - cw * sf / 2f, cy - ch * sf / 2f, cw * sf, ch * sf, 24);
             }
         }
 
@@ -180,7 +179,7 @@ public class AtmosphereRenderer implements Disposable {
                 float ox = (s - 2f) * cw * 0.20f;
                 float oy = -s * ch * 0.15f;
                 shapeRenderer.setColor(0.97f, 0.96f, 0.94f, c[5] * sf * 0.9f);
-                shapeRenderer.circle(cx + ox, cy + oy, ch * (0.7f + s * 0.12f), 10);
+                shapeRenderer.circle(cx + ox, cy + oy, ch * (0.7f + s * 0.12f), 36);
             }
             // Base fill
             shapeRenderer.setColor(0.97f, 0.96f, 0.94f, c[5] * 0.70f);
@@ -193,11 +192,11 @@ public class AtmosphereRenderer implements Disposable {
             float cy = c[1] * h;
             float cw = c[2] * w;
             float ch = c[3] * h;
-            shapeRenderer.setColor(0.95f, 0.96f, 1.00f, c[5] * 0.7f);
-            // Thin horizontal wisp
-            shapeRenderer.rect(cx, cy - ch / 2f, cw, ch);
-            shapeRenderer.setColor(0.95f, 0.96f, 1.00f, c[5] * 0.35f);
-            shapeRenderer.rect(cx - cw * 0.2f, cy - ch * 0.8f, cw * 1.4f, ch * 0.4f);
+            // Thin horizontal wisp: a faint wide ellipse under a tighter brighter one
+            shapeRenderer.setColor(0.95f, 0.96f, 1.00f, c[5] * 0.30f);
+            shapeRenderer.ellipse(cx - cw * 0.1f, cy - ch * 0.9f, cw * 1.2f, ch * 1.8f, 24);
+            shapeRenderer.setColor(0.95f, 0.96f, 1.00f, c[5] * 0.55f);
+            shapeRenderer.ellipse(cx, cy - ch / 2f, cw, ch, 24);
         }
 
         // ── Bird silhouettes ─────────────────────────────────────────

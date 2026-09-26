@@ -68,6 +68,8 @@ public class WhereWindsMeetHUD implements Disposable {
     );
 
     private TextureFactory textures = null;
+    private com.badlogic.gdx.graphics.Texture campusMapTex = null;
+    private boolean campusMapLoadTried = false;
 
     // ── AAA Visual FX Fields ──────────────────────────────────────────────────
     // Checkpoint flash: brief full-screen gold flash when a memorial is inspected
@@ -1060,6 +1062,13 @@ public class WhereWindsMeetHUD implements Disposable {
     // CAMPUS TACTICAL MAP OVERLAY (MATCHING MEDIA_1790270627121)
     // ==========================================
     private void renderCampusMap(PlayerController player, JulyMemorials memorials, float cameraYaw, float w, float h) {
+        if (campusMapTex == null && !campusMapLoadTried) loadCampusMapTexture();
+        if (campusMapTex != null) {
+            renderCampusMapImage(player, memorials, w, h);
+            return;
+        }
+
+        // Fallback: shape-drawn map, used only if the map image is missing from the assets
         float mapW = 1520f;
         float mapH = h - 50f;
         float mx = (w - mapW) / 2f;
@@ -1108,14 +1117,14 @@ public class WhereWindsMeetHUD implements Disposable {
         // Central Promenade: X=0, Z=+78 (gate) to Z=-40 (behind Curzon Hall)
         shapeRenderer.rect(centerMapX - 3.6f * scale, centerMapY - 62f * scale, 7.2f * scale, 118f * scale);
 
-        // East branch path (runs along RIGHT side of pukur): X=+22m, Z=-16 to Z=+14
-        shapeRenderer.rect(centerMapX + 19.5f * scale, centerMapY - (14f - 18f) * scale - 4.8f * scale, 5.0f * scale, 30f * scale);
+        // Pukur ring paths: X=+-14m, Z=-10.8 to +24
+        float ringBottomY = centerMapY - (24f - 18f) * scale;
+        shapeRenderer.rect(centerMapX - 16.4f * scale, ringBottomY, 4.8f * scale, 34.8f * scale);
+        shapeRenderer.rect(centerMapX + 11.6f * scale, ringBottomY, 4.8f * scale, 34.8f * scale);
 
-        // North cross-path (Z=-16, X=0 to X=+22) connecting promenade to east branch
-        shapeRenderer.rect(centerMapX, centerMapY - (-16f - 18f) * scale - 2.4f * scale, 22f * scale, 4.8f * scale);
-
-        // South cross-path (Z=+14, X=0 to X=+22) connecting promenade to east branch
-        shapeRenderer.rect(centerMapX, centerMapY - (14f - 18f) * scale - 2.4f * scale, 22f * scale, 4.8f * scale);
+        // North link (Z=-10.8) and south link (Z=+24) joining the promenade to the ring paths
+        shapeRenderer.rect(centerMapX - 14f * scale, centerMapY - (-10.8f - 18f) * scale - 2.4f * scale, 28f * scale, 4.8f * scale);
+        shapeRenderer.rect(centerMapX - 14f * scale, centerMapY - (24f - 18f) * scale - 2.4f * scale, 28f * scale, 4.8f * scale);
 
         // West Cross-Avenue: Z=+26, X=0 to X=-74
         shapeRenderer.rect(centerMapX - 74f * scale, centerMapY - (26f - 18f) * scale - 2.4f * scale, 74f * scale, 4.8f * scale);
@@ -1140,13 +1149,12 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // ============================================================
         // CURZON HALL PUKUR
-        // Reference map: pond is EAST of central promenade (~+12m east)
-        // The central promenade passes to the LEFT (west) of the pond
+        // Pond sits in the centre of the spine; the promenade splits around it
         // ============================================================
-        float pukurWorldX = 12f;
-        float pukurWorldZ = -2f;
-        float pukurWm     = 20f;
-        float pukurHm     = 16f;
+        float pukurWorldX = 0f;
+        float pukurWorldZ = 6f;
+        float pukurWm     = 18f;
+        float pukurHm     = 24f;
 
         float pX = centerMapX + pukurWorldX * scale;
         float pY = centerMapY - (pukurWorldZ - 18f) * scale;
@@ -1223,15 +1231,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(0.24f, 0.27f, 0.30f, 0.97f);
         shapeRenderer.circle(abMapX, abMapY, 2.0f * scale, 12);
 
-        // 7. FLANK BUILDINGS around pukur (small red-brick blocks in reference)
-        shapeRenderer.setColor(0.66f, 0.22f, 0.16f, 0.90f);
-        // West of pukur, north
-        shapeRenderer.rect(centerMapX + 4f * scale, centerMapY - (-16f - 18f) * scale - 5f * scale, 6f * scale, 10f * scale);
-        // East of pukur, north
-        shapeRenderer.rect(centerMapX + 24f * scale, centerMapY - (-16f - 18f) * scale - 5f * scale, 6f * scale, 10f * scale);
-        // South-east block
-        shapeRenderer.rect(centerMapX + 22f * scale, centerMapY - (10f - 18f) * scale - 4f * scale, 5f * scale, 8f * scale);
-
         // 8. TEACHER-STUDENT CENTRE (far right, modernist)
         float tscMapX = centerMapX + 68f * scale;
         float tscMapY = centerMapY - (20f - 18f) * scale;
@@ -1278,9 +1277,9 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // 12. TREE CANOPIES
         float[][] treeMapLocs = {
-            {-12f, -4f}, {12f, -4f},
+            {-19.5f, -2f}, {19.5f, -2f},
             {-50f, -28f}, {-62f, -28f}, {50f, -28f}, {62f, -28f},
-            {-14f, 12f}, {14f, 12f},
+            {-19.5f, 14f}, {19.5f, 14f},
             {-28f, 14f}, {-48f, 4f}, {-62f, 28f},
             {28f, 14f}, {48f, 4f}, {62f, 28f},
             {-14f, 48f}, {14f, 48f},
@@ -1439,8 +1438,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.draw(spriteBatch, "Fuller Road Corridor", centerMapX - 60f, centerMapY + 64f * scale);
         fonts.smallFont.draw(spriteBatch, "Curzon Hall", chX - 32f, chY + 2.5f * scale);
         fonts.smallFont.setColor(new Color(0.88f, 0.96f, 1.0f, 1f));
-        fonts.smallFont.draw(spriteBatch, "Curzon Hall", pX - 36f, pY + 4f);
-        fonts.smallFont.draw(spriteBatch, "Pukur", pX - 18f, pY - 8f);
+        fonts.smallFont.draw(spriteBatch, "Curzon Hall Pukur", pX - 46f, pY + 4f);
         fonts.smallFont.setColor(Color.WHITE);
         fonts.smallFont.draw(spriteBatch, "Central Library Building", clMapX - 56f, clMapY + 20f * scale);
         fonts.smallFont.draw(spriteBatch, "Hakim Chattar", hkMapX - 42f, hkMapY - 9f * scale);
@@ -1477,6 +1475,187 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.setColor(new Color(0.70f, 0.82f, 0.90f, 1f));
         fonts.smallFont.draw(spriteBatch, String.format("%.1fE  %.1fN", ppos.x, -ppos.z), legX + 16f, legY + 24f);
 
+        spriteBatch.end();
+    }
+
+    // ==========================================
+    // CAMPUS MAP (illustrated map image + live markers)
+    // ==========================================
+    // The map art was cleaned of its baked-in UI (title bar, menu button, legend, photo panels,
+    // quest pins). The top 48px title bar was cropped off, so anchors below stay in the original
+    // 843px-tall picture's coordinates and MAP_TOP_CROP is subtracted when converting.
+    private static final float MAP_IMG_W = 1264f;
+    private static final float MAP_IMG_H = 795f;
+    private static final float MAP_TOP_CROP = 48f;
+
+    /**
+     * Landmarks whose in-game position is pinned to a spot on the map illustration:
+     * {worldX, worldZ, imageX, imageY} with the image origin at the top-left.
+     * The illustration is hand-drawn, not to scale, so a plain linear mapping drifts; these
+     * anchors pull the markers onto the right buildings (see {@link #worldToMapImage}).
+     */
+    private static final float[][] MAP_ANCHORS = {
+        {0f, 78f, 632f, 745f},      // Main Gate
+        {0f, -32f, 630f, 170f},     // Curzon Hall
+        {0f, -16f, 630f, 262f},     // Curzon Hall central arcade
+        {0f, 6f, 630f, 405f},       // Curzon Hall Pukur
+        {-68f, 22f, 150f, 385f},    // Central Library
+        {68f, 20f, 1105f, 400f},    // Teacher-Student Centre
+        {66f, 20f, 1085f, 410f},    // TSC memorial
+        {-56f, -16f, 255f, 130f},   // Madhur Canteen
+        {-58f, 54f, 190f, 640f},    // Hakim Chattar
+        {-58f, 36f, 200f, 545f},    // Library steps / Hakim memorial
+        {-36f, 26f, 440f, 430f},    // Aparajeyo Bangla statue / Arts Plaza
+        {-42f, 38f, 345f, 375f},    // Book stalls
+        {44f, 42f, 930f, 410f},     // Raju memorial
+        {56f, -16f, 1030f, 150f},   // Swadhinata Sangram garden
+        {-26f, 52f, 400f, 590f},    // West academic building
+        {26f, 52f, 870f, 590f},     // East academic building
+    };
+
+    private final com.badlogic.gdx.graphics.g2d.GlyphLayout glyphs = new com.badlogic.gdx.graphics.g2d.GlyphLayout();
+
+    private void loadCampusMapTexture() {
+        campusMapLoadTried = true;
+        try {
+            com.badlogic.gdx.files.FileHandle file = Gdx.files.internal("maps/campus_map.png");
+            if (file.exists()) {
+                campusMapTex = new com.badlogic.gdx.graphics.Texture(file, true);
+                campusMapTex.setFilter(
+                    com.badlogic.gdx.graphics.Texture.TextureFilter.MipMapLinearLinear,
+                    com.badlogic.gdx.graphics.Texture.TextureFilter.Linear);
+            }
+        } catch (Exception e) {
+            Gdx.app.error("WhereWindsMeetHUD", "Could not load campus map image, using fallback map", e);
+        }
+    }
+
+    /**
+     * Converts a world position to a pixel on the map image. Starts from a linear estimate
+     * (gate at the bottom, north up) and bends it toward the landmark anchors: each anchor's
+     * error is blended in by inverse-distance weight, so a landmark lands exactly on its
+     * building and positions in between are smoothly interpolated.
+     */
+    private static void worldToMapImage(float wx, float wz, float[] out) {
+        float baseX = 632f + 7.0f * wx;
+        float baseY = 745f - 4.85f * (78f - wz);
+
+        float corrX = 0f, corrY = 0f, weightSum = 0f;
+        for (float[] a : MAP_ANCHORS) {
+            float dx = wx - a[0], dz = wz - a[1];
+            float d2 = dx * dx + dz * dz;
+            if (d2 < 0.01f) {
+                out[0] = a[2];
+                out[1] = a[3] - MAP_TOP_CROP;
+                return;
+            }
+            float weight = 1f / (d2 * (float) Math.sqrt(d2)); // 1 / d^3: landmarks dominate nearby
+            corrX += weight * (a[2] - (632f + 7.0f * a[0]));
+            corrY += weight * (a[3] - (745f - 4.85f * (78f - a[1])));
+            weightSum += weight;
+        }
+        out[0] = MathUtils.clamp(baseX + corrX / weightSum, 0f, MAP_IMG_W);
+        out[1] = MathUtils.clamp(baseY + corrY / weightSum - MAP_TOP_CROP, 0f, MAP_IMG_H);
+    }
+
+    private void renderCampusMapImage(PlayerController player, JulyMemorials memorials, float w, float h) {
+        float margin = 34f;
+        float fit = Math.min((w - 2f * margin) / MAP_IMG_W, (h - 2f * margin - 16f) / MAP_IMG_H);
+        float dw = MAP_IMG_W * fit;
+        float dh = MAP_IMG_H * fit;
+        float dx = (w - dw) / 2f;
+        float dy = (h - dh) / 2f + 8f;
+
+        // Dim the game behind the map
+        shapeRenderer.begin(ShapeType.Filled);
+        shapeRenderer.setColor(0f, 0f, 0f, 0.94f);
+        shapeRenderer.rect(0, 0, w, h);
+        shapeRenderer.end();
+
+        spriteBatch.begin();
+        spriteBatch.setColor(1f, 1f, 1f, 1f);
+        spriteBatch.draw(campusMapTex, dx, dy, dw, dh);
+        spriteBatch.end();
+
+        float[] pt = new float[2];
+        MemorialEntry nextObj = memorials.getNextObjective(player.getPosition());
+
+        shapeRenderer.begin(ShapeType.Filled);
+
+        // Memorial pins: secured = green, current objective = pulsing gold diamond, others = gold
+        for (MemorialEntry entry : memorials.getEntries()) {
+            worldToMapImage(entry.position.x, entry.position.z, pt);
+            float px = dx + pt[0] * fit;
+            float py = dy + dh - pt[1] * fit;
+            shapeRenderer.setColor(0f, 0f, 0f, 0.55f);
+            shapeRenderer.circle(px, py, 11f, 20);
+            if (entry == nextObj) {
+                // Backing plate so the objective label stays readable over light paths
+                glyphs.setText(fonts.smallFont, "OBJECTIVE: " + entry.title);
+                shapeRenderer.setColor(0.03f, 0.05f, 0.08f, 0.82f);
+                shapeRenderer.rect(px - 86f, py + 17f, glyphs.width + 12f, 24f);
+            }
+            if (entry.inspected) {
+                shapeRenderer.setColor(Color.GREEN);
+                shapeRenderer.circle(px, py, 8f, 16);
+            } else if (entry == nextObj) {
+                float pulse = 0.85f + 0.25f * MathUtils.sin(animTime * 6f);
+                shapeRenderer.setColor(1.0f, 0.82f * pulse, 0.25f, 1f);
+                float ds = 13f * pulse;
+                shapeRenderer.triangle(px, py + ds, px + ds, py, px, py - ds);
+                shapeRenderer.triangle(px, py + ds, px - ds, py, px, py - ds);
+            } else {
+                shapeRenderer.setColor(goldAccent);
+                shapeRenderer.circle(px, py, 7f, 16);
+            }
+        }
+
+        // Live player marker
+        Vector3 ppos = player.getPosition();
+        worldToMapImage(ppos.x, ppos.z, pt);
+        float pMapX = dx + pt[0] * fit;
+        float pMapY = dy + dh - pt[1] * fit;
+        shapeRenderer.setColor(0.03f, 0.05f, 0.08f, 0.82f);
+        shapeRenderer.rect(pMapX + 15f, pMapY - 9f, 42f, 22f);
+        shapeRenderer.setColor(0.2f, 0.9f, 1.0f, 0.30f + 0.18f * MathUtils.sin(animTime * 4f));
+        shapeRenderer.circle(pMapX, pMapY, 15f, 24);
+        shapeRenderer.setColor(Color.WHITE);
+        shapeRenderer.circle(pMapX, pMapY, 7.5f, 18);
+        shapeRenderer.setColor(Color.CYAN);
+        shapeRenderer.circle(pMapX, pMapY, 5.5f, 18);
+        float headRad = (player.getHeadingDegrees() - 90f) * MathUtils.degreesToRadians;
+        float tipX = pMapX - 22f * MathUtils.cos(headRad);
+        float tipY = pMapY + 22f * MathUtils.sin(headRad);
+        float leftX = pMapX - 8f * MathUtils.cos(headRad + 2.2f);
+        float leftY = pMapY + 8f * MathUtils.sin(headRad + 2.2f);
+        float rightX = pMapX - 8f * MathUtils.cos(headRad - 2.2f);
+        float rightY = pMapY + 8f * MathUtils.sin(headRad - 2.2f);
+        shapeRenderer.setColor(Color.WHITE);
+        shapeRenderer.triangle(tipX, tipY, leftX, leftY, rightX, rightY);
+        shapeRenderer.end();
+
+        shapeRenderer.begin(ShapeType.Line);
+        shapeRenderer.setColor(goldBorder);
+        shapeRenderer.rect(dx, dy, dw, dh);
+        shapeRenderer.end();
+
+        // Labels: objective name above its pin, "YOU" beside the player, close hint underneath
+        spriteBatch.begin();
+        if (nextObj != null) {
+            worldToMapImage(nextObj.position.x, nextObj.position.z, pt);
+            float px = dx + pt[0] * fit;
+            float py = dy + dh - pt[1] * fit;
+            String label = "OBJECTIVE: " + nextObj.title;
+            fonts.smallFont.setColor(1f, 0.88f, 0.40f, 1f);
+            fonts.smallFont.draw(spriteBatch, label, px - 80f, py + 35f);
+        }
+        fonts.smallFont.setColor(0.55f, 1f, 1f, 1f);
+        fonts.smallFont.draw(spriteBatch, "YOU", pMapX + 24f, pMapY + 7f);
+
+        fonts.promptFont.setColor(goldAccent);
+        fonts.promptFont.draw(spriteBatch, "[M] / [ESC]  Close map", dx + dw - 190f, dy - 6f);
+        fonts.smallFont.setColor(new Color(0.70f, 0.82f, 0.90f, 1f));
+        fonts.smallFont.draw(spriteBatch, String.format("%.1fE  %.1fN", ppos.x, -ppos.z), dx, dy - 8f);
         spriteBatch.end();
     }
 
@@ -1719,6 +1898,7 @@ public class WhereWindsMeetHUD implements Disposable {
     public void dispose() {
         shapeRenderer.dispose();
         spriteBatch.dispose();
+        if (campusMapTex != null) campusMapTex.dispose();
     }
 }
 

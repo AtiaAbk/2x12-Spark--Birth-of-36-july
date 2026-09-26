@@ -10,15 +10,18 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.DepthTestAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
-import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalShadowLight;
+import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder.VertexInfo;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 
@@ -30,13 +33,26 @@ import com.badlogic.gdx.utils.Disposable;
 public class DhakaCampusWorld implements Disposable {
 
     public static final Vector3 BOUNDARY_STONE_POS = new Vector3(7.8f, 0f, 36.5f);
+    private static final int SHADOW_MAP_SIZE = 4096;
 
     private final Environment environment;
-    private final DirectionalLight sunLight;
+    private final DirectionalShadowLight sunLight;
     private final Array<Model> models = new Array<>();
     private final Array<ModelInstance> instances = new Array<>();
     private final Array<ModelInstance> boundarySparkles = new Array<>();
     private float animTime = 0f;
+
+    // Solid geometry for player/camera collision: {minX, minY, minZ, maxX, maxY, maxZ}.
+    // Trunks and bamboo are added explicitly while building; everything else is derived from the
+    // instances' real bounds so no solid object can be forgotten.
+    private final java.util.List<float[]> colliders = new java.util.ArrayList<>();
+    // Instances that must never block: ground, water, sparkles and the merged foliage meshes
+    private final java.util.Set<ModelInstance> nonSolid = new java.util.HashSet<>();
+
+    // Translucent effects (light shafts): drawn after the scene, never cast shadows or collide
+    private final Array<ModelInstance> effects = new Array<>();
+    private BlendingAttribute beamBlend;
+    private static final float BEAM_BASE_OPACITY = 0.27f;
 
     // Animated water shimmer (pukur)
     private ModelInstance waterSurface;      // main water plane (animated tint)
@@ -50,18 +66,122 @@ public class DhakaCampusWorld implements Disposable {
     public DhakaCampusWorld(TextureFactory textures) {
         environment = new Environment();
 
-        // Warm golden-hour sun matching mockup lighting (upper-right sun streaming down)
-        sunLight = new DirectionalLight();
-        sunLight.set(new Color(1.0f, 0.95f, 0.82f, 1f), new Vector3(-0.55f, -0.60f, -0.58f).nor());
+        // Warm golden-hour sun (upper-right, behind the player at spawn) that also casts real
+        // shadows: a 120m x 120m shadow window that follows the player.
+        sunLight = new DirectionalShadowLight(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 120f, 120f, 1f, 140f);
+        sunLight.set(new Color(1.05f, 0.97f, 0.84f, 1f), new Vector3(-0.55f, -0.60f, -0.58f).nor());
         environment.add(sunLight);
+        environment.shadowMap = sunLight;
 
-        // Soft ambient daylight
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.52f, 0.50f, 0.54f, 1f));
+        // Cool sky-fill ambient so shadowed areas read as blue-ish shade, not flat grey
+        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.42f, 0.45f, 0.52f, 1f));
 
         // Atmospheric depth fog (warm golden dawn mist)
         environment.set(new ColorAttribute(ColorAttribute.Fog, 0.92f, 0.86f, 0.74f, 1f));
 
         buildCampus(textures);
+        buildColliders();
+    }
+
+    /**
+     * A mesh being filled with one material, that quietly rolls over to a fresh mesh before it hits
+     * the ~32k-vertex limit (16-bit indices), so callers can just keep adding geometry.
+     */
+    private final class FoliageBatch {
+        private static final int MAX_VERTICES = 30000;
+        private final String id;
+        private final Material material;
+        private final long attributes;
+        private ModelBuilder builder;
+        private MeshPartBuilder part;
+
+        FoliageBatch(String id, Material material, long attributes) {
+            this.id = id;
+            this.material = material;
+            this.attributes = attributes;
+            open();
+        }
+
+        private void open() {
+            builder = new ModelBuilder();
+            builder.begin();
+            part = builder.part(id, GL20.GL_TRIANGLES, attributes, material);
+        }
+
+        /** The part to write into, first starting a new mesh if {@code needed} more vertices won't fit. */
+        MeshPartBuilder part(int needed) {
+            if (((MeshBuilder) part).getNumVertices() + needed > MAX_VERTICES) {
+                close();
+                open();
+            }
+            return part;
+        }
+
+        void close() {
+            registerFoliage(builder);
+        }
+    }
+
+    /**
+     * Two crossed translucent quads along the sunlight direction, from the ground up toward the
+     * sun: a soft volumetric shaft that reads from any viewing angle.
+     */
+    private void addLightShaft(MeshPartBuilder mpb, float baseX, float baseZ, float width, float length, Vector3 towardSun) {
+        Vector3 w1 = new Vector3(towardSun).crs(Vector3.Y).nor().scl(width * 0.5f);
+        Vector3 w2 = new Vector3(towardSun).crs(w1).nor().scl(width * 0.5f);
+        Vector3 base = new Vector3(baseX, -0.4f, baseZ);
+        Vector3 top = new Vector3(base).mulAdd(towardSun, length);
+
+        for (Vector3 w : new Vector3[]{w1, w2}) {
+            VertexInfo a = new VertexInfo().setPos(base.x - w.x, base.y - w.y, base.z - w.z).setNor(0f, 1f, 0f).setUV(0f, 0f);
+            VertexInfo b = new VertexInfo().setPos(base.x + w.x, base.y + w.y, base.z + w.z).setNor(0f, 1f, 0f).setUV(1f, 0f);
+            VertexInfo c = new VertexInfo().setPos(top.x + w.x, top.y + w.y, top.z + w.z).setNor(0f, 1f, 0f).setUV(1f, 1f);
+            VertexInfo d = new VertexInfo().setPos(top.x - w.x, top.y - w.y, top.z - w.z).setNor(0f, 1f, 0f).setUV(0f, 1f);
+            mpb.rect(a, b, c, d);
+        }
+    }
+
+    /**
+     * Finishes a foliage batch and adds it to the scene. Foliage (limbs, canopies, fronds, bushes)
+     * is never derived into a collision box: tree trunks and bamboo stands get explicit ones.
+     */
+    private void registerFoliage(ModelBuilder builder) {
+        Model foliageModel = builder.end();
+        models.add(foliageModel);
+        ModelInstance foliageInstance = new ModelInstance(foliageModel);
+        nonSolid.add(foliageInstance);
+        instances.add(foliageInstance);
+    }
+
+    /** Solid boxes for the player and camera to collide with. */
+    public java.util.List<float[]> getColliders() {
+        return colliders;
+    }
+
+    /**
+     * Derives a collision box from every solid instance's world-space bounds. Skips things that
+     * are too low to matter (paving, roads), too high to reach (cornices, domes, lanterns) and the
+     * non-solid set. Hedge-height boxes are nudged just over the step-up limit so they read as
+     * walls to jump over instead of stairs to walk up.
+     */
+    private void buildColliders() {
+        nonSolid.add(instances.get(0)); // ground plane
+        if (waterSurface != null) nonSolid.add(waterSurface);
+        if (waterShimmer != null) nonSolid.add(waterShimmer);
+        for (ModelInstance sp : boundarySparkles) nonSolid.add(sp);
+
+        BoundingBox bb = new BoundingBox();
+        for (ModelInstance inst : instances) {
+            if (nonSolid.contains(inst)) continue;
+            inst.calculateBoundingBox(bb);
+            // ModelInstance bounds are local to the model. Apply the instance placement
+            // before handing them to the player's world-space collision checks.
+            bb.mul(inst.transform);
+            float top = bb.max.y;
+            if (top < 0.30f || bb.min.y > 2.0f) continue;
+            if (top > 0.60f && top <= 0.68f) top = 0.72f;
+            colliders.add(new float[]{bb.min.x, Math.max(bb.min.y, 0f), bb.min.z, bb.max.x, top, bb.max.z});
+        }
     }
 
     private void buildCampus(TextureFactory textures) {
@@ -103,6 +223,71 @@ public class DhakaCampusWorld implements Disposable {
             FloatAttribute.createAlphaTest(0.20f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 0.96f, 0.94f, 1f))
+        );
+
+        // Limbs are built as open tubes, so draw both sides rather than depend on winding
+        Material barkTwoSidedMat = new Material(
+            TextureAttribute.createDiffuse(textures.treeBark),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(0.90f, 0.88f, 0.85f, 1f))
+        );
+
+        Material leafClumpMat = new Material(
+            TextureAttribute.createDiffuse(textures.leafClump),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.92f, 1f)),
+            ColorAttribute.createEmissive(new Color(0.05f, 0.09f, 0.03f, 1f))
+        );
+
+        Material blossomClumpMat = new Material(
+            TextureAttribute.createDiffuse(textures.blossomClump),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(1f, 0.97f, 0.94f, 1f)),
+            ColorAttribute.createEmissive(new Color(0.05f, 0.08f, 0.03f, 1f))
+        );
+
+        // Individual leaf cards: cut out by alpha (no blending, so no sorting artefacts) and seen
+        // from both sides. The cutout also shapes the shadows into dappled leaf patterns.
+        // libGDX's default shader only applies the alpha cutout (colour AND shadow) to materials
+        // flagged as blended, so every cutout card carries a BlendingAttribute.
+        Material leafCardMat = new Material(
+            TextureAttribute.createDiffuse(textures.leafAtlas),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            FloatAttribute.createAlphaTest(0.5f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
+            // Sunlight shining through leaves: a soft green glow so shaded foliage isn't black
+            ColorAttribute.createEmissive(new Color(0.10f, 0.17f, 0.05f, 1f))
+        );
+
+        // Bamboo canes are built as open tubes, so draw both sides
+        Material bambooBarkMat = new Material(
+            TextureAttribute.createDiffuse(textures.bambooCulm),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.90f, 1f))
+        );
+
+        Material bambooLeafCardMat = new Material(
+            TextureAttribute.createDiffuse(textures.bambooAtlas),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            FloatAttribute.createAlphaTest(0.5f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
+            ColorAttribute.createEmissive(new Color(0.10f, 0.16f, 0.05f, 1f))
+        );
+
+        Material rockMat = new Material(
+            TextureAttribute.createDiffuse(textures.rockSurface),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.95f, 0.92f, 1f))
+        );
+
+        // Worn dirt path: feathered edges, so it blends into the grass
+        Material dirtMat = new Material(
+            TextureAttribute.createDiffuse(textures.dirtPath),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.93f, 0.90f, 1f))
         );
 
         Material bambooCulmMat = new Material(
@@ -178,7 +363,7 @@ public class DhakaCampusWorld implements Disposable {
         Material waterMat = new Material(ColorAttribute.createDiffuse(new Color(0.24f, 0.52f, 0.62f, 1f)));
         Material woodBench = new Material(ColorAttribute.createDiffuse(new Color(0.42f, 0.28f, 0.16f, 1f)));
         Material bicycleMetal = new Material(ColorAttribute.createDiffuse(new Color(0.22f, 0.24f, 0.28f, 1f)));
-        Material hedgeMat = new Material(ColorAttribute.createDiffuse(new Color(0.14f, 0.38f, 0.12f, 1f)));
+        Material hedgeMat = new Material(ColorAttribute.createDiffuse(new Color(0.20f, 0.33f, 0.16f, 1f)));
         Material flowerRed = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.16f, 0.18f, 1f)));
 
         // 1. Central Campus Lawn (Spanning entire precinct)
@@ -199,7 +384,10 @@ public class DhakaCampusWorld implements Disposable {
         models.add(flowerTile);
 
         // Central Promenade (from South Gate at 76m to Curzon steps at -18m)
+        // The Curzon Hall Pukur sits in the middle of the spine (per the campus map), so the
+        // promenade splits around it and rejoins via the ring paths below.
         for (float z = -18f; z <= 76f; z += 7.2f) {
+            if (z > -6f && z < 20f) continue;
             ModelInstance aInst = new ModelInstance(avenueTile);
             aInst.transform.setTranslation(0f, 0.03f, z);
             instances.add(aInst);
@@ -214,7 +402,9 @@ public class DhakaCampusWorld implements Disposable {
             instances.add(curbR);
 
             // Flanking Garden Hedges & Flowerbeds
-            if (z > -10f && z < 70f) {
+            // No hedge where the cross avenues (Z=30) and pond-ring links (Z=24) leave the promenade
+            boolean atCrossing = z > 20f && z < 36f;
+            if (z > -10f && z < 70f && !atCrossing) {
                 ModelInstance hL = new ModelInstance(hedgeTile);
                 hL.transform.setTranslation(-4.85f, 0.32f, z);
                 instances.add(hL);
@@ -279,6 +469,24 @@ public class DhakaCampusWorld implements Disposable {
             ModelInstance cwInst = new ModelInstance(crossWalkNorthSouth);
             cwInst.transform.setTranslation(44f, 0.03f, z);
             instances.add(cwInst);
+        }
+
+        // Pukur ring paths: run either side of the pond (X=+-14m) and link to the promenade
+        // at the north (Z=-10.8m) and south (Z=24m) ends.
+        for (float sx : new float[]{-14f, 14f}) {
+            for (float z = -10.8f; z <= 24f; z += 5.4f) {
+                ModelInstance ring = new ModelInstance(crossWalkNorthSouth);
+                ring.transform.setTranslation(sx, 0.03f, z);
+                instances.add(ring);
+            }
+            for (float z : new float[]{-10.8f, 24f}) {
+                float dir = Math.signum(sx);
+                for (float x = 6.0f; x <= 11.5f; x += 5.4f) {
+                    ModelInstance link = new ModelInstance(crossWalkEastWest);
+                    link.transform.setTranslation(dir * x, 0.03f, z);
+                    instances.add(link);
+                }
+            }
         }
 
         // Front Verandah Walkway
@@ -451,39 +659,26 @@ public class DhakaCampusWorld implements Disposable {
 
         // 4. REALISTIC DHAKA UNIVERSITY CAMPUS VEGETATION & LANDMARKS
         // Rain Tree & Krishnachura Trunks & Branches
-        Model rainTrunk = mb.createCylinder(1.10f, 4.4f, 1.10f, 12, treeTrunkMat, attr);
-        Model rainBranch = mb.createBox(0.42f, 3.2f, 0.42f, treeTrunkMat, attr);
-        Model krishnaTrunk = mb.createCylinder(0.82f, 4.0f, 0.82f, 10, treeTrunkMat, attr);
-        Model krishnaBranch = mb.createBox(0.35f, 2.8f, 0.35f, treeTrunkMat, attr);
         Model palmTrunk = mb.createCylinder(0.38f, 9.6f, 0.38f, 10, treeTrunkMat, attr);
-        models.add(rainTrunk);
-        models.add(rainBranch);
-        models.add(krishnaTrunk);
-        models.add(krishnaBranch);
         models.add(palmTrunk);
 
-        // Bamboo Culm Models (slender segmented canes: 8.5m, 10.5m, 12m)
-        Model culm8 = mb.createCylinder(0.14f, 8.5f, 0.14f, 8, bambooCulmMat, attr);
-        Model culm10 = mb.createCylinder(0.16f, 10.5f, 0.16f, 8, bambooCulmMat, attr);
-        Model culm12 = mb.createCylinder(0.16f, 12.0f, 0.16f, 8, bambooCulmMat, attr);
-        Model bambooShoot = mb.createCylinder(0.08f, 1.4f, 0.08f, 6, bambooCulmMat, attr);
-        models.add(culm8);
-        models.add(culm10);
-        models.add(culm12);
-        models.add(bambooShoot);
-
-        // Combined Foliage Meshes (Batch-rendered for 60fps performance!)
-        ModelBuilder mbFoliage = new ModelBuilder();
-        mbFoliage.begin();
-        MeshPartBuilder mpbRain = mbFoliage.part("rainLeaves", GL20.GL_TRIANGLES, attr, foliageMat);
-        MeshPartBuilder mpbKrishna = mbFoliage.part("krishnaLeaves", GL20.GL_TRIANGLES, attr, krishnachuraMat);
-        MeshPartBuilder mpbBamboo = mbFoliage.part("bambooLeaves", GL20.GL_TRIANGLES, attr, bambooLeafMat);
-        MeshPartBuilder mpbBushes = mbFoliage.part("bushes", GL20.GL_TRIANGLES, attr, bushMat);
+        // Foliage meshes (batch-rendered for 60fps). Each material gets its OWN ModelBuilder:
+        // ModelBuilder hands back one shared MeshBuilder per attribute set, so parts opened on a
+        // single builder all end up writing into the last part (and its material).
+        ModelBuilder mbPalm = new ModelBuilder();
+        mbPalm.begin();
+        MeshPartBuilder mpbRain = mbPalm.part("palmFronds", GL20.GL_TRIANGLES, attr, foliageMat);
+        ModelBuilder mbBush = new ModelBuilder();
+        mbBush.begin();
+        MeshPartBuilder mpbBushes = mbBush.part("bushes", GL20.GL_TRIANGLES, attr, bushMat);
+        // Shared foliage batches (palms, bamboo, bushes); trees get their own meshes below because
+        // a single mesh can only hold ~32k vertices and each tree carries thousands of leaf cards.
+        ModelBuilder[] foliageBuilders = {mbPalm, mbBush};
 
         float[][] treeLocations = {
             // Avenue flanks: Alternating Rain Trees & Krishnachura
-            {-11.5f, -4f, 0}, {11.5f, -4f, 1},
-            {-12.5f, 14f, 1}, {12.5f, 14f, 0},
+            {-19.5f, -2f, 0}, {19.5f, -2f, 1},
+            {-19.5f, 14f, 1}, {19.5f, 14f, 0},
             {-13.5f, 32f, 0}, {13.5f, 32f, 1},
             {-14.5f, 50f, 1}, {14.5f, 50f, 0},
             {-28.0f, 16f, 0}, {28.0f, 16f, 1},
@@ -498,72 +693,54 @@ public class DhakaCampusWorld implements Disposable {
             {-20f, 40f, 2}, {20f, 40f, 2}
         };
 
+        int treeIndex = 0;
         for (float[] loc : treeLocations) {
             float tx = loc[0];
             float tz = loc[1];
             int type = (int) loc[2];
+            // Deterministic per-tree variety so no two neighbours are identical
+            float seed = treeIndex * 2.399f;
+            float scale = 0.9f + 0.28f * (0.5f + 0.5f * MathUtils.sin(treeIndex * 1.7f));
+            treeIndex++;
+
+            // Trunk footprint (rain trees flare to ~0.95m at the root, so use a generous box)
+            float trunkHalf = (type == 2) ? 0.45f : 0.75f * scale;
+            colliders.add(new float[]{tx - trunkHalf, 0f, tz - trunkHalf, tx + trunkHalf, 6f, tz + trunkHalf});
 
             if (type == 0) {
-                // Rain Tree (Majestic spreading umbrella with real branches & cutout leaf cards)
-                ModelInstance tInst = new ModelInstance(rainTrunk);
-                tInst.transform.setTranslation(tx, 2.2f, tz);
-                instances.add(tInst);
-
-                // 4 Spreading gnarled branches reaching outwards
-                float[][] bOffsets = {
-                    {1.5f, 3.8f, 1.5f, 35f, 35f},
-                    {-1.5f, 3.8f, 1.5f, 35f, -35f},
-                    {1.5f, 3.8f, -1.5f, -35f, 35f},
-                    {-1.5f, 3.8f, -1.5f, -35f, -35f}
-                };
-
-                for (float[] bo : bOffsets) {
-                    ModelInstance b = new ModelInstance(rainBranch);
-                    b.transform.setTranslation(tx + bo[0], bo[1], tz + bo[2]);
-                    b.transform.rotate(Vector3.X, bo[3]).rotate(Vector3.Z, bo[4]);
-                    instances.add(b);
-
-                    // Multi-layer foliage cards at branch tip
-                    addCrossedQuads(mpbRain, tx + bo[0] * 1.6f, 4.4f, tz + bo[2] * 1.6f, 5.2f, 3.6f, 3, 0f);
-                    addHorizontalQuad(mpbRain, tx + bo[0] * 1.6f, 6.2f, tz + bo[2] * 1.6f, 4.8f);
-                }
-
-                // Central lower and high canopy crown (fully enveloping trunk and branches)
-                addCrossedQuads(mpbRain, tx, 3.4f, tz, 7.2f, 3.8f, 3, 0f);
-                addHorizontalQuad(mpbRain, tx, 4.8f, tz, 6.4f);
-                addCrossedQuads(mpbRain, tx, 4.6f, tz, 7.8f, 4.4f, 4, 0f);
-                addHorizontalQuad(mpbRain, tx, 7.0f, tz, 6.8f);
+                ModelBuilder limbsB = new ModelBuilder();
+                ModelBuilder coreB = new ModelBuilder();
+                ModelBuilder cardsB = new ModelBuilder();
+                limbsB.begin();
+                coreB.begin();
+                cardsB.begin();
+                TreeGeometry.rainTree(
+                    limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
+                    coreB.part("core", GL20.GL_TRIANGLES, attr, leafClumpMat),
+                    cardsB.part("leaves", GL20.GL_TRIANGLES, attr, leafCardMat),
+                    tx, tz, scale, seed);
+                registerFoliage(limbsB);
+                registerFoliage(coreB);
+                registerFoliage(cardsB);
 
                 // Ground bush ring around tree trunk
                 addCrossedQuads(mpbBushes, tx + 1.2f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
                 addCrossedQuads(mpbBushes, tx - 1.0f, 0f, tz - 1.1f, 1.6f, 1.1f, 3, 0f);
             } else if (type == 1) {
-                // Krishnachura Tree (Vibrant scarlet-red blossoms & feathery fronds)
-                ModelInstance tInst = new ModelInstance(krishnaTrunk);
-                tInst.transform.setTranslation(tx, 2.0f, tz);
-                instances.add(tInst);
-
-                float[][] bOffsets = {
-                    {1.3f, 3.5f, 1.1f, 30f, 30f},
-                    {-1.3f, 3.5f, 1.1f, 30f, -30f},
-                    {0.0f, 3.6f, -1.4f, -35f, 0f}
-                };
-
-                for (float[] bo : bOffsets) {
-                    ModelInstance b = new ModelInstance(krishnaBranch);
-                    b.transform.setTranslation(tx + bo[0], bo[1], tz + bo[2]);
-                    b.transform.rotate(Vector3.X, bo[3]).rotate(Vector3.Z, bo[4]);
-                    instances.add(b);
-
-                    addCrossedQuads(mpbKrishna, tx + bo[0] * 1.5f, 4.2f, tz + bo[2] * 1.5f, 4.8f, 3.4f, 3, 0f);
-                    addHorizontalQuad(mpbKrishna, tx + bo[0] * 1.5f, 5.8f, tz + bo[2] * 1.5f, 4.4f);
-                }
-
-                // Central lower and high blossom crown
-                addCrossedQuads(mpbKrishna, tx, 3.2f, tz, 6.5f, 3.6f, 3, 0f);
-                addHorizontalQuad(mpbKrishna, tx, 4.5f, tz, 5.8f);
-                addCrossedQuads(mpbKrishna, tx, 4.4f, tz, 7.0f, 4.0f, 4, 0f);
-                addHorizontalQuad(mpbKrishna, tx, 6.6f, tz, 6.2f);
+                ModelBuilder limbsB = new ModelBuilder();
+                ModelBuilder coreB = new ModelBuilder();
+                ModelBuilder cardsB = new ModelBuilder();
+                limbsB.begin();
+                coreB.begin();
+                cardsB.begin();
+                TreeGeometry.krishnaTree(
+                    limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
+                    coreB.part("core", GL20.GL_TRIANGLES, attr, blossomClumpMat),
+                    cardsB.part("leaves", GL20.GL_TRIANGLES, attr, leafCardMat),
+                    tx, tz, scale, seed);
+                registerFoliage(limbsB);
+                registerFoliage(coreB);
+                registerFoliage(cardsB);
 
                 // Wildflower shrub around base
                 addCrossedQuads(mpbBushes, tx + 0.9f, 0f, tz + 0.9f, 1.7f, 1.2f, 3, 0f);
@@ -579,73 +756,94 @@ public class DhakaCampusWorld implements Disposable {
         }
 
         // ==========================================
-        // DENSE BAMBOO GROVES (বাঁশঝাড় — Authentic Asian Bamboo Stands)
+        // GLADES: dense bamboo, leafy ground cover and worn dirt paths (the Boundary Stone woodland)
         // ==========================================
-        float[][] bambooGroves = {
-            // Front walkway flank (Right next to spawn & Boundary Stone!)
-            {12.5f, 38f},
-            // Opposite walkway flank
-            {-13.5f, 38f},
-            // Western garden stands
-            {-24.0f, 26f},
-            // Eastern garden stands
-            {24.0f, 26f},
-            // Curzon Hall North-West & North-East Flanks
-            {-22.0f, -8f},
-            {22.0f, -8f}
+        FoliageBatch caneBatch = new FoliageBatch("bambooCanes", bambooBarkMat, attr);
+        FoliageBatch sprayBatch = new FoliageBatch("bambooSprays", bambooLeafCardMat, attr);
+        FoliageBatch plantBatch = new FoliageBatch("groundPlants", leafCardMat, attr);
+        FoliageBatch rockBatch = new FoliageBatch("rocks", rockMat, attr);
+        FoliageBatch mossBatch = new FoliageBatch("moss", leafClumpMat, attr);
+        FoliageBatch pathBatch = new FoliageBatch("dirtPaths", dirtMat, attr);
+        FoliageBatch[] gladeBatches = {caneBatch, sprayBatch, plantBatch, rockBatch, mossBatch, pathBatch};
+
+        java.util.Random gladeRng = new java.util.Random(4242L);
+
+        // Bamboo stands run either side of a dirt path east and west of the promenade:
+        // {minX, maxX, minZ, maxZ}
+        float[][] bambooBands = {
+            {13f, 32f, 33.5f, 38.5f}, {13f, 32f, 42.5f, 45.5f},
+            {-32f, -13f, 33.5f, 38.5f}, {-32f, -13f, 42.5f, 45.5f}
         };
-
-        for (float[] grove : bambooGroves) {
-            float gx = grove[0], gz = grove[1];
-
-            // 11-13 slender bamboo culms clustered naturally in each grove
-            float[][] culmOffsets = {
-                {0f, 0f, 12f}, {0.8f, 0.5f, 10.5f}, {-0.7f, 0.6f, 12f},
-                {1.2f, -0.6f, 10.5f}, {-1.1f, -0.4f, 8.5f}, {0.4f, 1.2f, 10.5f},
-                {-0.5f, 1.3f, 8.5f}, {1.5f, 0.8f, 12f}, {-1.4f, 0.9f, 10.5f},
-                {0.2f, -1.2f, 8.5f}, {-0.8f, -1.1f, 10.5f}, {1.0f, -1.3f, 8.5f}
-            };
-
-            for (int c = 0; c < culmOffsets.length; c++) {
-                float[] co = culmOffsets[c];
-                float cx = gx + co[0];
-                float cz = gz + co[1];
-                float h = co[2];
-
-                Model culmModel = (h > 11f) ? culm12 : ((h > 9.5f) ? culm10 : culm8);
-                ModelInstance cInst = new ModelInstance(culmModel);
-                cInst.transform.setTranslation(cx, h * 0.5f, cz);
-
-                // Slight natural wind tilt (1 to 4 degrees)
-                float tiltAngle = (c * 37f) % 4.5f - 2.2f;
-                cInst.transform.rotate(Vector3.X, tiltAngle).rotate(Vector3.Z, -tiltAngle);
-                instances.add(cInst);
-
-                // Multi-tiered bamboo leaf sprays along the upper half of the culm
-                float leafBaseY = h * 0.52f;
-                float leafTopY = h * 0.96f;
-                float leafH = (leafTopY - leafBaseY) * 0.65f;
-
-                // Crossed bamboo leaf quads radiating in all directions
-                addCrossedQuads(mpbBamboo, cx, leafBaseY, cz, 3.2f, leafH, 3, 0f);
-                addCrossedQuads(mpbBamboo, cx, leafBaseY + leafH * 0.4f, cz, 2.6f, leafH * 0.75f, 3, 0f);
-                addHorizontalQuad(mpbBamboo, cx, leafTopY, cz, 2.8f);
+        long caneSeed = 9000L;
+        for (float[] band : bambooBands) {
+            float bandArea = (band[1] - band[0]) * (band[3] - band[2]);
+            int canes = Math.round(bandArea * 0.45f);
+            for (int c = 0; c < canes; c++) {
+                float cx = band[0] + gladeRng.nextFloat() * (band[1] - band[0]);
+                float cz = band[2] + gladeRng.nextFloat() * (band[3] - band[2]);
+                float height = 8f + gladeRng.nextFloat() * 5f;
+                float lean = 0.5f + gladeRng.nextFloat() * 1.8f;
+                float leanAngle = gladeRng.nextFloat() * MathUtils.PI2;
+                float radius = 0.05f + gladeRng.nextFloat() * 0.025f;
+                GladeGeometry.bambooCane(caneBatch.part(1800), sprayBatch.part(1800),
+                    cx, cz, height, lean, leanAngle, radius, caneSeed++);
             }
-
-            // Young bamboo shoot sprouts around grove perimeter
-            float[][] shootOffsets = {{-1.6f, 0.2f}, {1.7f, -0.4f}, {0.3f, 1.8f}, {-0.2f, -1.7f}};
-            for (float[] so : shootOffsets) {
-                ModelInstance sInst = new ModelInstance(bambooShoot);
-                sInst.transform.setTranslation(gx + so[0], 0.7f, gz + so[1]);
-                sInst.transform.rotate(Vector3.Z, so[0] * 5f);
-                instances.add(sInst);
-            }
-
-            // Low undergrowth bushes and fallen leaves at bamboo grove base
-            addCrossedQuads(mpbBushes, gx + 0.6f, 0f, gz - 0.4f, 2.2f, 1.4f, 3, 0f);
-            addCrossedQuads(mpbBushes, gx - 0.8f, 0f, gz + 0.6f, 2.0f, 1.2f, 3, 0f);
+            // A bamboo stand is dense enough to be one solid
+            colliders.add(new float[]{band[0], 0f, band[2], band[1], 12f, band[3]});
         }
 
+        // Ground cover: lush low plants either side of the paths (kept off the path itself)
+        for (float side : new float[]{1f, -1f}) {
+            for (int p = 0; p < 1500; p++) {
+                float px = side * (7.4f + gladeRng.nextFloat() * 26.6f);
+                float pz = 33.2f + gladeRng.nextFloat() * 12.4f;
+                float pathZ = 40.5f + 0.7f * MathUtils.sin(Math.abs(px) * 0.35f);
+                if (Math.abs(pz - pathZ) < 1.3f) continue;
+                float size = 0.17f + gladeRng.nextFloat() * 0.15f;
+                GladeGeometry.plant(plantBatch.part(90), px, pz, size, 6 + gladeRng.nextInt(4),
+                    500L + p * 7L + (side > 0f ? 0L : 3000L));
+            }
+        }
+
+        // Worn dirt paths: one each way from the promenade, plus a short spur to the Boundary Stone
+        for (float side : new float[]{1f, -1f}) {
+            float[][] pts = new float[14][2];
+            for (int i = 0; i < pts.length; i++) {
+                float ax = 6.8f + i * 2.1f;
+                pts[i][0] = side * ax;
+                pts[i][1] = 40.5f + 0.7f * MathUtils.sin(ax * 0.35f);
+            }
+            GladeGeometry.ribbon(pathBatch.part(200), pts, 0.95f, 0.02f, 2.6f);
+        }
+        GladeGeometry.ribbon(pathBatch.part(200),
+            new float[][]{{6.9f, 40.3f}, {8.2f, 39.2f}, {9.2f, 38.0f}}, 0.7f, 0.021f, 2.6f);
+
+        // Shafts of sunlight slanting through the canopy along the paths
+        beamBlend = new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE, BEAM_BASE_OPACITY);
+        Material beamMat = new Material(
+            TextureAttribute.createDiffuse(textures.lightBeam),
+            beamBlend,
+            IntAttribute.createCullFace(0),
+            new DepthTestAttribute(GL20.GL_LEQUAL, false),   // read depth, don't write it
+            ColorAttribute.createDiffuse(new Color(0f, 0f, 0f, 1f)),
+            ColorAttribute.createEmissive(new Color(1f, 0.94f, 0.78f, 1f))
+        );
+        ModelBuilder beamBuilder = new ModelBuilder();
+        beamBuilder.begin();
+        MeshPartBuilder beamPart = beamBuilder.part("lightShafts", GL20.GL_TRIANGLES, attr, beamMat);
+        Vector3 towardSun = new Vector3(0.55f, 0.60f, 0.58f).nor();
+        // {baseX, baseZ, width, length}
+        float[][] shafts = {
+            {14f, 38f, 3.0f, 19f}, {19f, 41f, 2.4f, 22f}, {24.5f, 39f, 3.4f, 18f},
+            {30f, 40f, 2.6f, 20f}, {11f, 44f, 2.2f, 17f}
+        };
+        for (float[] s : shafts) {
+            addLightShaft(beamPart, s[0], s[1], s[2], s[3], towardSun);
+            addLightShaft(beamPart, -s[0] - 2f, s[1] + 1f, s[2] * 0.9f, s[3], towardSun);
+        }
+        Model beamModel = beamBuilder.end();
+        models.add(beamModel);
+        effects.add(new ModelInstance(beamModel));
         // ==========================================
         // HISTORICAL BOUNDARY STONE (1921) & MOSSY BOULDERS
         // (Directly echoing [RT] Boundary Stone from reference image)
@@ -659,48 +857,31 @@ public class DhakaCampusWorld implements Disposable {
         plinthInst.transform.setTranslation(bsX, 0.16f, bsZ);
         instances.add(plinthInst);
 
-        // Chiseled standing Boundary Stone monolith
-        Model stoneMonolith = mb.createBox(0.95f, 1.40f, 0.65f, weatheredStoneMat, attr);
-        Model stoneTop = mb.createCone(0.85f, 0.55f, 0.55f, 8, weatheredStoneMat, attr);
-        Model stonePlaque = mb.createBox(0.70f, 0.90f, 0.04f, aparajeyoMat, attr);
-        models.add(stoneMonolith);
-        models.add(stoneTop);
-        models.add(stonePlaque);
+        // The Boundary Stone itself: a tall, weathered standing stone with a moss cap, in place of
+        // the old box-and-cone monolith (its collision box is hand-authored in PlayerController).
+        GladeGeometry.rock(rockBatch.part(500), mossBatch.part(500), bsX, bsZ, 0.55f, 1.15f, 0.42f, 8f);
 
-        ModelInstance monolithInst = new ModelInstance(stoneMonolith);
-        monolithInst.transform.setTranslation(bsX, 1.02f, bsZ);
-        monolithInst.transform.rotate(Vector3.Y, 20f);
-        instances.add(monolithInst);
-
-        ModelInstance topInst = new ModelInstance(stoneTop);
-        topInst.transform.setTranslation(bsX, 1.95f, bsZ);
-        topInst.transform.rotate(Vector3.Y, 20f);
-        instances.add(topInst);
-
-        ModelInstance plaqueInst = new ModelInstance(stonePlaque);
-        plaqueInst.transform.setTranslation(bsX - 0.08f, 1.05f, bsZ + 0.32f);
-        plaqueInst.transform.rotate(Vector3.Y, 20f);
-        instances.add(plaqueInst);
-
-        // Surrounding weathered granite rock boulders
-        Model boulderLg = mb.createSphere(2.2f, 1.3f, 1.8f, 10, 8, weatheredStoneMat, attr);
-        Model boulderMd = mb.createSphere(1.5f, 0.95f, 1.3f, 8, 6, weatheredStoneMat, attr);
-        models.add(boulderLg);
-        models.add(boulderMd);
-
+        // Surrounding weathered, moss-capped boulders, plus more rocks along the glade paths
         float[][] boulders = {
-            {bsX + 1.8f, 0.55f, bsZ - 0.8f, 0},
-            {bsX - 1.5f, 0.40f, bsZ + 1.1f, 1},
-            {bsX + 1.4f, 0.65f, bsZ + 1.6f, 0},
-            {bsX + 3.0f, 0.70f, bsZ - 2.8f, 0}
+            {bsX + 1.8f, bsZ - 0.8f, 1.15f, 0.80f, 0.95f},
+            {bsX - 1.5f, bsZ + 1.1f, 0.80f, 0.55f, 0.70f},
+            {bsX + 1.4f, bsZ + 1.6f, 1.05f, 0.75f, 0.85f},
+            {bsX + 3.0f, bsZ - 2.8f, 1.15f, 0.80f, 0.95f},
+            {16.5f, 39.4f, 0.70f, 0.45f, 0.55f}, {25.5f, 41.6f, 0.90f, 0.60f, 0.70f},
+            {31.0f, 39.0f, 0.60f, 0.40f, 0.50f}, {-16.5f, 41.4f, 0.75f, 0.50f, 0.60f},
+            {-24.5f, 39.2f, 0.95f, 0.65f, 0.75f}, {-30.5f, 41.5f, 0.60f, 0.40f, 0.50f}
         };
-
-        for (float[] b : boulders) {
-            ModelInstance bInst = new ModelInstance(b[3] == 0 ? boulderLg : boulderMd);
-            bInst.transform.setTranslation(b[0], b[1], b[2]);
-            instances.add(bInst);
-            // Shrub nestled beside boulder
-            addCrossedQuads(mpbBushes, b[0] + 0.5f, 0f, b[2] + 0.5f, 1.6f, 1.1f, 3, 0f);
+        float rockSeed = 1f;
+        for (int r = 0; r < boulders.length; r++) {
+            float[] b = boulders[r];
+            GladeGeometry.rock(rockBatch.part(500), mossBatch.part(500), b[0], b[1], b[2], b[3], b[4], rockSeed += 1.7f);
+            if (r >= 4) {
+                // The first four have hand-authored collision boxes; the path rocks get theirs here
+                colliders.add(new float[]{b[0] - b[2] * 0.85f, 0f, b[1] - b[4] * 0.85f,
+                    b[0] + b[2] * 0.85f, b[3] * 1.1f, b[1] + b[4] * 0.85f});
+            }
+            // Shrub nestled beside the boulder
+            addCrossedQuads(mpbBushes, b[0] + 0.5f, 0f, b[1] + 0.5f, 1.6f, 1.1f, 3, 0f);
         }
 
         // Sparkling aura particles orbiting Boundary Stone (matching reference image)
@@ -716,8 +897,8 @@ public class DhakaCampusWorld implements Disposable {
         // ==========================================
         // CURZON HALL PUKUR (Historic Campus Reflection Pond)
         // ==========================================
-        float pukurX = 12f, pukurZ = -2f;
-        float pukurW = 20.0f, pukurL = 16.0f;
+        float pukurX = 0f, pukurZ = 6f;
+        float pukurW = 18.0f, pukurL = 24.0f;
 
         // Perimeter stone curb border
         Model pukurCurbX = mb.createBox(pukurW + 0.8f, 0.45f, 0.6f, stoneCurb, attr);
@@ -765,10 +946,13 @@ public class DhakaCampusWorld implements Disposable {
         instances.add(waterShimmer);
 
 
-        // End Foliage batch generation & register models
-        Model combinedFoliage = mbFoliage.end();
-        models.add(combinedFoliage);
-        instances.add(new ModelInstance(combinedFoliage));
+        // End foliage batches & register models
+        for (ModelBuilder builder : foliageBuilders) {
+            registerFoliage(builder);
+        }
+        for (FoliageBatch batch : gladeBatches) {
+            batch.close();
+        }
 
         // 5. APARAJEYO BANGLA (অপরাজেয় বাংলা — Iconic 3-Student Sculpture)
         // Positioned on south-west campus lawn at (-36, 0, 26)
@@ -1292,7 +1476,9 @@ public class DhakaCampusWorld implements Disposable {
         float[] lampZ = {-10f, 8f, 26f, 44f, 60f};
         for (int i = 0; i < lampZ.length; i++) {
             float lz = lampZ[i];
-            for (float lx : new float[]{-5.4f, 5.4f}) {
+            // Lamp row at Z=8 would stand in the pukur, so it moves out to the ring paths
+            float[] lampX = (lz == 8f) ? new float[]{-16.5f, 16.5f} : new float[]{-5.4f, 5.4f};
+            for (float lx : lampX) {
                 ModelInstance pInst = new ModelInstance(postModel);
                 pInst.transform.setTranslation(lx, 2.1f, lz);
                 instances.add(pInst);
@@ -1318,14 +1504,16 @@ public class DhakaCampusWorld implements Disposable {
 
         float[] benchZ = {6f, 24f, 42f};
         for (float bz : benchZ) {
+            // The Z=6 bench would be in the pukur, so it moves to the west ring path
+            boolean atPukur = bz == 6f;
             ModelInstance benchL = new ModelInstance(benchModel);
-            benchL.transform.setTranslation(-7.0f, 0.4f, bz);
+            benchL.transform.setTranslation(atPukur ? -17.6f : -7.0f, 0.4f, bz);
             benchL.transform.rotate(Vector3.Y, 90f);
             instances.add(benchL);
 
             // Bicycle leaning against bench
             ModelInstance bike = new ModelInstance(bikeFrame);
-            bike.transform.setTranslation(-8.2f, 0.5f, bz + 1.2f);
+            bike.transform.setTranslation(atPukur ? -18.8f : -8.2f, 0.5f, bz + 1.2f);
             bike.transform.rotate(Vector3.Y, 75f);
             instances.add(bike);
         }
@@ -1333,6 +1521,11 @@ public class DhakaCampusWorld implements Disposable {
 
     public void update(float delta) {
         animTime += delta;
+
+        // Light shafts breathe slowly, as if clouds and leaves drift across the sun
+        if (beamBlend != null) {
+            beamBlend.opacity = BEAM_BASE_OPACITY * (0.80f + 0.20f * MathUtils.sin(animTime * 0.45f));
+        }
 
         // ── Animated Pukur Water Shimmer ──────────────────────────────────────
         if (waterSurface != null) {
@@ -1419,6 +1612,32 @@ public class DhakaCampusWorld implements Disposable {
         for (ModelInstance inst : instances) {
             batch.render(inst, environment);
         }
+        for (ModelInstance fx : effects) {
+            batch.render(fx, environment);
+        }
+    }
+
+    /** Starts the sun's depth pass, centred on the player. Pair with {@link #endShadowPass()}. */
+    public void beginShadowPass(Vector3 center, Vector3 forward) {
+        sunLight.begin(center, forward);
+    }
+
+    public void endShadowPass() {
+        sunLight.end();
+    }
+
+    public com.badlogic.gdx.graphics.Camera getShadowCamera() {
+        return sunLight.getCamera();
+    }
+
+    /** Draws everything that should cast a shadow (all but the ground plane and the water). */
+    public void renderShadowCasters(ModelBatch depthBatch) {
+        // instances[0] is the ground plane: it only receives shadows
+        for (int i = 1; i < instances.size; i++) {
+            ModelInstance inst = instances.get(i);
+            if (inst == waterSurface || inst == waterShimmer) continue;
+            depthBatch.render(inst);
+        }
     }
 
     public Environment getEnvironment() {
@@ -1433,5 +1652,6 @@ public class DhakaCampusWorld implements Disposable {
         models.clear();
         instances.clear();
         boundarySparkles.clear();
+        sunLight.dispose();
     }
 }

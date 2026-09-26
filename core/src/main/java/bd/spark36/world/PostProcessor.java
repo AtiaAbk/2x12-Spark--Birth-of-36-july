@@ -36,12 +36,12 @@ public class PostProcessor implements Disposable {
     private int bloomW, bloomH;
 
     // Parameters
-    public float bloomStrength   = 0.55f;
-    public float bloomThreshold  = 0.58f;
-    public float vignetteStrength = 0.62f;
-    public float vignetteRadius  = 0.72f;
-    public float exposure        = 1.15f;
-    public float saturation      = 1.18f;
+    public float bloomStrength   = 0.30f;
+    public float bloomThreshold  = 0.70f;
+    public float vignetteStrength = 0.50f;
+    public float vignetteRadius  = 0.75f;
+    public float exposure        = 1.05f;
+    public float saturation      = 1.00f;
     private float time = 0f;
 
     private boolean valid = false;
@@ -194,6 +194,10 @@ public class PostProcessor implements Disposable {
         compositeShader.setUniformf("u_saturation", saturation);
         compositeShader.setUniformf("u_time", time);
         quad.render(compositeShader, GL20.GL_TRIANGLES);
+
+        // Leave unit 0 active: SpriteBatch (particles, HUD text) binds to whatever unit is current
+        // but samples unit 0, so a leftover unit 1 made every glyph draw the scene texture.
+        Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
 
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glEnable(GL20.GL_BLEND);
