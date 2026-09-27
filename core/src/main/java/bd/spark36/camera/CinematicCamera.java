@@ -24,8 +24,8 @@ public class CinematicCamera {
     private float distance = 3.3f;
     private final float minDistance = 2.2f;
     private final float maxDistance = 6.0f;
-    private final float shoulderOffset = 0.28f;
-    private final float targetHeight = 1.32f;
+    private float shoulderOffset = 0.28f;
+    private float targetHeight = 1.32f;
 
     // Angles (degrees)
     private float yaw = 0f;
@@ -73,6 +73,9 @@ public class CinematicCamera {
         // Debug/test hooks so automated screenshots can inspect the player from any side and range
         yaw = Float.parseFloat(System.getProperty("bd.spark36.cameraYaw", "0"));
         distance = Float.parseFloat(System.getProperty("bd.spark36.cameraDistance", String.valueOf(distance)));
+        pitch = Float.parseFloat(System.getProperty("bd.spark36.cameraPitch", String.valueOf(pitch)));
+        shoulderOffset = Float.parseFloat(System.getProperty("bd.spark36.cameraShoulderOffset", String.valueOf(shoulderOffset)));
+        targetHeight = Float.parseFloat(System.getProperty("bd.spark36.cameraTargetHeight", String.valueOf(targetHeight)));
         camera = new PerspectiveCamera(baseFov, viewportWidth, viewportHeight);
         camera.near = 0.2f;
         camera.far = 350f;

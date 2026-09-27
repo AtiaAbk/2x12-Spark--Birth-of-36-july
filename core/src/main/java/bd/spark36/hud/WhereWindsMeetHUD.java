@@ -44,6 +44,19 @@ public class WhereWindsMeetHUD implements Disposable {
     // States
     private MemorialEntry activeModalEntry = null;
     private boolean isMapOpen = false;
+    private boolean parametersVisible = true;
+
+    public void toggleParameters() {
+        parametersVisible = !parametersVisible;
+    }
+
+    public boolean areParametersVisible() {
+        return parametersVisible;
+    }
+
+    public void setParametersVisible(boolean visible) {
+        this.parametersVisible = visible;
+    }
     private boolean isPauseMenuOpen = false;
     private boolean isVictoryOpen = false;
     private boolean victoryShown = false;
@@ -215,6 +228,10 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
+        if ((Gdx.input.isKeyJustPressed(Input.Keys.P) || Gdx.input.isKeyJustPressed(Input.Keys.H)) && !isVictoryOpen && !isPauseMenuOpen && activeModalEntry == null) {
+            parametersVisible = !parametersVisible;
+        }
+
         if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
             if (activeModalEntry == null && !isVictoryOpen) {
                 isMapOpen = !isMapOpen;
@@ -308,7 +325,9 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.begin(ShapeType.Filled);
 
         drawMissionCardBg(memorials, w, h);
-        drawMissionChecklistBg(player, memorials, w, h);
+        if (parametersVisible) {
+            drawMissionChecklistBg(player, memorials, w, h);
+        }
         drawAntiqueCompassRoseFilled(w, h, cameraYaw);
         drawKeycapsBg(w, h);
         if (!isMapOpen && !isPauseMenuOpen && !isVictoryOpen && activeModalEntry == null) {
@@ -327,7 +346,9 @@ public class WhereWindsMeetHUD implements Disposable {
         // 2. Draw HUD Outlines, Accents & Filigree
         shapeRenderer.begin(ShapeType.Line);
         drawMissionCardBorders(w, h);
-        drawMissionChecklistBorders(player, memorials, w, h);
+        if (parametersVisible) {
+            drawMissionChecklistBorders(player, memorials, w, h);
+        }
         drawAntiqueCompassRoseLines(w, h, cameraYaw);
         drawKeycapsBorders(w, h);
         if (!isMapOpen && !isPauseMenuOpen && !isVictoryOpen && activeModalEntry == null) {
@@ -342,7 +363,11 @@ public class WhereWindsMeetHUD implements Disposable {
         // 3. Draw Typography & Glyphs
         spriteBatch.begin();
         drawMissionCardText(memorials, nearest, dstToNearest, w, h);
-        drawMissionChecklistText(player, memorials, w, h);
+        if (parametersVisible) {
+            drawMissionChecklistText(player, memorials, w, h);
+        } else {
+            drawParametersHiddenPrompt(w, h);
+        }
         drawAntiqueCompassRoseText(w, h, cameraYaw);
         drawKeycapsText(w, h);
         if (!isMapOpen && !isPauseMenuOpen && !isVictoryOpen && activeModalEntry == null) {
@@ -718,12 +743,17 @@ public class WhereWindsMeetHUD implements Disposable {
         int ins = memorials.getInspectedCount();
         int tot = memorials.getTotalCount();
 
-        // 1. Header: "* MISSION PARAMETERS: 01 / 05"
+        // 1. Header: "* MISSION PARAMETERS: 01 / 05" + [P] HIDE hint
         String headerTitle = String.format("* MISSION PARAMETERS: %02d / %02d", ins, tot);
         fonts.keyFont.setColor(0f, 0f, 0f, 0.90f);
         fonts.keyFont.draw(spriteBatch, headerTitle, bx + 17f, by + bh - 11f);
         fonts.keyFont.setColor(ins >= tot ? Color.GREEN : goldAccent);
         fonts.keyFont.draw(spriteBatch, headerTitle, bx + 16f, by + bh - 10f);
+
+        fonts.smallFont.setColor(0f, 0f, 0f, 0.85f);
+        fonts.smallFont.draw(spriteBatch, "[P] HIDE", bx + bw - 74f, by + bh - 11f);
+        fonts.smallFont.setColor(goldMuted);
+        fonts.smallFont.draw(spriteBatch, "[P] HIDE", bx + bw - 75f, by + bh - 10f);
 
         // 2. Checklist of the 5 Memorial checkpoints
         String[] shortNames = {
@@ -954,6 +984,12 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.draw(spriteBatch, "INTERACT", kBaseX + 172f, kBaseY + 42f);
         fonts.smallFont.draw(spriteBatch, "MAP", kBaseX + 75f, kBaseY + 15f);
         fonts.smallFont.draw(spriteBatch, "PAUSE", kBaseX + 156f, kBaseY + 15f);
+
+        // Action Hints: Crouch, Attack, Gender, and Hide Parameters
+        fonts.smallFont.setColor(0f, 0f, 0f, 0.85f);
+        fonts.smallFont.draw(spriteBatch, "[C] CROUCH  |  [F] ATTACK  |  [G] GENDER (M/F)  |  [P] PARAMETERS", kBaseX - 169f, kBaseY - 3f);
+        fonts.smallFont.setColor(goldAccent);
+        fonts.smallFont.draw(spriteBatch, "[C] CROUCH  |  [F] ATTACK  |  [G] GENDER (M/F)  |  [P] PARAMETERS", kBaseX - 170f, kBaseY - 2f);
     }
 
     // ==========================================
@@ -1900,6 +1936,14 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.dispose();
         if (campusMapTex != null) campusMapTex.dispose();
     }
+
+    private void drawParametersHiddenPrompt(float w, float h) {
+        float bx = 36f;
+        float by = 36f;
+        fonts.keyFont.setColor(0f, 0f, 0f, 0.90f);
+        fonts.keyFont.draw(spriteBatch, "[P] SHOW MISSION PARAMETERS", bx + 1f, by + 19f);
+        fonts.keyFont.setColor(goldAccent);
+        fonts.keyFont.draw(spriteBatch, "[P] SHOW MISSION PARAMETERS", bx, by + 20f);
+    }
+
 }
-
-

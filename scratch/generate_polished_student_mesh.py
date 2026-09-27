@@ -1,4 +1,6 @@
-package bd.spark36.character;
+import re
+
+mesh_code = '''package bd.spark36.character;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
@@ -147,14 +149,14 @@ public class StudentMesh implements Disposable {
 
         // Shared realistic materials
         Material eyeWhite = flat(0.96f, 0.96f, 0.98f);
-        Material iris = flat(0.24f, 0.16f, 0.11f);
-        Material pupil = flat(0.04f, 0.03f, 0.03f);
+        Material iris = flat(0.22f, 0.14f, 0.09f);
+        Material pupil = flat(0.02f, 0.02f, 0.02f);
         Material catchlight = flat(0.99f, 0.99f, 1.0f);
-        Material upperLid = flat(0.18f, 0.12f, 0.09f);
-        Material browMale = flat(0.10f, 0.08f, 0.07f);
+        Material upperLid = flat(0.14f, 0.09f, 0.07f);
+        Material browMale = flat(0.08f, 0.06f, 0.05f);
         Material browFemale = flat(0.28f, 0.16f, 0.10f);
-        Material lipsMale = flat(0.76f, 0.52f, 0.46f);
-        Material lipsFemale = flat(0.82f, 0.52f, 0.48f);
+        Material lipsMale = flat(0.70f, 0.46f, 0.42f);
+        Material lipsFemale = flat(0.80f, 0.46f, 0.44f);
         Material hairMale = flat(0.07f, 0.06f, 0.05f);
         Material hairMaleHighlight = flat(0.12f, 0.10f, 0.08f);
         Material hairFemale = flat(0.42f, 0.22f, 0.12f);
@@ -255,58 +257,59 @@ public class StudentMesh implements Disposable {
         put(chestParts[0], capsuleModel(0.016f, 0.24f, backpackStrap), -0.105f, 0.08f, 0.105f, -6f, 0f, 0f);
         put(chestParts[0], capsuleModel(0.016f, 0.24f, backpackStrap), 0.105f, 0.08f, 0.105f, -6f, 0f, 0f);
 
-        // 3. Male Neck (Natural anatomical taper & sternocleidomastoid)
-        put(neckParts[0], cylinderModel(0.098f, 0.080f, 0.096f, skinMale), 0f, -0.010f, 0.005f);
-        put(neckParts[0], ellipsoidModel(0.018f, 0.022f, 0.014f, skinMale), 0f, 0.002f, 0.052f); // Adam's apple
+        // 3. Male Neck
+        put(neckParts[0], cylinderModel(0.120f, 0.100f, 0.114f, skinMale), 0f, -0.005f, 0.005f);
+        put(neckParts[0], ellipsoidModel(0.020f, 0.024f, 0.016f, skinMale), 0f, 0.005f, 0.058f);
 
-        // 4. Male Head & Sculpted Hair
-        put(headParts[0], ellipsoidModel(0.160f, 0.190f, 0.160f, skinMale), 0f, 0.020f, -0.005f); // Base cranium
-        put(headParts[0], ellipsoidModel(0.142f, 0.080f, 0.065f, skinMaleHighlight), 0f, 0.045f, 0.052f); // Forehead brow
-        put(headParts[0], ellipsoidModel(0.038f, 0.030f, 0.038f, skinMaleHighlight), -0.048f, 0f, 0.060f); // Cheek L
-        put(headParts[0], ellipsoidModel(0.038f, 0.030f, 0.038f, skinMaleHighlight), 0.048f, 0f, 0.060f);  // Cheek R
-        put(headParts[0], ellipsoidModel(0.125f, 0.095f, 0.115f, skinMale), 0f, -0.035f, 0.016f); // Jaw
-        put(headParts[0], ellipsoidModel(0.036f, 0.026f, 0.032f, skinMaleHighlight), 0f, -0.076f, 0.056f); // Chin
+        // 4. Male Head & Textured Hair
+        put(headParts[0], ellipsoidModel(0.165f, 0.200f, 0.165f, skinMale), 0f, 0.015f, -0.005f);
+        put(headParts[0], ellipsoidModel(0.145f, 0.090f, 0.070f, skinMaleHighlight), 0f, 0.040f, 0.048f);
+        put(headParts[0], ellipsoidModel(0.138f, 0.028f, 0.040f, skinMale), 0f, 0.026f, 0.068f);
+        put(headParts[0], ellipsoidModel(0.042f, 0.036f, 0.044f, skinMaleHighlight), -0.052f, 0f, 0.062f);
+        put(headParts[0], ellipsoidModel(0.042f, 0.036f, 0.044f, skinMaleHighlight), 0.052f, 0f, 0.062f);
+        put(headParts[0], ellipsoidModel(0.135f, 0.105f, 0.125f, skinMale), 0f, -0.045f, 0.012f);
+        put(headParts[0], ellipsoidModel(0.044f, 0.034f, 0.038f, skinMaleHighlight), 0f, -0.086f, 0.056f);
 
-        // Male Ears (Smoothly recessed)
-        put(headParts[0], ellipsoidModel(0.018f, 0.042f, 0.028f, skinMale), -0.082f, 0.005f, -0.010f, -4f, -12f, 5f);
-        put(headParts[0], ellipsoidModel(0.018f, 0.042f, 0.028f, skinMale), 0.082f, 0.005f, -0.010f, -4f, 12f, -5f);
+        // Male Ears
+        put(headParts[0], ellipsoidModel(0.020f, 0.046f, 0.030f, skinMale), -0.084f, -0.005f, -0.008f, -4f, -12f, 5f);
+        put(headParts[0], ellipsoidModel(0.020f, 0.046f, 0.030f, skinMale), 0.084f, -0.005f, -0.008f, -4f, 12f, -5f);
 
-        // Eyes & Brows (Refined proportions & alignment)
-        put(headParts[0], ellipsoidModel(0.024f, 0.014f, 0.010f, eyeWhite), -0.034f, 0.018f, 0.076f, 0f, -4f, 0f);
-        put(headParts[0], ellipsoidModel(0.014f, 0.014f, 0.007f, iris), -0.034f, 0.018f, 0.080f, 0f, -4f, 0f);
-        put(headParts[0], ellipsoidModel(0.007f, 0.007f, 0.004f, pupil), -0.034f, 0.018f, 0.083f, 0f, -4f, 0f);
-        put(headParts[0], ellipsoidModel(0.0035f, 0.0035f, 0.0035f, catchlight), -0.032f, 0.020f, 0.085f);
-        put(headParts[0], capsuleModel(0.0032f, 0.024f, upperLid), -0.034f, 0.024f, 0.080f, 0f, 0f, 85f);
+        // Eyes & Brows
+        put(headParts[0], ellipsoidModel(0.028f, 0.016f, 0.012f, eyeWhite), -0.036f, 0.012f, 0.082f, 0f, -5f, 0f);
+        put(headParts[0], ellipsoidModel(0.016f, 0.016f, 0.008f, iris), -0.036f, 0.012f, 0.086f, 0f, -5f, 0f);
+        put(headParts[0], ellipsoidModel(0.008f, 0.008f, 0.005f, pupil), -0.036f, 0.012f, 0.089f, 0f, -5f, 0f);
+        put(headParts[0], ellipsoidModel(0.004f, 0.004f, 0.004f, catchlight), -0.034f, 0.014f, 0.092f);
+        put(headParts[0], capsuleModel(0.004f, 0.028f, upperLid), -0.036f, 0.019f, 0.087f, 0f, 0f, 85f);
 
-        put(headParts[0], ellipsoidModel(0.024f, 0.014f, 0.010f, eyeWhite), 0.034f, 0.018f, 0.076f, 0f, 4f, 0f);
-        put(headParts[0], ellipsoidModel(0.014f, 0.014f, 0.007f, iris), 0.034f, 0.018f, 0.080f, 0f, 4f, 0f);
-        put(headParts[0], ellipsoidModel(0.007f, 0.007f, 0.004f, pupil), 0.034f, 0.018f, 0.083f, 0f, 4f, 0f);
-        put(headParts[0], ellipsoidModel(0.0035f, 0.0035f, 0.0035f, catchlight), 0.036f, 0.020f, 0.085f);
-        put(headParts[0], capsuleModel(0.0032f, 0.024f, upperLid), 0.034f, 0.024f, 0.080f, 0f, 0f, -85f);
+        put(headParts[0], ellipsoidModel(0.028f, 0.016f, 0.012f, eyeWhite), 0.036f, 0.012f, 0.082f, 0f, 5f, 0f);
+        put(headParts[0], ellipsoidModel(0.016f, 0.016f, 0.008f, iris), 0.036f, 0.012f, 0.086f, 0f, 5f, 0f);
+        put(headParts[0], ellipsoidModel(0.008f, 0.008f, 0.005f, pupil), 0.036f, 0.012f, 0.089f, 0f, 5f, 0f);
+        put(headParts[0], ellipsoidModel(0.004f, 0.004f, 0.004f, catchlight), 0.038f, 0.014f, 0.092f);
+        put(headParts[0], capsuleModel(0.004f, 0.028f, upperLid), 0.036f, 0.019f, 0.087f, 0f, 0f, -85f);
 
-        put(headParts[0], capsuleModel(0.0032f, 0.024f, browMale), -0.022f, 0.034f, 0.082f, 0f, 0f, 78f);
-        put(headParts[0], capsuleModel(0.0028f, 0.022f, browMale), -0.044f, 0.037f, 0.076f, 0f, 0f, 105f);
-        put(headParts[0], capsuleModel(0.0032f, 0.024f, browMale), 0.022f, 0.034f, 0.082f, 0f, 0f, -78f);
-        put(headParts[0], capsuleModel(0.0028f, 0.022f, browMale), 0.044f, 0.037f, 0.076f, 0f, 0f, -105f);
+        put(headParts[0], capsuleModel(0.0038f, 0.026f, browMale), -0.022f, 0.030f, 0.086f, 0f, 0f, 78f);
+        put(headParts[0], capsuleModel(0.0030f, 0.024f, browMale), -0.045f, 0.033f, 0.080f, 0f, 0f, 105f);
+        put(headParts[0], capsuleModel(0.0038f, 0.026f, browMale), 0.022f, 0.030f, 0.086f, 0f, 0f, -78f);
+        put(headParts[0], capsuleModel(0.0030f, 0.024f, browMale), 0.045f, 0.033f, 0.080f, 0f, 0f, -105f);
 
-        // Refined Nose & Lips
-        put(headParts[0], capsuleModel(0.0070f, 0.036f, skinMaleHighlight), 0f, 0.002f, 0.082f, 16f, 0f, 0f);
-        put(headParts[0], ellipsoidModel(0.014f, 0.011f, 0.013f, skinMale), 0f, -0.015f, 0.090f);
-        put(headParts[0], ellipsoidModel(0.026f, 0.008f, 0.009f, lipsMale), 0f, -0.034f, 0.076f);
-        put(headParts[0], ellipsoidModel(0.024f, 0.009f, 0.009f, lipsMale), 0f, -0.042f, 0.075f);
+        // Nose & Lips
+        put(headParts[0], capsuleModel(0.0085f, 0.042f, skinMaleHighlight), 0f, -0.006f, 0.088f, 18f, 0f, 0f);
+        put(headParts[0], ellipsoidModel(0.016f, 0.013f, 0.015f, skinMale), 0f, -0.024f, 0.098f);
+        put(headParts[0], ellipsoidModel(0.032f, 0.009f, 0.010f, lipsMale), 0f, -0.044f, 0.082f);
+        put(headParts[0], ellipsoidModel(0.030f, 0.011f, 0.011f, lipsMale), 0f, -0.053f, 0.080f);
 
-        // Male Textured College Hair (Smoother, naturally contoured cap)
-        put(headParts[0], ellipsoidModel(0.174f, 0.135f, 0.174f, hairMale), 0f, 0.065f, -0.012f);
-        put(headParts[0], ellipsoidModel(0.160f, 0.125f, 0.135f, hairMale), 0f, -0.010f, -0.038f);
-        put(headParts[0], ellipsoidModel(0.045f, 0.075f, 0.070f, hairMale), -0.072f, 0.025f, -0.005f);
-        put(headParts[0], ellipsoidModel(0.045f, 0.075f, 0.070f, hairMale), 0.072f, 0.025f, -0.005f);
-        put(headParts[0], ellipsoidModel(0.155f, 0.055f, 0.145f, hairMale), 0.008f, 0.105f, 0.005f, -6f, 8f, -4f);
-        put(headParts[0], ellipsoidModel(0.125f, 0.048f, 0.125f, hairMaleHighlight), -0.012f, 0.110f, 0.008f, -4f, -6f, 3f);
-        put(headParts[0], capsuleModel(0.009f, 0.044f, hairMale), 0.025f, 0.075f, 0.074f, -28f, 14f, -32f);
-        put(headParts[0], capsuleModel(0.008f, 0.042f, hairMaleHighlight), 0.044f, 0.070f, 0.070f, -20f, 20f, -38f);
-        put(headParts[0], capsuleModel(0.009f, 0.044f, hairMale), -0.016f, 0.076f, 0.074f, -24f, -10f, 25f);
-        put(headParts[0], capsuleModel(0.007f, 0.044f, hairMale), -0.072f, 0.010f, 0.020f, 8f, 0f, 0f);
-        put(headParts[0], capsuleModel(0.007f, 0.044f, hairMale), 0.072f, 0.010f, 0.020f, 8f, 0f, 0f);
+        // Male Textured College Hair (matching reference image)
+        put(headParts[0], ellipsoidModel(0.182f, 0.142f, 0.182f, hairMale), 0f, 0.055f, -0.015f);
+        put(headParts[0], ellipsoidModel(0.165f, 0.130f, 0.140f, hairMale), 0f, -0.020f, -0.040f);
+        put(headParts[0], ellipsoidModel(0.052f, 0.085f, 0.078f, hairMale), -0.076f, 0.020f, -0.005f);
+        put(headParts[0], ellipsoidModel(0.052f, 0.085f, 0.078f, hairMale), 0.076f, 0.020f, -0.005f);
+        put(headParts[0], ellipsoidModel(0.165f, 0.060f, 0.155f, hairMale), 0.010f, 0.100f, 0.005f, -8f, 10f, -6f);
+        put(headParts[0], ellipsoidModel(0.130f, 0.052f, 0.130f, hairMaleHighlight), -0.015f, 0.106f, 0.010f, -5f, -8f, 4f);
+        put(headParts[0], capsuleModel(0.010f, 0.052f, hairMale), 0.028f, 0.072f, 0.080f, -30f, 16f, -36f);
+        put(headParts[0], capsuleModel(0.009f, 0.048f, hairMaleHighlight), 0.048f, 0.066f, 0.075f, -22f, 24f, -42f);
+        put(headParts[0], capsuleModel(0.010f, 0.050f, hairMale), -0.018f, 0.074f, 0.078f, -26f, -12f, 28f);
+        put(headParts[0], capsuleModel(0.008f, 0.050f, hairMale), -0.076f, 0.002f, 0.022f, 8f, 0f, 0f);
+        put(headParts[0], capsuleModel(0.008f, 0.050f, hairMale), 0.076f, 0.002f, 0.022f, 8f, 0f, 0f);
 
         // 5. Male Arms & Hands (Polo Sleeves + White Stripe)
         Model poloSleeveM = capsuleModel(0.048f, 0.16f, poloNavy);
@@ -386,49 +389,49 @@ public class StudentMesh implements Disposable {
         put(chestParts[1], boxModel(0.075f, 0.022f, 0.005f, idCardHeader), 0f, -0.038f, 0.113f);
         put(chestParts[1], boxModel(0.028f, 0.034f, 0.005f, idPhoto), -0.016f, -0.070f, 0.114f);
 
-        // 3. Female Neck (Graceful anatomical taper)
-        put(neckParts[1], cylinderModel(0.082f, 0.085f, 0.080f, skinFemale), 0f, 0.020f, 0.005f);
+        // 3. Female Neck
+        put(neckParts[1], cylinderModel(0.108f, 0.095f, 0.104f, skinFemale), 0f, -0.005f, 0.005f);
 
         // 4. Female Head & Flowing Hair (Reference: Long auburn/chestnut locks past shoulders)
-        put(headParts[1], ellipsoidModel(0.142f, 0.175f, 0.142f, skinFemale), 0f, 0.015f, -0.005f);
-        put(headParts[1], ellipsoidModel(0.125f, 0.075f, 0.058f, skinFemaleHighlight), 0f, 0.038f, 0.048f); // Forehead
-        put(headParts[1], ellipsoidModel(0.032f, 0.026f, 0.034f, skinFemaleHighlight), -0.042f, -0.005f, 0.052f); // Cheek L
-        put(headParts[1], ellipsoidModel(0.032f, 0.026f, 0.034f, skinFemaleHighlight), 0.042f, -0.005f, 0.052f);  // Cheek R
-        put(headParts[1], ellipsoidModel(0.110f, 0.080f, 0.100f, skinFemale), 0f, -0.035f, 0.012f); // Jaw
-        put(headParts[1], ellipsoidModel(0.028f, 0.022f, 0.026f, skinFemaleHighlight), 0f, -0.070f, 0.048f); // Chin
+        put(headParts[1], ellipsoidModel(0.155f, 0.190f, 0.155f, skinFemale), 0f, 0.015f, -0.005f);
+        put(headParts[1], ellipsoidModel(0.135f, 0.085f, 0.065f, skinFemaleHighlight), 0f, 0.038f, 0.046f);
+        put(headParts[1], ellipsoidModel(0.038f, 0.032f, 0.040f, skinFemaleHighlight), -0.048f, 0f, 0.058f);
+        put(headParts[1], ellipsoidModel(0.038f, 0.032f, 0.040f, skinFemaleHighlight), 0.048f, 0f, 0.058f);
+        put(headParts[1], ellipsoidModel(0.125f, 0.095f, 0.115f, skinFemale), 0f, -0.042f, 0.012f);
+        put(headParts[1], ellipsoidModel(0.038f, 0.030f, 0.034f, skinFemaleHighlight), 0f, -0.082f, 0.052f);
 
         // Eyes & Brows (Feminine gentle contours)
-        put(headParts[1], ellipsoidModel(0.022f, 0.013f, 0.009f, eyeWhite), -0.030f, 0.015f, 0.070f, 0f, -4f, 0f);
-        put(headParts[1], ellipsoidModel(0.013f, 0.013f, 0.006f, iris), -0.030f, 0.015f, 0.074f, 0f, -4f, 0f);
-        put(headParts[1], ellipsoidModel(0.006f, 0.006f, 0.004f, pupil), -0.030f, 0.015f, 0.076f, 0f, -4f, 0f);
-        put(headParts[1], ellipsoidModel(0.0035f, 0.0035f, 0.0035f, catchlight), -0.028f, 0.017f, 0.078f);
-        put(headParts[1], capsuleModel(0.0028f, 0.022f, upperLid), -0.030f, 0.020f, 0.074f, 0f, 0f, 85f);
+        put(headParts[1], ellipsoidModel(0.026f, 0.015f, 0.011f, eyeWhite), -0.034f, 0.012f, 0.078f, 0f, -5f, 0f);
+        put(headParts[1], ellipsoidModel(0.015f, 0.015f, 0.007f, iris), -0.034f, 0.012f, 0.082f, 0f, -5f, 0f);
+        put(headParts[1], ellipsoidModel(0.007f, 0.007f, 0.004f, pupil), -0.034f, 0.012f, 0.085f, 0f, -5f, 0f);
+        put(headParts[1], ellipsoidModel(0.004f, 0.004f, 0.004f, catchlight), -0.032f, 0.014f, 0.088f);
+        put(headParts[1], capsuleModel(0.0035f, 0.026f, upperLid), -0.034f, 0.018f, 0.083f, 0f, 0f, 85f);
 
-        put(headParts[1], ellipsoidModel(0.022f, 0.013f, 0.009f, eyeWhite), 0.030f, 0.015f, 0.070f, 0f, 4f, 0f);
-        put(headParts[1], ellipsoidModel(0.013f, 0.013f, 0.006f, iris), 0.030f, 0.015f, 0.074f, 0f, 4f, 0f);
-        put(headParts[1], ellipsoidModel(0.006f, 0.006f, 0.004f, pupil), 0.030f, 0.015f, 0.076f, 0f, 4f, 0f);
-        put(headParts[1], ellipsoidModel(0.0035f, 0.0035f, 0.0035f, catchlight), 0.032f, 0.017f, 0.078f);
-        put(headParts[1], capsuleModel(0.0028f, 0.022f, upperLid), 0.030f, 0.020f, 0.074f, 0f, 0f, -85f);
+        put(headParts[1], ellipsoidModel(0.026f, 0.015f, 0.011f, eyeWhite), 0.034f, 0.012f, 0.078f, 0f, 5f, 0f);
+        put(headParts[1], ellipsoidModel(0.015f, 0.015f, 0.007f, iris), 0.034f, 0.012f, 0.082f, 0f, 5f, 0f);
+        put(headParts[1], ellipsoidModel(0.007f, 0.007f, 0.004f, pupil), 0.034f, 0.012f, 0.085f, 0f, 5f, 0f);
+        put(headParts[1], ellipsoidModel(0.004f, 0.004f, 0.004f, catchlight), 0.036f, 0.014f, 0.088f);
+        put(headParts[1], capsuleModel(0.0035f, 0.026f, upperLid), 0.034f, 0.018f, 0.083f, 0f, 0f, -85f);
 
-        put(headParts[1], capsuleModel(0.0026f, 0.022f, browFemale), -0.019f, 0.028f, 0.074f, 0f, 0f, 78f);
-        put(headParts[1], capsuleModel(0.0022f, 0.020f, browFemale), -0.038f, 0.031f, 0.068f, 0f, 0f, 105f);
-        put(headParts[1], capsuleModel(0.0026f, 0.022f, browFemale), 0.019f, 0.028f, 0.074f, 0f, 0f, -78f);
-        put(headParts[1], capsuleModel(0.0022f, 0.020f, browFemale), 0.038f, 0.031f, 0.068f, 0f, 0f, -105f);
+        put(headParts[1], capsuleModel(0.0030f, 0.024f, browFemale), -0.022f, 0.028f, 0.082f, 0f, 0f, 78f);
+        put(headParts[1], capsuleModel(0.0026f, 0.022f, browFemale), -0.042f, 0.031f, 0.076f, 0f, 0f, 105f);
+        put(headParts[1], capsuleModel(0.0030f, 0.024f, browFemale), 0.022f, 0.028f, 0.082f, 0f, 0f, -78f);
+        put(headParts[1], capsuleModel(0.0026f, 0.022f, browFemale), 0.042f, 0.031f, 0.076f, 0f, 0f, -105f);
 
-        put(headParts[1], capsuleModel(0.0060f, 0.032f, skinFemaleHighlight), 0f, -0.001f, 0.074f, 16f, 0f, 0f);
-        put(headParts[1], ellipsoidModel(0.011f, 0.009f, 0.010f, skinFemale), 0f, -0.016f, 0.080f);
-        put(headParts[1], ellipsoidModel(0.022f, 0.007f, 0.007f, lipsFemale), 0f, -0.033f, 0.069f);
-        put(headParts[1], ellipsoidModel(0.020f, 0.008f, 0.008f, lipsFemale), 0f, -0.040f, 0.068f);
+        put(headParts[1], capsuleModel(0.0075f, 0.038f, skinFemaleHighlight), 0f, -0.006f, 0.084f, 18f, 0f, 0f);
+        put(headParts[1], ellipsoidModel(0.014f, 0.011f, 0.013f, skinFemale), 0f, -0.022f, 0.092f);
+        put(headParts[1], ellipsoidModel(0.028f, 0.009f, 0.009f, lipsFemale), 0f, -0.042f, 0.078f);
+        put(headParts[1], ellipsoidModel(0.026f, 0.010f, 0.010f, lipsFemale), 0f, -0.050f, 0.076f);
 
-        // Long Flowing Auburn Hair (Cascading naturally around head, shoulders, and chest)
-        put(headParts[1], ellipsoidModel(0.158f, 0.130f, 0.158f, hairFemale), 0f, 0.052f, -0.012f); // Crown
-        put(headParts[1], ellipsoidModel(0.145f, 0.220f, 0.110f, hairFemale), 0f, -0.060f, -0.045f); // Back cascade
-        put(headParts[1], capsuleModel(0.016f, 0.26f, hairFemale), -0.060f, -0.055f, 0.005f, 4f, 0f, 3f);  // Left front cascade
-        put(headParts[1], capsuleModel(0.016f, 0.26f, hairFemale), 0.060f, -0.055f, 0.005f, 4f, 0f, -3f);  // Right front cascade
-        put(headParts[1], capsuleModel(0.013f, 0.22f, hairFemaleHighlight), -0.055f, -0.065f, 0.018f, 6f, 0f, 4f);
-        put(headParts[1], capsuleModel(0.013f, 0.22f, hairFemaleHighlight), 0.055f, -0.065f, 0.018f, 6f, 0f, -4f);
-        put(headParts[1], capsuleModel(0.009f, 0.048f, hairFemale), 0.016f, 0.062f, 0.064f, -22f, 10f, -25f); // Soft bangs
-        put(headParts[1], capsuleModel(0.009f, 0.048f, hairFemale), -0.016f, 0.062f, 0.064f, -22f, -10f, 25f);
+        // Long Flowing Auburn Hair (Cascading naturally past shoulders)
+        put(headParts[1], ellipsoidModel(0.175f, 0.140f, 0.175f, hairFemale), 0f, 0.055f, -0.015f);
+        put(headParts[1], ellipsoidModel(0.160f, 0.180f, 0.130f, hairFemale), 0f, -0.060f, -0.045f); // Back mane
+        put(headParts[1], capsuleModel(0.026f, 0.28f, hairFemale), -0.082f, -0.06f, 0.010f, 8f, 0f, 5f);  // Left cascade
+        put(headParts[1], capsuleModel(0.026f, 0.28f, hairFemale), 0.082f, -0.06f, 0.010f, 8f, 0f, -5f);  // Right cascade
+        put(headParts[1], capsuleModel(0.022f, 0.24f, hairFemaleHighlight), -0.075f, -0.08f, 0.030f, 10f, 0f, 8f);
+        put(headParts[1], capsuleModel(0.022f, 0.24f, hairFemaleHighlight), 0.075f, -0.08f, 0.030f, 10f, 0f, -8f);
+        put(headParts[1], capsuleModel(0.012f, 0.065f, hairFemale), 0.024f, 0.068f, 0.078f, -28f, 14f, -32f);
+        put(headParts[1], capsuleModel(0.012f, 0.065f, hairFemale), -0.024f, 0.068f, 0.078f, -28f, -14f, 32f);
 
         // 5. Female Arms & Rolled Sleeves
         Model sleeveF = capsuleModel(0.042f, 0.15f, shirtSkyBlue);
@@ -574,18 +577,18 @@ public class StudentMesh implements Disposable {
             .rotate(Vector3.X, torsoPitch);
         drawParts(batch, env, chestParts[g], segment);
 
-        // Neck (Seamless collar-to-chin connection)
-        float neckY = isCrouching ? 0.90f : (isSittingWater ? 0.84f : 1.34f);
-        float neckZ = isCrouching ? 0.20f : 0f;
+        // Neck
+        float neckY = isCrouching ? 0.94f : (isSittingWater ? 0.88f : 1.42f);
+        float neckZ = isCrouching ? 0.22f : 0f;
         segment.set(rootTransform).translate(0f, neckY + breathe, neckZ)
             .rotate(Vector3.Y, -twist * 0.5f)
             .rotate(Vector3.X, torsoPitch * 0.7f);
         drawParts(batch, env, neckParts[g], segment);
 
-        // Head (Proper anatomical proportion over neck)
+        // Head
         float sprintHeadLean = isSprinting && isMoving ? 8f : 0f;
-        float headY = isCrouching ? 0.99f : (isSittingWater ? 0.93f : 1.45f);
-        float headZ = isCrouching ? 0.25f : 0f;
+        float headY = isCrouching ? 1.05f : (isSittingWater ? 0.99f : 1.55f);
+        float headZ = isCrouching ? 0.28f : 0f;
         segment.set(rootTransform).translate(0f, headY + breathe - bobOffset * 0.3f, headZ)
             .rotate(Vector3.X, headPitch + sprintHeadLean)
             .rotate(Vector3.Y, -twist * 0.3f);
@@ -651,29 +654,28 @@ public class StudentMesh implements Disposable {
                 tmp.set(segment).translate(0f, -0.37f, 0f);
                 drawParts(batch, env, footParts[g][side], tmp);
 
-                // Upper Arm (Natural relaxed posture resting gently beside the body)
+                // Upper Arm
                 float armSwing = isMoving ? -swing * (side == 0 ? 28f : -28f) * (isSprinting ? 1.6f : 1f) : 0f;
-                float armBaseAngle = 3f;
+                float armBaseAngle = 4f;
 
                 if (isAttacking) {
                     if (side == 0 && attackArmL != 0f) armSwing = attackArmL;
                     if (side == 1 && attackArmR != 0f) armSwing = attackArmR;
                 }
 
-                segment.set(rootTransform).translate(sx * (g == 1 ? 0.165f : 0.180f), chestY + 0.18f + breathe, chestZ)
+                segment.set(rootTransform).translate(sx * 0.185f, chestY + 0.18f + breathe, chestZ)
                     .rotate(Vector3.X, armBaseAngle + armSwing)
-                    .rotate(Vector3.Z, sx * -3.5f)
-                    .rotate(Vector3.Y, sx * 4.0f);
+                    .rotate(Vector3.Z, sx * -5f);
                 drawParts(batch, env, upperArmParts[g][side], segment);
 
-                // Forearm (Slight natural forward curve)
-                float elbowBend = isMoving ? (isSprinting ? 52f : 24f) : 8f;
+                // Forearm
+                float elbowBend = isMoving ? (isSprinting ? 52f : 24f) : 10f;
                 if (isAttacking) {
                     if (side == 0 && attackForeArmL != 0f) elbowBend = Math.abs(attackForeArmL);
                     if (side == 1 && attackForeArmR != 0f) elbowBend = Math.abs(attackForeArmR);
                 }
 
-                segment.translate(0f, -0.27f, 0f).rotate(Vector3.X, -elbowBend).rotate(Vector3.Y, sx * 8f);
+                segment.translate(0f, -0.27f, 0f).rotate(Vector3.X, -elbowBend);
                 drawParts(batch, env, foreArmParts[g][side], segment);
             }
         }
@@ -687,3 +689,9 @@ public class StudentMesh implements Disposable {
         models.clear();
     }
 }
+'''
+
+with open('core/src/main/java/bd/spark36/character/StudentMesh.java', 'w') as f:
+    f.write(mesh_code)
+
+print("StudentMesh.java generated with dual-gender support and clean reference attire!")

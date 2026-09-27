@@ -87,6 +87,21 @@ public class SparkGame extends ApplicationAdapter {
         fontRenderer = new FontRenderer();
         glyphLayout = new GlyphLayout();
         gameState = GameState.MAIN_MENU;
+        if (System.getProperty("bd.spark36.testHeroScreenshot") != null ||
+            System.getProperty("bd.spark36.testSitScreenshot") != null ||
+            System.getProperty("bd.spark36.testScreenshot") != null) {
+            System.clearProperty("bd.spark36.testVictory");
+            System.clearProperty("bd.spark36.testModalScreenshot");
+            System.clearProperty("bd.spark36.testMapScreenshot");
+        }
+        if (System.getProperty("bd.spark36.testMenuScreenshot") == null &&
+            (System.getProperty("bd.spark36.testScreenshot") != null ||
+             System.getProperty("bd.spark36.testHeroScreenshot") != null ||
+             System.getProperty("bd.spark36.testSitScreenshot") != null ||
+             System.getProperty("bd.spark36.testMapScreenshot") != null ||
+             System.getProperty("bd.spark36.testModalScreenshot") != null)) {
+            startGameplay();
+        }
     }
 
     /**
@@ -370,8 +385,6 @@ public class SparkGame extends ApplicationAdapter {
         int screenW = Gdx.graphics.getBackBufferWidth();
         int screenH = Gdx.graphics.getBackBufferHeight();
 
-        handleGameplayInputs(delta);
-
         // Check for exit actions from pause menu or victory screen
         int exitAction = hud.consumeExitAction();
         if (exitAction == 1) {
@@ -389,7 +402,14 @@ public class SparkGame extends ApplicationAdapter {
         }
 
         // 1. Update Game Logic
-        boolean canMove = !hud.isModalOpen();
+        boolean canMove = !hud.isModalOpen() && System.getProperty("bd.spark36.testHeroScreenshot") == null;
+        if (world.isNearPondGhat(player.getPosition()) && Gdx.input.isKeyJustPressed(Input.Keys.E) && !hud.isModalOpen()) {
+            boolean nextSit = !player.isSittingWater();
+            player.setSittingWater(nextSit);
+            if (nextSit) {
+                player.setPosition(0f, 0.18f, 17.2f);
+            }
+        }
         player.update(delta, camera.getYaw(), canMove);
         // Enhanced camera: pass movement state for bob + FOV push + shake
         camera.update(delta, player.getPosition(), canMove,
@@ -415,7 +435,14 @@ public class SparkGame extends ApplicationAdapter {
             player.getHeadingDegrees(),
             player.getWalkCycle(),
             player.isMoving(),
-            player.isSprinting()
+            player.isSprinting(),
+            player.isCrouching(),
+            player.isAttacking(),
+            player.getAttackCombo(),
+            player.getAttackProgress(),
+            player.isSittingWater(),
+            player.getSitProgress(),
+            player.getGender()
         );
         shadowBatch.end();
         world.endShadowPass();
@@ -447,7 +474,14 @@ public class SparkGame extends ApplicationAdapter {
             player.getHeadingDegrees(),
             player.getWalkCycle(),
             player.isMoving(),
-            player.isSprinting()
+            player.isSprinting(),
+            player.isCrouching(),
+            player.isAttacking(),
+            player.getAttackCombo(),
+            player.getAttackProgress(),
+            player.isSittingWater(),
+            player.getSitProgress(),
+            player.getGender()
         );
         modelBatch.end();
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
@@ -469,6 +503,8 @@ public class SparkGame extends ApplicationAdapter {
         // 7. 2D HUD (always crisp, rendered AFTER post-processing)
         hud.render(player, memorials, camera.getYaw(), camera.getCamera());
 
+        // Process inputs and automated test screenshot triggers AFTER the frame is fully drawn!
+        handleGameplayInputs(delta);
     }
 
     private void handleGameplayInputs(float delta) {
@@ -500,7 +536,50 @@ public class SparkGame extends ApplicationAdapter {
         }
 
         // Automated visual verification support
-        if (System.getProperty("bd.spark36.testVictory") != null) {
+        if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.testHideParameters"))) {
+            hud.setParametersVisible(false);
+        }
+
+        String testGender = System.getProperty("bd.spark36.testGender");
+        if ("female".equalsIgnoreCase(testGender) || "1".equals(testGender)) {
+            player.setGender(1);
+        }
+
+        if (System.getProperty("bd.spark36.testHeroScreenshot") != null) {
+            hud.reset();
+            testTimer += delta;
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                String shotName = System.getProperty("bd.spark36.testHeroName", "spark36_hero_character_verified");
+                takeScreenshot(shotName);
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testSitScreenshot") != null) {
+            hud.reset();
+            player.setPosition(0f, 0.18f, 17.2f);
+            player.setSittingWater(true);
+            testTimer += delta;
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                String shotName = System.getProperty("bd.spark36.testHeroName", "spark36_pond_sitting_verified");
+                takeScreenshot(shotName);
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testScreenshot") != null) {
+            hud.reset();
+            testTimer += delta;
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("spark36_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testVictory") != null) {
             testTimer += delta;
             if (testTimer >= 1.0f && !hud.isModalOpen()) {
                 for (bd.spark36.world.JulyMemorials.MemorialEntry e : memorials.getEntries()) {
@@ -534,15 +613,6 @@ public class SparkGame extends ApplicationAdapter {
             }
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
                 takeScreenshot("spark36_map_verified");
-                autoScreenshotTaken = true;
-                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
-                    Gdx.app.exit();
-                }
-            }
-        } else if (System.getProperty("bd.spark36.testScreenshot") != null) {
-            testTimer += delta;
-            if (!autoScreenshotTaken && testTimer >= 2.0f) {
-                takeScreenshot("spark36_verified");
                 autoScreenshotTaken = true;
                 if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
                     Gdx.app.exit();

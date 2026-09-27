@@ -64,10 +64,20 @@ public class PlayerController {
     private float staminaCooldown = 0f;
     private boolean staminaExhausted = false;
 
+    // Gender: 0 = Male, 1 = Female
+    private int gender = 0;
+
     // Animation & State
     private boolean isMoving = false;
     private boolean isSprinting = false;
     private float walkCycle = 0f;
+    private boolean isCrouching = false;
+    private boolean isAttacking = false;
+    private int attackCombo = 0;
+    private float attackProgress = 0f;
+    private float comboWindowTimer = 0f;
+    private boolean isSittingWater = false;
+    private float sitProgress = 0f;
 
     // Temp vectors for math
     private final Vector2 moveDir = new Vector2();
@@ -280,10 +290,32 @@ public class PlayerController {
                         Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) ||
                         Gdx.input.isKeyPressed(Input.Keys.R);
 
-            // JUMP / DOUBLE JUMP: 'J' (Primary key, replacing SPACE completely as requested!)
-            // Also supports C, V, or Right-Click as alternative gamer inputs
+            // CROUCH / DUCK: 'C' key toggles crouch
+            if (Gdx.input.isKeyJustPressed(Input.Keys.C)) {
+                isCrouching = !isCrouching;
+            }
+
+            // GENDER SWITCH: 'G' key toggles Male / Female student
+            if (Gdx.input.isKeyJustPressed(Input.Keys.G)) {
+                gender = (gender == 0) ? 1 : 0;
+            }
+
+            // COMBAT STRIKES: 'F' key or Left-Click (3-hit student protest defense combo!)
+            boolean attackPressed = Gdx.input.isKeyJustPressed(Input.Keys.F) ||
+                                    (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && !isSittingWater);
+            if (attackPressed && !isAttacking && !isSittingWater) {
+                isAttacking = true;
+                attackProgress = 0f;
+                if (comboWindowTimer > 0f) {
+                    attackCombo = (attackCombo % 3) + 1;
+                } else {
+                    attackCombo = 1;
+                }
+            }
+
+            // JUMP / DOUBLE JUMP: 'J' or 'SPACE' or 'V' or Right-Click
             jumpKey = Gdx.input.isKeyJustPressed(Input.Keys.J) ||
-                      Gdx.input.isKeyJustPressed(Input.Keys.C) ||
+                      Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
                       Gdx.input.isKeyJustPressed(Input.Keys.V) ||
                       Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT);
 
@@ -304,8 +336,38 @@ public class PlayerController {
         staminaExhausted = false;
         isSprinting = isMoving && sprintKey;
 
+        // Handle combat attack timing
+        if (isAttacking) {
+            attackProgress += delta * 3.2f;
+            if (attackProgress >= 1.0f) {
+                isAttacking = false;
+                attackProgress = 1.0f;
+                comboWindowTimer = 0.65f;
+            }
+        } else if (comboWindowTimer > 0f) {
+            comboWindowTimer -= delta;
+            if (comboWindowTimer <= 0f) {
+                attackCombo = 0;
+            }
+        }
+
+        // Handle water sitting state
+        if (isSittingWater) {
+            sitProgress = Math.min(1.0f, sitProgress + delta * 3.5f);
+            velocity.set(0f, 0f, 0f);
+            boolean breakSit = (inputEnabled && (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.S) ||
+                                                 Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.D) ||
+                                                 jumpKey || isAttacking));
+            if (breakSit) {
+                isSittingWater = false;
+            }
+        } else {
+            sitProgress = Math.max(0f, sitProgress - delta * 4.0f);
+        }
+
         // 3. Movement direction relative to camera angle
-        float currentSpeed = isSprinting ? SPRINT_SPEED : WALK_SPEED;
+        float currentSpeed = isCrouching ? (isSprinting ? 2.6f : 1.8f) : (isSprinting ? SPRINT_SPEED : WALK_SPEED);
+        if (isSittingWater) currentSpeed = 0f;
         float targetVx = 0f;
         float targetVz = 0f;
 
@@ -630,5 +692,48 @@ public class PlayerController {
 
     public void setPosition(float x, float y, float z) {
         position.set(x, y, z);
+    }
+    public boolean isCrouching() {
+        return isCrouching;
+    }
+
+    public void setCrouching(boolean crouching) {
+        this.isCrouching = crouching;
+    }
+
+    public boolean isAttacking() {
+        return isAttacking;
+    }
+
+    public int getAttackCombo() {
+        return attackCombo;
+    }
+
+    public float getAttackProgress() {
+        return attackProgress;
+    }
+
+    public boolean isSittingWater() {
+        return isSittingWater;
+    }
+
+    public float getSitProgress() {
+        return sitProgress;
+    }
+
+    public void setSittingWater(boolean sitting) {
+        this.isSittingWater = sitting;
+        if (sitting) {
+            this.sitProgress = 1f;
+            this.velocity.set(0f, 0f, 0f);
+        }
+    }
+
+    public int getGender() {
+        return gender;
+    }
+
+    public void setGender(int gender) {
+        this.gender = (gender == 1) ? 1 : 0;
     }
 }
