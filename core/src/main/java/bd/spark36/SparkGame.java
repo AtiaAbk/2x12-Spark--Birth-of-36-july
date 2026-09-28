@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import bd.spark36.camera.CinematicCamera;
+import bd.spark36.character.CampusCrowd;
 import bd.spark36.character.PlayerController;
 import bd.spark36.character.StudentMesh;
 import bd.spark36.hud.FontRenderer;
@@ -65,6 +66,7 @@ public class SparkGame extends ApplicationAdapter {
     private DhakaCampusWorld world;
     private JulyMemorials memorials;
     private StudentMesh studentMesh;
+    private CampusCrowd crowd;
     private PlayerController player;
     private CinematicCamera camera;
     private TextureFactory textures;
@@ -119,6 +121,8 @@ public class SparkGame extends ApplicationAdapter {
         studentMesh = new StudentMesh(textures);
         player = new PlayerController();
         player.setExtraColliders(world.getColliders());
+        crowd = new CampusCrowd(16, player.getColliders());
+        Gdx.app.log("SparkGame", "Crowd paths usable: " + crowd.usableEdgeCount() + " segments; blocked: " + crowd.blockedEdges());
         // Test hook: start somewhere other than the gate, e.g. -Dbd.spark36.startPos=4,41
         String startPos = System.getProperty("bd.spark36.startPos");
         if (startPos != null) {
@@ -411,6 +415,7 @@ public class SparkGame extends ApplicationAdapter {
             }
         }
         player.update(delta, camera.getYaw(), canMove);
+        crowd.update(delta, player.getPosition());
         // Enhanced camera: pass movement state for bob + FOV push + shake
         camera.update(delta, player.getPosition(), canMove,
             player.isMoving(), player.isSprinting(), player.getHeadingDegrees());
@@ -444,6 +449,7 @@ public class SparkGame extends ApplicationAdapter {
             player.getSitProgress(),
             player.getGender()
         );
+        crowd.render(shadowBatch, null, studentMesh);
         shadowBatch.end();
         world.endShadowPass();
         // ModelBatch leaves a higher texture unit active; SpriteBatch (HUD text) assumes unit 0
@@ -483,6 +489,7 @@ public class SparkGame extends ApplicationAdapter {
             player.getSitProgress(),
             player.getGender()
         );
+        crowd.render(modelBatch, world.getEnvironment(), studentMesh);
         modelBatch.end();
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
 

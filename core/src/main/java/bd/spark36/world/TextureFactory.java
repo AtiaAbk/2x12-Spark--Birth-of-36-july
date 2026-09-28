@@ -36,6 +36,7 @@ public class TextureFactory implements Disposable {
     public final Texture bushFoliage;
     public final Texture weatheredStone;
     public final Texture curzonWater;
+    public final Texture waterRipple;
     public final Texture backpackFabric;
     public final Texture studentJacket;
     public final Texture movementBanner;
@@ -65,6 +66,7 @@ public class TextureFactory implements Disposable {
         bushFoliage = createBushFoliage();
         weatheredStone = createWeatheredStone();
         curzonWater = createCurzonWater();
+        waterRipple = createWaterRipple();
         backpackFabric = createBackpackFabric();
         studentJacket = createStudentJacket();
         movementBanner = createMovementBanner();
@@ -77,7 +79,7 @@ public class TextureFactory implements Disposable {
 
         textures.addAll(brickPavement, curzonBrick, lawnGrass, treeBark,
                         foliage, krishnachuraBlossom, leafClump, blossomClump, leafAtlas, bambooAtlas, dirtPath, lightBeam, rockSurface, bambooCulm, bambooFoliage,
-                        bushFoliage, weatheredStone, curzonWater,
+                        bushFoliage, weatheredStone, curzonWater, waterRipple,
                         backpackFabric, studentJacket, movementBanner, bdFlag, aparajeyoStone,
                         asphaltRoad, modernistConcrete, canteenTinRoof, mapVisualTarget);
     }
@@ -865,6 +867,30 @@ public class TextureFactory implements Disposable {
             pix.setColor(0.18f, 0.48f, 0.16f, 0.95f);
         }
 
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    /** Tileable caustic highlight lines on transparent black, scrolled over the pukur surface. */
+    private Texture createWaterRipple() {
+        int size = 256;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+        float k = MathUtils.PI2 / size;
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                // Integer frequencies keep every term periodic over the tile, so it wraps seamlessly
+                float a = MathUtils.sin(x * k * 3f + MathUtils.sin(y * k * 2f) * 1.6f);
+                float b = MathUtils.sin(y * k * 4f + MathUtils.sin(x * k * 3f) * 1.3f);
+                float c = MathUtils.sin((x + y) * k * 2f + MathUtils.cos(x * k * 5f) * 0.9f);
+                float lines = 1f - Math.abs((a + b + c) / 3f);
+                float glint = (float) Math.pow(lines, 7.0);
+                pix.setColor(0.85f, 0.95f, 1f, MathUtils.clamp(glint * 0.9f, 0f, 1f));
+                pix.drawPixel(x, y);
+            }
+        }
         Texture tex = new Texture(pix);
         tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);

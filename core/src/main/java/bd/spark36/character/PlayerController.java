@@ -48,11 +48,24 @@ public class PlayerController {
     public static final float PLAYER_HEIGHT = 1.70f;
     public static final float STEP_UP_HEIGHT = 0.65f; // Auto step-up for obstacles <= this height (stairs, curbs)
 
-    // The pukur curb can be stepped onto, but the water inside it is not walkable.
-    private static final float POND_MIN_X = -8.9f;
-    private static final float POND_MAX_X = 8.9f;
-    private static final float POND_MIN_Z = -5.9f;
-    private static final float POND_MAX_Z = 17.9f;
+    // The pukur water inside the curbs can be waded: its floor sits below the ground plane so the
+    // legs sink under the surface.
+    private static final float POND_MIN_X = -8.7f;
+    private static final float POND_MAX_X = 8.7f;
+    private static final float POND_MIN_Z = -5.7f;
+    private static final float POND_MAX_Z = 17.7f;
+    public static final float POND_FLOOR_Y = -0.45f;
+    private static final float WADE_SPEED_FACTOR = 0.55f;
+    private static final float WADE_STEP_UP_HEIGHT = 1.0f; // climbing out over the curb
+
+    // Wall climbing: hold jump while pushing into a wall to scale it and vault onto the roof
+    private static final float CLIMB_SPEED = 4.2f;
+    private static final float MIN_CLIMB_WALL_WIDTH = 1.5f; // skip tree trunks and lamp posts
+    private boolean isClimbing = false;
+    private boolean wallBlocked = false;
+    private float wallTopY = 0f;
+    private float wallPushX = 0f;
+    private float wallPushZ = 0f;
 
     // Stamina & Vitality
     private float health = 100f;
@@ -131,7 +144,7 @@ public class PlayerController {
         {31.5f, 0f, -12.5f, 32.5f, 6f, -11.5f},
         {-22.5f, 0f, 67.5f, -21.5f, 6f, 68.5f},
         {21.5f, 0f, 67.5f, 22.5f, 6f, 68.5f},
-        {-0.5f, 0f, 77.5f, 0.5f, 6f, 78.5f},
+        {-12f, 0f, 70.5f, -11f, 6f, 71.5f},    // moved out of the main gateway
 
         // ======== 10 CAST-IRON LAMPPOSTS — solid posts height 4.0m ========
         {-5.55f, 0f, -10.15f, -5.25f, 4.0f, -9.85f},
@@ -367,6 +380,7 @@ public class PlayerController {
 
         // 3. Movement direction relative to camera angle
         float currentSpeed = isCrouching ? (isSprinting ? 2.6f : 1.8f) : (isSprinting ? SPRINT_SPEED : WALK_SPEED);
+        if (isWading()) currentSpeed *= WADE_SPEED_FACTOR;
         if (isSittingWater) currentSpeed = 0f;
         float targetVx = 0f;
         float targetVz = 0f;
@@ -446,6 +460,25 @@ public class PlayerController {
             }
         }
 
+        // 4b. Wall climbing: jump held + pushing into a wall found blocking us last frame
+        boolean climbHeld = inputEnabled && isMoving && !isSittingWater &&
+            (Gdx.input.isKeyPressed(Input.Keys.J) || Gdx.input.isKeyPressed(Input.Keys.SPACE));
+        if (climbHeld && wallBlocked && wallTopY > position.y + STEP_UP_HEIGHT) {
+            isClimbing = true;
+            isGrounded = false;
+            float remaining = wallTopY - position.y;
+            if (remaining < 1.1f) {
+                // Vault over the lip: just enough upward speed to clear the top, carried forward
+                verticalVelocity = (float) Math.sqrt(2f * -GRAVITY * (remaining + 0.35f));
+                velocity.x = wallPushX * WALK_SPEED;
+                velocity.z = wallPushZ * WALK_SPEED;
+            } else {
+                verticalVelocity = CLIMB_SPEED;
+            }
+        } else if (isClimbing && (isGrounded || !climbHeld)) {
+            isClimbing = false;
+        }
+
         // 5. Physics and Collision Resolution
         prevPosition.set(position);
         resolveMovementAndCollisions(delta);
@@ -478,7 +511,10 @@ public class PlayerController {
         float proposedY = position.y + verticalVelocity * delta;
 
         // Find the highest solid ground surface directly beneath player's footprint
-        float highestGround = 0f; // Default ground plane Y=0
+        float baseGround = groundLevelAt(position.x, position.z);
+        float highestGround = baseGround; // ground plane Y=0, or the pond floor
+        float stepUp = isWading() ? WADE_STEP_UP_HEIGHT : STEP_UP_HEIGHT;
+        wallBlocked = false;
 
         for (float[] box : boxes) {
             float bMinX = box[0], bMinZ = box[2];
@@ -530,7 +566,7 @@ public class PlayerController {
             boolean overlapX = (proposedX + PLAYER_RADIUS > bMinX) && (proposedX - PLAYER_RADIUS < bMaxX);
             if (overlapX) {
                 // Check if within step-up height
-                if (bMaxY <= position.y + STEP_UP_HEIGHT && (bMaxY - bMinY) <= STEP_UP_HEIGHT) {
+                if (bMaxY <= position.y + stepUp && (bMaxY - bMinY) <= STEP_UP_HEIGHT) {
                     // Allowed to enter; vertical step-up will elevate player
                 } else if (!isGrounded && (position.y + 0.65f >= bMaxY || (verticalVelocity > 0f && position.y + (verticalVelocity * verticalVelocity / (2 * -GRAVITY)) >= bMaxY))) {
                     // Airborne and jumping high enough to clear or land on top of surface! Allow horizontal entry
@@ -538,20 +574,13 @@ public class PlayerController {
                     // Firm wall collision! Push outside box along X
                     if (position.x <= (bMinX + bMaxX) / 2f) {
                         proposedX = bMinX - PLAYER_RADIUS;
+                        recordWall(box, 1f, 0f);
                     } else {
                         proposedX = bMaxX + PLAYER_RADIUS;
+                        recordWall(box, -1f, 0f);
                     }
                     velocity.x = 0f;
                 }
-            }
-        }
-        if (position.z + PLAYER_RADIUS > POND_MIN_Z && position.z - PLAYER_RADIUS < POND_MAX_Z) {
-            if (position.x <= POND_MIN_X - PLAYER_RADIUS && proposedX > POND_MIN_X - PLAYER_RADIUS) {
-                proposedX = POND_MIN_X - PLAYER_RADIUS;
-                velocity.x = 0f;
-            } else if (position.x >= POND_MAX_X + PLAYER_RADIUS && proposedX < POND_MAX_X + PLAYER_RADIUS) {
-                proposedX = POND_MAX_X + PLAYER_RADIUS;
-                velocity.x = 0f;
             }
         }
         position.x = proposedX;
@@ -577,7 +606,7 @@ public class PlayerController {
             boolean overlapZ = (proposedZ + PLAYER_RADIUS > bMinZ) && (proposedZ - PLAYER_RADIUS < bMaxZ);
             if (overlapZ) {
                 // Check if within step-up height
-                if (bMaxY <= position.y + STEP_UP_HEIGHT && (bMaxY - bMinY) <= STEP_UP_HEIGHT) {
+                if (bMaxY <= position.y + stepUp && (bMaxY - bMinY) <= STEP_UP_HEIGHT) {
                     // Allowed to enter; vertical step-up will elevate player
                 } else if (!isGrounded && (position.y + 0.65f >= bMaxY || (verticalVelocity > 0f && position.y + (verticalVelocity * verticalVelocity / (2 * -GRAVITY)) >= bMaxY))) {
                     // Airborne and jumping high enough to clear or land on top of surface! Allow horizontal entry
@@ -585,26 +614,19 @@ public class PlayerController {
                     // Firm wall collision! Push outside box along Z
                     if (position.z <= (bMinZ + bMaxZ) / 2f) {
                         proposedZ = bMinZ - PLAYER_RADIUS;
+                        recordWall(box, 0f, 1f);
                     } else {
                         proposedZ = bMaxZ + PLAYER_RADIUS;
+                        recordWall(box, 0f, -1f);
                     }
                     velocity.z = 0f;
                 }
             }
         }
-        if (position.x + PLAYER_RADIUS > POND_MIN_X && position.x - PLAYER_RADIUS < POND_MAX_X) {
-            if (position.z <= POND_MIN_Z - PLAYER_RADIUS && proposedZ > POND_MIN_Z - PLAYER_RADIUS) {
-                proposedZ = POND_MIN_Z - PLAYER_RADIUS;
-                velocity.z = 0f;
-            } else if (position.z >= POND_MAX_Z + PLAYER_RADIUS && proposedZ < POND_MAX_Z + PLAYER_RADIUS) {
-                proposedZ = POND_MAX_Z + PLAYER_RADIUS;
-                velocity.z = 0f;
-            }
-        }
         position.z = proposedZ;
 
         // --- D. Post-Move Step-Up & Edge Detection ---
-        float surfaceUnderFoot = 0f;
+        float surfaceUnderFoot = groundLevelAt(position.x, position.z);
         for (float[] box : boxes) {
             float bMinX = box[0], bMinZ = box[2];
             float bMaxX = box[3], bMaxY = box[4], bMaxZ = box[5];
@@ -614,7 +636,7 @@ public class PlayerController {
 
             if (overlapX && overlapZ) {
                 // Can step up onto this box if it's within reach or landing on top
-                if (bMaxY >= position.y && bMaxY <= position.y + STEP_UP_HEIGHT) {
+                if (bMaxY >= position.y && bMaxY <= position.y + stepUp) {
                     if (bMaxY > surfaceUnderFoot) {
                         surfaceUnderFoot = bMaxY;
                     }
@@ -635,7 +657,7 @@ public class PlayerController {
         }
 
         // Edge detection: if standing on an elevated surface and walked off
-        if (isGrounded && position.y > 0.05f) {
+        if (isGrounded && position.y > surfaceUnderFoot + 0.05f) {
             if (surfaceUnderFoot < position.y - 0.10f) {
                 isGrounded = false; // Walked off the edge! Start falling
             }
@@ -644,6 +666,34 @@ public class PlayerController {
         // --- E. Campus Boundary Clamping ---
         position.x = MathUtils.clamp(position.x, -95f, 95f);
         position.z = MathUtils.clamp(position.z, -55f, 85f);
+    }
+
+    /** Height of the bare ground at (x, z): the ground plane, or the floor inside the pukur. */
+    private static float groundLevelAt(float x, float z) {
+        boolean inPond = x > POND_MIN_X && x < POND_MAX_X && z > POND_MIN_Z && z < POND_MAX_Z;
+        if (!inPond) return 0f;
+        // The ghat's submerged bottom step (where the student sits) stays dry underfoot
+        if (Math.abs(x) < 3.1f && z >= 16.3f) return 0.14f;
+        return POND_FLOOR_Y;
+    }
+
+    /** Remembers the wall we just ran into so holding jump next frame can climb it. */
+    private void recordWall(float[] box, float pushX, float pushZ) {
+        float width = Math.max(box[3] - box[0], box[5] - box[2]);
+        if (width < MIN_CLIMB_WALL_WIDTH) return;
+        wallBlocked = true;
+        wallTopY = box[4];
+        wallPushX = pushX;
+        wallPushZ = pushZ;
+    }
+
+    /** True while standing or walking in the pukur water. */
+    public boolean isWading() {
+        return groundLevelAt(position.x, position.z) < 0f && position.y < 0.2f;
+    }
+
+    public boolean isClimbing() {
+        return isClimbing;
     }
 
     public Vector3 getPosition() {

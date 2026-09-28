@@ -41,6 +41,30 @@ public class WhereWindsMeetHUD implements Disposable {
     private final Color staminaGreen = new Color(0.18f, 0.85f, 0.62f, 1f); // Jade cyan
     private final Color staminaBg = new Color(0.06f, 0.22f, 0.16f, 0.85f);
 
+    // ── Glass HUD panel theme (mission card, checklist, compass tag, map button, keycaps) ──
+    // See-through smoked glass: vertical gradient, ~0.14 at top fading to ~0.08 at the bottom.
+    private final Color panelGlassTop = new Color(0.04f, 0.06f, 0.09f, 0.14f);
+    private final Color panelGlassBottom = new Color(0.02f, 0.03f, 0.05f, 0.08f);
+    private final Color panelSheen = new Color(1.0f, 0.86f, 0.45f, 0.05f);      // faint warm top sheen
+    private final Color panelSheenClear = new Color(1.0f, 0.86f, 0.45f, 0f);
+    private final Color panelGlow = new Color(1.0f, 0.80f, 0.35f, 0.07f);       // soft outer gold halo
+    private final Color panelBorder = new Color(0.98f, 0.80f, 0.36f, 0.90f);    // crisp thin gold line
+    private final Color textShadow = new Color(0f, 0f, 0f, 0.92f);
+    private final Color textOutline = new Color(0f, 0f, 0f, 0.45f);
+    private final Color activeRowGold = new Color(1.0f, 0.86f, 0.38f, 1f);
+    private final Color doneRowColor = new Color(0.55f, 0.85f, 0.58f, 0.70f);
+    private final Color upcomingRowColor = new Color(1f, 1f, 1f, 1f);
+    private final Color tmpColor = new Color();
+    private final com.badlogic.gdx.graphics.g2d.GlyphLayout glyphLayout = new com.badlogic.gdx.graphics.g2d.GlyphLayout();
+
+    private static final String[] CHECKLIST_NAMES = {
+        "1. Curzon Hall Central Arcade",
+        "2. Aparajeyo Bangla (Arts Plaza)",
+        "3. TSC Raju Anti-Terrorism Sculpture",
+        "4. Central Library & Hakim Chattar",
+        "5. Teacher-Student Centre (TSC)"
+    };
+
     // States
     private MemorialEntry activeModalEntry = null;
     private boolean isMapOpen = false;
@@ -294,7 +318,7 @@ public class WhereWindsMeetHUD implements Disposable {
         }
 
         // ── AAA VFX: Sprint Motion Trail + Checkpoint Flash ──────────────────
-        shapeRenderer.begin(ShapeType.Filled);
+        beginShapes(ShapeType.Filled);
 
         // Sprint vignette: dark edges when sprinting for speed blur effect
         if (sprintTrailIntensity > 0.01f) {
@@ -322,7 +346,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // ── End VFX ───────────────────────────────────────────────────────────
 
         // 1. Draw HUD Background Shapes & Ornate Geometry
-        shapeRenderer.begin(ShapeType.Filled);
+        beginShapes(ShapeType.Filled);
 
         drawMissionCardBg(memorials, w, h);
         if (parametersVisible) {
@@ -344,7 +368,7 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.end();
 
         // 2. Draw HUD Outlines, Accents & Filigree
-        shapeRenderer.begin(ShapeType.Line);
+        beginShapes(ShapeType.Line);
         drawMissionCardBorders(w, h);
         if (parametersVisible) {
             drawMissionChecklistBorders(player, memorials, w, h);
@@ -397,6 +421,88 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     // ==========================================
+    // GLASS PANEL HELPERS
+    // ==========================================
+
+    /**
+     * Begins a ShapeRenderer pass with alpha blending forced on. SpriteBatch.end() disables GL_BLEND,
+     * so blending must be re-enabled before every shape pass or translucent colors render opaque (ANGLE/GLES2).
+     */
+    private void beginShapes(ShapeType type) {
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        shapeRenderer.begin(type);
+    }
+
+    /** Smooth 0..1..0 pulse: cosine wave passed through smoothstep so peaks/troughs ease in and out (no jitter). */
+    private float easedPulse(float speed) {
+        float t = 0.5f - 0.5f * MathUtils.cos(animTime * speed);
+        return t * t * (3f - 2f * t);
+    }
+
+    /** Filled pass: thin soft outer glow + gradient smoked-glass body + faint warm top sheen. */
+    private void fillGlassPanel(float x, float y, float pw, float ph) {
+        // Outer glow: one thin feathered frame just outside the border
+        fillFrame(x - 2.5f, y - 2.5f, pw + 5f, ph + 5f, 2f, panelGlow.r, panelGlow.g, panelGlow.b, panelGlow.a);
+
+        // Gradient glass body (bottom-left, bottom-right, top-right, top-left)
+        shapeRenderer.rect(x, y, pw, ph, panelGlassBottom, panelGlassBottom, panelGlassTop, panelGlassTop);
+
+        // Top sheen strip fading downward
+        float sheenH = Math.min(18f, ph * 0.35f);
+        shapeRenderer.rect(x, y + ph - sheenH, pw, sheenH, panelSheenClear, panelSheenClear, panelSheen, panelSheen);
+    }
+
+    /** Filled rectangular frame of thickness t. */
+    private void fillFrame(float x, float y, float fw, float fh, float t, float r, float g, float b, float a) {
+        shapeRenderer.setColor(r, g, b, a);
+        shapeRenderer.rect(x, y, fw, t);
+        shapeRenderer.rect(x, y + fh - t, fw, t);
+        shapeRenderer.rect(x, y + t, t, fh - 2f * t);
+        shapeRenderer.rect(x + fw - t, y + t, t, fh - 2f * t);
+    }
+
+    /** Line pass: crisp 1px gold border with a gentle eased breathing brightness. */
+    private void strokeGlassBorder(float x, float y, float bw, float bh) {
+        float breathe = easedPulse(1.6f);
+        shapeRenderer.setColor(panelBorder.r, panelBorder.g, panelBorder.b, 0.75f + 0.20f * breathe);
+        shapeRenderer.rect(x, y, bw, bh);
+    }
+
+    /**
+     * Readable text over the 3D world. Large fonts (title/header) get a soft dark outline + drop shadow;
+     * small fonts get only a crisp 1px drop shadow (an outline smears small glyphs).
+     */
+    private void drawOutlined(com.badlogic.gdx.graphics.g2d.BitmapFont font, String text, float x, float y, Color color) {
+        drawOutlined(font, text, x, y, color.r, color.g, color.b, color.a);
+    }
+
+    private void drawOutlined(com.badlogic.gdx.graphics.g2d.BitmapFont font, String text, float x, float y,
+                              float r, float g, float b, float a) {
+        x = Math.round(x);
+        y = Math.round(y);
+        boolean large = font == fonts.titleFont || font == fonts.headerFont;
+        if (large) {
+            font.setColor(textOutline.r, textOutline.g, textOutline.b, textOutline.a * a);
+            font.draw(spriteBatch, text, x - 1f, y);
+            font.draw(spriteBatch, text, x + 1f, y);
+            font.draw(spriteBatch, text, x, y + 1f);
+            font.draw(spriteBatch, text, x, y - 1f);
+            font.setColor(textShadow.r, textShadow.g, textShadow.b, textShadow.a * a);
+            font.draw(spriteBatch, text, x + 2f, y - 2f);
+        } else {
+            // Very faint 1px outline (alpha 0.30) + crisp 1px drop shadow
+            font.setColor(0f, 0f, 0f, 0.30f * a);
+            font.draw(spriteBatch, text, x - 1f, y);
+            font.draw(spriteBatch, text, x, y + 1f);
+            font.setColor(0f, 0f, 0f, 0.95f * a);
+            font.draw(spriteBatch, text, x + 1f, y - 1f);
+        }
+        font.setColor(r, g, b, a);
+        font.draw(spriteBatch, text, x, y);
+    }
+
+    // ==========================================
     // 1. TOP-LEFT MISSION CARD (Matching Mockup)
     // ==========================================
     private void drawMissionCardBg(JulyMemorials memorials, float w, float h) {
@@ -405,9 +511,8 @@ public class WhereWindsMeetHUD implements Disposable {
         float cardW = 390f;
         float cardH = 160f;
 
-        // Dark glass background
-        shapeRenderer.setColor(glassBg);
-        shapeRenderer.rect(cardX, cardY, cardW, cardH);
+        // See-through smoked glass background with soft gold halo
+        fillGlassPanel(cardX, cardY, cardW, cardH);
 
         // Gold Diamond Icon for "◆ ACTIVE MISSION"
         shapeRenderer.setColor(goldAccent);
@@ -424,7 +529,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float barH = 5f;
 
         // Track
-        shapeRenderer.setColor(0.18f, 0.16f, 0.12f, 0.9f);
+        shapeRenderer.setColor(0.18f, 0.16f, 0.12f, 0.45f);
         shapeRenderer.rect(barX, barY, barW, barH);
 
         // Gold/Green Fill with Gleam based on actual mission progress
@@ -436,9 +541,12 @@ public class WhereWindsMeetHUD implements Disposable {
         if (fillW > 0f) {
             shapeRenderer.setColor(inspected >= total ? Color.GREEN : goldAccent);
             shapeRenderer.rect(barX, barY, fillW, barH);
+            // Soft glow above/below the fill
+            shapeRenderer.setColor(1.0f, 0.85f, 0.40f, 0.14f);
+            shapeRenderer.rect(barX, barY - 2f, fillW, barH + 4f);
 
-            // Gleam particle
-            float gleamPos = (MathUtils.sin(animTime * 2.5f) + 1f) * 0.5f * fillW;
+            // Gleam particle (eased sweep, slows smoothly at both ends)
+            float gleamPos = easedPulse(1.25f) * fillW;
             shapeRenderer.setColor(1.0f, 0.98f, 0.85f, 0.95f);
             shapeRenderer.circle(barX + gleamPos, barY + barH / 2f, 4f, 12);
         }
@@ -446,7 +554,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // Waypoint Compass Needle Icon Circle (next to DISTANCE)
         float cX = cardX + 338f;
         float cY = cardY + 22f;
-        shapeRenderer.setColor(0.08f, 0.18f, 0.22f, 0.9f);
+        shapeRenderer.setColor(0.08f, 0.18f, 0.22f, 0.40f);
         shapeRenderer.circle(cX, cY, 15f, 20);
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.circle(cX, cY, 2.5f, 10);
@@ -458,9 +566,8 @@ public class WhereWindsMeetHUD implements Disposable {
         float cardW = 390f;
         float cardH = 160f;
 
-        // Subtle outer border
-        shapeRenderer.setColor(goldMuted);
-        shapeRenderer.rect(cardX, cardY, cardW, cardH);
+        // Crisp thin gold border with gentle breathing glow
+        strokeGlassBorder(cardX, cardY, cardW, cardH);
 
         // Ornate Corner Brackets (⌜ ⌝ ⌞ ⌟)
         shapeRenderer.setColor(goldAccent);
@@ -502,28 +609,24 @@ public class WhereWindsMeetHUD implements Disposable {
         boolean allDone = ins >= total;
 
         // 1. ACTIVE MISSION TAG
-        fonts.smallFont.setColor(allDone ? Color.GREEN : goldAccent);
         String missionTag = allDone ?
             "ALL ARCHIVES UNLOCKED: 05 / 05" :
             String.format("ACTIVE MISSION: %02d / %02d", Math.min(ins + 1, total), total);
-        fonts.smallFont.draw(spriteBatch, missionTag, cardX + 28f, cardY + 148f);
+        drawOutlined(fonts.smallFont, missionTag, cardX + 28f, cardY + 148f, allDone ? Color.GREEN : goldAccent);
 
         // 2. MISSION TITLE
-        fonts.titleFont.setColor(Color.WHITE);
         String missionTitle = allDone ? "LEVEL 1 ACCOMPLISHED" : (nearest != null ? nearest.title : "EXPLORE CAMPUS");
-        fonts.titleFont.draw(spriteBatch, missionTitle, cardX + 16f, cardY + 124f);
+        drawOutlined(fonts.titleFont, missionTitle, cardX + 16f, cardY + 124f, 1f, 0.98f, 0.94f, 1f);
 
         // 3. Subtitle description / location
-        fonts.bodyFont.setColor(new Color(0.88f, 0.88f, 0.90f, 1f));
         String missionDesc = allDone ?
             "All 5 historical archives secured. Victory achieved!" :
             (nearest != null ? "Target: " + nearest.location : "Investigate Dhaka University archives");
-        fonts.bodyFont.draw(spriteBatch, missionDesc, cardX + 16f, cardY + 92f);
+        drawOutlined(fonts.bodyFont, missionDesc, cardX + 16f, cardY + 92f, 1f, 1f, 1f, 1f);
 
         // 4. DISTANCE
-        fonts.headerFont.setColor(goldAccent);
         String distStr = allDone ? "STATUS: COMPLETED" : String.format("DISTANCE: %.1f M", dst);
-        fonts.headerFont.draw(spriteBatch, distStr, cardX + 16f, cardY + 30f);
+        drawOutlined(fonts.headerFont, distStr, cardX + 16f, cardY + 30f, goldAccent);
     }
 
     // =======================================================
@@ -543,8 +646,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float pillH = 28f;
         float pillX = cx - r - pillW - 14f;
         float pillY = cy - pillH / 2f;
-        shapeRenderer.setColor(glassBg);
-        shapeRenderer.rect(pillX, pillY, pillW, pillH);
+        fillGlassPanel(pillX, pillY, pillW, pillH);
 
         // Diamond marker on ticker
         shapeRenderer.setColor(goldAccent);
@@ -639,8 +741,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float pillH = 28f;
         float pillX = cx - r - pillW - 14f;
         float pillY = cy - pillH / 2f;
-        shapeRenderer.setColor(goldMuted);
-        shapeRenderer.rect(pillX, pillY, pillW, pillH);
+        strokeGlassBorder(pillX, pillY, pillW, pillH);
     }
 
     private void drawAntiqueCompassRoseText(float w, float h, float yaw) {
@@ -669,8 +770,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // Waypoint Ticker Text ("CURZON HALL   W")
         float pillW = 165f;
         float pillX = cx - r - pillW - 14f;
-        fonts.smallFont.setColor(goldAccent);
-        fonts.smallFont.draw(spriteBatch, "CURZON HALL   W", pillX + 28f, cy + 6f);
+        drawOutlined(fonts.smallFont, "CURZON HALL   W", pillX + 28f, cy + 6f, goldAccent);
     }
 
     // ========================================================
@@ -682,9 +782,35 @@ public class WhereWindsMeetHUD implements Disposable {
         float bw = 390f;
         float bh = 158f;
 
-        // Transparent glass backing (zero dark black box!)
-        shapeRenderer.setColor(glassBg);
-        shapeRenderer.rect(bx, by, bw, bh);
+        // See-through smoked glass backing with soft gold halo
+        fillGlassPanel(bx, by, bw, bh);
+
+        // Active objective row highlight: gold glow bar fading to the right + solid left accent bar
+        Array<MemorialEntry> entries = memorials.getEntries();
+        MemorialEntry nextObj = memorials.getNextObjective(player.getPosition());
+        float startY = by + bh - 38f;
+        float itemSpacing = 18f;
+        float pulse = easedPulse(2.4f);
+        for (int i = 0; i < entries.size && i < CHECKLIST_NAMES.length; i++) {
+            MemorialEntry entry = entries.get(i);
+            if (entry.inspected || entry != nextObj) continue;
+            float rowTop = startY - i * itemSpacing + 3f;
+            float rowBot = rowTop - itemSpacing;
+            float rowX = bx + 8f;
+            float rowW = bw - 16f;
+            // Soft translucent gold glow (max alpha 0.22) fading to fully clear on the right
+            tmpColor.set(1.0f, 0.80f, 0.32f, 0.12f + 0.10f * pulse);
+            Color clear = panelSheenClear;
+            shapeRenderer.rect(rowX, rowBot, rowW, itemSpacing, tmpColor, clear, clear, tmpColor);
+            // Thin soft gold underline, fading right
+            tmpColor.set(1.0f, 0.86f, 0.38f, 0.45f + 0.15f * pulse);
+            shapeRenderer.rect(rowX, rowBot, rowW * 0.8f, 1f, tmpColor, clear, clear, tmpColor);
+            // Left accent bar (+ faint halo), left of the text
+            shapeRenderer.setColor(1.0f, 0.86f, 0.40f, 0.10f + 0.08f * pulse);
+            shapeRenderer.rect(rowX - 1f, rowBot + 1f, 4f, itemSpacing - 2f);
+            shapeRenderer.setColor(activeRowGold);
+            shapeRenderer.rect(rowX, rowBot + 2f, 2f, itemSpacing - 4f);
+        }
 
         // Progress bar track at bottom of checklist
         float barX = bx + 16f;
@@ -702,6 +828,8 @@ public class WhereWindsMeetHUD implements Disposable {
 
         if (fillW > 0f) {
             Color fillC = ins >= tot ? Color.GREEN : staminaGreen;
+            shapeRenderer.setColor(fillC.r, fillC.g, fillC.b, 0.16f);
+            shapeRenderer.rect(barX, barY - 2f, fillW, barH + 4f);
             shapeRenderer.setColor(fillC);
             shapeRenderer.rect(barX, barY, fillW, barH);
         }
@@ -713,9 +841,8 @@ public class WhereWindsMeetHUD implements Disposable {
         float bw = 390f;
         float bh = 158f;
 
-        // Thin outer gold line
-        shapeRenderer.setColor(goldMuted);
-        shapeRenderer.rect(bx, by, bw, bh);
+        // Crisp thin gold border with gentle breathing glow
+        strokeGlassBorder(bx, by, bw, bh);
 
         // Ornate Corner Brackets
         shapeRenderer.setColor(goldAccent);
@@ -732,6 +859,19 @@ public class WhereWindsMeetHUD implements Disposable {
         // Separator below title
         shapeRenderer.setColor(goldMuted);
         shapeRenderer.line(bx + 14f, by + bh - 28f, bx + bw - 14f, by + bh - 28f);
+
+        // Strike-through lines on completed objectives
+        Array<MemorialEntry> entries = memorials.getEntries();
+        float startY = by + bh - 38f;
+        float itemSpacing = 18f;
+        float strikeOffset = fonts.smallFont.getCapHeight() * 0.5f;
+        shapeRenderer.setColor(doneRowColor.r, doneRowColor.g, doneRowColor.b, 0.75f);
+        for (int i = 0; i < entries.size && i < CHECKLIST_NAMES.length; i++) {
+            if (!entries.get(i).inspected) continue;
+            glyphLayout.setText(fonts.smallFont, "[OK] " + CHECKLIST_NAMES[i]);
+            float sy = startY - i * itemSpacing - strikeOffset;
+            shapeRenderer.line(bx + 16f, sy, bx + 16f + glyphLayout.width, sy);
+        }
     }
 
     private void drawMissionChecklistText(PlayerController player, JulyMemorials memorials, float w, float h) {
@@ -745,24 +885,11 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // 1. Header: "* MISSION PARAMETERS: 01 / 05" + [P] HIDE hint
         String headerTitle = String.format("* MISSION PARAMETERS: %02d / %02d", ins, tot);
-        fonts.keyFont.setColor(0f, 0f, 0f, 0.90f);
-        fonts.keyFont.draw(spriteBatch, headerTitle, bx + 17f, by + bh - 11f);
-        fonts.keyFont.setColor(ins >= tot ? Color.GREEN : goldAccent);
-        fonts.keyFont.draw(spriteBatch, headerTitle, bx + 16f, by + bh - 10f);
-
-        fonts.smallFont.setColor(0f, 0f, 0f, 0.85f);
-        fonts.smallFont.draw(spriteBatch, "[P] HIDE", bx + bw - 74f, by + bh - 11f);
-        fonts.smallFont.setColor(goldMuted);
-        fonts.smallFont.draw(spriteBatch, "[P] HIDE", bx + bw - 75f, by + bh - 10f);
+        drawOutlined(fonts.keyFont, headerTitle, bx + 16f, by + bh - 10f, ins >= tot ? Color.GREEN : goldAccent);
+        drawOutlined(fonts.smallFont, "[P] HIDE", bx + bw - 75f, by + bh - 10f, 0.95f, 0.84f, 0.52f, 1f);
 
         // 2. Checklist of the 5 Memorial checkpoints
-        String[] shortNames = {
-            "1. Curzon Hall Central Arcade",
-            "2. Aparajeyo Bangla (Arts Plaza)",
-            "3. TSC Raju Anti-Terrorism Sculpture",
-            "4. Central Library & Hakim Chattar",
-            "5. Teacher-Student Centre (TSC)"
-        };
+        String[] shortNames = CHECKLIST_NAMES;
 
         Array<MemorialEntry> entries = memorials.getEntries();
         MemorialEntry nextObj = memorials.getNextObjective(player.getPosition());
@@ -773,36 +900,25 @@ public class WhereWindsMeetHUD implements Disposable {
             MemorialEntry entry = entries.get(i);
             float y = startY - i * itemSpacing;
             if (entry.inspected) {
-                // Completed: green [OK]
-                fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
-                fonts.smallFont.draw(spriteBatch, "[OK] " + shortNames[i], bx + 17f, y - 1f);
-                fonts.smallFont.setColor(Color.GREEN);
-                fonts.smallFont.draw(spriteBatch, "[OK] " + shortNames[i], bx + 16f, y);
+                // Completed: dimmed muted green [OK] (struck through in the border pass)
+                drawOutlined(fonts.smallFont, "[OK] " + shortNames[i], bx + 16f, y, doneRowColor);
             } else if (entry == nextObj) {
-                // Active objective: pulsing gold with pointer arrow and distance!
-                float pulse = 0.8f + 0.2f * MathUtils.sin(animTime * 5f);
+                // Active objective: bright gold with gentle eased brightness breathing
+                float pulse = easedPulse(2.4f);
                 float dst = player.getPosition().dst(entry.position);
                 String line = String.format("[>]  %s (%.0fm)", shortNames[i], dst);
-                fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
-                fonts.smallFont.draw(spriteBatch, line, bx + 17f, y - 1f);
-                fonts.smallFont.setColor(1f, 0.85f * pulse, 0.35f, 1f);
-                fonts.smallFont.draw(spriteBatch, line, bx + 16f, y);
+                drawOutlined(fonts.smallFont, line, bx + 16f, y,
+                    1f, 0.80f + 0.08f * pulse, 0.26f + 0.10f * pulse, 1f);
             } else {
                 // Upcoming
-                fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
-                fonts.smallFont.draw(spriteBatch, "[  ] " + shortNames[i], bx + 17f, y - 1f);
-                fonts.smallFont.setColor(new Color(0.95f, 0.95f, 0.98f, 0.95f));
-                fonts.smallFont.draw(spriteBatch, "[  ] " + shortNames[i], bx + 16f, y);
+                drawOutlined(fonts.smallFont, "[  ] " + shortNames[i], bx + 16f, y, upcomingRowColor);
             }
         }
 
         // 3. Progress percentage
         int pct = tot > 0 ? (ins * 100 / tot) : 0;
         String pctStr = String.format("PROGRESS: %d%% (%d/5 COMPLETE)", pct, ins);
-        fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
-        fonts.smallFont.draw(spriteBatch, pctStr, bx + bw - 194f, by + 29f);
-        fonts.smallFont.setColor(ins >= tot ? Color.GREEN : goldAccent);
-        fonts.smallFont.draw(spriteBatch, pctStr, bx + bw - 195f, by + 30f);
+        drawOutlined(fonts.smallFont, pctStr, bx + bw - 195f, by + 30f, ins >= tot ? Color.GREEN : goldAccent);
     }
 
     // In-world 3D Waypoint Pin floating above active objective
@@ -821,14 +937,14 @@ public class WhereWindsMeetHUD implements Disposable {
 
             float dst = player.getPosition().dst(target.position);
 
-            shapeRenderer.begin(ShapeType.Filled);
+            beginShapes(ShapeType.Filled);
             shapeRenderer.setColor(goldAccent);
             float ds = 7f;
             shapeRenderer.triangle(px, py + ds, px + ds, py, px, py - ds);
             shapeRenderer.triangle(px, py + ds, px - ds, py, px, py - ds);
             shapeRenderer.end();
 
-            shapeRenderer.begin(ShapeType.Line);
+            beginShapes(ShapeType.Line);
             shapeRenderer.setColor(Color.WHITE);
             shapeRenderer.circle(px, py, ds + 3f, 16);
             shapeRenderer.end();
@@ -857,7 +973,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float py = h * 0.44f;
 
         // Gold border with subtle pulse
-        float pulse = 0.7f + 0.3f * MathUtils.sin(animTime * 4.5f);
+        float pulse = 0.7f + 0.3f * easedPulse(3.0f);
         shapeRenderer.setColor(1.0f, 0.84f * pulse, 0.38f, 1f);
 
         shapeRenderer.rect(px, py, promptW, promptH);
@@ -904,37 +1020,36 @@ public class WhereWindsMeetHUD implements Disposable {
         float kBaseX = w - 240f;
         float kBaseY = 16f;
 
-        // Keycap button boxes (sleek transparent)
-        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.20f);
-
+        // Keycap button boxes (see-through smoked glass with gold halo)
         // [W]
-        shapeRenderer.rect(kBaseX + 68f, kBaseY + 84f, 28f, 26f);
+        fillGlassPanel(kBaseX + 68f, kBaseY + 84f, 28f, 26f);
         // [A] [S] [D]
-        shapeRenderer.rect(kBaseX + 36f, kBaseY + 54f, 28f, 26f);
-        shapeRenderer.rect(kBaseX + 68f, kBaseY + 54f, 28f, 26f);
-        shapeRenderer.rect(kBaseX + 100f, kBaseY + 54f, 28f, 26f);
+        fillGlassPanel(kBaseX + 36f, kBaseY + 54f, 28f, 26f);
+        fillGlassPanel(kBaseX + 68f, kBaseY + 54f, 28f, 26f);
+        fillGlassPanel(kBaseX + 100f, kBaseY + 54f, 28f, 26f);
 
         // [SHIFT]
-        shapeRenderer.rect(kBaseX + 140f, kBaseY + 54f, 48f, 26f);
+        fillGlassPanel(kBaseX + 140f, kBaseY + 54f, 48f, 26f);
 
         // [J] (Jump / Double Jump)
-        shapeRenderer.rect(kBaseX + 16f, kBaseY + 26f, 26f, 22f);
+        fillGlassPanel(kBaseX + 16f, kBaseY + 26f, 26f, 22f);
 
         // [E]
-        shapeRenderer.rect(kBaseX + 140f, kBaseY + 26f, 26f, 22f);
+        fillGlassPanel(kBaseX + 140f, kBaseY + 26f, 26f, 22f);
 
         // [M]
-        shapeRenderer.rect(kBaseX + 44f, kBaseY, 26f, 20f);
+        fillGlassPanel(kBaseX + 44f, kBaseY, 26f, 20f);
 
         // [ESC]
-        shapeRenderer.rect(kBaseX + 114f, kBaseY, 36f, 20f);
+        fillGlassPanel(kBaseX + 114f, kBaseY, 36f, 20f);
     }
 
     private void drawKeycapsBorders(float w, float h) {
         float kBaseX = w - 240f;
         float kBaseY = 16f;
 
-        shapeRenderer.setColor(goldBorder);
+        float breathe = easedPulse(1.6f);
+        shapeRenderer.setColor(panelBorder.r, panelBorder.g, panelBorder.b, 0.78f + 0.17f * breathe);
 
         // [W]
         shapeRenderer.rect(kBaseX + 68f, kBaseY + 84f, 28f, 26f);
@@ -964,32 +1079,28 @@ public class WhereWindsMeetHUD implements Disposable {
         float kBaseY = 16f;
 
         // Button letter labels
-        fonts.keyFont.setColor(goldAccent);
-        fonts.keyFont.draw(spriteBatch, "W", kBaseX + 76f, kBaseY + 102f);
-        fonts.keyFont.draw(spriteBatch, "A", kBaseX + 44f, kBaseY + 72f);
-        fonts.keyFont.draw(spriteBatch, "S", kBaseX + 77f, kBaseY + 72f);
-        fonts.keyFont.draw(spriteBatch, "D", kBaseX + 108f, kBaseY + 72f);
+        drawOutlined(fonts.keyFont, "W", kBaseX + 76f, kBaseY + 102f, goldAccent);
+        drawOutlined(fonts.keyFont, "A", kBaseX + 44f, kBaseY + 72f, goldAccent);
+        drawOutlined(fonts.keyFont, "S", kBaseX + 77f, kBaseY + 72f, goldAccent);
+        drawOutlined(fonts.keyFont, "D", kBaseX + 108f, kBaseY + 72f, goldAccent);
 
-        fonts.keyFont.draw(spriteBatch, "SHIFT", kBaseX + 146f, kBaseY + 72f);
-        fonts.keyFont.draw(spriteBatch, "J", kBaseX + 25f, kBaseY + 42f);
-        fonts.keyFont.draw(spriteBatch, "E", kBaseX + 149f, kBaseY + 42f);
-        fonts.keyFont.draw(spriteBatch, "M", kBaseX + 51f, kBaseY + 15f);
-        fonts.keyFont.draw(spriteBatch, "ESC", kBaseX + 118f, kBaseY + 15f);
+        drawOutlined(fonts.keyFont, "SHIFT", kBaseX + 146f, kBaseY + 72f, goldAccent);
+        drawOutlined(fonts.keyFont, "J", kBaseX + 25f, kBaseY + 42f, goldAccent);
+        drawOutlined(fonts.keyFont, "E", kBaseX + 149f, kBaseY + 42f, goldAccent);
+        drawOutlined(fonts.keyFont, "M", kBaseX + 51f, kBaseY + 15f, goldAccent);
+        drawOutlined(fonts.keyFont, "ESC", kBaseX + 118f, kBaseY + 15f, goldAccent);
 
         // Action sub-labels matching updated keybinds:
-        fonts.smallFont.setColor(Color.WHITE);
-        fonts.smallFont.draw(spriteBatch, "MOVE", kBaseX - 6f, kBaseY + 72f);
-        fonts.smallFont.draw(spriteBatch, "SPRINT", kBaseX + 194f, kBaseY + 72f);
-        fonts.smallFont.draw(spriteBatch, "JUMP (2X)", kBaseX + 48f, kBaseY + 42f);
-        fonts.smallFont.draw(spriteBatch, "INTERACT", kBaseX + 172f, kBaseY + 42f);
-        fonts.smallFont.draw(spriteBatch, "MAP", kBaseX + 75f, kBaseY + 15f);
-        fonts.smallFont.draw(spriteBatch, "PAUSE", kBaseX + 156f, kBaseY + 15f);
+        drawOutlined(fonts.smallFont, "MOVE", kBaseX - 6f, kBaseY + 72f, Color.WHITE);
+        drawOutlined(fonts.smallFont, "SPRINT", kBaseX + 194f, kBaseY + 72f, Color.WHITE);
+        drawOutlined(fonts.smallFont, "JUMP (2X)", kBaseX + 48f, kBaseY + 42f, Color.WHITE);
+        drawOutlined(fonts.smallFont, "INTERACT", kBaseX + 172f, kBaseY + 42f, Color.WHITE);
+        drawOutlined(fonts.smallFont, "MAP", kBaseX + 75f, kBaseY + 15f, Color.WHITE);
+        drawOutlined(fonts.smallFont, "PAUSE", kBaseX + 156f, kBaseY + 15f, Color.WHITE);
 
         // Action Hints: Crouch, Attack, Gender, and Hide Parameters
-        fonts.smallFont.setColor(0f, 0f, 0f, 0.85f);
-        fonts.smallFont.draw(spriteBatch, "[C] CROUCH  |  [F] ATTACK  |  [G] GENDER (M/F)  |  [P] PARAMETERS", kBaseX - 169f, kBaseY - 3f);
-        fonts.smallFont.setColor(goldAccent);
-        fonts.smallFont.draw(spriteBatch, "[C] CROUCH  |  [F] ATTACK  |  [G] GENDER (M/F)  |  [P] PARAMETERS", kBaseX - 170f, kBaseY - 2f);
+        drawOutlined(fonts.smallFont, "HOLD [J] AT WALL: CLIMB  |  [C] CROUCH  |  [F] ATTACK  |  [G] GENDER (M/F)  |  [P] PARAMETERS",
+            kBaseX - 170f, kBaseY - 2f, goldAccent);
     }
 
     // ==========================================
@@ -1003,13 +1114,13 @@ public class WhereWindsMeetHUD implements Disposable {
         float my = 48f; // Floating in lower area of screen
 
         // Thin golden top line
-        shapeRenderer.begin(ShapeType.Filled);
+        beginShapes(ShapeType.Filled);
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(mx, my + mh - 2f, mw, 2f);
         shapeRenderer.end();
 
         // Golden Corner brackets
-        shapeRenderer.begin(ShapeType.Line);
+        beginShapes(ShapeType.Line);
         shapeRenderer.setColor(goldBorder);
         float cLen = 16f;
         shapeRenderer.line(mx, my + mh, mx + cLen, my + mh);
@@ -1061,8 +1172,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float mbY = h - 230f;
         float mbW = 195f;
         float mbH = 34f;
-        shapeRenderer.setColor(glassBg);
-        shapeRenderer.rect(mbX, mbY, mbW, mbH);
+        fillGlassPanel(mbX, mbY, mbW, mbH);
     }
 
     private void drawTacticalMapButtonBorder(float w, float h) {
@@ -1070,8 +1180,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float mbY = h - 230f;
         float mbW = 195f;
         float mbH = 34f;
-        shapeRenderer.setColor(goldBorder);
-        shapeRenderer.rect(mbX, mbY, mbW, mbH);
+        strokeGlassBorder(mbX, mbY, mbW, mbH);
 
         float cLen = 7f;
         shapeRenderer.setColor(goldAccent);
@@ -1088,10 +1197,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private void drawTacticalMapButtonText(float w, float h) {
         float mbX = w - 215f;
         float mbY = h - 230f;
-        fonts.keyFont.setColor(0f, 0f, 0f, 0.90f);
-        fonts.keyFont.draw(spriteBatch, "[M]  CAMPUS MAP", mbX + 21f, mbY + 23f);
-        fonts.keyFont.setColor(goldAccent);
-        fonts.keyFont.draw(spriteBatch, "[M]  CAMPUS MAP", mbX + 20f, mbY + 24f);
+        drawOutlined(fonts.keyFont, "[M]  CAMPUS MAP", mbX + 20f, mbY + 24f, goldAccent);
     }
 
     // ==========================================
@@ -1119,7 +1225,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // ============================================================
         // FILLED PASS
         // ============================================================
-        shapeRenderer.begin(ShapeType.Filled);
+        beginShapes(ShapeType.Filled);
 
         // Full dark backdrop
         shapeRenderer.setColor(0f, 0f, 0f, 0.92f);
@@ -1411,7 +1517,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // ============================================================
         // LINE BORDERS PASS
         // ============================================================
-        shapeRenderer.begin(ShapeType.Line);
+        beginShapes(ShapeType.Line);
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.rect(mx, my, mapW, mapH);
         shapeRenderer.rect(mx + 3f, my + 3f, mapW - 6f, mapH - 6f);
@@ -1603,7 +1709,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float dy = (h - dh) / 2f + 8f;
 
         // Dim the game behind the map
-        shapeRenderer.begin(ShapeType.Filled);
+        beginShapes(ShapeType.Filled);
         shapeRenderer.setColor(0f, 0f, 0f, 0.94f);
         shapeRenderer.rect(0, 0, w, h);
         shapeRenderer.end();
@@ -1616,7 +1722,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float[] pt = new float[2];
         MemorialEntry nextObj = memorials.getNextObjective(player.getPosition());
 
-        shapeRenderer.begin(ShapeType.Filled);
+        beginShapes(ShapeType.Filled);
 
         // Memorial pins: secured = green, current objective = pulsing gold diamond, others = gold
         for (MemorialEntry entry : memorials.getEntries()) {
@@ -1670,7 +1776,7 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.triangle(tipX, tipY, leftX, leftY, rightX, rightY);
         shapeRenderer.end();
 
-        shapeRenderer.begin(ShapeType.Line);
+        beginShapes(ShapeType.Line);
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.rect(dx, dy, dw, dh);
         shapeRenderer.end();
@@ -1699,7 +1805,7 @@ public class WhereWindsMeetHUD implements Disposable {
     // PAUSE MENU
     // ==========================================
     private void renderPauseMenu(float w, float h) {
-        shapeRenderer.begin(ShapeType.Filled);
+        beginShapes(ShapeType.Filled);
         shapeRenderer.setColor(0f, 0f, 0f, 0.78f);
         shapeRenderer.rect(0, 0, w, h);
 
@@ -1716,7 +1822,7 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.rect(px, py + ph - 4f, pw, 4f);
         shapeRenderer.end();
 
-        shapeRenderer.begin(ShapeType.Line);
+        beginShapes(ShapeType.Line);
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.rect(px, py, pw, ph);
         // Separator line below title
@@ -1765,7 +1871,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float by = h - 105f;
 
         // Transparent glass background (zero dark block!)
-        shapeRenderer.begin(ShapeType.Filled);
+        beginShapes(ShapeType.Filled);
         shapeRenderer.setColor(0.01f, 0.02f, 0.04f, 0.20f * alpha);
         shapeRenderer.rect(bx, by, bw, bh);
 
@@ -1782,7 +1888,7 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.end();
 
         // Border
-        shapeRenderer.begin(ShapeType.Line);
+        beginShapes(ShapeType.Line);
         shapeRenderer.setColor(0.92f, 0.76f, 0.32f, 0.90f * alpha);
         shapeRenderer.rect(bx, by, bw, bh);
         shapeRenderer.end();
@@ -1806,7 +1912,7 @@ public class WhereWindsMeetHUD implements Disposable {
     // GRAND LEVEL 1 VICTORY / CONGRATULATIONS SCREEN
     // ==========================================
     private void renderVictoryScreen(float w, float h) {
-        shapeRenderer.begin(ShapeType.Filled);
+        beginShapes(ShapeType.Filled);
         // Dim screen background (translucent: 3D campus remains visible)
         shapeRenderer.setColor(0f, 0f, 0f, 0.45f);
         shapeRenderer.rect(0, 0, w, h);
@@ -1838,7 +1944,7 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.end();
 
         // Lines and Borders
-        shapeRenderer.begin(ShapeType.Line);
+        beginShapes(ShapeType.Line);
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.rect(vx, vy, vw, vh);
         shapeRenderer.line(vx, vy + vh - 75f, vx + vw, vy + vh - 75f);

@@ -1,8 +1,16 @@
 fonts/LICENSE-LiberationSans.txt
 fonts/LiberationSans-Bold.ttf
 fonts/LiberationSans-Regular.ttf
+hs_err_pid10336.log
+hs_err_pid21844.log
+hs_err_pid22200.log
 libgdx.png
 maps/campus_map.png
+screenshots/claude_crowd2.png
+screenshots/claude_crowd3.png
+screenshots/claude_fxaa.png
+screenshots/claude_pond_wade.png
+screenshots/claude_tmp.png
 screenshots/spark36_female_sitting_verified.png
 screenshots/spark36_female_verified.png
 screenshots/spark36_hero_character_verified.png
