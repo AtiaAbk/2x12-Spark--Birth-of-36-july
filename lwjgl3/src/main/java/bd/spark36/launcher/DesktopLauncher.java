@@ -81,7 +81,14 @@ public class DesktopLauncher {
         });
 
         // Anti-aliasing (8x MSAA) and 24-bit depth buffer for crisp clean polygon edges
-        configuration.setBackBufferConfig(8, 8, 8, 8, 24, 0, 8);
+        // Override with -Dbd.spark36.msaa=N (some AMD drivers crash on 8x at window creation)
+        int msaaSamples = Integer.getInteger("bd.spark36.msaa", 8);
+        configuration.setBackBufferConfig(8, 8, 8, 8, 24, 0, msaaSamples);
+
+        // Render through ANGLE (DirectX) instead of the native OpenGL driver
+        if (Boolean.getBoolean("bd.spark36.angle")) {
+            configuration.setOpenGLEmulation(Lwjgl3ApplicationConfiguration.GLEmulation.ANGLE_GLES20, 0, 0);
+        }
         configuration.useVsync(true);
         int refreshRate = 60;
         try {

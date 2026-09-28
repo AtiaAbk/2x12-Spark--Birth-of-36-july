@@ -33,6 +33,25 @@ import com.badlogic.gdx.utils.Disposable;
  */
 public class DhakaCampusWorld implements Disposable {
 
+    /** Tree placements {x, z, kind}: 0 = rain tree, 1 = krishnachura, 2 = royal palm. */
+    public static final float[][] TREE_LOCATIONS = {
+        // Avenue flanks: Alternating Rain Trees & Krishnachura
+        {-19.5f, -2f, 0}, {19.5f, -2f, 1},
+        {-19.5f, 14f, 1}, {19.5f, 14f, 0},
+        {-13.5f, 32f, 0}, {13.5f, 32f, 1},
+        {-14.5f, 50f, 1}, {14.5f, 50f, 0},
+        {-28.0f, 16f, 0}, {28.0f, 16f, 1},
+        {-48.0f, 6f, 1},  {48.0f, 6f, 0},
+        {-62.0f, 30f, 0}, {62.0f, 30f, 1},
+        {-32.0f, -12f, 1}, {32.0f, -12f, 0},
+        {-22.0f, 68f, 0}, {22.0f, 68f, 1},
+        {-11.5f, 71f, 0}, // beside (not inside) the main gate
+
+        // Royal Palms along perimeter
+        {-18f, 2f, 2}, {18f, 2f, 2},
+        {-20f, 40f, 2}, {20f, 40f, 2}
+    };
+
     public static final Vector3 BOUNDARY_STONE_POS = new Vector3(7.8f, 0f, 36.5f);
     private static final int SHADOW_MAP_SIZE = 4096;
 
@@ -69,7 +88,8 @@ public class DhakaCampusWorld implements Disposable {
 
     // Animated water shimmer (pukur)
     private ModelInstance waterSurface;      // main water plane (animated tint)
-    private ModelInstance waterShimmer;      // secondary specular highlight plane
+    private ModelInstance waterShimmer;      // scrolling caustic ripple layer
+    private TextureAttribute waterRippleTex;
     private final com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute waterDiffuse =
         ColorAttribute.createDiffuse(new com.badlogic.gdx.graphics.Color(0.20f, 0.55f, 0.72f, 1f));
     private final com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute shimmerDiffuse =
@@ -371,7 +391,6 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         Material stoneCurb = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.85f, 0.80f, 1f)));
-        Material curzonDomeMat = new Material(ColorAttribute.createDiffuse(new Color(0.93f, 0.92f, 0.88f, 1f)));
         Material curzonTrimMat = new Material(ColorAttribute.createDiffuse(new Color(0.96f, 0.94f, 0.90f, 1f)));
         Material goldFinial = new Material(ColorAttribute.createDiffuse(new Color(1.0f, 0.85f, 0.35f, 1f)));
         Material archCavity = new Material(ColorAttribute.createDiffuse(new Color(0.18f, 0.10f, 0.08f, 1f)));
@@ -573,23 +592,44 @@ public class DhakaCampusWorld implements Disposable {
         stepRailR.transform.setTranslation(8.2f, 0.75f, -19.5f);
         instances.add(stepRailR);
 
-        // Arched Verandah Openings with White Cusped Arch Frames
-        Model archNiche = mb.createBox(2.8f, 6.0f, 0.4f, archCavity, attr);
-        Model archFrame = mb.createBox(3.2f, 6.4f, 0.1f, curzonTrimMat, attr);
+        // Two-storey arcades of pointed Indo-Saracenic arches across the main block and both wings.
+        // Each arch is a rectangular niche capped by a 45-degree-rotated square whose top corner
+        // forms the pointed crown; the cream frame repeats the same shape slightly larger.
+        Model archNiche = mb.createBox(2.4f, 4.2f, 0.4f, archCavity, attr);
+        Model archCrown = mb.createBox(1.70f, 1.70f, 0.4f, archCavity, attr);   // diagonal = 2.4
+        Model archFrame = mb.createBox(2.8f, 4.4f, 0.1f, curzonTrimMat, attr);
+        Model archFrameCrown = mb.createBox(1.98f, 1.98f, 0.1f, curzonTrimMat, attr); // diagonal = 2.8
+        Model floorBand = mb.createBox(92f, 0.35f, 0.3f, curzonTrimMat, attr);
         models.add(archNiche);
+        models.add(archCrown);
         models.add(archFrame);
+        models.add(archFrameCrown);
+        models.add(floorBand);
 
-        for (int i = -3; i <= 3; i++) {
-            if (i == 0) continue;
-            float ax = i * 4.4f;
-            ModelInstance frame = new ModelInstance(archFrame);
-            frame.transform.setTranslation(ax, 3.8f, -23.7f);
-            instances.add(frame);
+        float[] archFloorY = {3.0f, 8.4f};           // niche centres: ground floor verandah, upper floor
+        for (float ay : archFloorY) {
+            for (float ax = -44f; ax <= 44.01f; ax += 3.6f) {
+                if (Math.abs(ax) < 8.2f) continue;    // the portico projection covers the centre
+                float fz = -23.45f;
+                ModelInstance frame = new ModelInstance(archFrame);
+                frame.transform.setTranslation(ax, ay, fz);
+                instances.add(frame);
+                ModelInstance frameCrown = new ModelInstance(archFrameCrown);
+                frameCrown.transform.setTranslation(ax, ay + 2.2f, fz).rotate(Vector3.Z, 45f);
+                instances.add(frameCrown);
 
-            ModelInstance arch = new ModelInstance(archNiche);
-            arch.transform.setTranslation(ax, 3.8f, -23.8f);
-            instances.add(arch);
+                ModelInstance arch = new ModelInstance(archNiche);
+                arch.transform.setTranslation(ax, ay, fz - 0.05f);
+                instances.add(arch);
+                ModelInstance crown = new ModelInstance(archCrown);
+                crown.transform.setTranslation(ax, ay + 2.1f, fz - 0.04f).rotate(Vector3.Z, 45f);
+                instances.add(crown);
+            }
         }
+        // Cream string course between the floors
+        ModelInstance bandInst = new ModelInstance(floorBand);
+        bandInst.transform.setTranslation(0f, 6.1f, -23.4f);
+        instances.add(bandInst);
 
         // Grand Central Portal with Cusped Archway & Heavy Teak Doors
         Model portalFrame = mb.createBox(5.6f, 8.2f, 0.2f, curzonTrimMat, attr);
@@ -607,72 +647,121 @@ public class DhakaCampusWorld implements Disposable {
         mainArchInst.transform.setTranslation(0f, 4.2f, -20.6f);
         instances.add(mainArchInst);
 
+        // Tall pointed crown over the portal, framed in cream like the arcades
+        Model portalCrownFrame = mb.createBox(3.96f, 3.96f, 0.2f, curzonTrimMat, attr);
+        Model portalCrown = mb.createBox(3.39f, 3.39f, 0.6f, archCavity, attr);
+        models.add(portalCrownFrame);
+        models.add(portalCrown);
+        ModelInstance pcfInst = new ModelInstance(portalCrownFrame);
+        pcfInst.transform.setTranslation(0f, 8.4f, -20.5f).rotate(Vector3.Z, 45f);
+        instances.add(pcfInst);
+        ModelInstance pcInst = new ModelInstance(portalCrown);
+        pcInst.transform.setTranslation(0f, 7.9f, -20.6f).rotate(Vector3.Z, 45f);
+        instances.add(pcInst);
+
         ModelInstance doorInst = new ModelInstance(doorLeaf);
         doorInst.transform.setTranslation(0f, 3.8f, -20.4f);
         instances.add(doorInst);
 
-        // Central High Drum & Majestic White Bulbous Mughal Dome
-        Model domeBase = mb.createCylinder(8.6f, 3.2f, 8.6f, 24, curzonTrimMat, attr);
-        Model domeSphere = mb.createSphere(8.2f, 6.4f, 8.2f, 24, 20, curzonDomeMat, attr);
+        // Curzon Hall roofline: no single great white dome (that silhouette reads as the High
+        // Court). Instead a modest red-brick drum and terracotta dome crowns the portico, slender
+        // octagonal turrets flank the entrance, and small domed chhatris punctuate the parapet.
+        Material curzonRedDome = new Material(ColorAttribute.createDiffuse(new Color(0.62f, 0.22f, 0.16f, 1f)));
         Model finialBase = mb.createCone(0.8f, 2.6f, 0.8f, 12, goldFinial, attr);
-        Model finialSpire = mb.createCylinder(0.12f, 3.4f, 0.12f, 8, goldFinial, attr);
-        models.add(domeBase);
-        models.add(domeSphere);
+        Model smallFinial = mb.createCone(0.28f, 0.9f, 0.28f, 8, goldFinial, attr);
+        Model portDrum = mb.createCylinder(5.0f, 2.2f, 5.0f, 8, curzonBrickMat, attr);
+        Model portDome = mb.createSphere(4.6f, 4.0f, 4.6f, 20, 16, curzonRedDome, attr);
+        Model drumBand = mb.createCylinder(5.4f, 0.35f, 5.4f, 8, curzonTrimMat, attr);
         models.add(finialBase);
-        models.add(finialSpire);
+        models.add(smallFinial);
+        models.add(portDrum);
+        models.add(portDome);
+        models.add(drumBand);
 
-        ModelInstance domeBaseInst = new ModelInstance(domeBase);
-        domeBaseInst.transform.setTranslation(0f, 17.2f, -22.5f);
-        instances.add(domeBaseInst);
+        ModelInstance drumInst = new ModelInstance(portDrum);
+        drumInst.transform.setTranslation(0f, 16.7f, -22.5f);
+        instances.add(drumInst);
+        ModelInstance drumBandInst = new ModelInstance(drumBand);
+        drumBandInst.transform.setTranslation(0f, 17.9f, -22.5f);
+        instances.add(drumBandInst);
+        ModelInstance portDomeInst = new ModelInstance(portDome);
+        portDomeInst.transform.setTranslation(0f, 18.1f, -22.5f);
+        instances.add(portDomeInst);
+        ModelInstance portFinial = new ModelInstance(finialBase);
+        portFinial.transform.setTranslation(0f, 21.2f, -22.5f);
+        instances.add(portFinial);
 
-        ModelInstance domeInst = new ModelInstance(domeSphere);
-        domeInst.transform.setTranslation(0f, 20.8f, -22.5f);
-        instances.add(domeInst);
+        // Flanking octagonal turrets with cream bands and little red domes
+        Model turretShaft = mb.createCylinder(1.5f, 18.0f, 1.5f, 8, curzonBrickMat, attr);
+        Model turretBand = mb.createCylinder(1.75f, 0.3f, 1.75f, 8, curzonTrimMat, attr);
+        Model turretDome = mb.createSphere(1.9f, 1.7f, 1.9f, 14, 10, curzonRedDome, attr);
+        models.add(turretShaft);
+        models.add(turretBand);
+        models.add(turretDome);
+        for (float side = -1f; side <= 1f; side += 2f) {
+            float tx = side * 7.9f, tz = -20.8f;
+            ModelInstance shaft = new ModelInstance(turretShaft);
+            shaft.transform.setTranslation(tx, 9.0f, tz);
+            instances.add(shaft);
+            for (float by : new float[]{6.1f, 12.2f, 15.8f, 18.0f}) {
+                ModelInstance band = new ModelInstance(turretBand);
+                band.transform.setTranslation(tx, by, tz);
+                instances.add(band);
+            }
+            ModelInstance td = new ModelInstance(turretDome);
+            td.transform.setTranslation(tx, 18.7f, tz);
+            instances.add(td);
+            ModelInstance tf = new ModelInstance(smallFinial);
+            tf.transform.setTranslation(tx, 20.0f, tz);
+            instances.add(tf);
+        }
 
-        ModelInstance finialBaseInst = new ModelInstance(finialBase);
-        finialBaseInst.transform.setTranslation(0f, 24.8f, -22.5f);
-        instances.add(finialBaseInst);
-
-        ModelInstance finialSpireInst = new ModelInstance(finialSpire);
-        finialSpireInst.transform.setTranslation(0f, 26.5f, -22.5f);
-        instances.add(finialSpireInst);
-
-        // Bangladesh National Flag Flying High on Central Roof Flagpole
+        // Bangladesh National Flag on a pole rising from the portico roof behind the dome
         Model flagPole = mb.createCylinder(0.12f, 7.5f, 0.12f, 8, castIron, attr);
         Model flagModel = mb.createBox(3.4f, 2.04f, 0.04f, flagMat, attr);
         models.add(flagPole);
         models.add(flagModel);
 
         ModelInstance poleInst = new ModelInstance(flagPole);
-        poleInst.transform.setTranslation(0f, 25.5f, -26.0f);
+        poleInst.transform.setTranslation(0f, 17.35f, -26.5f);
         instances.add(poleInst);
 
         ModelInstance flagInst = new ModelInstance(flagModel);
-        flagInst.transform.setTranslation(1.7f, 27.5f, -26.0f);
+        flagInst.transform.setTranslation(1.7f, 20.0f, -26.5f);
         instances.add(flagInst);
 
-        // Corner Chhatris (4 authentic Indo-Saracenic domed kiosks with white pillars)
-        Model chhatriDome = mb.createSphere(3.4f, 2.6f, 3.4f, 16, 14, curzonDomeMat, attr);
-        Model chhatriPillar = mb.createBox(0.45f, 3.4f, 0.45f, curzonTrimMat, attr);
+        // Chhatris along the parapet: four slim cream pillars under a small red dome
+        Model chhatriDome = mb.createSphere(2.2f, 1.8f, 2.2f, 16, 12, curzonRedDome, attr);
+        Model chhatriPillar = mb.createBox(0.28f, 2.2f, 0.28f, curzonTrimMat, attr);
+        Model chhatriSlab = mb.createBox(2.3f, 0.2f, 2.3f, curzonTrimMat, attr);
         models.add(chhatriDome);
         models.add(chhatriPillar);
+        models.add(chhatriSlab);
 
-        float[] chhatriX = {-18.5f, 18.5f, -44.5f, 44.5f};
-        for (float cx : chhatriX) {
-            float cz = -24.5f;
-            ModelInstance cd = new ModelInstance(chhatriDome);
-            cd.transform.setTranslation(cx, 16.0f, cz);
-            instances.add(cd);
-
-            float[] ox = {-1.0f, 1.0f};
-            float[] oz = {-1.0f, 1.0f};
-            for (float px : ox) {
-                for (float pz : oz) {
+        float[][] chhatriPos = {                       // {x, parapet top y}
+            {-18.5f, 14f}, {18.5f, 14f},               // corners of the taller central block
+            {-12.5f, 14f}, {12.5f, 14f},
+            {-26f, 11.5f}, {26f, 11.5f}, {-36f, 11.5f}, {36f, 11.5f},
+            {-45f, 11.5f}, {45f, 11.5f}                // wing ends
+        };
+        for (float[] c : chhatriPos) {
+            float cx = c[0], baseY = c[1], cz = -24.2f;
+            for (float px = -0.8f; px <= 0.8f; px += 1.6f) {
+                for (float pz = -0.8f; pz <= 0.8f; pz += 1.6f) {
                     ModelInstance cp = new ModelInstance(chhatriPillar);
-                    cp.transform.setTranslation(cx + px, 13.2f, cz + pz);
+                    cp.transform.setTranslation(cx + px, baseY + 1.1f, cz + pz);
                     instances.add(cp);
                 }
             }
+            ModelInstance slab = new ModelInstance(chhatriSlab);
+            slab.transform.setTranslation(cx, baseY + 2.3f, cz);
+            instances.add(slab);
+            ModelInstance cd = new ModelInstance(chhatriDome);
+            cd.transform.setTranslation(cx, baseY + 2.8f, cz);
+            instances.add(cd);
+            ModelInstance cf = new ModelInstance(smallFinial);
+            cf.transform.setTranslation(cx, baseY + 4.0f, cz);
+            instances.add(cf);
         }
 
         // 4. REALISTIC DHAKA UNIVERSITY CAMPUS VEGETATION & LANDMARKS
@@ -693,23 +782,7 @@ public class DhakaCampusWorld implements Disposable {
         // a single mesh can only hold ~32k vertices and each tree carries thousands of leaf cards.
         ModelBuilder[] foliageBuilders = {mbPalm, mbBush};
 
-        float[][] treeLocations = {
-            // Avenue flanks: Alternating Rain Trees & Krishnachura
-            {-19.5f, -2f, 0}, {19.5f, -2f, 1},
-            {-19.5f, 14f, 1}, {19.5f, 14f, 0},
-            {-13.5f, 32f, 0}, {13.5f, 32f, 1},
-            {-14.5f, 50f, 1}, {14.5f, 50f, 0},
-            {-28.0f, 16f, 0}, {28.0f, 16f, 1},
-            {-48.0f, 6f, 1},  {48.0f, 6f, 0},
-            {-62.0f, 30f, 0}, {62.0f, 30f, 1},
-            {-32.0f, -12f, 1}, {32.0f, -12f, 0},
-            {-22.0f, 68f, 0}, {22.0f, 68f, 1},
-            {0.0f, 78f, 0},
-
-            // Royal Palms along perimeter
-            {-18f, 2f, 2}, {18f, 2f, 2},
-            {-20f, 40f, 2}, {20f, 40f, 2}
-        };
+        float[][] treeLocations = TREE_LOCATIONS;
 
         int treeIndex = 0;
         for (float[] loc : treeLocations) {
@@ -720,6 +793,9 @@ public class DhakaCampusWorld implements Disposable {
             float seed = treeIndex * 2.399f;
             float scale = 0.9f + 0.28f * (0.5f + 0.5f * MathUtils.sin(treeIndex * 1.7f));
             treeIndex++;
+
+            // Every third broadleaf tree has a thinner, airier canopy; the rest stay full
+            TreeGeometry.leafDensity = (treeIndex % 3 == 1) ? 0.45f : 1f;
 
             // Trunk footprint (rain trees flare to ~0.95m at the root, so use a generous box)
             float trunkHalf = (type == 2) ? 0.45f : 0.75f * scale;
@@ -763,6 +839,7 @@ public class DhakaCampusWorld implements Disposable {
                 // Wildflower shrub around base
                 addCrossedQuads(mpbBushes, tx + 0.9f, 0f, tz + 0.9f, 1.7f, 1.2f, 3, 0f);
             } else {
+                TreeGeometry.leafDensity = 1f;
                 // Royal Palm Tree with radiating fronds
                 ModelInstance pInst = new ModelInstance(palmTrunk);
                 pInst.transform.setTranslation(tx, 4.8f, tz);
@@ -772,6 +849,7 @@ public class DhakaCampusWorld implements Disposable {
                 addHorizontalQuad(mpbRain, tx, 9.6f, tz, 5.0f);
             }
         }
+        TreeGeometry.leafDensity = 1f;
 
         // ==========================================
         // GLADES: dense bamboo, leafy ground cover and worn dirt paths (the Boundary Stone woodland)
@@ -940,10 +1018,18 @@ public class DhakaCampusWorld implements Disposable {
         pcE.transform.setTranslation(pukurX + pukurW * 0.5f, 0.22f, pukurZ);
         instances.add(pcE);
 
+        // Dark silty pond bed just above the ground plane, so fish read against it through the water
+        Material pondBedMat = new Material(ColorAttribute.createDiffuse(new Color(0.07f, 0.16f, 0.17f, 1f)));
+        Model pondBed = mb.createBox(pukurW - 0.2f, 0.02f, pukurL - 0.2f, pondBedMat, attr);
+        models.add(pondBed);
+        ModelInstance pondBedInst = new ModelInstance(pondBed);
+        pondBedInst.transform.setTranslation(pukurX, 0.01f, pukurZ);
+        instances.add(pondBedInst);
+
         // Water surface plane — animated tint stored for runtime shimmer
         Material waterAnimMat = new Material(
             TextureAttribute.createDiffuse(textures.curzonWater),
-            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.88f),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.68f),
             ColorAttribute.createDiffuse(new Color(0.20f, 0.55f, 0.72f, 1f))
         );
         Model pukurWater = mb.createBox(pukurW - 0.2f, 0.04f, pukurL - 0.2f, waterAnimMat, attr);
@@ -952,15 +1038,20 @@ public class DhakaCampusWorld implements Disposable {
         waterSurface.transform.setTranslation(pukurX, 0.12f, pukurZ);
         instances.add(waterSurface);
 
-        // Specular shimmer plane (semi-transparent, pulsing alpha for light glint)
+        // Caustic ripple layer over the whole surface: its texture scrolls every frame
+        waterRippleTex = TextureAttribute.createDiffuse(textures.waterRipple);
+        waterRippleTex.scaleU = 3f;
+        waterRippleTex.scaleV = 4f;
         Material shimmerMat = new Material(
-            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0f),
-            ColorAttribute.createDiffuse(new Color(0.75f, 0.92f, 1.0f, 0f))
+            waterRippleTex,
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE, 0.45f),
+            new DepthTestAttribute(GL20.GL_LEQUAL, false),
+            ColorAttribute.createDiffuse(new Color(0.80f, 0.94f, 1.0f, 1f))
         );
-        Model pukurShimmer = mb.createBox(pukurW * 0.6f, 0.01f, pukurL * 0.5f, shimmerMat, attr);
+        Model pukurShimmer = mb.createBox(pukurW - 0.2f, 0.005f, pukurL - 0.2f, shimmerMat, attr);
         models.add(pukurShimmer);
         waterShimmer = new ModelInstance(pukurShimmer);
-        waterShimmer.transform.setTranslation(pukurX - 2f, 0.14f, pukurZ - 1.5f);
+        waterShimmer.transform.setTranslation(pukurX, 0.145f, pukurZ);
         instances.add(waterShimmer);
 
         // Curzon Hall Pukur Grand Ghat Steps (South Bank Entrance)
@@ -1118,7 +1209,10 @@ public class DhakaCampusWorld implements Disposable {
         Model gateArchPillar = mb.createBox(1.8f, 7.2f, 1.8f, curzonBrickMat, attr);
         Model gateArchBeam = mb.createBox(8.4f, 1.6f, 2.0f, curzonBrickMat, attr);
         Model gateArchCrest = mb.createBox(6.4f, 1.2f, 0.4f, curzonTrimMat, attr);
-        Model gateTrimFrame = mb.createBox(4.8f, 5.6f, 0.15f, curzonTrimMat, attr);
+        Model gateTrimFrame = mb.createBox(4.8f, 0.3f, 2.05f, curzonTrimMat, attr);
+        Model gateTrimJamb = mb.createBox(0.16f, 5.6f, 2.05f, curzonTrimMat, attr);
+        Model gateLeafRail = mb.createBox(0.07f, 0.08f, 2.30f, castIron, attr);
+        Model gateLeafBar = mb.createCylinder(0.045f, 3.2f, 0.045f, 6, castIron, attr);
         Model sidePedArch = mb.createBox(2.4f, 4.4f, 1.6f, curzonBrickMat, attr);
         Model guardKiosk = mb.createBox(2.8f, 3.2f, 2.8f, curzonBrickMat, attr);
         Model guardRoof = mb.createBox(3.4f, 0.4f, 3.4f, curzonTrimMat, attr);
@@ -1126,6 +1220,9 @@ public class DhakaCampusWorld implements Disposable {
         models.add(gateArchBeam);
         models.add(gateArchCrest);
         models.add(gateTrimFrame);
+        models.add(gateTrimJamb);
+        models.add(gateLeafRail);
+        models.add(gateLeafBar);
         models.add(sidePedArch);
         models.add(guardKiosk);
         models.add(guardRoof);
@@ -1148,9 +1245,30 @@ public class DhakaCampusWorld implements Disposable {
         gcInst.transform.setTranslation(0f, 7.8f, 78f);
         instances.add(gcInst);
 
+        // Open archway: trim only frames the opening (jambs + lintel) so the gateway stays clear
         ModelInstance gtInst = new ModelInstance(gateTrimFrame);
-        gtInst.transform.setTranslation(0f, 3.6f, 78f);
+        gtInst.transform.setTranslation(0f, 5.45f, 78f);
         instances.add(gtInst);
+        for (float side = -1f; side <= 1f; side += 2f) {
+            ModelInstance jamb = new ModelInstance(gateTrimJamb);
+            jamb.transform.setTranslation(side * 2.28f, 2.8f, 78f);
+            instances.add(jamb);
+        }
+
+        // Wrought-iron gate leaves swung fully open, folded back along the inside of each jamb
+        for (float side = -1f; side <= 1f; side += 2f) {
+            float lx = side * 2.30f;
+            for (int r = 0; r < 3; r++) {
+                ModelInstance rail = new ModelInstance(gateLeafRail);
+                rail.transform.setTranslation(lx, 0.25f + r * 1.45f, 78f - 0.9f - 1.15f);
+                instances.add(rail);
+            }
+            for (int b = 0; b < 9; b++) {
+                ModelInstance bar = new ModelInstance(gateLeafBar);
+                bar.transform.setTranslation(lx, 1.6f, 78f - 0.95f - b * 0.27f);
+                instances.add(bar);
+            }
+        }
 
         // Finials atop gate pillars
         ModelInstance gfL = new ModelInstance(finialBase);
@@ -1592,14 +1710,16 @@ public class DhakaCampusWorld implements Disposable {
             if (ca != null) ca.color.set(r, g, b, 1f);
         }
         if (waterShimmer != null) {
-            // Pulse shimmer highlight — faster sine for sparkling glint
-            float shimmer = 0.08f + 0.28f * Math.max(0f, MathUtils.sin(animTime * 2.4f));
-            float shimmer2 = 0.05f + 0.20f * Math.max(0f, MathUtils.sin(animTime * 3.8f + 1.2f));
-            float combined = shimmer + shimmer2;
+            // Drift the caustics diagonally with a slow wobble, and let their brightness breathe
+            if (waterRippleTex != null) {
+                waterRippleTex.offsetU = (animTime * 0.018f + MathUtils.sin(animTime * 0.35f) * 0.03f) % 1f;
+                waterRippleTex.offsetV = (animTime * 0.026f + MathUtils.cos(animTime * 0.27f) * 0.03f) % 1f;
+            }
             com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute ba =
                 (com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute)
                 waterShimmer.materials.get(0).get(com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute.Type);
-            if (ba != null) ba.opacity = combined;
+            if (ba != null) ba.opacity = 0.22f + 0.08f * MathUtils.sin(animTime * 0.9f)
+                + 0.04f * MathUtils.sin(animTime * 2.3f + 1.2f);
         }
 
 
@@ -1616,17 +1736,24 @@ public class DhakaCampusWorld implements Disposable {
 
             fish.body.transform.idt().translate(fx, fish.depthY, fz).rotate(Vector3.Y, heading);
             fish.tail.transform.idt().translate(fx, fish.depthY, fz).rotate(Vector3.Y, heading)
-                .translate(0f, 0f, -0.28f).rotate(Vector3.Y, tailWag);
+                .translate(0f, 0f, -0.22f).rotate(Vector3.Y, tailWag);
         }
 
+        // Fireflies: each wanders its own slow, irregular path (sums of unrelated sines) around
+        // the stone and blinks on its own rhythm, instead of orbiting together in a ring
         for (int i = 0; i < boundarySparkles.size; i++) {
             ModelInstance sp = boundarySparkles.get(i);
-            float angle = animTime * 1.8f + i * (MathUtils.PI2 / boundarySparkles.size);
-            float rad = 0.95f + MathUtils.sin(animTime * 2f + i) * 0.15f;
-            float px = BOUNDARY_STONE_POS.x + MathUtils.cos(angle) * rad;
-            float pz = BOUNDARY_STONE_POS.z + MathUtils.sin(angle) * rad;
-            float py = 1.1f + MathUtils.sin(animTime * 2.8f + i * 1.5f) * 0.45f;
-            sp.transform.setTranslation(px, py, pz);
+            float seed = i * 2.39f;
+            float t = animTime * (0.55f + (i % 3) * 0.12f);
+            float px = BOUNDARY_STONE_POS.x + MathUtils.sin(t * 0.73f + seed) * 1.6f
+                + MathUtils.sin(t * 1.91f + seed * 1.7f) * 0.45f;
+            float pz = BOUNDARY_STONE_POS.z + MathUtils.cos(t * 0.61f + seed * 1.3f) * 1.6f
+                + MathUtils.sin(t * 1.53f + seed * 0.6f) * 0.45f;
+            float py = 1.0f + (i % 3) * 0.35f + MathUtils.sin(t * 1.17f + seed) * 0.35f
+                + MathUtils.sin(t * 2.9f + seed * 2.1f) * 0.08f;
+            float blink = MathUtils.sin(animTime * (1.3f + (i % 4) * 0.37f) + seed * 3f);
+            float glow = blink > 0.2f ? 1f : Math.max(0.25f, 0.6f + blink);
+            sp.transform.setToTranslationAndScaling(px, py, pz, glow, glow, glow);
         }
     }
 
@@ -1740,26 +1867,26 @@ public class DhakaCampusWorld implements Disposable {
             new Color(0.98f, 0.65f, 0.15f, 1f)  // Sunburst Koi
         };
 
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 14; i++) {
             Color c = fishColors[i % fishColors.length];
             Material fishMat = new Material(
                 ColorAttribute.createDiffuse(c),
                 new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.92f)
             );
-            Model bodyModel = mb.createSphere(0.18f, 0.12f, 0.52f, 10, 8, fishMat, attr);
-            Model tailModel = mb.createBox(0.035f, 0.16f, 0.22f, fishMat, attr);
+            Model bodyModel = mb.createSphere(0.13f, 0.055f, 0.36f, 12, 8, fishMat, attr);
+            Model tailModel = mb.createBox(0.025f, 0.05f, 0.15f, fishMat, attr);
             models.add(bodyModel);
             models.add(tailModel);
 
             PondFish fish = new PondFish();
             fish.centerX = cx;
             fish.centerZ = cz;
-            fish.radiusX = 3.5f + (i % 4) * 1.3f;
-            fish.radiusZ = 5.0f + (i % 4) * 1.8f;
-            fish.speed = 0.8f + (i * 0.15f);
-            fish.angle = i * (MathUtils.PI2 / 8f);
+            fish.radiusX = 2.6f + (i % 5) * 1.15f;
+            fish.radiusZ = 3.8f + (i % 5) * 1.6f;
+            fish.speed = 0.7f + (i % 7) * 0.14f;
+            fish.angle = i * (MathUtils.PI2 / 14f);
             fish.swimPhase = i * 1.3f;
-            fish.depthY = 0.04f + (i % 3) * 0.02f;
+            fish.depthY = 0.055f + (i % 3) * 0.012f;
             fish.body = new ModelInstance(bodyModel);
             fish.tail = new ModelInstance(tailModel);
             pondFishes.add(fish);

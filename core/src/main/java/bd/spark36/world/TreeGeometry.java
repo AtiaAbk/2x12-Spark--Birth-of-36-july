@@ -108,6 +108,12 @@ final class TreeGeometry {
     private static final int MAX_LEAVES_PER_CANOPY = 900;
 
     /**
+     * Fraction of leaf cards to grow (1 = full canopy). Below 1 the shaded core also shrinks so
+     * branches and sky show through. Set before building a tree; reset to 1 afterwards.
+     */
+    static float leafDensity = 1f;
+
+    /**
      * SplitMix64 scramble. java.util.Random seeded with consecutive numbers gives nearly identical
      * first values, so seeds must be mixed first or neighbouring trees, canes and plants line up.
      */
@@ -127,7 +133,8 @@ final class TreeGeometry {
     static void foliage(MeshPartBuilder core, MeshPartBuilder cards, float cx, float cy, float cz,
                         float rx, float ry, float rz, float seed, float leafSize,
                         int[] cardCells, float blossomChance) {
-        clump(core, cx, cy, cz, rx * 0.90f, ry * 0.90f, rz * 0.90f, seed);
+        float coreScale = leafDensity < 1f ? 0.90f * (0.45f + 0.55f * leafDensity) : 0.90f;
+        clump(core, cx, cy, cz, rx * coreScale, ry * coreScale, rz * coreScale, seed);
         leafCards(cards, cx, cy, cz, rx, ry, rz, seed, leafSize, cardCells, blossomChance);
     }
 
@@ -142,6 +149,7 @@ final class TreeGeometry {
         double area = 4.0 * Math.PI * Math.pow(
             (Math.pow(rx * ry, p) + Math.pow(rx * rz, p) + Math.pow(ry * rz, p)) / 3.0, 1.0 / p);
         int count = Math.min(MAX_LEAVES_PER_CANOPY, (int) (2.6 * area / (leafSize * leafSize * 0.55f)));
+        count = (int) (count * leafDensity);
 
         for (int i = 0; i < count; i++) {
             float th = RNG.nextFloat() * MathUtils.PI2;

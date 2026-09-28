@@ -50,12 +50,43 @@ vec3 colorGrade(vec3 col) {
     return highlights;
 }
 
+// ─────────────────────────────────────────────
+// FXAA: smooths polygon and foliage edges (the scene renders into a non-multisampled FBO)
+// ─────────────────────────────────────────────
+vec3 fxaa(vec2 uv, vec2 inv) {
+    const vec3 lumaW = vec3(0.299, 0.587, 0.114);
+    const float REDUCE_MIN = 1.0 / 128.0;
+    const float REDUCE_MUL = 1.0 / 8.0;
+    const float SPAN_MAX = 8.0;
+    vec3 rgbNW = texture2D(u_texture, uv + vec2(-1.0, -1.0) * inv).rgb;
+    vec3 rgbNE = texture2D(u_texture, uv + vec2( 1.0, -1.0) * inv).rgb;
+    vec3 rgbSW = texture2D(u_texture, uv + vec2(-1.0,  1.0) * inv).rgb;
+    vec3 rgbSE = texture2D(u_texture, uv + vec2( 1.0,  1.0) * inv).rgb;
+    vec3 rgbM  = texture2D(u_texture, uv).rgb;
+    float lNW = dot(rgbNW, lumaW), lNE = dot(rgbNE, lumaW);
+    float lSW = dot(rgbSW, lumaW), lSE = dot(rgbSE, lumaW);
+    float lM  = dot(rgbM, lumaW);
+    float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
+    float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
+
+    vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
+    float dirReduce = max((lNW + lNE + lSW + lSE) * (0.25 * REDUCE_MUL), REDUCE_MIN);
+    float rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
+    dir = clamp(dir * rcpDirMin, vec2(-SPAN_MAX), vec2(SPAN_MAX)) * inv;
+
+    vec3 rgbA = 0.5 * (texture2D(u_texture, uv + dir * (1.0 / 3.0 - 0.5)).rgb +
+                       texture2D(u_texture, uv + dir * (2.0 / 3.0 - 0.5)).rgb);
+    vec3 rgbB = rgbA * 0.5 + 0.25 * (texture2D(u_texture, uv - dir * 0.5).rgb +
+                                     texture2D(u_texture, uv + dir * 0.5).rgb);
+    float lB = dot(rgbB, lumaW);
+    return (lB < lMin || lB > lMax) ? rgbA : rgbB;
+}
+
 void main() {
     vec2 uv = v_texCoord;
 
     // ── 1. Scene colour ──────────────────────
-    vec4 scene = texture2D(u_texture, uv);
-    vec3 col = scene.rgb;
+    vec3 col = fxaa(uv, 1.0 / u_resolution);
 
     // ── 2. Bloom additive composite ──────────
     vec3 bloom = texture2D(u_bloomTexture, uv).rgb;
@@ -84,11 +115,11 @@ void main() {
     float aberration = 0.0008;
     float r = texture2D(u_texture, uv + vec2( aberration,  0.0)).r;
     float b = texture2D(u_texture, uv + vec2(-aberration,  0.0)).b;
-    col.r = mix(col.r, r, 0.45);
-    col.b = mix(col.b, b, 0.45);
+    col.r = mix(col.r, r, 0.15);   // light touch: raw samples would reintroduce aliasing
+    col.b = mix(col.b, b, 0.15);
 
     // ── 9. Film Grain ─────────────────────────
-    float grain = (rand(uv + vec2(u_time * 0.1, u_time * 0.07)) - 0.5) * 0.022;
+    float grain = (rand(uv + vec2(u_time * 0.1, u_time * 0.07)) - 0.5) * 0.010;
     col += grain;
 
     gl_FragColor = vec4(col, 1.0);
