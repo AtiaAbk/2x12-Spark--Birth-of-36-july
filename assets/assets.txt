@@ -1,9 +1,6 @@
 fonts/LICENSE-LiberationSans.txt
 fonts/LiberationSans-Bold.ttf
 fonts/LiberationSans-Regular.ttf
-hs_err_pid10336.log
-hs_err_pid21844.log
-hs_err_pid22200.log
 libgdx.png
 maps/campus_map.png
 screenshots/claude_crowd2.png

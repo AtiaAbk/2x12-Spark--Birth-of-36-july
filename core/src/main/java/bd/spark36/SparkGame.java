@@ -26,12 +26,7 @@ import bd.spark36.world.ParticleSystem;
 import bd.spark36.world.PostProcessor;
 import bd.spark36.world.TextureFactory;
 
-/**
- * Main game class for 2x12: Spark — Birth of 36 July.
- * Manages game states (Main Menu / Playing), coordinates 3D Dhaka University campus
- * exploration, over-the-shoulder cinematic camera, July 2024 student protagonist,
- * historical archives, and Where Winds Meet style HUD.
- */
+
 public class SparkGame extends ApplicationAdapter {
 
     // ==========================================
