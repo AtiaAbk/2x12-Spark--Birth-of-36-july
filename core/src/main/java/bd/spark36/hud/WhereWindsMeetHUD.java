@@ -2112,7 +2112,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.setColor(new Color(0.85f, 0.82f, 0.78f, 0.90f));
         fonts.smallFont.draw(spriteBatch, subTitle, bx + 10f, by - 8f);
 
-        String hpText = goon.isKnockedOut() ? "DEFEATED / পরাজিত" : String.format("HP: %d / %d", (int)goon.getHealth(), (int)goon.getMaxHealth());
+        String hpText = goon.isKnockedOut() ? "DEFEATED / KNOCKED OUT" : String.format("HP: %d / %d", (int)goon.getHealth(), (int)goon.getMaxHealth());
         fonts.headerFont.setColor(goon.isKnockedOut() ? Color.GREEN : new Color(1.0f, 0.92f, 0.80f, 1f));
         glyphLayout.setText(fonts.headerFont, hpText);
         fonts.headerFont.draw(spriteBatch, hpText, bx + bw - glyphLayout.width - 8f, by + bh + 20f);
@@ -2140,7 +2140,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.headerFont.draw(spriteBatch, "⚔ HELMET THUG: \"Oi shon! Ei campus theke ekhuni bhag, noile lathi diye matha fatiye debo!\"", dx + 18f, dy + dh - 16f);
 
         fonts.promptFont.setColor(goldAccent);
-        fonts.promptFont.draw(spriteBatch, "[F] ACCEPT CHALLENGE   •   [Left-Click] PUNCH   [Q/K] KICK   [C] CROUCH/DODGE   [B] BLOCK", dx + 18f, dy + 22f);
+        fonts.promptFont.draw(spriteBatch, "[F] ACCEPT CHALLENGE   |   [Left-Click] PUNCH   [Q/K] KICK   [C] CROUCH/DODGE   [B] BLOCK", dx + 18f, dy + 22f);
         spriteBatch.end();
     }
 
@@ -2226,7 +2226,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.titleFont.draw(spriteBatch, "DISQUALIFIED -- CAMPUS PEACE VIOLATION", dx + 35f, dy + dh - 20f);
 
         fonts.headerFont.setColor(new Color(1.0f, 0.85f, 0.80f, 1f));
-        fonts.headerFont.draw(spriteBatch, "নির্দোষ শিক্ষার্থীর উপর হামলা নিষিদ্ধ / ATTACK ON INNOCENT STUDENT", dx + 35f, dy + dh - 46f);
+        fonts.headerFont.draw(spriteBatch, "CAMPUS PEACE RULE: UNPROVOKED ATTACK ON INNOCENT STUDENT", dx + 35f, dy + dh - 46f);
 
         fonts.bodyFont.setColor(Color.WHITE);
         fonts.bodyFont.draw(spriteBatch,
@@ -2312,7 +2312,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         spriteBatch.begin();
         fonts.titleFont.setColor(new Color(1.0f, 0.45f, 0.35f, 1f));
-        fonts.titleFont.draw(spriteBatch, "DEFEATED IN COMBAT / যুদ্ধে ভূপাতিত", dx + 35f, dy + dh - 20f);
+        fonts.titleFont.draw(spriteBatch, "DEFEATED IN COMBAT -- STRUCK DOWN", dx + 35f, dy + dh - 20f);
 
         fonts.headerFont.setColor(new Color(0.95f, 0.90f, 0.80f, 1f));
         fonts.headerFont.draw(spriteBatch, "KNOCKED OUT BY HELMET ENFORCER'S LATHI", dx + 35f, dy + dh - 46f);
@@ -2327,7 +2327,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         fonts.smallFont.setColor(new Color(0.95f, 0.95f, 0.95f, 1f));
         fonts.smallFont.draw(spriteBatch,
-            "• Crouch / Duck [C] to evade high horizontal lathi swings!\n• Guard / Block [B] to deflect 80% heavy overhead strikes!\n• Retaliate with Punches [Left-Click] and Martial Kicks [Q / K]!",
+            "  - Crouch / Duck [C] to evade high horizontal lathi swings!\n  - Guard / Block [B] to deflect 80% heavy overhead strikes!\n  - Retaliate with Punches [Left-Click] and Martial Kicks [Q / K]!",
             sx + 18f, sy + 52f);
 
         fonts.headerFont.setColor(b1Hover ? Color.WHITE : goldAccent);
@@ -2452,7 +2452,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.titleFont.draw(spriteBatch, "CONGRATULATIONS! LEVEL 1 VICTORY ACHIEVED", vx + 35f, vy + vh - 20f);
 
         fonts.headerFont.setColor(new Color(0.95f, 0.90f, 0.80f, 1f));
-        fonts.headerFont.draw(spriteBatch, "36 JULY: THE SPARK OF FREEDOM / ৩৬ জুলাই: স্বাধীনতার স্ফুলিঙ্গ", vx + 35f, vy + vh - 48f);
+        fonts.headerFont.draw(spriteBatch, "36 JULY: THE SPARK OF SOLIDARITY & FREEDOM -- BANGLADESH 2.0", vx + 35f, vy + vh - 48f);
 
         // Historical Tribute Narrative
         fonts.bodyFont.setColor(Color.WHITE);
@@ -2475,7 +2475,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.draw(spriteBatch, "Campus Peace Rule: Upheld (0 Innocent Students Harmed)", sx + 20f, sy + 28f);
 
         fonts.headerFont.setColor(Color.GREEN);
-        fonts.headerFont.draw(spriteBatch, "RANK S • HERO OF 36 JULY", sx + sw - 290f, sy + 58f);
+        fonts.headerFont.draw(spriteBatch, "RANK S -- HERO OF 36 JULY", sx + sw - 290f, sy + 58f);
 
         // Interactive action prompts
         fonts.promptFont.setColor(b1Hover ? Color.WHITE : goldAccent);
