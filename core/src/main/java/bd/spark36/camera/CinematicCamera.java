@@ -100,7 +100,11 @@ public class CinematicCamera {
     public void update(float delta, Vector3 playerPos, boolean inputEnabled,
                        boolean isMoving, boolean isSprinting, float headingDeg) {
         // 1. Mouse/Trackpad rotation
-        if (inputEnabled && mouseLookActive) {
+        boolean testMode = System.getProperty("bd.spark36.testScreenshot") != null ||
+                           System.getProperty("bd.spark36.testHeroScreenshot") != null ||
+                           System.getProperty("bd.spark36.testSitScreenshot") != null ||
+                           System.getProperty("bd.spark36.noMouseLook") != null;
+        if (inputEnabled && mouseLookActive && !testMode) {
             if (!Gdx.input.isCursorCatched()) Gdx.input.setCursorCatched(true);
 
             if (initFrameSkip > 0) {

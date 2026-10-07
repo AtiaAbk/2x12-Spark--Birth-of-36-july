@@ -463,63 +463,65 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.end();
         // ── End VFX ───────────────────────────────────────────────────────────
 
-        // 1. Draw HUD Background Shapes & Ornate Geometry
-        beginShapes(ShapeType.Filled);
+        // 1. Draw HUD Background Shapes & Ornate Geometry (only during normal gameplay)
+        if (!isVictoryOpen && !isDisqualified && !isDefeated) {
+            beginShapes(ShapeType.Filled);
 
-        drawMissionCardBg(memorials, w, h);
-        if (parametersVisible) {
-            drawMissionChecklistBg(player, memorials, w, h);
-        }
-        drawAntiqueCompassRoseFilled(w, h, cameraYaw);
-        drawKeycapsBg(w, h);
-        if (!isMapOpen && !isPauseMenuOpen && !isVictoryOpen && activeModalEntry == null) {
-            drawTacticalMapButtonBg(w, h);
-        }
+            drawMissionCardBg(memorials, w, h);
+            if (parametersVisible) {
+                drawMissionChecklistBg(player, memorials, w, h);
+            }
+            drawAntiqueCompassRoseFilled(w, h, cameraYaw);
+            drawKeycapsBg(w, h);
+            if (!isMapOpen && !isPauseMenuOpen && activeModalEntry == null) {
+                drawTacticalMapButtonBg(w, h);
+            }
 
-        MemorialEntry nearby = memorials.getNearbyMemorial(player.getPosition());
-        if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
-            nearby = boundaryStoneEntry;
-        }
-        if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
-            drawSpeechBubblePromptBg(w, h);
-        }
-        shapeRenderer.end();
+            MemorialEntry nearby = memorials.getNearbyMemorial(player.getPosition());
+            if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
+                nearby = boundaryStoneEntry;
+            }
+            if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
+                drawSpeechBubblePromptBg(w, h);
+            }
+            shapeRenderer.end();
 
-        // 2. Draw HUD Outlines, Accents & Filigree
-        beginShapes(ShapeType.Line);
-        drawMissionCardBorders(w, h);
-        if (parametersVisible) {
-            drawMissionChecklistBorders(player, memorials, w, h);
-        }
-        drawAntiqueCompassRoseLines(w, h, cameraYaw);
-        drawKeycapsBorders(w, h);
-        if (!isMapOpen && !isPauseMenuOpen && !isVictoryOpen && activeModalEntry == null) {
-            drawTacticalMapButtonBorder(w, h);
-        }
+            // 2. Draw HUD Outlines, Accents & Filigree
+            beginShapes(ShapeType.Line);
+            drawMissionCardBorders(w, h);
+            if (parametersVisible) {
+                drawMissionChecklistBorders(player, memorials, w, h);
+            }
+            drawAntiqueCompassRoseLines(w, h, cameraYaw);
+            drawKeycapsBorders(w, h);
+            if (!isMapOpen && !isPauseMenuOpen && activeModalEntry == null) {
+                drawTacticalMapButtonBorder(w, h);
+            }
 
-        if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
-            drawSpeechBubblePromptBorders(w, h);
-        }
-        shapeRenderer.end();
+            if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
+                drawSpeechBubblePromptBorders(w, h);
+            }
+            shapeRenderer.end();
 
-        // 3. Draw Typography & Glyphs
-        spriteBatch.begin();
-        drawMissionCardText(memorials, nearest, dstToNearest, w, h);
-        if (parametersVisible) {
-            drawMissionChecklistText(player, memorials, w, h);
-        } else {
-            drawParametersHiddenPrompt(w, h);
-        }
-        drawAntiqueCompassRoseText(w, h, cameraYaw);
-        drawKeycapsText(w, h);
-        if (!isMapOpen && !isPauseMenuOpen && !isVictoryOpen && activeModalEntry == null) {
-            drawTacticalMapButtonText(w, h);
-        }
+            // 3. Draw Typography & Glyphs
+            spriteBatch.begin();
+            drawMissionCardText(memorials, nearest, dstToNearest, w, h);
+            if (parametersVisible) {
+                drawMissionChecklistText(player, memorials, w, h);
+            } else {
+                drawParametersHiddenPrompt(w, h);
+            }
+            drawAntiqueCompassRoseText(w, h, cameraYaw);
+            drawKeycapsText(w, h);
+            if (!isMapOpen && !isPauseMenuOpen && activeModalEntry == null) {
+                drawTacticalMapButtonText(w, h);
+            }
 
-        if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen && !isVictoryOpen) {
-            drawSpeechBubblePromptText(nearby, w, h);
+            if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
+                drawSpeechBubblePromptText(nearby, w, h);
+            }
+            spriteBatch.end();
         }
-        spriteBatch.end();
 
         // 4. Toast Notification Banner (renders on top of HUD when active)
         if (!isVictoryOpen && !isDisqualified && !isDefeated && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
