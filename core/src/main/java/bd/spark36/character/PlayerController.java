@@ -303,34 +303,51 @@ public class PlayerController {
                         Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) ||
                         Gdx.input.isKeyPressed(Input.Keys.R);
 
-            // CROUCH / DUCK: 'C' key toggles crouch
+            // CROUCH / DUCK (Bosepora): 'C' key toggles or holding crouch
             if (Gdx.input.isKeyJustPressed(Input.Keys.C)) {
                 isCrouching = !isCrouching;
             }
+            if (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
+                isCrouching = true;
+            }
+
+            // MARTIAL ARTS BLOCK / GUARD: 'B' key holds guard, reducing damage by 80%
+            isBlocking = Gdx.input.isKeyPressed(Input.Keys.B);
 
             // GENDER SWITCH: 'G' key toggles Male / Female student
             if (Gdx.input.isKeyJustPressed(Input.Keys.G)) {
                 gender = (gender == 0) ? 1 : 0;
             }
 
-            // COMBAT STRIKES: 'F' key or Left-Click (3-hit student protest defense combo!)
-            boolean attackPressed = Gdx.input.isKeyJustPressed(Input.Keys.F) ||
-                                    (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && !isSittingWater);
-            if (attackPressed && !isAttacking && !isSittingWater) {
+            // COMBAT PUNCHES (Ghusi): 'F' key or Left-Click (Jab -> Cross)
+            boolean punchPressed = Gdx.input.isKeyJustPressed(Input.Keys.F) ||
+                                   (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && !isSittingWater);
+
+            // COMBAT KICKS (Latthi): 'Q' or 'K' key (High Roundhouse Kick -> Low Sweep Kick)
+            boolean kickPressed = Gdx.input.isKeyJustPressed(Input.Keys.Q) || Gdx.input.isKeyJustPressed(Input.Keys.K);
+
+            if (punchPressed && !isAttacking && !isSittingWater) {
                 isAttacking = true;
                 attackProgress = 0f;
                 if (comboWindowTimer > 0f) {
-                    attackCombo = (attackCombo % 3) + 1;
+                    attackCombo = (attackCombo == 1) ? 2 : 1;
                 } else {
-                    attackCombo = 1;
+                    attackCombo = 1; // Left Jab
+                }
+            } else if (kickPressed && !isAttacking && !isSittingWater) {
+                isAttacking = true;
+                attackProgress = 0f;
+                if (comboWindowTimer > 0f && (attackCombo == 3 || attackCombo == 4)) {
+                    attackCombo = (attackCombo == 3) ? 4 : 3;
+                } else {
+                    attackCombo = 3; // High Martial Arts Kick
                 }
             }
 
-            // JUMP / DOUBLE JUMP: 'J' or 'SPACE' or 'V' or Right-Click
+            // JUMP / DOUBLE JUMP: 'J' or 'SPACE' or 'V'
             jumpKey = Gdx.input.isKeyJustPressed(Input.Keys.J) ||
                       Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
-                      Gdx.input.isKeyJustPressed(Input.Keys.V) ||
-                      Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT);
+                      Gdx.input.isKeyJustPressed(Input.Keys.V);
 
             if (up) moveDir.y += 1f;
             if (down) moveDir.y -= 1f;
@@ -340,6 +357,8 @@ public class PlayerController {
             if (moveDir.len2() > 0.001f) {
                 moveDir.nor();
             }
+        } else {
+            isBlocking = false;
         }
 
         isMoving = moveDir.len2() > 0.001f;
