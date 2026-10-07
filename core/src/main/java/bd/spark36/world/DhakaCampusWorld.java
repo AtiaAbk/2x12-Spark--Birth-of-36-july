@@ -598,6 +598,7 @@ public class DhakaCampusWorld implements Disposable {
         Material glassMat = new Material(ColorAttribute.createDiffuse(new Color(0.12f, 0.16f, 0.22f, 1f)));
         Material redCarpetMat = new Material(ColorAttribute.createDiffuse(new Color(0.85f, 0.12f, 0.15f, 1f)));
         Material curzonWhiteDome = new Material(ColorAttribute.createDiffuse(new Color(0.96f, 0.95f, 0.91f, 1f)));
+        Material curzonRedDome = new Material(ColorAttribute.createDiffuse(new Color(0.68f, 0.20f, 0.16f, 1f)));
 
         Model archNiche = mb.createBox(2.6f, 4.4f, 0.4f, archCavity, attr);
         Model archFrame = mb.createBox(3.0f, 4.8f, 0.15f, curzonTrimMat, attr);
