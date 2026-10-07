@@ -46,6 +46,10 @@ public class HelmetGoon implements Disposable {
     private float heading = 0f; // degrees
     private float health = 100f;
     private final float maxHealth = 100f;
+    private float poise = 100f;
+    private final float maxPoise = 100f;
+    private float poiseRegenTimer = 0f;
+    private boolean isGuardBroken = false;
 
     // Animation & Combat Timers
     private float animTime = 0f;
