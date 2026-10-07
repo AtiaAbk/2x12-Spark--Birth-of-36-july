@@ -543,24 +543,46 @@ public class TextureFactory implements Disposable {
 
         for (float[] cl : clusters) {
             float cx = cl[0], cy = cl[1], rad = cl[2];
-            int leafCount = (int)(rad * 1.3f);
+            int leafCount = (int)(rad * 1.35f);
             for (int i = 0; i < leafCount; i++) {
                 float angle = MathUtils.random(0f, 360f);
                 float dist = MathUtils.random(0f, rad);
                 float lx = cx + MathUtils.cosDeg(angle) * dist;
                 float ly = cy + MathUtils.sinDeg(angle) * dist;
-                float leafLen = MathUtils.random(22f, 42f);
+                float leafLen = MathUtils.random(24f, 46f);
                 float leafAngle = angle + MathUtils.random(-35f, 35f);
 
                 float var = MathUtils.random(0f, 1f);
                 Color blade = new Color(
-                    0.14f + var * 0.14f,
-                    0.42f + var * 0.26f,
+                    0.16f + var * 0.16f,
+                    0.52f + var * 0.28f,
                     0.12f + var * 0.10f,
                     1f
                 );
-                Color vein = new Color(0.48f, 0.78f, 0.28f, 1f);
-                drawBambooBlade(pix, lx, ly, leafLen, leafAngle, 9f, blade, vein);
+                Color vein = new Color(0.55f, 0.88f, 0.32f, 1f);
+                drawBambooBlade(pix, lx, ly, leafLen, leafAngle, 9.5f, blade, vein);
+            }
+        }
+
+        // Distinct vibrant white and scarlet floral accents matching reference image
+        int flowerCount = 65;
+        for (int i = 0; i < flowerCount; i++) {
+            float fx = MathUtils.random(80, 432);
+            float fy = MathUtils.random(70, 390);
+            boolean isWhite = (i % 2 == 0);
+
+            if (isWhite) {
+                // Crisp bright white blossom with ivory highlight
+                pix.setColor(0.99f, 0.99f, 0.96f, 1f);
+                pix.fillCircle((int)fx, (int)fy, MathUtils.random(3, 6));
+                pix.setColor(1.0f, 0.88f, 0.25f, 1f);
+                pix.fillCircle((int)fx, (int)fy, 2);
+            } else {
+                // Saturated high-contrast scarlet-red floral cluster
+                pix.setColor(0.98f, 0.14f, 0.18f, 1f);
+                pix.fillCircle((int)fx, (int)fy, MathUtils.random(4, 7));
+                pix.setColor(1.0f, 0.90f, 0.30f, 1f);
+                pix.fillCircle((int)fx, (int)fy, 2);
             }
         }
 
@@ -583,37 +605,37 @@ public class TextureFactory implements Disposable {
         drawBranchLine(pix, 256, 300, 370, 170, 4);
 
         // Feathery bipinnate green fronds
-        for (int b = 0; b < 24; b++) {
-            float fx = MathUtils.random(80, 432);
-            float fy = MathUtils.random(60, 380);
-            float fLen = MathUtils.random(60, 110);
+        for (int b = 0; b < 28; b++) {
+            float fx = MathUtils.random(70, 442);
+            float fy = MathUtils.random(50, 390);
+            float fLen = MathUtils.random(65, 120);
             float fAngle = MathUtils.random(-80, 80);
-            Color fernCol = new Color(0.16f, 0.52f, 0.14f, 1f);
-            Color fernVein = new Color(0.40f, 0.72f, 0.22f, 1f);
-            drawBambooBlade(pix, fx, fy, fLen, fAngle, 7f, fernCol, fernVein);
+            Color fernCol = new Color(0.12f, 0.48f, 0.10f, 1f);
+            Color fernVein = new Color(0.45f, 0.82f, 0.24f, 1f);
+            drawBambooBlade(pix, fx, fy, fLen, fAngle, 7.5f, fernCol, fernVein);
         }
 
-        // Iconic blazing scarlet-orange Krishnachura 5-petaled flowers
-        int flowerCount = 75;
+        // Iconic blazing high-contrast scarlet-orange Krishnachura flowers
+        int flowerCount = 95;
         for (int i = 0; i < flowerCount; i++) {
-            float fx = MathUtils.random(60, 452);
-            float fy = MathUtils.random(50, 400);
-            int petLen = MathUtils.random(10, 20);
+            float fx = MathUtils.random(50, 462);
+            float fy = MathUtils.random(40, 410);
+            int petLen = MathUtils.random(11, 22);
 
-            // 5 fiery petals radiating outward
+            // 5 fiery petals radiating outward with intense contrast against deep green
             for (int p = 0; p < 5; p++) {
                 float pAngle = p * 72f + MathUtils.random(-12f, 12f);
                 float px = fx + MathUtils.cosDeg(pAngle) * petLen;
                 float py = fy + MathUtils.sinDeg(pAngle) * petLen;
 
-                // Scarlet red petal with orange flame highlight
-                float shade = MathUtils.random(0.85f, 1.0f);
-                pix.setColor(0.96f * shade, 0.18f + MathUtils.random(-0.04f, 0.08f), 0.08f, 1f);
-                pix.fillCircle((int)px, (int)py, Math.max(3, petLen / 3));
+                // Glowing scarlet red petal with fiery vermilion flame highlight
+                float shade = MathUtils.random(0.90f, 1.0f);
+                pix.setColor(0.99f * shade, 0.12f + MathUtils.random(-0.02f, 0.08f), 0.06f, 1f);
+                pix.fillCircle((int)px, (int)py, Math.max(4, petLen / 3));
             }
 
-            // Golden-yellow central stamens
-            pix.setColor(1.0f, 0.88f, 0.24f, 1f);
+            // High-contrast luminous gold central stamens
+            pix.setColor(1.0f, 0.92f, 0.20f, 1f);
             pix.fillCircle((int)fx, (int)fy, 4);
         }
 
