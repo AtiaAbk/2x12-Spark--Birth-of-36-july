@@ -98,7 +98,8 @@ public class SparkGame extends ApplicationAdapter {
              System.getProperty("bd.spark36.testHeroScreenshot") != null ||
              System.getProperty("bd.spark36.testSitScreenshot") != null ||
              System.getProperty("bd.spark36.testMapScreenshot") != null ||
-             System.getProperty("bd.spark36.testModalScreenshot") != null)) {
+             System.getProperty("bd.spark36.testModalScreenshot") != null ||
+             System.getProperty("bd.spark36.testVictory") != null)) {
             startGameplay();
         }
     }
