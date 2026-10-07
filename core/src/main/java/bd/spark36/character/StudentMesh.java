@@ -884,17 +884,26 @@ public class StudentMesh implements Disposable {
                        float walkCycle, boolean isMoving, boolean isSprinting,
                        boolean isCrouching, boolean isAttacking, int attackCombo, float attackProgress,
                        boolean isSittingWater, float sitProgress, int gender, Appearance look) {
+        render(batch, env, pos, headingDegrees, walkCycle, isMoving, isSprinting,
+               isCrouching, false, isAttacking, attackCombo, attackProgress,
+               isSittingWater, sitProgress, gender, look);
+    }
+
+    public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
+                       float walkCycle, boolean isMoving, boolean isSprinting,
+                       boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,
+                       boolean isSittingWater, float sitProgress, int gender, Appearance look) {
         tick();
         int g = (gender == 1) ? 1 : 0;
         Rig rig = look == null ? baseRigs[g] : rigFor(g, look);
         float phase = look == null ? 0f : (System.identityHashCode(look) % 97) * 0.13f;
         draw(batch, env, rig, g, pos, headingDegrees, walkCycle, isMoving, isSprinting,
-             isCrouching, isAttacking, attackCombo, attackProgress, isSittingWater, sitProgress, phase);
+             isCrouching, isBlocking, isAttacking, attackCombo, attackProgress, isSittingWater, sitProgress, phase);
     }
 
     private void draw(ModelBatch batch, Environment env, Rig rig, int g, Vector3 pos, float headingDegrees,
                       float walkCycle, boolean isMoving, boolean isSprinting,
-                      boolean isCrouching, boolean isAttacking, int attackCombo, float attackProgress,
+                      boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,
                       boolean isSittingWater, float sitProgress, float idlePhase) {
 
         float idle = idleTime + idlePhase;
@@ -932,7 +941,14 @@ public class StudentMesh implements Disposable {
         float attackArmL = 0f, attackForeArmL = 0f;
         float attackLegR = 0f, attackKneeR = 0f;
 
-        if (isAttacking) {
+        if (isBlocking) {
+            // Defensive martial arts guard / parry: both arms raised in front of face
+            attackArmL = -82f;
+            attackForeArmL = -95f;
+            attackArmR = -82f;
+            attackForeArmR = -95f;
+            torsoPitch += 8f;
+        } else if (isAttacking) {
             float t = MathUtils.clamp(attackProgress, 0f, 1f);
             float strikePower = MathUtils.sin(t * MathUtils.PI);
 
@@ -953,6 +969,12 @@ public class StudentMesh implements Disposable {
                 torsoTwist = -45f * strikePower;
                 attackLegR = -90f * strikePower;
                 attackKneeR = 25f * strikePower;
+            } else if (attackCombo == 4) {
+                // Low sweeping martial arts kick
+                torsoPitch = 22f * strikePower;
+                torsoTwist = 55f * strikePower;
+                attackLegR = -75f * strikePower;
+                attackKneeR = 48f * strikePower;
             }
         }
 
