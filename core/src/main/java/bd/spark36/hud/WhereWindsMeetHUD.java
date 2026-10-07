@@ -108,6 +108,64 @@ public class WhereWindsMeetHUD implements Disposable {
     private com.badlogic.gdx.graphics.Texture campusMapTex = null;
     private boolean campusMapLoadTried = false;
 
+    // Antagonist Boss and Combat status
+    private bd.spark36.character.HelmetGoon helmetGoon = null;
+    private boolean isDisqualified = false;
+    private String disqualifyReason = "VIOLATION: You assaulted an innocent campus student!";
+    private boolean isDefeated = false;
+
+    // Cinematic finish screen background texture
+    private com.badlogic.gdx.graphics.Texture cinematicFinishTex = null;
+    private boolean cinematicFinishLoadTried = false;
+
+    public void setHelmetGoon(bd.spark36.character.HelmetGoon goon) {
+        this.helmetGoon = goon;
+    }
+
+    public bd.spark36.character.HelmetGoon getHelmetGoon() {
+        return helmetGoon;
+    }
+
+    public void setDisqualified(boolean disq, String reason) {
+        this.isDisqualified = disq;
+        if (reason != null && !reason.isEmpty()) {
+            this.disqualifyReason = reason;
+        }
+    }
+
+    public boolean isDisqualified() {
+        return isDisqualified;
+    }
+
+    public void setDefeated(boolean def) {
+        this.isDefeated = def;
+    }
+
+    public boolean isDefeated() {
+        return isDefeated;
+    }
+
+    public void triggerVictory() {
+        this.isVictoryOpen = true;
+        this.victoryShown = true;
+    }
+
+    private com.badlogic.gdx.graphics.Texture getCinematicFinishTexture() {
+        if (!cinematicFinishLoadTried) {
+            cinematicFinishLoadTried = true;
+            try {
+                if (Gdx.files.internal("cinematic_finish_bg.png").exists()) {
+                    cinematicFinishTex = new com.badlogic.gdx.graphics.Texture(Gdx.files.internal("cinematic_finish_bg.png"));
+                } else if (Gdx.files.internal("assets/cinematic_finish_bg.png").exists()) {
+                    cinematicFinishTex = new com.badlogic.gdx.graphics.Texture(Gdx.files.internal("assets/cinematic_finish_bg.png"));
+                }
+            } catch (Exception e) {
+                Gdx.app.log("HUD", "Could not load cinematic finish background: " + e.getMessage());
+            }
+        }
+        return cinematicFinishTex;
+    }
+
     // ── AAA Visual FX Fields ──────────────────────────────────────────────────
     // Checkpoint flash: brief full-screen gold flash when a memorial is inspected
     private float checkpointFlashAlpha = 0f;
@@ -170,14 +228,48 @@ public class WhereWindsMeetHUD implements Disposable {
         float mouseY = (1.0f - (float) Gdx.input.getY() / backbufferH) * virtH;
 
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-            if (isMapOpen) {
+            if (isVictoryOpen) {
+                float vw = 860f;
+                float vh = 580f;
+                float vx = (virtW - vw) / 2f;
+                float vy = (virtH - vh) / 2f;
+                float btnY = vy + 38f;
+                float btnH = 46f;
+                if (mouseX >= vx + 45f && mouseX <= vx + 275f && mouseY >= btnY && mouseY <= btnY + btnH) {
+                    exitAction = 1; // Return to Main Menu
+                    isVictoryOpen = false;
+                } else if (mouseX >= vx + 295f && mouseX <= vx + 525f && mouseY >= btnY && mouseY <= btnY + btnH) {
+                    exitAction = 3; // Replay Level 1
+                    isVictoryOpen = false;
+                    victoryShown = false;
+                } else if (mouseX >= vx + 555f && mouseX <= vx + 785f && mouseY >= btnY && mouseY <= btnY + btnH) {
+                    exitAction = 2; // Quit Game
+                    isVictoryOpen = false;
+                }
+            } else if (isDisqualified || isDefeated) {
+                float dw = 780f;
+                float dh = 420f;
+                float dx = (virtW - dw) / 2f;
+                float dy = (virtH - dh) / 2f;
+                float btnY = dy + 35f;
+                float btnH = 46f;
+                if (mouseX >= dx + 90f && mouseX <= dx + 330f && mouseY >= btnY && mouseY <= btnY + btnH) {
+                    exitAction = 3; // Retry
+                    isDisqualified = false;
+                    isDefeated = false;
+                } else if (mouseX >= dx + 450f && mouseX <= dx + 690f && mouseY >= btnY && mouseY <= btnY + btnH) {
+                    exitAction = 1; // Menu
+                    isDisqualified = false;
+                    isDefeated = false;
+                }
+            } else if (isMapOpen) {
                 // Click close button on map
                 float cbX = virtW - 200f;
                 float cbY = virtH - 65f;
                 if (mouseX >= cbX && mouseX <= cbX + 170f && mouseY >= cbY && mouseY <= cbY + 45f) {
                     isMapOpen = false;
                 }
-            } else if (activeModalEntry == null && !isPauseMenuOpen && !isVictoryOpen) {
+            } else if (activeModalEntry == null && !isPauseMenuOpen && !isVictoryOpen && !isDisqualified && !isDefeated) {
                 // Click tactical map HUD button
                 float mbX = virtW - 215f;
                 float mbY = virtH - 230f;
@@ -185,6 +277,32 @@ public class WhereWindsMeetHUD implements Disposable {
                     isMapOpen = true;
                 }
             }
+        }
+
+        // Handle Disqualification Screen input
+        if (isDisqualified) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+                exitAction = 3; // Replay Level 1
+                isDisqualified = false;
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                exitAction = 1; // Return to Main Menu
+                isDisqualified = false;
+            }
+            return;
+        }
+
+        // Handle Defeat Screen input
+        if (isDefeated) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+                exitAction = 3; // Retry combat
+                isDefeated = false;
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                exitAction = 1; // Return to Main Menu
+                isDefeated = false;
+            }
+            return;
         }
 
         // Handle Victory Screen input
@@ -508,7 +626,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private void drawMissionCardBg(JulyMemorials memorials, float w, float h) {
         float cardX = 36f;
         float cardY = h - 195f;
-        float cardW = 390f;
+        float cardW = 460f;
         float cardH = 160f;
 
         // See-through smoked glass background with soft gold halo
@@ -525,7 +643,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // Glowing Golden Progress Bar (Dynamic: fills as archives are inspected)
         float barX = cardX + 16f;
         float barY = cardY + 48f;
-        float barW = 300f;
+        float barW = 360f;
         float barH = 5f;
 
         // Track
@@ -552,7 +670,7 @@ public class WhereWindsMeetHUD implements Disposable {
         }
 
         // Waypoint Compass Needle Icon Circle (next to DISTANCE)
-        float cX = cardX + 338f;
+        float cX = cardX + cardW - 38f;
         float cY = cardY + 22f;
         shapeRenderer.setColor(0.08f, 0.18f, 0.22f, 0.40f);
         shapeRenderer.circle(cX, cY, 15f, 20);
@@ -563,7 +681,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private void drawMissionCardBorders(float w, float h) {
         float cardX = 36f;
         float cardY = h - 195f;
-        float cardW = 390f;
+        float cardW = 460f;
         float cardH = 160f;
 
         // Crisp thin gold border with gentle breathing glow
@@ -590,7 +708,7 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.line(cardX + cardW + 2, cardY - 2, cardX + cardW + 2, cardY + cLen);
 
         // Waypoint Compass Needle Icon Ring
-        float cX = cardX + 338f;
+        float cX = cardX + cardW - 38f;
         float cY = cardY + 22f;
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.circle(cX, cY, 15f, 24);
@@ -2022,7 +2140,7 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     public boolean isModalOpen() {
-        return activeModalEntry != null || isMapOpen || isPauseMenuOpen || isVictoryOpen;
+        return activeModalEntry != null || isMapOpen || isPauseMenuOpen || isVictoryOpen || isDisqualified || isDefeated;
     }
 
     /** Reset HUD state (used when returning from main menu or replaying) */
@@ -2031,6 +2149,8 @@ public class WhereWindsMeetHUD implements Disposable {
         isMapOpen = false;
         isPauseMenuOpen = false;
         isVictoryOpen = false;
+        isDisqualified = false;
+        isDefeated = false;
         victoryShown = false;
         missionBannerTime = 0f;
         exitAction = 0;
@@ -2041,6 +2161,7 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.dispose();
         spriteBatch.dispose();
         if (campusMapTex != null) campusMapTex.dispose();
+        if (cinematicFinishTex != null) cinematicFinishTex.dispose();
     }
 
     private void drawParametersHiddenPrompt(float w, float h) {

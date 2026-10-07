@@ -354,4 +354,26 @@ public class CampusCrowd {
         for (float[] lanes : edgeLanes) if (lanes.length > 0) n++;
         return n;
     }
+
+    /**
+     * Detects if an attack hits any innocent student walker.
+     * Returns true if an innocent student was within the attack strike zone.
+     */
+    public boolean checkHitByPlayer(Vector3 playerPos, float heading, float attackRange) {
+        if (walkers == null) return false;
+        for (Walker w : walkers) {
+            float dx = w.pos.x - playerPos.x;
+            float dz = w.pos.z - playerPos.z;
+            float distSq = dx * dx + dz * dz;
+            if (distSq <= attackRange * attackRange) {
+                // Check if student is roughly in front of player (within 80 degree cone)
+                float angleToTarget = MathUtils.atan2(dx, dz) * MathUtils.radiansToDegrees;
+                float diff = Math.abs((angleToTarget - heading + 540f) % 360f - 180f);
+                if (diff < 80f) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

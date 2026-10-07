@@ -593,37 +593,55 @@ public class DhakaCampusWorld implements Disposable {
         instances.add(stepRailR);
 
         // Two-storey arcades of pointed Indo-Saracenic arches across the main block and both wings.
-        // Each arch is a rectangular niche capped by a 45-degree-rotated square whose top corner
-        // forms the pointed crown; the cream frame repeats the same shape slightly larger.
-        Model archNiche = mb.createBox(2.4f, 4.2f, 0.4f, archCavity, attr);
-        Model archCrown = mb.createBox(1.70f, 1.70f, 0.4f, archCavity, attr);   // diagonal = 2.4
-        Model archFrame = mb.createBox(2.8f, 4.4f, 0.1f, curzonTrimMat, attr);
-        Model archFrameCrown = mb.createBox(1.98f, 1.98f, 0.1f, curzonTrimMat, attr); // diagonal = 2.8
+        // Clean authentic architecture: ground floor deep arched verandah openings with teak doors,
+        // and upper floor stately colonial arched windows with cream stone surrounds.
+        Material glassMat = new Material(ColorAttribute.createDiffuse(new Color(0.12f, 0.16f, 0.22f, 1f)));
+        Material redCarpetMat = new Material(ColorAttribute.createDiffuse(new Color(0.85f, 0.12f, 0.15f, 1f)));
+        Material curzonWhiteDome = new Material(ColorAttribute.createDiffuse(new Color(0.96f, 0.95f, 0.91f, 1f)));
+
+        Model archNiche = mb.createBox(2.6f, 4.4f, 0.4f, archCavity, attr);
+        Model archFrame = mb.createBox(3.0f, 4.8f, 0.15f, curzonTrimMat, attr);
+        Model archUpperWindow = mb.createBox(2.2f, 3.8f, 0.25f, glassMat, attr);
+        Model archGroundDoor = mb.createBox(2.2f, 4.0f, 0.25f, teakDoor, attr);
         Model floorBand = mb.createBox(92f, 0.35f, 0.3f, curzonTrimMat, attr);
+        Model sillBand = mb.createBox(2.8f, 0.18f, 0.35f, curzonTrimMat, attr);
         models.add(archNiche);
-        models.add(archCrown);
         models.add(archFrame);
-        models.add(archFrameCrown);
+        models.add(archUpperWindow);
+        models.add(archGroundDoor);
         models.add(floorBand);
+        models.add(sillBand);
 
         float[] archFloorY = {3.0f, 8.4f};           // niche centres: ground floor verandah, upper floor
         for (float ay : archFloorY) {
+            boolean isGround = (ay < 5f);
             for (float ax = -44f; ax <= 44.01f; ax += 3.6f) {
                 if (Math.abs(ax) < 8.2f) continue;    // the portico projection covers the centre
                 float fz = -23.45f;
+                // Clean white ornamental stone arch frame
                 ModelInstance frame = new ModelInstance(archFrame);
                 frame.transform.setTranslation(ax, ay, fz);
                 instances.add(frame);
-                ModelInstance frameCrown = new ModelInstance(archFrameCrown);
-                frameCrown.transform.setTranslation(ax, ay + 2.2f, fz).rotate(Vector3.Z, 45f);
-                instances.add(frameCrown);
 
+                // Deep recessed cavity
                 ModelInstance arch = new ModelInstance(archNiche);
-                arch.transform.setTranslation(ax, ay, fz - 0.05f);
+                arch.transform.setTranslation(ax, ay, fz - 0.08f);
                 instances.add(arch);
-                ModelInstance crown = new ModelInstance(archCrown);
-                crown.transform.setTranslation(ax, ay + 2.1f, fz - 0.04f).rotate(Vector3.Z, 45f);
-                instances.add(crown);
+
+                if (isGround) {
+                    // Ground floor: Carved teak wooden panel door
+                    ModelInstance door = new ModelInstance(archGroundDoor);
+                    door.transform.setTranslation(ax, ay - 0.1f, fz - 0.04f);
+                    instances.add(door);
+                } else {
+                    // Upper floor: Elegant colonial glazed window with stone sill
+                    ModelInstance win = new ModelInstance(archUpperWindow);
+                    win.transform.setTranslation(ax, ay, fz - 0.04f);
+                    instances.add(win);
+                    ModelInstance sill = new ModelInstance(sillBand);
+                    sill.transform.setTranslation(ax, ay - 1.9f, fz + 0.08f);
+                    instances.add(sill);
+                }
             }
         }
         // Cream string course between the floors
@@ -632,46 +650,38 @@ public class DhakaCampusWorld implements Disposable {
         instances.add(bandInst);
 
         // Grand Central Portal with Cusped Archway & Heavy Teak Doors
-        Model portalFrame = mb.createBox(5.6f, 8.2f, 0.2f, curzonTrimMat, attr);
-        Model mainArch = mb.createBox(4.8f, 7.4f, 0.6f, archCavity, attr);
-        Model doorLeaf = mb.createBox(4.0f, 6.4f, 0.3f, teakDoor, attr);
+        Model portalFrame = mb.createBox(6.4f, 9.2f, 0.25f, curzonTrimMat, attr);
+        Model mainArch = mb.createBox(5.4f, 8.4f, 0.8f, archCavity, attr);
+        Model doorLeaf = mb.createBox(4.4f, 7.2f, 0.3f, teakDoor, attr);
         models.add(portalFrame);
         models.add(mainArch);
         models.add(doorLeaf);
 
         ModelInstance portalFrameInst = new ModelInstance(portalFrame);
-        portalFrameInst.transform.setTranslation(0f, 4.3f, -20.5f);
+        portalFrameInst.transform.setTranslation(0f, 4.8f, -20.5f);
         instances.add(portalFrameInst);
 
         ModelInstance mainArchInst = new ModelInstance(mainArch);
-        mainArchInst.transform.setTranslation(0f, 4.2f, -20.6f);
+        mainArchInst.transform.setTranslation(0f, 4.6f, -20.8f);
         instances.add(mainArchInst);
 
-        // Tall pointed crown over the portal, framed in cream like the arcades
-        Model portalCrownFrame = mb.createBox(3.96f, 3.96f, 0.2f, curzonTrimMat, attr);
-        Model portalCrown = mb.createBox(3.39f, 3.39f, 0.6f, archCavity, attr);
-        models.add(portalCrownFrame);
-        models.add(portalCrown);
-        ModelInstance pcfInst = new ModelInstance(portalCrownFrame);
-        pcfInst.transform.setTranslation(0f, 8.4f, -20.5f).rotate(Vector3.Z, 45f);
-        instances.add(pcfInst);
-        ModelInstance pcInst = new ModelInstance(portalCrown);
-        pcInst.transform.setTranslation(0f, 7.9f, -20.6f).rotate(Vector3.Z, 45f);
-        instances.add(pcInst);
-
         ModelInstance doorInst = new ModelInstance(doorLeaf);
-        doorInst.transform.setTranslation(0f, 3.8f, -20.4f);
+        doorInst.transform.setTranslation(0f, 4.2f, -20.6f);
         instances.add(doorInst);
 
-        // Curzon Hall roofline: no single great white dome (that silhouette reads as the High
-        // Court). Instead a modest red-brick drum and terracotta dome crowns the portico, slender
-        // octagonal turrets flank the entrance, and small domed chhatris punctuate the parapet.
-        Material curzonRedDome = new Material(ColorAttribute.createDiffuse(new Color(0.62f, 0.22f, 0.16f, 1f)));
-        Model finialBase = mb.createCone(0.8f, 2.6f, 0.8f, 12, goldFinial, attr);
-        Model smallFinial = mb.createCone(0.28f, 0.9f, 0.28f, 8, goldFinial, attr);
-        Model portDrum = mb.createCylinder(5.0f, 2.2f, 5.0f, 8, curzonBrickMat, attr);
-        Model portDome = mb.createSphere(4.6f, 4.0f, 4.6f, 20, 16, curzonRedDome, attr);
-        Model drumBand = mb.createCylinder(5.4f, 0.35f, 5.4f, 8, curzonTrimMat, attr);
+        // Ceremonial Red Carpet on Central Steps leading up to Portal
+        Model redCarpet = mb.createBox(3.8f, 0.04f, 4.6f, redCarpetMat, attr);
+        models.add(redCarpet);
+        ModelInstance carpetInst = new ModelInstance(redCarpet);
+        carpetInst.transform.setTranslation(0f, 0.62f, -19.5f);
+        instances.add(carpetInst);
+
+        // Curzon Hall Grand White Mughal Bulbous Dome
+        Model finialBase = mb.createCone(0.85f, 3.2f, 0.85f, 14, goldFinial, attr);
+        Model smallFinial = mb.createCone(0.32f, 1.1f, 0.32f, 10, goldFinial, attr);
+        Model portDrum = mb.createCylinder(5.4f, 2.4f, 5.4f, 12, curzonBrickMat, attr);
+        Model portDome = mb.createSphere(5.6f, 4.8f, 5.6f, 24, 20, curzonWhiteDome, attr);
+        Model drumBand = mb.createCylinder(5.8f, 0.4f, 5.8f, 12, curzonTrimMat, attr);
         models.add(finialBase);
         models.add(smallFinial);
         models.add(portDrum);
@@ -685,10 +695,10 @@ public class DhakaCampusWorld implements Disposable {
         drumBandInst.transform.setTranslation(0f, 17.9f, -22.5f);
         instances.add(drumBandInst);
         ModelInstance portDomeInst = new ModelInstance(portDome);
-        portDomeInst.transform.setTranslation(0f, 18.1f, -22.5f);
+        portDomeInst.transform.setTranslation(0f, 18.6f, -22.5f);
         instances.add(portDomeInst);
         ModelInstance portFinial = new ModelInstance(finialBase);
-        portFinial.transform.setTranslation(0f, 21.2f, -22.5f);
+        portFinial.transform.setTranslation(0f, 22.2f, -22.5f);
         instances.add(portFinial);
 
         // Flanking octagonal turrets with cream bands and little red domes
@@ -766,21 +776,35 @@ public class DhakaCampusWorld implements Disposable {
 
         // 4. REALISTIC DHAKA UNIVERSITY CAMPUS VEGETATION & LANDMARKS
         // Rain Tree & Krishnachura Trunks & Branches
+        Model rainTrunk = mb.createCylinder(1.10f, 4.4f, 1.10f, 12, treeTrunkMat, attr);
+        Model rainBranch = mb.createBox(0.42f, 3.2f, 0.42f, treeTrunkMat, attr);
+        Model krishnaTrunk = mb.createCylinder(0.82f, 4.0f, 0.82f, 10, treeTrunkMat, attr);
+        Model krishnaBranch = mb.createBox(0.35f, 2.8f, 0.35f, treeTrunkMat, attr);
         Model palmTrunk = mb.createCylinder(0.38f, 9.6f, 0.38f, 10, treeTrunkMat, attr);
+        models.add(rainTrunk);
+        models.add(rainBranch);
+        models.add(krishnaTrunk);
+        models.add(krishnaBranch);
         models.add(palmTrunk);
 
         // Foliage meshes (batch-rendered for 60fps). Each material gets its OWN ModelBuilder:
-        // ModelBuilder hands back one shared MeshBuilder per attribute set, so parts opened on a
-        // single builder all end up writing into the last part (and its material).
         ModelBuilder mbPalm = new ModelBuilder();
         mbPalm.begin();
         MeshPartBuilder mpbRain = mbPalm.part("palmFronds", GL20.GL_TRIANGLES, attr, foliageMat);
+
         ModelBuilder mbBush = new ModelBuilder();
         mbBush.begin();
         MeshPartBuilder mpbBushes = mbBush.part("bushes", GL20.GL_TRIANGLES, attr, bushMat);
-        // Shared foliage batches (palms, bamboo, bushes); trees get their own meshes below because
-        // a single mesh can only hold ~32k vertices and each tree carries thousands of leaf cards.
-        ModelBuilder[] foliageBuilders = {mbPalm, mbBush};
+
+        ModelBuilder mbClassicRain = new ModelBuilder();
+        mbClassicRain.begin();
+        MeshPartBuilder mpbClassicRain = mbClassicRain.part("classicRainLeaves", GL20.GL_TRIANGLES, attr, foliageMat);
+
+        ModelBuilder mbClassicKrishna = new ModelBuilder();
+        mbClassicKrishna.begin();
+        MeshPartBuilder mpbClassicKrishna = mbClassicKrishna.part("classicKrishnaLeaves", GL20.GL_TRIANGLES, attr, krishnachuraMat);
+
+        ModelBuilder[] foliageBuilders = {mbPalm, mbBush, mbClassicRain, mbClassicKrishna};
 
         float[][] treeLocations = TREE_LOCATIONS;
 
@@ -801,43 +825,104 @@ public class DhakaCampusWorld implements Disposable {
             float trunkHalf = (type == 2) ? 0.45f : 0.75f * scale;
             colliders.add(new float[]{tx - trunkHalf, 0f, tz - trunkHalf, tx + trunkHalf, 6f, tz + trunkHalf});
 
+            // Prominent big trees near the boundary stone and avenue get the exact lush canopy from the reference image
+            boolean isProminentBigTree = (Math.abs(tx) <= 15.5f && tz >= 28f && tz <= 55f);
+
             if (type == 0) {
-                ModelBuilder limbsB = new ModelBuilder();
-                ModelBuilder coreB = new ModelBuilder();
-                ModelBuilder cardsB = new ModelBuilder();
-                limbsB.begin();
-                coreB.begin();
-                cardsB.begin();
-                TreeGeometry.rainTree(
-                    limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
-                    coreB.part("core", GL20.GL_TRIANGLES, attr, leafClumpMat),
-                    cardsB.part("leaves", GL20.GL_TRIANGLES, attr, leafCardMat),
-                    tx, tz, scale, seed);
-                registerFoliage(limbsB);
-                registerFoliage(coreB);
-                registerFoliage(cardsB);
+                if (isProminentBigTree) {
+                    // Rain Tree (Majestic spreading umbrella with real branches & cutout leaf cards)
+                    ModelInstance tInst = new ModelInstance(rainTrunk);
+                    tInst.transform.setTranslation(tx, 2.2f, tz);
+                    instances.add(tInst);
 
-                // Ground bush ring around tree trunk
-                addCrossedQuads(mpbBushes, tx + 1.2f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
-                addCrossedQuads(mpbBushes, tx - 1.0f, 0f, tz - 1.1f, 1.6f, 1.1f, 3, 0f);
+                    float[][] bOffsets = {
+                        {1.5f, 3.8f, 1.5f, 35f, 35f},
+                        {-1.5f, 3.8f, 1.5f, 35f, -35f},
+                        {1.5f, 3.8f, -1.5f, -35f, 35f},
+                        {-1.5f, 3.8f, -1.5f, -35f, -35f}
+                    };
+                    for (float[] bo : bOffsets) {
+                        ModelInstance b = new ModelInstance(rainBranch);
+                        b.transform.setTranslation(tx + bo[0], bo[1], tz + bo[2]);
+                        b.transform.rotate(Vector3.X, bo[3]).rotate(Vector3.Z, bo[4]);
+                        instances.add(b);
+
+                        addCrossedQuads(mpbClassicRain, tx + bo[0] * 1.6f, 4.4f, tz + bo[2] * 1.6f, 5.2f, 3.6f, 3, 0f);
+                        addHorizontalQuad(mpbClassicRain, tx + bo[0] * 1.6f, 6.2f, tz + bo[2] * 1.6f, 4.8f);
+                    }
+                    addCrossedQuads(mpbClassicRain, tx, 3.4f, tz, 7.2f, 3.8f, 3, 0f);
+                    addHorizontalQuad(mpbClassicRain, tx, 4.8f, tz, 6.4f);
+                    addCrossedQuads(mpbClassicRain, tx, 4.6f, tz, 7.8f, 4.4f, 4, 0f);
+                    addHorizontalQuad(mpbClassicRain, tx, 7.0f, tz, 6.8f);
+
+                    addCrossedQuads(mpbBushes, tx + 1.2f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
+                    addCrossedQuads(mpbBushes, tx - 1.0f, 0f, tz - 1.1f, 1.6f, 1.1f, 3, 0f);
+                } else {
+                    ModelBuilder limbsB = new ModelBuilder();
+                    ModelBuilder coreB = new ModelBuilder();
+                    ModelBuilder cardsB = new ModelBuilder();
+                    limbsB.begin();
+                    coreB.begin();
+                    cardsB.begin();
+                    TreeGeometry.rainTree(
+                        limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
+                        coreB.part("core", GL20.GL_TRIANGLES, attr, leafClumpMat),
+                        cardsB.part("leaves", GL20.GL_TRIANGLES, attr, leafCardMat),
+                        tx, tz, scale, seed);
+                    registerFoliage(limbsB);
+                    registerFoliage(coreB);
+                    registerFoliage(cardsB);
+
+                    // Ground bush ring around tree trunk
+                    addCrossedQuads(mpbBushes, tx + 1.2f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
+                    addCrossedQuads(mpbBushes, tx - 1.0f, 0f, tz - 1.1f, 1.6f, 1.1f, 3, 0f);
+                }
             } else if (type == 1) {
-                ModelBuilder limbsB = new ModelBuilder();
-                ModelBuilder coreB = new ModelBuilder();
-                ModelBuilder cardsB = new ModelBuilder();
-                limbsB.begin();
-                coreB.begin();
-                cardsB.begin();
-                TreeGeometry.krishnaTree(
-                    limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
-                    coreB.part("core", GL20.GL_TRIANGLES, attr, blossomClumpMat),
-                    cardsB.part("leaves", GL20.GL_TRIANGLES, attr, leafCardMat),
-                    tx, tz, scale, seed);
-                registerFoliage(limbsB);
-                registerFoliage(coreB);
-                registerFoliage(cardsB);
+                if (isProminentBigTree) {
+                    // Krishnachura Tree (Vibrant scarlet-red blossoms & feathery fronds matching reference image)
+                    ModelInstance tInst = new ModelInstance(krishnaTrunk);
+                    tInst.transform.setTranslation(tx, 2.0f, tz);
+                    instances.add(tInst);
 
-                // Wildflower shrub around base
-                addCrossedQuads(mpbBushes, tx + 0.9f, 0f, tz + 0.9f, 1.7f, 1.2f, 3, 0f);
+                    float[][] bOffsets = {
+                        {1.3f, 3.5f, 1.1f, 30f, 30f},
+                        {-1.3f, 3.5f, 1.1f, 30f, -30f},
+                        {0.0f, 3.6f, -1.4f, -35f, 0f}
+                    };
+                    for (float[] bo : bOffsets) {
+                        ModelInstance b = new ModelInstance(krishnaBranch);
+                        b.transform.setTranslation(tx + bo[0], bo[1], tz + bo[2]);
+                        b.transform.rotate(Vector3.X, bo[3]).rotate(Vector3.Z, bo[4]);
+                        instances.add(b);
+
+                        addCrossedQuads(mpbClassicKrishna, tx + bo[0] * 1.5f, 4.2f, tz + bo[2] * 1.5f, 4.8f, 3.4f, 3, 0f);
+                        addHorizontalQuad(mpbClassicKrishna, tx + bo[0] * 1.5f, 5.8f, tz + bo[2] * 1.5f, 4.4f);
+                    }
+                    addCrossedQuads(mpbClassicKrishna, tx, 3.2f, tz, 6.8f, 3.6f, 3, 0f);
+                    addHorizontalQuad(mpbClassicKrishna, tx, 4.6f, tz, 6.2f);
+                    addCrossedQuads(mpbClassicKrishna, tx, 4.4f, tz, 7.4f, 4.2f, 4, 0f);
+                    addHorizontalQuad(mpbClassicKrishna, tx, 6.8f, tz, 6.4f);
+
+                    addCrossedQuads(mpbBushes, tx + 0.9f, 0f, tz + 0.9f, 1.7f, 1.2f, 3, 0f);
+                } else {
+                    ModelBuilder limbsB = new ModelBuilder();
+                    ModelBuilder coreB = new ModelBuilder();
+                    ModelBuilder cardsB = new ModelBuilder();
+                    limbsB.begin();
+                    coreB.begin();
+                    cardsB.begin();
+                    TreeGeometry.krishnaTree(
+                        limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
+                        coreB.part("core", GL20.GL_TRIANGLES, attr, blossomClumpMat),
+                        cardsB.part("leaves", GL20.GL_TRIANGLES, attr, leafCardMat),
+                        tx, tz, scale, seed);
+                    registerFoliage(limbsB);
+                    registerFoliage(coreB);
+                    registerFoliage(cardsB);
+
+                    // Wildflower shrub around base
+                    addCrossedQuads(mpbBushes, tx + 0.9f, 0f, tz + 0.9f, 1.7f, 1.2f, 3, 0f);
+                }
             } else {
                 TreeGeometry.leafDensity = 1f;
                 // Royal Palm Tree with radiating fronds

@@ -105,6 +105,20 @@ void main() {
     // ── 6. ACES Tone Mapping ─────────────────
     col = aces(col);
 
+    // ── 6b. Cinematic S-Curve Contrast & Detail Sharpening ──
+    // Smooth cinematic contrast curve (rich deep tones and bright highlights)
+    vec3 contrastS = col * col * (3.0 - 2.0 * col);
+    col = mix(col, contrastS, 0.40);
+
+    // Unsharp mask sharpening: crisp leaf textures and facade details
+    vec2 invR = 1.0 / u_resolution;
+    vec3 neighborAvg = (texture2D(u_texture, uv + vec2( invR.x, 0.0)).rgb +
+                        texture2D(u_texture, uv + vec2(-invR.x, 0.0)).rgb +
+                        texture2D(u_texture, uv + vec2(0.0,  invR.y)).rgb +
+                        texture2D(u_texture, uv + vec2(0.0, -invR.y)).rgb) * 0.25;
+    vec3 sharpDetail = col - neighborAvg;
+    col += clamp(sharpDetail * 0.35, -0.08, 0.08);
+
     // ── 7. Vignette ──────────────────────────
     vec2 center = uv - 0.5;
     float dist = length(center) / u_vignetteRadius;
