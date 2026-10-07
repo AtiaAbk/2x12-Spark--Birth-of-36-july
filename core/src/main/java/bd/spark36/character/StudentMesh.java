@@ -837,7 +837,16 @@ public class StudentMesh implements Disposable {
                        boolean isCrouching, boolean isAttacking, int attackCombo, float attackProgress,
                        boolean isSittingWater, float sitProgress, int gender) {
         render(batch, env, pos, headingDegrees, walkCycle, isMoving, isSprinting,
-               isCrouching, isAttacking, attackCombo, attackProgress,
+               isCrouching, false, isAttacking, attackCombo, attackProgress,
+               isSittingWater, sitProgress, gender, 0);
+    }
+
+    public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
+                       float walkCycle, boolean isMoving, boolean isSprinting,
+                       boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,
+                       boolean isSittingWater, float sitProgress, int gender) {
+        render(batch, env, pos, headingDegrees, walkCycle, isMoving, isSprinting,
+               isCrouching, isBlocking, isAttacking, attackCombo, attackProgress,
                isSittingWater, sitProgress, gender, 0);
     }
 
@@ -850,10 +859,19 @@ public class StudentMesh implements Disposable {
                        float walkCycle, boolean isMoving, boolean isSprinting,
                        boolean isCrouching, boolean isAttacking, int attackCombo, float attackProgress,
                        boolean isSittingWater, float sitProgress, int gender, int variant) {
+        render(batch, env, pos, headingDegrees, walkCycle, isMoving, isSprinting,
+               isCrouching, false, isAttacking, attackCombo, attackProgress,
+               isSittingWater, sitProgress, gender, variant);
+    }
+
+    public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
+                       float walkCycle, boolean isMoving, boolean isSprinting,
+                       boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,
+                       boolean isSittingWater, float sitProgress, int gender, int variant) {
         tick();
         int g = (gender == 1) ? 1 : 0;
         draw(batch, env, rigFor(g, variant), g, pos, headingDegrees, walkCycle, isMoving, isSprinting,
-             isCrouching, isAttacking, attackCombo, attackProgress, isSittingWater, sitProgress,
+             isCrouching, isBlocking, isAttacking, attackCombo, attackProgress, isSittingWater, sitProgress,
              variant * 1.37f);
     }
 
