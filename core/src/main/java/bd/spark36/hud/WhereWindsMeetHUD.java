@@ -2347,31 +2347,39 @@ public class WhereWindsMeetHUD implements Disposable {
         float mouseX = ((float) Gdx.input.getX() / backbufferW) * w;
         float mouseY = (1.0f - (float) Gdx.input.getY() / backbufferH) * h;
 
-        // 1. Cinematic Background Artwork / Wallpaper (if available)
+        // 1. Cinematic Background Artwork / Wallpaper (matching user reference image)
         com.badlogic.gdx.graphics.Texture bgTex = getCinematicFinishTexture();
         if (bgTex != null) {
+            beginShapes(ShapeType.Filled);
+            shapeRenderer.setColor(0.04f, 0.05f, 0.08f, 1f);
+            shapeRenderer.rect(0, 0, w, h);
+            shapeRenderer.end();
+
             spriteBatch.begin();
-            spriteBatch.setColor(1f, 1f, 1f, 0.55f);
+            spriteBatch.setColor(1f, 1f, 1f, 0.96f);
             spriteBatch.draw(bgTex, 0, 0, w, h);
             spriteBatch.end();
-        }
 
-        beginShapes(ShapeType.Filled);
-        // Dim screen background with rich cinematic dark gradient
-        shapeRenderer.setColor(0.01f, 0.02f, 0.04f, bgTex != null ? 0.45f : 0.65f);
-        shapeRenderer.rect(0, 0, w, h);
+            beginShapes(ShapeType.Filled);
+            shapeRenderer.setColor(0.02f, 0.03f, 0.06f, 0.22f);
+            shapeRenderer.rect(0, 0, w, h);
+        } else {
+            beginShapes(ShapeType.Filled);
+            shapeRenderer.setColor(0.02f, 0.04f, 0.07f, 0.75f);
+            shapeRenderer.rect(0, 0, w, h);
+        }
 
         float vw = 860f;
         float vh = 580f;
         float vx = (w - vw) / 2f;
         float vy = (h - vh) / 2f;
 
-        // Translucent glass panel matching Where Winds Meet aesthetics
-        shapeRenderer.setColor(0.02f, 0.04f, 0.07f, 0.88f);
+        // Elegant glassmorphic panel (translucent frosted dark slate)
+        shapeRenderer.setColor(0.04f, 0.07f, 0.12f, 0.82f);
         shapeRenderer.rect(vx, vy, vw, vh);
 
         // Header band
-        shapeRenderer.setColor(0.06f, 0.06f, 0.04f, 0.90f);
+        shapeRenderer.setColor(0.06f, 0.09f, 0.14f, 0.88f);
         shapeRenderer.rect(vx, vy + vh - 75f, vw, 75f);
 
         // Gold top accent

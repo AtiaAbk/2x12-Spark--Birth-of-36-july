@@ -33,18 +33,18 @@ import com.badlogic.gdx.utils.Disposable;
  */
 public class DhakaCampusWorld implements Disposable {
 
-    /** Tree placements {x, z, kind}: 0 = rain tree, 1 = krishnachura, 2 = royal palm. */
+    /** Tree placements {x, z, kind}: 0 = rain tree, 1 = krishnachura, 2 = royal palm, 3 = white blossom tree. */
     public static final float[][] TREE_LOCATIONS = {
-        // Avenue flanks: Alternating Rain Trees & Krishnachura
-        {-19.5f, -2f, 0}, {19.5f, -2f, 1},
-        {-19.5f, 14f, 1}, {19.5f, 14f, 0},
-        {-13.5f, 32f, 0}, {13.5f, 32f, 1},
-        {-14.5f, 50f, 1}, {14.5f, 50f, 0},
+        // Avenue flanks: Alternating Rain Trees, Krishnachura & White Blossom Trees
+        {-19.5f, -2f, 3}, {19.5f, -2f, 1},
+        {-19.5f, 14f, 1}, {19.5f, 14f, 3},
+        {-13.5f, 32f, 3}, {13.5f, 32f, 1},
+        {-14.5f, 50f, 1}, {14.5f, 50f, 3},
         {-28.0f, 16f, 0}, {28.0f, 16f, 1},
-        {-48.0f, 6f, 1},  {48.0f, 6f, 0},
+        {-48.0f, 6f, 1},  {48.0f, 6f, 3},
         {-62.0f, 30f, 0}, {62.0f, 30f, 1},
-        {-32.0f, -12f, 1}, {32.0f, -12f, 0},
-        {-22.0f, 68f, 0}, {22.0f, 68f, 1},
+        {-32.0f, -12f, 3}, {32.0f, -12f, 0},
+        {-22.0f, 68f, 3}, {22.0f, 68f, 1},
         {-11.5f, 71f, 0}, // beside (not inside) the main gate
 
         // Royal Palms along perimeter
@@ -99,23 +99,22 @@ public class DhakaCampusWorld implements Disposable {
     public DhakaCampusWorld(TextureFactory textures) {
         environment = new Environment();
 
-        // Warm golden-hour sun (upper-right, behind the player at spawn) that also casts real
-        // shadows: a 120m x 120m shadow window that follows the player.
+        // Warm daylight sun with rich, cinematic shadow contrast (prevents washed-out pastel)
         sunLight = new DirectionalShadowLight(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 120f, 120f, 1f, 140f);
-        sunLight.set(new Color(1.18f, 1.14f, 1.06f, 1f), new Vector3(-0.55f, -0.65f, -0.55f).nor());
+        sunLight.set(new Color(1.10f, 1.05f, 0.95f, 1f), new Vector3(-0.55f, -0.65f, -0.55f).nor());
         environment.add(sunLight);
         environment.shadowMap = sunLight;
 
-        // Neutral daylight ambient without sickly yellow/green tint
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.44f, 0.46f, 0.50f, 1f));
+        // Rich daylight ambient with natural blue sky bounce
+        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.36f, 0.38f, 0.42f, 1f));
 
-        // Soft front fill light for natural facial illumination
+        // Soft front fill light for natural character and facade illumination
         DirectionalLight fillLight = new DirectionalLight();
-        fillLight.set(new Color(0.34f, 0.34f, 0.36f, 1f), new Vector3(0.20f, -0.30f, 0.92f).nor());
+        fillLight.set(new Color(0.24f, 0.24f, 0.26f, 1f), new Vector3(0.20f, -0.30f, 0.92f).nor());
         environment.add(fillLight);
 
-        // Clean atmospheric sky-blue depth haze (zero muddy greenish-yellow fog!)
-        environment.set(new ColorAttribute(ColorAttribute.Fog, 0.78f, 0.86f, 0.96f, 1f));
+        // Clean atmospheric sky-blue depth haze
+        environment.set(new ColorAttribute(ColorAttribute.Fog, 0.72f, 0.82f, 0.94f, 1f));
 
         buildCampus(textures);
         buildColliders();
@@ -281,7 +280,42 @@ public class DhakaCampusWorld implements Disposable {
             TextureAttribute.createDiffuse(textures.blossomClump),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 0.97f, 0.94f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.05f, 0.08f, 0.03f, 1f))
+            ColorAttribute.createEmissive(new Color(0.08f, 0.05f, 0.03f, 1f))
+        );
+
+        Material whiteBlossomClumpMat = new Material(
+            TextureAttribute.createDiffuse(textures.whiteBlossomClump),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
+            ColorAttribute.createEmissive(new Color(0.12f, 0.12f, 0.10f, 1f))
+        );
+
+        Material whiteBlossomCardMat = new Material(
+            TextureAttribute.createDiffuse(textures.whiteBlossomAtlas),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            FloatAttribute.createAlphaTest(0.5f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
+            ColorAttribute.createEmissive(new Color(0.14f, 0.14f, 0.12f, 1f))
+        );
+
+        Material kashfulCardMat = new Material(
+            TextureAttribute.createDiffuse(textures.kashfulAtlas),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            FloatAttribute.createAlphaTest(0.35f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
+            ColorAttribute.createEmissive(new Color(0.12f, 0.12f, 0.10f, 1f))
+        );
+
+        Material colonialWindowMat = new Material(
+            TextureAttribute.createDiffuse(textures.colonialWindow),
+            ColorAttribute.createDiffuse(new Color(0.96f, 0.96f, 0.94f, 1f))
+        );
+
+        Material teakDoorMat = new Material(
+            TextureAttribute.createDiffuse(textures.teakDoorTexture),
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.92f, 0.88f, 1f))
         );
 
         // Individual leaf cards: cut out by alpha (no blending, so no sorting artefacts) and seen
@@ -600,10 +634,10 @@ public class DhakaCampusWorld implements Disposable {
         Material curzonWhiteDome = new Material(ColorAttribute.createDiffuse(new Color(0.96f, 0.95f, 0.91f, 1f)));
         Material curzonRedDome = new Material(ColorAttribute.createDiffuse(new Color(0.68f, 0.20f, 0.16f, 1f)));
 
-        // Window & Door components for the two-storey Curzon facade
+        // Window & Door components for the two-storey Curzon facade (Authentic Mughal-Gothic)
         Model archNiche = mb.createBox(1.9f, 3.8f, 0.35f, archCavity, attr);
-        Model archUpperWindow = mb.createBox(1.6f, 3.2f, 0.20f, glassMat, attr);
-        Model archGroundDoor = mb.createBox(1.6f, 3.4f, 0.20f, teakDoor, attr);
+        Model archUpperWindow = mb.createBox(1.6f, 3.2f, 0.20f, colonialWindowMat, attr);
+        Model archGroundDoor = mb.createBox(1.6f, 3.4f, 0.20f, teakDoorMat, attr);
         Model archCrown = mb.createBox(2.05f, 0.22f, 0.25f, curzonTrimMat, attr);
         Model archSill = mb.createBox(2.10f, 0.16f, 0.28f, curzonTrimMat, attr);
         Model archPilaster = mb.createBox(0.12f, 3.8f, 0.22f, curzonTrimMat, attr);
@@ -642,12 +676,12 @@ public class DhakaCampusWorld implements Disposable {
                 instances.add(crown);
 
                 if (isGround) {
-                    // Ground floor: Carved teak wooden panel door
+                    // Ground floor: Authentic carved Burma teak wooden double door with brass knockers
                     ModelInstance door = new ModelInstance(archGroundDoor);
                     door.transform.setTranslation(ax, ay - 0.2f, fz);
                     instances.add(door);
                 } else {
-                    // Upper floor: Elegant colonial glazed window with protruding stone sill
+                    // Upper floor: Stately colonial glazed window with white mullions and stone sill
                     ModelInstance win = new ModelInstance(archUpperWindow);
                     win.transform.setTranslation(ax, ay, fz);
                     instances.add(win);
@@ -664,10 +698,10 @@ public class DhakaCampusWorld implements Disposable {
         instances.add(bandInst);
 
         // Grand Central Portal with Cusped Archway & Heavy Teak Doors
-        Model portalJamb = mb.createBox(0.38f, 8.8f, 0.35f, curzonTrimMat, attr);
-        Model portalHeader = mb.createBox(6.0f, 0.55f, 0.35f, curzonTrimMat, attr);
+        Model portalJamb = mb.createBox(0.48f, 8.8f, 0.45f, curzonTrimMat, attr);
+        Model portalHeader = mb.createBox(6.4f, 0.65f, 0.45f, curzonTrimMat, attr);
         Model mainArch = mb.createBox(5.2f, 8.4f, 0.6f, archCavity, attr);
-        Model doorLeaf = mb.createBox(4.4f, 7.2f, 0.25f, teakDoor, attr);
+        Model doorLeaf = mb.createBox(4.4f, 7.2f, 0.25f, teakDoorMat, attr);
         models.add(portalJamb);
         models.add(portalHeader);
         models.add(mainArch);
@@ -701,6 +735,91 @@ public class DhakaCampusWorld implements Disposable {
         ModelInstance carpetInst = new ModelInstance(redCarpet);
         carpetInst.transform.setTranslation(0f, 0.62f, -19.5f);
         instances.add(carpetInst);
+
+        // Grand Central Portico First-Floor Balcony & Triple Mughal Windows
+        Model balconySlab = mb.createBox(8.4f, 0.35f, 1.4f, curzonTrimMat, attr);
+        Model balconyRail = mb.createBox(8.4f, 0.85f, 0.15f, curzonTrimMat, attr);
+        Model balconySideRail = mb.createBox(0.15f, 0.85f, 1.4f, curzonTrimMat, attr);
+        models.add(balconySlab);
+        models.add(balconyRail);
+        models.add(balconySideRail);
+
+        ModelInstance bSlabInst = new ModelInstance(balconySlab);
+        bSlabInst.transform.setTranslation(0f, 9.15f, -19.95f);
+        instances.add(bSlabInst);
+        ModelInstance bRailInst = new ModelInstance(balconyRail);
+        bRailInst.transform.setTranslation(0f, 9.75f, -19.28f);
+        instances.add(bRailInst);
+        ModelInstance bRailL = new ModelInstance(balconySideRail);
+        bRailL.transform.setTranslation(-4.15f, 9.75f, -19.95f);
+        instances.add(bRailL);
+        ModelInstance bRailR = new ModelInstance(balconySideRail);
+        bRailR.transform.setTranslation(4.15f, 9.75f, -19.95f);
+        instances.add(bRailR);
+
+        // Triple Mughal Colonial Windows on Portico Upper Storey
+        Model porticoWinCenter = mb.createBox(2.2f, 3.8f, 0.20f, colonialWindowMat, attr);
+        Model porticoWinSide = mb.createBox(1.4f, 3.0f, 0.20f, colonialWindowMat, attr);
+        Model porticoCrownCenter = mb.createBox(2.6f, 0.30f, 0.25f, curzonTrimMat, attr);
+        Model porticoCrownSide = mb.createBox(1.7f, 0.25f, 0.25f, curzonTrimMat, attr);
+        models.add(porticoWinCenter);
+        models.add(porticoWinSide);
+        models.add(porticoCrownCenter);
+        models.add(porticoCrownSide);
+
+        ModelInstance pwc = new ModelInstance(porticoWinCenter);
+        pwc.transform.setTranslation(0f, 11.6f, -20.50f);
+        instances.add(pwc);
+        ModelInstance pwcCrown = new ModelInstance(porticoCrownCenter);
+        pwcCrown.transform.setTranslation(0f, 13.65f, -20.48f);
+        instances.add(pwcCrown);
+
+        ModelInstance pwL = new ModelInstance(porticoWinSide);
+        pwL.transform.setTranslation(-2.4f, 11.2f, -20.50f);
+        instances.add(pwL);
+        ModelInstance pwLCrown = new ModelInstance(porticoCrownSide);
+        pwLCrown.transform.setTranslation(-2.4f, 12.85f, -20.48f);
+        instances.add(pwLCrown);
+
+        ModelInstance pwR = new ModelInstance(porticoWinSide);
+        pwR.transform.setTranslation(2.4f, 11.2f, -20.50f);
+        instances.add(pwR);
+        ModelInstance pwRCrown = new ModelInstance(porticoCrownSide);
+        pwRCrown.transform.setTranslation(2.4f, 12.85f, -20.48f);
+        instances.add(pwRCrown);
+
+        // Projecting carved stone Chhajja (sunshade eaves overhang) above Portico windows
+        Model porticoChhajja = mb.createBox(9.6f, 0.22f, 1.2f, curzonTrimMat, attr);
+        Model chhajjaBracket = mb.createBox(0.22f, 0.60f, 0.85f, curzonTrimMat, attr);
+        models.add(porticoChhajja);
+        models.add(chhajjaBracket);
+
+        ModelInstance chhajjaInst = new ModelInstance(porticoChhajja);
+        chhajjaInst.transform.setTranslation(0f, 14.1f, -19.95f);
+        instances.add(chhajjaInst);
+
+        float[] bracketX = {-3.6f, -1.2f, 1.2f, 3.6f};
+        for (float bx : bracketX) {
+            ModelInstance brk = new ModelInstance(chhajjaBracket);
+            brk.transform.setTranslation(bx, 13.7f, -20.15f);
+            instances.add(brk);
+        }
+
+        // Flanking vintage carriage lanterns at the Grand Entrance
+        Model lanternPost = mb.createBox(0.16f, 0.35f, 0.30f, castIron, attr);
+        Model lanternGlass = mb.createBox(0.24f, 0.38f, 0.24f, lanternGlow, attr);
+        models.add(lanternPost);
+        models.add(lanternGlass);
+
+        float[] lanternX = {-3.3f, 3.3f};
+        for (float lx : lanternX) {
+            ModelInstance lp = new ModelInstance(lanternPost);
+            lp.transform.setTranslation(lx, 5.0f, -20.35f);
+            instances.add(lp);
+            ModelInstance lg = new ModelInstance(lanternGlass);
+            lg.transform.setTranslation(lx, 5.25f, -20.25f);
+            instances.add(lg);
+        }
 
         // Curzon Hall Grand White Mughal Bulbous Dome
         Model finialBase = mb.createCone(0.85f, 3.2f, 0.85f, 14, goldFinial, attr);
@@ -822,15 +941,7 @@ public class DhakaCampusWorld implements Disposable {
         mbBush.begin();
         MeshPartBuilder mpbBushes = mbBush.part("bushes", GL20.GL_TRIANGLES, attr, bushMat);
 
-        ModelBuilder mbClassicRain = new ModelBuilder();
-        mbClassicRain.begin();
-        MeshPartBuilder mpbClassicRain = mbClassicRain.part("classicRainLeaves", GL20.GL_TRIANGLES, attr, foliageMat);
-
-        ModelBuilder mbClassicKrishna = new ModelBuilder();
-        mbClassicKrishna.begin();
-        MeshPartBuilder mpbClassicKrishna = mbClassicKrishna.part("classicKrishnaLeaves", GL20.GL_TRIANGLES, attr, krishnachuraMat);
-
-        ModelBuilder[] foliageBuilders = {mbPalm, mbBush, mbClassicRain, mbClassicKrishna};
+        ModelBuilder[] foliageBuilders = {mbPalm, mbBush};
 
         float[][] treeLocations = TREE_LOCATIONS;
 
@@ -845,110 +956,69 @@ public class DhakaCampusWorld implements Disposable {
             treeIndex++;
 
             // Every third broadleaf tree has a thinner, airier canopy; the rest stay full
-            TreeGeometry.leafDensity = (treeIndex % 3 == 1) ? 0.45f : 1f;
+            TreeGeometry.leafDensity = (treeIndex % 3 == 1) ? 0.55f : 1f;
 
-            // Trunk footprint (rain trees flare to ~0.95m at the root, so use a generous box)
+            // Trunk footprint collider
             float trunkHalf = (type == 2) ? 0.45f : 0.75f * scale;
             colliders.add(new float[]{tx - trunkHalf, 0f, tz - trunkHalf, tx + trunkHalf, 6f, tz + trunkHalf});
 
-            // Prominent big trees near the boundary stone and avenue get the exact lush canopy from the reference image
-            boolean isProminentBigTree = (Math.abs(tx) <= 15.5f && tz >= 28f && tz <= 55f);
+            if (type == 3) {
+                // White Blossom Tree (Dense white magnolia/cherry petals matching user reference image)
+                ModelBuilder limbsB = new ModelBuilder();
+                ModelBuilder coreB = new ModelBuilder();
+                ModelBuilder cardsB = new ModelBuilder();
+                limbsB.begin();
+                coreB.begin();
+                cardsB.begin();
+                TreeGeometry.whiteBlossomTree(
+                    limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
+                    coreB.part("blossomCore", GL20.GL_TRIANGLES, attr, whiteBlossomClumpMat),
+                    cardsB.part("blossomCards", GL20.GL_TRIANGLES, attr, whiteBlossomCardMat),
+                    tx, tz, scale, seed);
+                registerFoliage(limbsB);
+                registerFoliage(coreB);
+                registerFoliage(cardsB);
 
-            if (type == 0) {
-                if (isProminentBigTree) {
-                    // Rain Tree (Majestic spreading umbrella with real branches & cutout leaf cards)
-                    ModelInstance tInst = new ModelInstance(rainTrunk);
-                    tInst.transform.setTranslation(tx, 2.2f, tz);
-                    instances.add(tInst);
-
-                    float[][] bOffsets = {
-                        {1.5f, 3.8f, 1.5f, 35f, 35f},
-                        {-1.5f, 3.8f, 1.5f, 35f, -35f},
-                        {1.5f, 3.8f, -1.5f, -35f, 35f},
-                        {-1.5f, 3.8f, -1.5f, -35f, -35f}
-                    };
-                    for (float[] bo : bOffsets) {
-                        ModelInstance b = new ModelInstance(rainBranch);
-                        b.transform.setTranslation(tx + bo[0], bo[1], tz + bo[2]);
-                        b.transform.rotate(Vector3.X, bo[3]).rotate(Vector3.Z, bo[4]);
-                        instances.add(b);
-
-                        addCrossedQuads(mpbClassicRain, tx + bo[0] * 1.6f, 4.4f, tz + bo[2] * 1.6f, 5.2f, 3.6f, 3, 0f);
-                        addHorizontalQuad(mpbClassicRain, tx + bo[0] * 1.6f, 6.2f, tz + bo[2] * 1.6f, 4.8f);
-                    }
-                    addCrossedQuads(mpbClassicRain, tx, 3.4f, tz, 7.2f, 3.8f, 3, 0f);
-                    addHorizontalQuad(mpbClassicRain, tx, 4.8f, tz, 6.4f);
-                    addCrossedQuads(mpbClassicRain, tx, 4.6f, tz, 7.8f, 4.4f, 4, 0f);
-                    addHorizontalQuad(mpbClassicRain, tx, 7.0f, tz, 6.8f);
-
-                    addCrossedQuads(mpbBushes, tx + 1.2f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
-                    addCrossedQuads(mpbBushes, tx - 1.0f, 0f, tz - 1.1f, 1.6f, 1.1f, 3, 0f);
-                } else {
-                    ModelBuilder limbsB = new ModelBuilder();
-                    ModelBuilder coreB = new ModelBuilder();
-                    ModelBuilder cardsB = new ModelBuilder();
-                    limbsB.begin();
-                    coreB.begin();
-                    cardsB.begin();
-                    TreeGeometry.rainTree(
-                        limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
-                        coreB.part("core", GL20.GL_TRIANGLES, attr, leafClumpMat),
-                        cardsB.part("leaves", GL20.GL_TRIANGLES, attr, leafCardMat),
-                        tx, tz, scale, seed);
-                    registerFoliage(limbsB);
-                    registerFoliage(coreB);
-                    registerFoliage(cardsB);
-
-                    // Ground bush ring around tree trunk
-                    addCrossedQuads(mpbBushes, tx + 1.2f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
-                    addCrossedQuads(mpbBushes, tx - 1.0f, 0f, tz - 1.1f, 1.6f, 1.1f, 3, 0f);
-                }
+                // Lush green shrub ring around base
+                addCrossedQuads(mpbBushes, tx + 1.1f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
+                addCrossedQuads(mpbBushes, tx - 1.0f, 0f, tz - 1.0f, 1.6f, 1.1f, 3, 0f);
             } else if (type == 1) {
-                if (isProminentBigTree) {
-                    // Krishnachura Tree (Vibrant scarlet-red blossoms & feathery fronds matching reference image)
-                    ModelInstance tInst = new ModelInstance(krishnaTrunk);
-                    tInst.transform.setTranslation(tx, 2.0f, tz);
-                    instances.add(tInst);
+                // Krishnachura Tree (Vibrant fiery scarlet-red blossoms & bipinnate fronds)
+                ModelBuilder limbsB = new ModelBuilder();
+                ModelBuilder coreB = new ModelBuilder();
+                ModelBuilder cardsB = new ModelBuilder();
+                limbsB.begin();
+                coreB.begin();
+                cardsB.begin();
+                TreeGeometry.krishnaTree(
+                    limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
+                    coreB.part("core", GL20.GL_TRIANGLES, attr, blossomClumpMat),
+                    cardsB.part("leaves", GL20.GL_TRIANGLES, attr, leafCardMat),
+                    tx, tz, scale, seed);
+                registerFoliage(limbsB);
+                registerFoliage(coreB);
+                registerFoliage(cardsB);
 
-                    float[][] bOffsets = {
-                        {1.3f, 3.5f, 1.1f, 30f, 30f},
-                        {-1.3f, 3.5f, 1.1f, 30f, -30f},
-                        {0.0f, 3.6f, -1.4f, -35f, 0f}
-                    };
-                    for (float[] bo : bOffsets) {
-                        ModelInstance b = new ModelInstance(krishnaBranch);
-                        b.transform.setTranslation(tx + bo[0], bo[1], tz + bo[2]);
-                        b.transform.rotate(Vector3.X, bo[3]).rotate(Vector3.Z, bo[4]);
-                        instances.add(b);
+                addCrossedQuads(mpbBushes, tx + 0.9f, 0f, tz + 0.9f, 1.7f, 1.2f, 3, 0f);
+            } else if (type == 0) {
+                // Rain Tree (Majestic spreading broadleaf umbrella canopy)
+                ModelBuilder limbsB = new ModelBuilder();
+                ModelBuilder coreB = new ModelBuilder();
+                ModelBuilder cardsB = new ModelBuilder();
+                limbsB.begin();
+                coreB.begin();
+                cardsB.begin();
+                TreeGeometry.rainTree(
+                    limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
+                    coreB.part("core", GL20.GL_TRIANGLES, attr, leafClumpMat),
+                    cardsB.part("leaves", GL20.GL_TRIANGLES, attr, leafCardMat),
+                    tx, tz, scale, seed);
+                registerFoliage(limbsB);
+                registerFoliage(coreB);
+                registerFoliage(cardsB);
 
-                        addCrossedQuads(mpbClassicKrishna, tx + bo[0] * 1.5f, 4.2f, tz + bo[2] * 1.5f, 4.8f, 3.4f, 3, 0f);
-                        addHorizontalQuad(mpbClassicKrishna, tx + bo[0] * 1.5f, 5.8f, tz + bo[2] * 1.5f, 4.4f);
-                    }
-                    addCrossedQuads(mpbClassicKrishna, tx, 3.2f, tz, 6.8f, 3.6f, 3, 0f);
-                    addHorizontalQuad(mpbClassicKrishna, tx, 4.6f, tz, 6.2f);
-                    addCrossedQuads(mpbClassicKrishna, tx, 4.4f, tz, 7.4f, 4.2f, 4, 0f);
-                    addHorizontalQuad(mpbClassicKrishna, tx, 6.8f, tz, 6.4f);
-
-                    addCrossedQuads(mpbBushes, tx + 0.9f, 0f, tz + 0.9f, 1.7f, 1.2f, 3, 0f);
-                } else {
-                    ModelBuilder limbsB = new ModelBuilder();
-                    ModelBuilder coreB = new ModelBuilder();
-                    ModelBuilder cardsB = new ModelBuilder();
-                    limbsB.begin();
-                    coreB.begin();
-                    cardsB.begin();
-                    TreeGeometry.krishnaTree(
-                        limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
-                        coreB.part("core", GL20.GL_TRIANGLES, attr, blossomClumpMat),
-                        cardsB.part("leaves", GL20.GL_TRIANGLES, attr, leafCardMat),
-                        tx, tz, scale, seed);
-                    registerFoliage(limbsB);
-                    registerFoliage(coreB);
-                    registerFoliage(cardsB);
-
-                    // Wildflower shrub around base
-                    addCrossedQuads(mpbBushes, tx + 0.9f, 0f, tz + 0.9f, 1.7f, 1.2f, 3, 0f);
-                }
+                addCrossedQuads(mpbBushes, tx + 1.2f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
+                addCrossedQuads(mpbBushes, tx - 1.0f, 0f, tz - 1.1f, 1.6f, 1.1f, 3, 0f);
             } else {
                 TreeGeometry.leafDensity = 1f;
                 // Royal Palm Tree with radiating fronds

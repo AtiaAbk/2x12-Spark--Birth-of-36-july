@@ -106,18 +106,19 @@ void main() {
     col = aces(col);
 
     // ── 6b. Cinematic S-Curve Contrast & Detail Sharpening ──
-    // Smooth cinematic contrast curve (rich deep tones and bright highlights)
+    // Rich cinematic contrast curve (deep shadows and vibrant highlights)
     vec3 contrastS = col * col * (3.0 - 2.0 * col);
-    col = mix(col, contrastS, 0.40);
+    col = mix(col, contrastS, 0.45);
 
-    // Unsharp mask sharpening: crisp leaf textures and facade details
+    // Clean unsharp masking for razor-sharp foliage and brick texture details
     vec2 invR = 1.0 / u_resolution;
-    vec3 neighborAvg = (texture2D(u_texture, uv + vec2( invR.x, 0.0)).rgb +
-                        texture2D(u_texture, uv + vec2(-invR.x, 0.0)).rgb +
-                        texture2D(u_texture, uv + vec2(0.0,  invR.y)).rgb +
-                        texture2D(u_texture, uv + vec2(0.0, -invR.y)).rgb) * 0.25;
+    vec3 n1 = aces(texture2D(u_texture, uv + vec2( invR.x, 0.0)).rgb * u_exposure);
+    vec3 n2 = aces(texture2D(u_texture, uv + vec2(-invR.x, 0.0)).rgb * u_exposure);
+    vec3 n3 = aces(texture2D(u_texture, uv + vec2(0.0,  invR.y)).rgb * u_exposure);
+    vec3 n4 = aces(texture2D(u_texture, uv + vec2(0.0, -invR.y)).rgb * u_exposure);
+    vec3 neighborAvg = (n1 + n2 + n3 + n4) * 0.25;
     vec3 sharpDetail = col - neighborAvg;
-    col += clamp(sharpDetail * 0.35, -0.08, 0.08);
+    col += clamp(sharpDetail * 0.50, -0.07, 0.07);
 
     // ── 7. Vignette ──────────────────────────
     vec2 center = uv - 0.5;
