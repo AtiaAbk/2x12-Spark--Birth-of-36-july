@@ -85,6 +85,7 @@ public class PlayerController {
     private boolean isSprinting = false;
     private float walkCycle = 0f;
     private boolean isCrouching = false;
+    private boolean isBlocking = false;
     private boolean isAttacking = false;
     private int attackCombo = 0;
     private float attackProgress = 0f;
