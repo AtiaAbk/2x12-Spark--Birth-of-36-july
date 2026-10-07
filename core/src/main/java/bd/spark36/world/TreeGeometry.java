@@ -187,7 +187,13 @@ final class TreeGeometry {
             // Lift slightly off the core so cards don't z-fight with it
             float ox = px + nx * half * 0.30f, oy = py + ny * half * 0.30f, oz = pz + nz * half * 0.30f;
 
-            int cell = RNG.nextFloat() < blossomChance ? 3 : cardCells[RNG.nextInt(cardCells.length)];
+            int cell;
+            if (blossomChance >= 0.8f && cardCells.length == 4) {
+                // White Blossom tree: rich variety of all 4 dense blossom card types
+                cell = cardCells[RNG.nextInt(cardCells.length)];
+            } else {
+                cell = RNG.nextFloat() < blossomChance ? 3 : cardCells[RNG.nextInt(cardCells.length)];
+            }
             float u0 = (cell % 2) * 0.5f, u1 = u0 + 0.5f;
             float v0 = (cell / 2) * 0.5f, v1 = v0 + 0.5f;
 

@@ -86,6 +86,7 @@ public class PlayerController {
     private float walkCycle = 0f;
     private boolean isCrouching = false;
     private boolean isBlocking = false;
+    private float blockTimer = 0f;
     private boolean isAttacking = false;
     private int attackCombo = 0;
     private float attackProgress = 0f;
@@ -312,8 +313,19 @@ public class PlayerController {
                 isCrouching = true;
             }
 
-            // MARTIAL ARTS BLOCK / GUARD: 'B' key holds guard, reducing damage by 80%
-            isBlocking = Gdx.input.isKeyPressed(Input.Keys.B);
+            // MARTIAL ARTS BLOCK / GUARD & PARRY: 'B' key
+            boolean blockHeld = Gdx.input.isKeyPressed(Input.Keys.B);
+            if (blockHeld) {
+                if (!isBlocking) {
+                    blockTimer = 0f; // Fresh block activation for perfect parry timing
+                } else {
+                    blockTimer += delta;
+                }
+                isBlocking = true;
+            } else {
+                isBlocking = false;
+                blockTimer = 0f;
+            }
 
             // GENDER SWITCH: 'G' key toggles Male / Female student
             if (Gdx.input.isKeyJustPressed(Input.Keys.G)) {
@@ -330,7 +342,9 @@ public class PlayerController {
             if (punchPressed && !isAttacking && !isSittingWater) {
                 isAttacking = true;
                 attackProgress = 0f;
-                if (comboWindowTimer > 0f) {
+                if (isCrouching) {
+                    attackCombo = 5; // Low Sweep Counter (Tripping Leg Kick)
+                } else if (comboWindowTimer > 0f) {
                     attackCombo = (attackCombo == 1) ? 2 : 1;
                 } else {
                     attackCombo = 1; // Left Jab
@@ -338,7 +352,9 @@ public class PlayerController {
             } else if (kickPressed && !isAttacking && !isSittingWater) {
                 isAttacking = true;
                 attackProgress = 0f;
-                if (comboWindowTimer > 0f && (attackCombo == 3 || attackCombo == 4)) {
+                if (isCrouching) {
+                    attackCombo = 5; // Low Sweep Counter
+                } else if (comboWindowTimer > 0f && (attackCombo == 3 || attackCombo == 4)) {
                     attackCombo = (attackCombo == 3) ? 4 : 3;
                 } else {
                     attackCombo = 3; // High Martial Arts Kick

@@ -9,6 +9,8 @@ screenshots/claude_crowd3.png
 screenshots/claude_fxaa.png
 screenshots/claude_pond_wade.png
 screenshots/claude_tmp.png
+screenshots/curzon_closeup.png
+screenshots/helmet_goon_duel.png
 screenshots/spark36_female_sitting_verified.png
 screenshots/spark36_female_verified.png
 screenshots/spark36_hero_character_verified.png

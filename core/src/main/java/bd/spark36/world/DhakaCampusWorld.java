@@ -35,16 +35,16 @@ public class DhakaCampusWorld implements Disposable {
 
     /** Tree placements {x, z, kind}: 0 = rain tree, 1 = krishnachura, 2 = royal palm, 3 = white blossom tree. */
     public static final float[][] TREE_LOCATIONS = {
-        // Avenue flanks: Alternating Rain Trees, Krishnachura & White Blossom Trees
-        {-19.5f, -2f, 3}, {19.5f, -2f, 1},
-        {-19.5f, 14f, 1}, {19.5f, 14f, 3},
-        {-13.5f, 32f, 3}, {13.5f, 32f, 1},
-        {-14.5f, 50f, 1}, {14.5f, 50f, 3},
-        {-28.0f, 16f, 0}, {28.0f, 16f, 1},
-        {-48.0f, 6f, 1},  {48.0f, 6f, 3},
-        {-62.0f, 30f, 0}, {62.0f, 30f, 1},
-        {-32.0f, -12f, 3}, {32.0f, -12f, 0},
-        {-22.0f, 68f, 3}, {22.0f, 68f, 1},
+        // Avenue flanks: Prominent White Blossom trees matching user reference, with a few heritage Krishnachura and Rain trees
+        {-19.5f, -2f, 3}, {19.5f, -2f, 1}, // 1 flame tree at corner
+        {-19.5f, 14f, 3}, {19.5f, 14f, 3},
+        {-13.5f, 32f, 3}, {13.5f, 32f, 3}, // prominent avenue flank: White Blossom trees
+        {-14.5f, 50f, 3}, {14.5f, 50f, 3},
+        {-28.0f, 16f, 0}, {28.0f, 16f, 1}, // 1 flame tree, 1 rain tree
+        {-48.0f, 6f, 3},  {48.0f, 6f, 3},
+        {-62.0f, 30f, 0}, {62.0f, 30f, 0},
+        {-32.0f, -12f, 3}, {32.0f, -12f, 3},
+        {-22.0f, 68f, 3}, {22.0f, 68f, 3},
         {-11.5f, 71f, 0}, // beside (not inside) the main gate
 
         // Royal Palms along perimeter
@@ -309,13 +309,11 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         Material colonialWindowMat = new Material(
-            TextureAttribute.createDiffuse(textures.colonialWindow),
-            ColorAttribute.createDiffuse(new Color(0.96f, 0.96f, 0.94f, 1f))
+            TextureAttribute.createDiffuse(textures.colonialWindow)
         );
 
         Material teakDoorMat = new Material(
-            TextureAttribute.createDiffuse(textures.teakDoorTexture),
-            ColorAttribute.createDiffuse(new Color(0.95f, 0.92f, 0.88f, 1f))
+            TextureAttribute.createDiffuse(textures.teakDoorTexture)
         );
 
         // Individual leaf cards: cut out by alpha (no blending, so no sorting artefacts) and seen
@@ -425,7 +423,7 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         Material stoneCurb = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.85f, 0.80f, 1f)));
-        Material curzonTrimMat = new Material(ColorAttribute.createDiffuse(new Color(0.96f, 0.94f, 0.90f, 1f)));
+        Material curzonTrimMat = new Material(ColorAttribute.createDiffuse(new Color(0.85f, 0.80f, 0.72f, 1f)));
         Material goldFinial = new Material(ColorAttribute.createDiffuse(new Color(1.0f, 0.85f, 0.35f, 1f)));
         Material archCavity = new Material(ColorAttribute.createDiffuse(new Color(0.18f, 0.10f, 0.08f, 1f)));
         Material teakDoor = new Material(ColorAttribute.createDiffuse(new Color(0.32f, 0.16f, 0.10f, 1f)));
@@ -635,18 +633,22 @@ public class DhakaCampusWorld implements Disposable {
         Material curzonRedDome = new Material(ColorAttribute.createDiffuse(new Color(0.68f, 0.20f, 0.16f, 1f)));
 
         // Window & Door components for the two-storey Curzon facade (Authentic Mughal-Gothic)
-        Model archNiche = mb.createBox(1.9f, 3.8f, 0.35f, archCavity, attr);
-        Model archUpperWindow = mb.createBox(1.6f, 3.2f, 0.20f, colonialWindowMat, attr);
-        Model archGroundDoor = mb.createBox(1.6f, 3.4f, 0.20f, teakDoorMat, attr);
-        Model archCrown = mb.createBox(2.05f, 0.22f, 0.25f, curzonTrimMat, attr);
-        Model archSill = mb.createBox(2.10f, 0.16f, 0.28f, curzonTrimMat, attr);
-        Model archPilaster = mb.createBox(0.12f, 3.8f, 0.22f, curzonTrimMat, attr);
-        Model floorBand = mb.createBox(92f, 0.30f, 0.25f, curzonTrimMat, attr);
+        Model archNiche = mb.createBox(2.0f, 4.0f, 0.40f, archCavity, attr);
+        Model archUpperWindow = mb.createBox(1.7f, 3.4f, 0.16f, colonialWindowMat, attr);
+        Model archGroundDoor = mb.createBox(1.8f, 3.6f, 0.18f, teakDoorMat, attr);
+        Model archCrown = mb.createBox(2.15f, 0.22f, 0.32f, curzonTrimMat, attr);
+        Model archKeystone = mb.createBox(0.35f, 0.36f, 0.36f, curzonTrimMat, attr);
+        Model archSill = mb.createBox(2.20f, 0.18f, 0.35f, curzonTrimMat, attr);
+        Model archCorbel = mb.createBox(0.16f, 0.26f, 0.24f, curzonTrimMat, attr);
+        Model archPilaster = mb.createBox(0.18f, 3.6f, 0.26f, curzonTrimMat, attr);
+        Model floorBand = mb.createBox(92f, 0.18f, 0.22f, curzonTrimMat, attr);
         models.add(archNiche);
         models.add(archUpperWindow);
         models.add(archGroundDoor);
         models.add(archCrown);
+        models.add(archKeystone);
         models.add(archSill);
+        models.add(archCorbel);
         models.add(archPilaster);
         models.add(floorBand);
 
@@ -659,10 +661,10 @@ public class DhakaCampusWorld implements Disposable {
 
                 // Deep recessed dark cavity
                 ModelInstance arch = new ModelInstance(archNiche);
-                arch.transform.setTranslation(ax, ay, fz - 0.10f);
+                arch.transform.setTranslation(ax, ay, fz - 0.12f);
                 instances.add(arch);
 
-                // Flanking slim stone pilasters (left & right)
+                // Flanking stone pilasters (left & right)
                 ModelInstance pilL = new ModelInstance(archPilaster);
                 pilL.transform.setTranslation(ax - 0.98f, ay, fz);
                 instances.add(pilL);
@@ -670,10 +672,13 @@ public class DhakaCampusWorld implements Disposable {
                 pilR.transform.setTranslation(ax + 0.98f, ay, fz);
                 instances.add(pilR);
 
-                // Top stone arch crown
+                // Top stone arch crown & keystone
                 ModelInstance crown = new ModelInstance(archCrown);
-                crown.transform.setTranslation(ax, ay + 1.9f, fz + 0.02f);
+                crown.transform.setTranslation(ax, ay + 1.82f, fz + 0.04f);
                 instances.add(crown);
+                ModelInstance kstone = new ModelInstance(archKeystone);
+                kstone.transform.setTranslation(ax, ay + 1.88f, fz + 0.08f);
+                instances.add(kstone);
 
                 if (isGround) {
                     // Ground floor: Authentic carved Burma teak wooden double door with brass knockers
@@ -686,13 +691,21 @@ public class DhakaCampusWorld implements Disposable {
                     win.transform.setTranslation(ax, ay, fz);
                     instances.add(win);
                     ModelInstance sill = new ModelInstance(archSill);
-                    sill.transform.setTranslation(ax, ay - 1.65f, fz + 0.05f);
+                    sill.transform.setTranslation(ax, ay - 1.72f, fz + 0.06f);
                     instances.add(sill);
+
+                    // Decorative twin stone brackets supporting the window sill
+                    ModelInstance corbL = new ModelInstance(archCorbel);
+                    corbL.transform.setTranslation(ax - 0.65f, ay - 1.90f, fz + 0.03f);
+                    instances.add(corbL);
+                    ModelInstance corbR = new ModelInstance(archCorbel);
+                    corbR.transform.setTranslation(ax + 0.65f, ay - 1.90f, fz + 0.03f);
+                    instances.add(corbR);
                 }
             }
         }
 
-        // Cream string course between the floors
+        // Refined sandstone string course between the floors
         ModelInstance bandInst = new ModelInstance(floorBand);
         bandInst.transform.setTranslation(0f, 5.8f, -23.38f);
         instances.add(bandInst);
@@ -701,7 +714,7 @@ public class DhakaCampusWorld implements Disposable {
         Model portalJamb = mb.createBox(0.48f, 8.8f, 0.45f, curzonTrimMat, attr);
         Model portalHeader = mb.createBox(6.4f, 0.65f, 0.45f, curzonTrimMat, attr);
         Model mainArch = mb.createBox(5.2f, 8.4f, 0.6f, archCavity, attr);
-        Model doorLeaf = mb.createBox(4.4f, 7.2f, 0.25f, teakDoorMat, attr);
+        Model doorLeaf = mb.createBox(3.8f, 7.2f, 0.25f, teakDoorMat, attr);
         models.add(portalJamb);
         models.add(portalHeader);
         models.add(mainArch);
@@ -709,10 +722,10 @@ public class DhakaCampusWorld implements Disposable {
 
         // Portal frame jambs (left & right)
         ModelInstance jambL = new ModelInstance(portalJamb);
-        jambL.transform.setTranslation(-2.8f, 4.6f, -20.55f);
+        jambL.transform.setTranslation(-2.6f, 4.6f, -20.55f);
         instances.add(jambL);
         ModelInstance jambR = new ModelInstance(portalJamb);
-        jambR.transform.setTranslation(2.8f, 4.6f, -20.55f);
+        jambR.transform.setTranslation(2.6f, 4.6f, -20.55f);
         instances.add(jambR);
 
         // Portal header
@@ -733,6 +746,8 @@ public class DhakaCampusWorld implements Disposable {
         Model redCarpet = mb.createBox(3.8f, 0.04f, 4.6f, redCarpetMat, attr);
         models.add(redCarpet);
         ModelInstance carpetInst = new ModelInstance(redCarpet);
+        carpetInst.transform.setTranslation(0f, 0.62f, -19.5f);
+        instances.add(carpetInst);
         carpetInst.transform.setTranslation(0f, 0.62f, -19.5f);
         instances.add(carpetInst);
 
