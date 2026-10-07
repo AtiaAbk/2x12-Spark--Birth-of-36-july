@@ -2046,38 +2046,372 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     // ==========================================
-    // GRAND LEVEL 1 VICTORY / CONGRATULATIONS SCREEN
+    // 4b. BOSS HEALTH BAR & COMBAT HUD
     // ==========================================
-    private void renderVictoryScreen(float w, float h) {
+    private void renderBossHealthBar(bd.spark36.character.HelmetGoon goon, float w, float h) {
+        float bw = 560f;
+        float bh = 18f;
+        float bx = (w - bw) / 2f;
+        float by = h - 56f;
+
         beginShapes(ShapeType.Filled);
-        // Dim screen background (translucent: 3D campus remains visible)
-        shapeRenderer.setColor(0f, 0f, 0f, 0.45f);
+        // Smoked glass panel behind boss bar
+        fillGlassPanel(bx - 16f, by - 26f, bw + 32f, bh + 48f);
+
+        // Bar track
+        shapeRenderer.setColor(0.18f, 0.08f, 0.08f, 0.88f);
+        shapeRenderer.rect(bx, by, bw, bh);
+
+        // Boss Health Fill
+        float pct = MathUtils.clamp(goon.getHealth() / goon.getMaxHealth(), 0f, 1f);
+        float fillW = bw * pct;
+        if (fillW > 0f) {
+            Color barCol = goon.isKnockedOut() ? Color.GREEN : new Color(0.92f, 0.20f, 0.16f, 0.95f);
+            shapeRenderer.setColor(barCol);
+            shapeRenderer.rect(bx, by, fillW, bh);
+
+            // Glowing highlight line at top of fill
+            shapeRenderer.setColor(1.0f, 0.65f, 0.35f, 0.40f);
+            shapeRenderer.rect(bx, by + bh - 3f, fillW, 3f);
+        }
+
+        // Diamond crest at top center
+        shapeRenderer.setColor(goldAccent);
+        float cdX = bx + bw / 2f;
+        float cdY = by + bh + 14f;
+        float cdS = 5f;
+        shapeRenderer.triangle(cdX, cdY + cdS, cdX + cdS, cdY, cdX, cdY - cdS);
+        shapeRenderer.triangle(cdX, cdY + cdS, cdX - cdS, cdY, cdX, cdY - cdS);
+        shapeRenderer.end();
+
+        beginShapes(ShapeType.Line);
+        strokeGlassBorder(bx, by, bw, bh);
+
+        // Corner teeth
+        shapeRenderer.setColor(goldAccent);
+        float cL = 8f;
+        shapeRenderer.line(bx - 3f, by + bh + 3f, bx + cL, by + bh + 3f);
+        shapeRenderer.line(bx - 3f, by + bh + 3f, bx - 3f, by + bh - cL);
+        shapeRenderer.line(bx + bw + 3f, by + bh + 3f, bx + bw - cL, by + bh + 3f);
+        shapeRenderer.line(bx + bw + 3f, by + bh + 3f, bx + bw + 3f, by + bh - cL);
+        shapeRenderer.line(bx - 3f, by - 3f, bx + cL, by - 3f);
+        shapeRenderer.line(bx - 3f, by - 3f, bx - 3f, by + cL);
+        shapeRenderer.line(bx + bw + 3f, by - 3f, bx + bw - cL, by - 3f);
+        shapeRenderer.line(bx + bw + 3f, by - 3f, bx + bw + 3f, by + cL);
+        shapeRenderer.end();
+
+        spriteBatch.begin();
+        fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
+        fonts.headerFont.draw(spriteBatch, "⚔ HELMET THUG ENFORCER ⚔", bx + 10f + 1f, by + bh + 19f);
+        fonts.headerFont.setColor(goldAccent);
+        fonts.headerFont.draw(spriteBatch, "⚔ HELMET THUG ENFORCER ⚔", bx + 10f, by + bh + 20f);
+
+        String subTitle = "LEAGUE GOON • LATHI WIELDER";
+        fonts.smallFont.setColor(new Color(0.85f, 0.82f, 0.78f, 0.90f));
+        fonts.smallFont.draw(spriteBatch, subTitle, bx + 10f, by - 8f);
+
+        String hpText = goon.isKnockedOut() ? "DEFEATED / পরাজিত" : String.format("HP: %d / %d", (int)goon.getHealth(), (int)goon.getMaxHealth());
+        fonts.headerFont.setColor(goon.isKnockedOut() ? Color.GREEN : new Color(1.0f, 0.92f, 0.80f, 1f));
+        glyphLayout.setText(fonts.headerFont, hpText);
+        fonts.headerFont.draw(spriteBatch, hpText, bx + bw - glyphLayout.width - 8f, by + bh + 20f);
+        spriteBatch.end();
+    }
+
+    private void renderBossChallengeDialogue(bd.spark36.character.HelmetGoon goon, float w, float h) {
+        float dw = 760f;
+        float dh = 70f;
+        float dx = (w - dw) / 2f;
+        float dy = h - 145f;
+
+        beginShapes(ShapeType.Filled);
+        fillGlassPanel(dx, dy, dw, dh);
+        shapeRenderer.setColor(1.0f, 0.55f, 0.20f, 0.90f);
+        shapeRenderer.rect(dx, dy + dh - 3f, dw, 3f);
+        shapeRenderer.end();
+
+        beginShapes(ShapeType.Line);
+        strokeGlassBorder(dx, dy, dw, dh);
+        shapeRenderer.end();
+
+        spriteBatch.begin();
+        fonts.headerFont.setColor(new Color(1.0f, 0.65f, 0.30f, 1f));
+        fonts.headerFont.draw(spriteBatch, "⚔ HELMET THUG: \"Oi shon! Ei campus theke ekhuni bhag, noile lathi diye matha fatiye debo!\"", dx + 18f, dy + dh - 16f);
+
+        fonts.promptFont.setColor(goldAccent);
+        fonts.promptFont.draw(spriteBatch, "[F] ACCEPT CHALLENGE   •   [Left-Click] PUNCH   [Q/K] KICK   [C] CROUCH/DODGE   [B] BLOCK", dx + 18f, dy + 22f);
+        spriteBatch.end();
+    }
+
+    private void renderCombatFloatingPopup(String text, Color color, float w, float h) {
+        spriteBatch.begin();
+        glyphLayout.setText(fonts.titleFont, text);
+        float tx = (w - glyphLayout.width) / 2f;
+        float ty = h / 2f + 115f;
+
+        fonts.titleFont.setColor(0f, 0f, 0f, 0.92f);
+        fonts.titleFont.draw(spriteBatch, text, tx + 2f, ty - 2f);
+        fonts.titleFont.setColor(color != null ? color : Color.WHITE);
+        fonts.titleFont.draw(spriteBatch, text, tx, ty);
+        spriteBatch.end();
+    }
+
+    // ==========================================
+    // DISQUALIFICATION OVERLAY (Campus Peace Rule)
+    // ==========================================
+    private void renderDisqualificationScreen(float w, float h) {
+        float backbufferW = (float) Gdx.graphics.getBackBufferWidth();
+        float backbufferH = (float) Gdx.graphics.getBackBufferHeight();
+        float mouseX = ((float) Gdx.input.getX() / backbufferW) * w;
+        float mouseY = (1.0f - (float) Gdx.input.getY() / backbufferH) * h;
+
+        beginShapes(ShapeType.Filled);
+        // Dim screen background with dark crimson tint
+        shapeRenderer.setColor(0.12f, 0.02f, 0.02f, 0.82f);
         shapeRenderer.rect(0, 0, w, h);
 
-        float vw = 760f;
-        float vh = 520f;
+        float dw = 800f;
+        float dh = 440f;
+        float dx = (w - dw) / 2f;
+        float dy = (h - dh) / 2f;
+
+        // Smoked glass panel
+        shapeRenderer.setColor(0.05f, 0.02f, 0.03f, 0.92f);
+        shapeRenderer.rect(dx, dy, dw, dh);
+
+        // Header band in danger red
+        shapeRenderer.setColor(0.35f, 0.06f, 0.08f, 0.92f);
+        shapeRenderer.rect(dx, dy + dh - 70f, dw, 70f);
+
+        // Top crimson accent line
+        shapeRenderer.setColor(1.0f, 0.25f, 0.20f, 1f);
+        shapeRenderer.rect(dx, dy + dh - 4f, dw, 4f);
+
+        // Sub-box for rule explanation
+        float sx = dx + 35f;
+        float sy = dy + 110f;
+        float sw = dw - 70f;
+        float sh = 88f;
+        shapeRenderer.setColor(0.10f, 0.04f, 0.05f, 0.85f);
+        shapeRenderer.rect(sx, sy, sw, sh);
+
+        // Buttons
+        float btnY = dy + 35f;
+        float btnH = 46f;
+        // Button 1: Retry
+        float b1X = dx + 85f, b1W = 260f;
+        boolean b1Hover = (mouseX >= b1X && mouseX <= b1X + b1W && mouseY >= btnY && mouseY <= btnY + btnH);
+        shapeRenderer.setColor(b1Hover ? new Color(0.45f, 0.15f, 0.15f, 0.90f) : new Color(0.20f, 0.06f, 0.08f, 0.85f));
+        shapeRenderer.rect(b1X, btnY, b1W, btnH);
+
+        // Button 2: Main Menu
+        float b2X = dx + 455f, b2W = 260f;
+        boolean b2Hover = (mouseX >= b2X && mouseX <= b2X + b2W && mouseY >= btnY && mouseY <= btnY + btnH);
+        shapeRenderer.setColor(b2Hover ? new Color(0.35f, 0.25f, 0.10f, 0.90f) : new Color(0.15f, 0.10f, 0.06f, 0.85f));
+        shapeRenderer.rect(b2X, btnY, b2W, btnH);
+        shapeRenderer.end();
+
+        beginShapes(ShapeType.Line);
+        shapeRenderer.setColor(new Color(0.95f, 0.30f, 0.25f, 0.90f));
+        shapeRenderer.rect(dx, dy, dw, dh);
+        shapeRenderer.line(dx, dy + dh - 70f, dx + dw, dy + dh - 70f);
+        shapeRenderer.rect(sx, sy, sw, sh);
+        shapeRenderer.rect(b1X, btnY, b1W, btnH);
+        shapeRenderer.rect(b2X, btnY, b2W, btnH);
+        shapeRenderer.end();
+
+        spriteBatch.begin();
+        fonts.titleFont.setColor(new Color(1.0f, 0.35f, 0.30f, 1f));
+        fonts.titleFont.draw(spriteBatch, "DISQUALIFIED -- CAMPUS PEACE VIOLATION", dx + 35f, dy + dh - 20f);
+
+        fonts.headerFont.setColor(new Color(1.0f, 0.85f, 0.80f, 1f));
+        fonts.headerFont.draw(spriteBatch, "নির্দোষ শিক্ষার্থীর উপর হামলা নিষিদ্ধ / ATTACK ON INNOCENT STUDENT", dx + 35f, dy + dh - 46f);
+
+        fonts.bodyFont.setColor(Color.WHITE);
+        fonts.bodyFont.draw(spriteBatch,
+            "You struck an innocent campus student! The Student Movement for meritocracy and justice is founded upon peaceful solidarity, disciplined restraint, and moral courage.",
+            dx + 35f, dy + dh - 95f, dw - 70f, 10, true);
+
+        fonts.bodyFont.setColor(new Color(0.90f, 0.85f, 0.85f, 1f));
+        fonts.bodyFont.draw(spriteBatch,
+            "Unprovoked violence against unarmed campus peers violates the core code of 36 July and results in immediate disqualification.",
+            dx + 35f, dy + dh - 140f, dw - 70f, 10, true);
+
+        fonts.headerFont.setColor(goldAccent);
+        fonts.headerFont.draw(spriteBatch, "RULE OF ENGAGEMENT", sx + 18f, sy + sh - 14f);
+
+        fonts.smallFont.setColor(new Color(1.0f, 0.90f, 0.85f, 1f));
+        fonts.smallFont.draw(spriteBatch,
+            "Self-defense is permitted only against armed enforcers (e.g. Helmet Thugs). Defend unarmed peers, never harm them.",
+            sx + 18f, sy + 32f);
+
+        fonts.headerFont.setColor(b1Hover ? Color.WHITE : new Color(1f, 0.80f, 0.80f, 1f));
+        fonts.headerFont.draw(spriteBatch, "[R] RETRY MISSION", b1X + 35f, btnY + 30f);
+
+        fonts.headerFont.setColor(b2Hover ? Color.WHITE : goldAccent);
+        fonts.headerFont.draw(spriteBatch, "[ESC] MAIN MENU", b2X + 45f, btnY + 30f);
+        spriteBatch.end();
+    }
+
+    // ==========================================
+    // DEFEAT OVERLAY (Player Knocked Out)
+    // ==========================================
+    private void renderDefeatScreen(float w, float h) {
+        float backbufferW = (float) Gdx.graphics.getBackBufferWidth();
+        float backbufferH = (float) Gdx.graphics.getBackBufferHeight();
+        float mouseX = ((float) Gdx.input.getX() / backbufferW) * w;
+        float mouseY = (1.0f - (float) Gdx.input.getY() / backbufferH) * h;
+
+        beginShapes(ShapeType.Filled);
+        shapeRenderer.setColor(0.08f, 0.02f, 0.02f, 0.80f);
+        shapeRenderer.rect(0, 0, w, h);
+
+        float dw = 800f;
+        float dh = 440f;
+        float dx = (w - dw) / 2f;
+        float dy = (h - dh) / 2f;
+
+        shapeRenderer.setColor(0.04f, 0.03f, 0.05f, 0.92f);
+        shapeRenderer.rect(dx, dy, dw, dh);
+
+        shapeRenderer.setColor(0.24f, 0.08f, 0.08f, 0.92f);
+        shapeRenderer.rect(dx, dy + dh - 70f, dw, 70f);
+
+        shapeRenderer.setColor(goldAccent);
+        shapeRenderer.rect(dx, dy + dh - 4f, dw, 4f);
+
+        float sx = dx + 35f;
+        float sy = dy + 110f;
+        float sw = dw - 70f;
+        float sh = 88f;
+        shapeRenderer.setColor(0.08f, 0.08f, 0.10f, 0.85f);
+        shapeRenderer.rect(sx, sy, sw, sh);
+
+        float btnY = dy + 35f;
+        float btnH = 46f;
+        float b1X = dx + 85f, b1W = 260f;
+        boolean b1Hover = (mouseX >= b1X && mouseX <= b1X + b1W && mouseY >= btnY && mouseY <= btnY + btnH);
+        shapeRenderer.setColor(b1Hover ? new Color(0.35f, 0.15f, 0.10f, 0.90f) : new Color(0.18f, 0.08f, 0.06f, 0.85f));
+        shapeRenderer.rect(b1X, btnY, b1W, btnH);
+
+        float b2X = dx + 455f, b2W = 260f;
+        boolean b2Hover = (mouseX >= b2X && mouseX <= b2X + b2W && mouseY >= btnY && mouseY <= btnY + btnH);
+        shapeRenderer.setColor(b2Hover ? new Color(0.30f, 0.25f, 0.10f, 0.90f) : new Color(0.15f, 0.10f, 0.06f, 0.85f));
+        shapeRenderer.rect(b2X, btnY, b2W, btnH);
+        shapeRenderer.end();
+
+        beginShapes(ShapeType.Line);
+        shapeRenderer.setColor(goldBorder);
+        shapeRenderer.rect(dx, dy, dw, dh);
+        shapeRenderer.line(dx, dy + dh - 70f, dx + dw, dy + dh - 70f);
+        shapeRenderer.rect(sx, sy, sw, sh);
+        shapeRenderer.rect(b1X, btnY, b1W, btnH);
+        shapeRenderer.rect(b2X, btnY, b2W, btnH);
+        shapeRenderer.end();
+
+        spriteBatch.begin();
+        fonts.titleFont.setColor(new Color(1.0f, 0.45f, 0.35f, 1f));
+        fonts.titleFont.draw(spriteBatch, "DEFEATED IN COMBAT / যুদ্ধে ভূপাতিত", dx + 35f, dy + dh - 20f);
+
+        fonts.headerFont.setColor(new Color(0.95f, 0.90f, 0.80f, 1f));
+        fonts.headerFont.draw(spriteBatch, "KNOCKED OUT BY HELMET ENFORCER'S LATHI", dx + 35f, dy + dh - 46f);
+
+        fonts.bodyFont.setColor(Color.WHITE);
+        fonts.bodyFont.draw(spriteBatch,
+            "You were struck down by the Helmet Enforcer. But the courage of 36 July cannot be silenced. Stand back up and liberate the campus!",
+            dx + 35f, dy + dh - 95f, dw - 70f, 10, true);
+
+        fonts.headerFont.setColor(goldAccent);
+        fonts.headerFont.draw(spriteBatch, "MARTIAL ARTS COMBAT TIPS", sx + 18f, sy + sh - 14f);
+
+        fonts.smallFont.setColor(new Color(0.95f, 0.95f, 0.95f, 1f));
+        fonts.smallFont.draw(spriteBatch,
+            "• Crouch / Duck [C] to evade high horizontal lathi swings!\n• Guard / Block [B] to deflect 80% heavy overhead strikes!\n• Retaliate with Punches [Left-Click] and Martial Kicks [Q / K]!",
+            sx + 18f, sy + 52f);
+
+        fonts.headerFont.setColor(b1Hover ? Color.WHITE : goldAccent);
+        fonts.headerFont.draw(spriteBatch, "[R] RETRY COMBAT", b1X + 35f, btnY + 30f);
+
+        fonts.headerFont.setColor(b2Hover ? Color.WHITE : new Color(0.90f, 0.85f, 0.80f, 1f));
+        fonts.headerFont.draw(spriteBatch, "[ESC] MAIN MENU", b2X + 45f, btnY + 30f);
+        spriteBatch.end();
+    }
+
+    // ==========================================
+    // GRAND LEVEL 1 VICTORY & CINEMATIC FINISH SCREEN
+    // ==========================================
+    private void renderVictoryScreen(float w, float h) {
+        float backbufferW = (float) Gdx.graphics.getBackBufferWidth();
+        float backbufferH = (float) Gdx.graphics.getBackBufferHeight();
+        float mouseX = ((float) Gdx.input.getX() / backbufferW) * w;
+        float mouseY = (1.0f - (float) Gdx.input.getY() / backbufferH) * h;
+
+        // 1. Cinematic Background Artwork / Wallpaper (if available)
+        com.badlogic.gdx.graphics.Texture bgTex = getCinematicFinishTexture();
+        if (bgTex != null) {
+            spriteBatch.begin();
+            spriteBatch.setColor(1f, 1f, 1f, 0.55f);
+            spriteBatch.draw(bgTex, 0, 0, w, h);
+            spriteBatch.end();
+        }
+
+        beginShapes(ShapeType.Filled);
+        // Dim screen background with rich cinematic dark gradient
+        shapeRenderer.setColor(0.01f, 0.02f, 0.04f, bgTex != null ? 0.45f : 0.65f);
+        shapeRenderer.rect(0, 0, w, h);
+
+        float vw = 860f;
+        float vh = 580f;
         float vx = (w - vw) / 2f;
         float vy = (h - vh) / 2f;
 
-        // Translucent glass panel
-        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.85f);
+        // Translucent glass panel matching Where Winds Meet aesthetics
+        shapeRenderer.setColor(0.02f, 0.04f, 0.07f, 0.88f);
         shapeRenderer.rect(vx, vy, vw, vh);
 
         // Header band
-        shapeRenderer.setColor(0.06f, 0.05f, 0.03f, 0.85f);
+        shapeRenderer.setColor(0.06f, 0.06f, 0.04f, 0.90f);
         shapeRenderer.rect(vx, vy + vh - 75f, vw, 75f);
 
         // Gold top accent
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(vx, vy + vh - 4f, vw, 4f);
 
+        // Narrative box
+        float nx = vx + 35f;
+        float ny = vy + 245f;
+        float nw = vw - 70f;
+        float nh = 120f;
+        shapeRenderer.setColor(0.05f, 0.07f, 0.10f, 0.75f);
+        shapeRenderer.rect(nx, ny, nw, nh);
+
         // Statistics sub-card
-        float sx = vx + 40f;
-        float sy = vy + 115f;
-        float sw = vw - 80f;
-        float sh = 105f;
-        shapeRenderer.setColor(0.08f, 0.10f, 0.13f, 0.80f);
+        float sx = vx + 35f;
+        float sy = vy + 105f;
+        float sw = vw - 70f;
+        float sh = 125f;
+        shapeRenderer.setColor(0.06f, 0.09f, 0.12f, 0.85f);
         shapeRenderer.rect(sx, sy, sw, sh);
+
+        // Interactive Button Backgrounds (Hoverable)
+        float btnY = vy + 38f;
+        float btnH = 46f;
+        // Button 1: Menu
+        float b1X = vx + 45f, b1W = 230f;
+        boolean b1Hover = (mouseX >= b1X && mouseX <= b1X + b1W && mouseY >= btnY && mouseY <= btnY + btnH);
+        shapeRenderer.setColor(b1Hover ? new Color(0.35f, 0.28f, 0.12f, 0.95f) : new Color(0.12f, 0.14f, 0.18f, 0.85f));
+        shapeRenderer.rect(b1X, btnY, b1W, btnH);
+
+        // Button 2: Replay
+        float b2X = vx + 315f, b2W = 230f;
+        boolean b2Hover = (mouseX >= b2X && mouseX <= b2X + b2W && mouseY >= btnY && mouseY <= btnY + btnH);
+        shapeRenderer.setColor(b2Hover ? new Color(0.20f, 0.35f, 0.25f, 0.95f) : new Color(0.12f, 0.14f, 0.18f, 0.85f));
+        shapeRenderer.rect(b2X, btnY, b2W, btnH);
+
+        // Button 3: Exit
+        float b3X = vx + 585f, b3W = 230f;
+        boolean b3Hover = (mouseX >= b3X && mouseX <= b3X + b3W && mouseY >= btnY && mouseY <= btnY + btnH);
+        shapeRenderer.setColor(b3Hover ? new Color(0.38f, 0.15f, 0.15f, 0.95f) : new Color(0.12f, 0.14f, 0.18f, 0.85f));
+        shapeRenderer.rect(b3X, btnY, b3W, btnH);
         shapeRenderer.end();
 
         // Lines and Borders
@@ -2085,65 +2419,71 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.rect(vx, vy, vw, vh);
         shapeRenderer.line(vx, vy + vh - 75f, vx + vw, vy + vh - 75f);
+        shapeRenderer.rect(nx, ny, nw, nh);
         shapeRenderer.rect(sx, sy, sw, sh);
+
+        shapeRenderer.setColor(b1Hover ? goldAccent : goldBorder);
+        shapeRenderer.rect(b1X, btnY, b1W, btnH);
+
+        shapeRenderer.setColor(b2Hover ? Color.GREEN : goldBorder);
+        shapeRenderer.rect(b2X, btnY, b2W, btnH);
+
+        shapeRenderer.setColor(b3Hover ? Color.RED : goldBorder);
+        shapeRenderer.rect(b3X, btnY, b3W, btnH);
 
         // Ornate Corner Brackets (⌜ ⌝ ⌞ ⌟)
         float cLen = 22f;
         shapeRenderer.setColor(goldAccent);
-        // Top-Left
         shapeRenderer.line(vx - 4f, vy + vh + 4f, vx + cLen, vy + vh + 4f);
         shapeRenderer.line(vx - 4f, vy + vh + 4f, vx - 4f, vy + vh - cLen);
-        // Top-Right
         shapeRenderer.line(vx + vw + 4f, vy + vh + 4f, vx + vw - cLen, vy + vh + 4f);
         shapeRenderer.line(vx + vw + 4f, vy + vh + 4f, vx + vw + 4f, vy + vh - cLen);
-        // Bottom-Left
         shapeRenderer.line(vx - 4f, vy - 4f, vx + cLen, vy - 4f);
         shapeRenderer.line(vx - 4f, vy - 4f, vx - 4f, vy + cLen);
-        // Bottom-Right
         shapeRenderer.line(vx + vw + 4f, vy - 4f, vx + vw - cLen, vy - 4f);
         shapeRenderer.line(vx + vw + 4f, vy - 4f, vx + vw + 4f, vy + cLen);
         shapeRenderer.end();
 
         // Typography
         spriteBatch.begin();
-        // Title
         fonts.titleFont.setColor(goldAccent);
-        fonts.titleFont.draw(spriteBatch, "CONGRATULATIONS!", vx + 40f, vy + vh - 22f);
+        fonts.titleFont.draw(spriteBatch, "CONGRATULATIONS! LEVEL 1 VICTORY ACHIEVED", vx + 35f, vy + vh - 20f);
 
         fonts.headerFont.setColor(new Color(0.95f, 0.90f, 0.80f, 1f));
-        fonts.headerFont.draw(spriteBatch, "LEVEL 1 COMPLETED -- 36 JULY: THE SPARK OF FREEDOM", vx + 40f, vy + vh - 48f);
+        fonts.headerFont.draw(spriteBatch, "36 JULY: THE SPARK OF FREEDOM / ৩৬ জুলাই: স্বাধীনতার স্ফুলিঙ্গ", vx + 35f, vy + vh - 48f);
 
         // Historical Tribute Narrative
         fonts.bodyFont.setColor(Color.WHITE);
         fonts.bodyFont.draw(spriteBatch,
-            "You have successfully documented all 5 historical checkpoints of the July 2024 Student Mass Uprising across Dhaka University campus.",
-            vx + 40f, vy + vh - 100f, vw - 80f, 10, true);
+            "You have documented all 5 historical archives of the July 2024 Student Mass Uprising and successfully repelled the campus intimidation enforcer with bare-handed martial arts courage!",
+            nx + 18f, ny + nh - 18f, nw - 36f, 10, true);
 
-        fonts.bodyFont.setColor(new Color(0.88f, 0.88f, 0.90f, 1f));
+        fonts.bodyFont.setColor(new Color(0.88f, 0.88f, 0.92f, 1f));
         fonts.bodyFont.draw(spriteBatch,
-            "From the initial solidarity at Curzon Hall to the climax of 36 July (August 5), students and citizens stood united for meritocracy, equality, and democratic rights. Authoritarian rule dissolved, opening a new dawn of freedom for Bangladesh.",
-            vx + 40f, vy + vh - 145f, vw - 80f, 10, true);
+            "From the initial solidarity at Curzon Hall to the climax of 36 July (August 5), students and citizens stood united for meritocracy, equal dignity, and truth. The campus remains free and proud.",
+            nx + 18f, ny + nh - 65f, nw - 36f, 10, true);
 
         // Statistics Card
         fonts.headerFont.setColor(goldAccent);
-        fonts.headerFont.draw(spriteBatch, "MISSION STATISTICS", sx + 20f, sy + sh - 15f);
+        fonts.headerFont.draw(spriteBatch, "MISSION PERFORMANCE & STATISTICS", sx + 20f, sy + sh - 15f);
 
         fonts.smallFont.setColor(Color.WHITE);
-        fonts.smallFont.draw(spriteBatch, "Historical Archives Documented: 5 / 5 (100% Completed)", sx + 20f, sy + 52f);
-        fonts.smallFont.draw(spriteBatch, "Campus Sector Explored: Curzon Hall & Central Avenue", sx + 20f, sy + 30f);
+        fonts.smallFont.draw(spriteBatch, "Historical Archives Documented: 5 / 5 (100% Complete)", sx + 20f, sy + 76f);
+        fonts.smallFont.draw(spriteBatch, "Campus Defense: Helmet Goon Neutralized (Unarmed Martial Arts)", sx + 20f, sy + 52f);
+        fonts.smallFont.draw(spriteBatch, "Campus Peace Rule: Upheld (0 Innocent Students Harmed)", sx + 20f, sy + 28f);
 
-        fonts.smallFont.setColor(Color.GREEN);
-        fonts.smallFont.draw(spriteBatch, "STATUS: VICTORY ACHIEVED", sx + sw - 210f, sy + 42f);
+        fonts.headerFont.setColor(Color.GREEN);
+        fonts.headerFont.draw(spriteBatch, "RANK S • HERO OF 36 JULY", sx + sw - 290f, sy + 58f);
 
         // Interactive action prompts
-        fonts.promptFont.setColor(goldAccent);
-        fonts.promptFont.draw(spriteBatch, "[ENTER] Return to Main Menu", vx + 50f, vy + 55f);
+        fonts.promptFont.setColor(b1Hover ? Color.WHITE : goldAccent);
+        fonts.promptFont.draw(spriteBatch, "[ENTER] Main Menu", b1X + 35f, btnY + 30f);
 
-        fonts.promptFont.setColor(new Color(1f, 0.80f, 0.40f, 1f));
-        fonts.promptFont.draw(spriteBatch, "[R] Replay Level 1", vx + 330f, vy + 55f);
+        fonts.promptFont.setColor(b2Hover ? Color.WHITE : new Color(1f, 0.85f, 0.45f, 1f));
+        fonts.promptFont.draw(spriteBatch, "[R] Replay Level 1", b2X + 35f, btnY + 30f);
 
-        fonts.promptFont.setColor(new Color(0.95f, 0.40f, 0.35f, 1f));
-        fonts.promptFont.draw(spriteBatch, "[X] Exit Game", vx + 540f, vy + 55f);
+        fonts.promptFont.setColor(b3Hover ? Color.WHITE : new Color(0.95f, 0.45f, 0.40f, 1f));
+        fonts.promptFont.draw(spriteBatch, "[X] Exit Game", b3X + 50f, btnY + 30f);
 
         spriteBatch.end();
     }
