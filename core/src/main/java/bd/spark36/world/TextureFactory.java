@@ -150,36 +150,42 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Mortar base
-        pix.setColor(0.42f, 0.38f, 0.35f, 1f);
+        // Aged lime-sand mortar base
+        pix.setColor(0.35f, 0.31f, 0.28f, 1f);
         pix.fill();
 
-        // Authentic terracotta red brick courses
+        // Authentic Dhaka University terracotta red brick courses (stretcher bond)
         int rows = 32;
         int rowH = size / rows;
         int brickW = size / 16;
 
         for (int r = 0; r < rows; r++) {
-            // Every 8th row is a white ornamental stone cornice line (Indo-Saracenic banding)
-            if (r % 8 == 0) {
-                pix.setColor(0.92f, 0.90f, 0.86f, 1f);
-                pix.fillRectangle(0, r * rowH, size, rowH);
-                continue;
-            }
-
             int y = r * rowH;
             int xOffset = (r % 2 == 0) ? 0 : brickW / 2;
 
             for (int b = -1; b <= 17; b++) {
                 int x = b * brickW + xOffset;
-                float v = (MathUtils.sin(r * 4.1f + b * 7.9f) + 1f) * 0.5f;
+                float v = (MathUtils.sin(r * 3.7f + b * 5.3f) + 1f) * 0.5f;
+                float v2 = (MathUtils.cos(r * 7.1f - b * 4.1f) + 1f) * 0.5f;
 
-                float rCol = 0.54f + v * 0.13f;
-                float gCol = 0.24f + v * 0.07f;
-                float bCol = 0.19f + v * 0.05f;
+                // Rich, deep Mughal terracotta burnt-red variation
+                float rCol = MathUtils.clamp(0.62f + v * 0.16f - v2 * 0.08f, 0.48f, 0.82f);
+                float gCol = MathUtils.clamp(0.18f + v * 0.05f - v2 * 0.03f, 0.11f, 0.26f);
+                float bCol = MathUtils.clamp(0.12f + v * 0.04f - v2 * 0.03f, 0.08f, 0.18f);
 
                 pix.setColor(rCol, gCol, bCol, 1f);
                 pix.fillRectangle(x + 1, y + 1, brickW - 2, rowH - 2);
+
+                // Subtle baked-clay organic stipple
+                for (int s = 0; s < 5; s++) {
+                    int sx = x + 2 + MathUtils.random(Math.max(1, brickW - 6));
+                    int sy = y + 2 + MathUtils.random(Math.max(1, rowH - 6));
+                    float stipple = MathUtils.random(-0.05f, 0.05f);
+                    pix.setColor(MathUtils.clamp(rCol + stipple, 0.42f, 0.85f),
+                                 MathUtils.clamp(gCol + stipple * 0.5f, 0.09f, 0.30f),
+                                 MathUtils.clamp(bCol + stipple * 0.3f, 0.06f, 0.22f), 1f);
+                    pix.drawPixel(sx, sy);
+                }
             }
         }
 
@@ -194,20 +200,19 @@ public class TextureFactory implements Disposable {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Base emerald green
-        pix.setColor(0.22f, 0.44f, 0.18f, 1f);
+        // Base vibrant emerald green
+        pix.setColor(0.16f, 0.46f, 0.14f, 1f);
         pix.fill();
 
-        // Multi-frequency organic turf variation
+        // Multi-frequency organic turf variation matching reference image
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 float n = (MathUtils.sin(x * 0.22f) * MathUtils.cos(y * 0.25f)
                          + MathUtils.sin((x + y) * 0.45f) * 0.5f);
-                // Muted olive grass with fine per-pixel speckle so it doesn't read as flat paint
-                float speckle = MathUtils.random(-0.03f, 0.03f);
-                float r = MathUtils.clamp(0.29f + n * 0.05f + speckle, 0.20f, 0.38f);
-                float g = MathUtils.clamp(0.41f + n * 0.09f + speckle, 0.30f, 0.52f);
-                float b = MathUtils.clamp(0.19f + n * 0.04f + speckle * 0.5f, 0.12f, 0.26f);
+                float speckle = MathUtils.random(-0.04f, 0.04f);
+                float r = MathUtils.clamp(0.20f + n * 0.06f + speckle, 0.12f, 0.32f);
+                float g = MathUtils.clamp(0.48f + n * 0.12f + speckle, 0.34f, 0.64f);
+                float b = MathUtils.clamp(0.14f + n * 0.04f + speckle * 0.4f, 0.08f, 0.22f);
 
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
@@ -226,8 +231,6 @@ public class TextureFactory implements Disposable {
      * hundreds of small leaves in varied greens, and (for the flame tree) scarlet blossoms.
      */
     private Texture createLeafClump(boolean blossoms) {
-        // This is the shaded inner core of each canopy, seen only through gaps between the leaf
-        // cards, so it stays dark and low-contrast.
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
         pix.setColor(0.09f, 0.20f, 0.06f, 1f);
@@ -239,12 +242,51 @@ public class TextureFactory implements Disposable {
             float t = MathUtils.random();
             int r = MathUtils.random(3, 6);
 
-            if (blossoms && MathUtils.random() < 0.08f) {
-                pix.setColor(0.55f + 0.12f * t, 0.10f + 0.08f * t, 0.06f, 1f);
+            if (blossoms && MathUtils.random() < 0.34f) {
+                // Saturated high-contrast fiery scarlet-crimson flowers
+                pix.setColor(0.94f + 0.05f * t, 0.11f + 0.08f * t, 0.06f, 1f);
             } else {
-                pix.setColor(0.12f + 0.10f * t, 0.26f + 0.16f * t, 0.07f + 0.05f * t, 1f);
+                pix.setColor(0.12f + 0.10f * t, 0.32f + 0.18f * t, 0.07f + 0.06f * t, 1f);
             }
-            // Draw at every wrap offset so the tile has no visible seam
+            for (int ox = -size; ox <= size; ox += size) {
+                for (int oy = -size; oy <= size; oy += size) {
+                    pix.fillCircle(x + ox, y + oy, r);
+                }
+            }
+        }
+
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        pix.dispose();
+        return tex;
+    }
+
+    /**
+     * Soft, dense canopy texture for the White Blossom Tree matching user reference image:
+     * Dark branch-shaded base layered with thousands of soft ivory and pure snow-white petals.
+     */
+    private Texture createWhiteBlossomClump() {
+        int size = 256;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+        pix.setColor(0.10f, 0.16f, 0.09f, 1f);
+        pix.fill();
+
+        for (int i = 0; i < 1300; i++) {
+            int x = MathUtils.random(size - 1);
+            int y = MathUtils.random(size - 1);
+            float t = MathUtils.random();
+            int r = MathUtils.random(3, 7);
+
+            if (MathUtils.random() < 0.68f) {
+                // Silvery white and ivory floral blossoms
+                float shade = 0.94f + 0.05f * t;
+                pix.setColor(shade, shade, shade * 0.94f, 1f);
+            } else {
+                // Understory green leaves
+                pix.setColor(0.12f + 0.10f * t, 0.32f + 0.15f * t, 0.09f + 0.05f * t, 1f);
+            }
+
             for (int ox = -size; ox <= size; ox += size) {
                 for (int oy = -size; oy <= size; oy += size) {
                     pix.fillCircle(x + ox, y + oy, r);
@@ -293,19 +335,28 @@ public class TextureFactory implements Disposable {
         }
         drawLeaf(pix, ox, oy, 128, 250, 236, 4, up, 0.20f, 0.30f, 0.09f, 0.26f, 0.38f, 0.10f);
 
-        // Cell 3: blossom clusters, each five petals around a golden centre, over a few leaves
+        // Cell 3: blazing scarlet Krishnachura blossom clusters over feathery leaflets
         ox = cell;
         oy = cell;
-        drawLeaf(pix, ox, oy, 128, 250, 150, 40, up - 0.5f, 0.10f, 0.30f, 0.08f, 0.30f, 0.54f, 0.14f);
-        drawLeaf(pix, ox, oy, 128, 250, 150, 40, up + 0.5f, 0.10f, 0.30f, 0.08f, 0.30f, 0.54f, 0.14f);
-        float[][] flowers = {{92, 96}, {168, 86}, {124, 140}, {70, 168}, {180, 158}, {132, 62}};
+        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up - 0.55f, 0.10f, 0.34f, 0.08f, 0.32f, 0.58f, 0.14f);
+        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up + 0.55f, 0.10f, 0.34f, 0.08f, 0.32f, 0.58f, 0.14f);
+        drawLeaf(pix, ox, oy, 128, 250, 190, 36, up, 0.12f, 0.38f, 0.09f, 0.36f, 0.62f, 0.16f);
+
+        float[][] flowers = {
+            {92, 96}, {168, 86}, {124, 140}, {70, 168}, {180, 158}, {132, 62},
+            {65, 80}, {195, 110}, {145, 185}, {90, 205}, {165, 215}, {110, 105}
+        };
         for (float[] f : flowers) {
             for (int p = 0; p < 5; p++) {
-                float ang = p * MathUtils.PI2 / 5f + f[0] * 0.1f;
-                drawLeaf(pix, ox, oy, f[0], f[1], 40f, 15f, ang, 0.74f, 0.08f, 0.05f, 0.97f, 0.32f, 0.10f);
+                float ang = p * MathUtils.PI2 / 5f + f[0] * 0.15f;
+                // Saturated high-contrast scarlet-red petals
+                drawLeaf(pix, ox, oy, f[0], f[1], 44f, 17f, ang, 0.90f, 0.08f, 0.05f, 0.99f, 0.28f, 0.08f);
             }
-            pix.setColor(1f, 0.82f, 0.28f, 1f);
-            pix.fillCircle(ox + (int) f[0], oy + (int) f[1], 4);
+            // Glowing golden central stamens
+            pix.setColor(1.0f, 0.90f, 0.20f, 1f);
+            pix.fillCircle(ox + (int) f[0], oy + (int) f[1], 5);
+            pix.setColor(1.0f, 0.98f, 0.60f, 1f);
+            pix.fillCircle(ox + (int) f[0], oy + (int) f[1], 2);
         }
 
         Texture tex = new Texture(pix, Format.RGBA8888, true);
@@ -367,6 +418,307 @@ public class TextureFactory implements Disposable {
         tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
         pix.dispose();
         return tex;
+    }
+
+    /**
+     * 2x2 atlas of white blossom cards (each cell 256px) matching user reference image:
+     * Dense clusters of five-petaled snow-white & ivory flowers with golden stamens and delicate green calyxes.
+     */
+    private Texture createWhiteBlossomAtlas() {
+        int cell = 256;
+        Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill();
+
+        // Cell 0: Dense bouquet of white petals with golden stamens
+        drawWhiteBlossomCluster(pix, 0, 0, 16);
+        // Cell 1: Fan of white blossoms with small green leaf calyxes
+        drawWhiteBlossomFan(pix, cell, 0);
+        // Cell 2: Spray of pure white cherry/magnolia florets
+        drawWhiteBlossomSpray(pix, 0, cell);
+        // Cell 3: Delicate white floral rosettes with golden centers
+        drawWhiteBlossomCluster(pix, cell, cell, 20);
+
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
+        pix.dispose();
+        return tex;
+    }
+
+    private void drawWhiteBlossomCluster(Pixmap pix, int ox, int oy, int flowerCount) {
+        final float up = -MathUtils.HALF_PI;
+        // Background leafy calyxes
+        drawLeaf(pix, ox, oy, 128, 250, 140, 36, up - 0.45f, 0.12f, 0.35f, 0.08f, 0.30f, 0.55f, 0.14f);
+        drawLeaf(pix, ox, oy, 128, 250, 140, 36, up + 0.45f, 0.12f, 0.35f, 0.08f, 0.30f, 0.55f, 0.14f);
+
+        for (int i = 0; i < flowerCount; i++) {
+            float fx = 45f + MathUtils.random(166f);
+            float fy = 45f + MathUtils.random(175f);
+            float rad = MathUtils.random(18f, 32f);
+
+            // 5 snow-white petals with subtle ivory base
+            for (int p = 0; p < 5; p++) {
+                float ang = p * MathUtils.PI2 / 5f + MathUtils.random(-0.15f, 0.15f);
+                float px = fx + MathUtils.cos(ang) * (rad * 0.45f);
+                float py = fy + MathUtils.sin(ang) * (rad * 0.45f);
+                float pr = rad * 0.55f;
+
+                pix.setColor(0.98f, 0.98f, 0.96f, 1f);
+                pix.fillCircle(ox + (int)px, oy + (int)py, (int)pr);
+                pix.setColor(1.0f, 1.0f, 1.0f, 1f);
+                pix.fillCircle(ox + (int)px, oy + (int)py, Math.max(1, (int)(pr * 0.6f)));
+            }
+
+            // Warm golden amber pistils / central stamens
+            pix.setColor(1.0f, 0.85f, 0.25f, 1f);
+            pix.fillCircle(ox + (int)fx, oy + (int)fy, 4);
+            pix.setColor(1.0f, 0.96f, 0.65f, 1f);
+            pix.fillCircle(ox + (int)fx, oy + (int)fy, 2);
+        }
+    }
+
+    private void drawWhiteBlossomFan(Pixmap pix, int ox, int oy) {
+        final float up = -MathUtils.HALF_PI;
+        drawLeaf(pix, ox, oy, 128, 246, 175, 42, up - 0.65f, 0.12f, 0.36f, 0.09f, 0.34f, 0.58f, 0.15f);
+        drawLeaf(pix, ox, oy, 128, 246, 175, 42, up + 0.65f, 0.12f, 0.36f, 0.09f, 0.34f, 0.58f, 0.15f);
+        drawLeaf(pix, ox, oy, 128, 246, 210, 48, up, 0.10f, 0.32f, 0.08f, 0.30f, 0.54f, 0.13f);
+
+        for (int i = 0; i < 12; i++) {
+            float fx = 55f + MathUtils.random(146f);
+            float fy = 50f + MathUtils.random(155f);
+            float rad = MathUtils.random(16f, 28f);
+
+            for (int p = 0; p < 5; p++) {
+                float ang = p * MathUtils.PI2 / 5f;
+                float px = fx + MathUtils.cos(ang) * (rad * 0.42f);
+                float py = fy + MathUtils.sin(ang) * (rad * 0.42f);
+                pix.setColor(0.97f, 0.97f, 0.95f, 1f);
+                pix.fillCircle(ox + (int)px, oy + (int)py, (int)(rad * 0.5f));
+            }
+            pix.setColor(1.0f, 0.88f, 0.22f, 1f);
+            pix.fillCircle(ox + (int)fx, oy + (int)fy, 4);
+        }
+    }
+
+    private void drawWhiteBlossomSpray(Pixmap pix, int ox, int oy) {
+        final float up = -MathUtils.HALF_PI;
+        drawLeaf(pix, ox, oy, 128, 250, 230, 4, up, 0.28f, 0.18f, 0.10f, 0.35f, 0.22f, 0.12f);
+
+        for (int i = 0; i < 18; i++) {
+            float t = (float) i / 18f;
+            float fy = 230f - t * 190f;
+            float fx = 128f + MathUtils.sin(t * 5.2f) * 45f;
+            float rad = MathUtils.random(14f, 24f);
+
+            for (int p = 0; p < 5; p++) {
+                float ang = p * MathUtils.PI2 / 5f + i * 0.2f;
+                float px = fx + MathUtils.cos(ang) * (rad * 0.45f);
+                float py = fy + MathUtils.sin(ang) * (rad * 0.45f);
+                pix.setColor(0.99f, 0.99f, 0.97f, 1f);
+                pix.fillCircle(ox + (int)px, oy + (int)py, (int)(rad * 0.5f));
+            }
+            pix.setColor(1.0f, 0.90f, 0.25f, 1f);
+            pix.fillCircle(ox + (int)fx, oy + (int)fy, 3);
+        }
+    }
+
+    /**
+     * White flowering reed plumes (Kashful / Saccharum spontaneum) along the water edges.
+     */
+    private Texture createKashfulAtlas() {
+        int w = 256, h = 512;
+        Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill();
+
+        float[] stemX = {65f, 128f, 190f};
+        float[] plumeH = {300f, 340f, 280f};
+
+        for (int s = 0; s < 3; s++) {
+            float sx = stemX[s];
+            float len = plumeH[s];
+
+            // Slender green stem
+            pix.setColor(0.22f, 0.46f, 0.15f, 1f);
+            for (int y = (int)(h - 1); y >= (int)(h - len); y--) {
+                float t = (float)(h - y) / len;
+                float curve = MathUtils.sin(t * 1.6f) * 14f * (s % 2 == 0 ? 1f : -1f);
+                pix.fillCircle((int)(sx + curve), y, 2);
+            }
+
+            // Silky fluffy white plume
+            int plumeStart = (int)(h - len);
+            int plumeEnd = (int)(h - len * 0.35f);
+            for (int y = plumeStart; y < plumeEnd; y++) {
+                float pt = (float)(y - plumeStart) / (plumeEnd - plumeStart);
+                float width = MathUtils.sin(pt * MathUtils.PI) * 18f;
+                float curve = MathUtils.sin(((float)(h - y) / len) * 1.6f) * 14f * (s % 2 == 0 ? 1f : -1f);
+                float cx = sx + curve;
+
+                int wisps = (int)(width * 2.2f);
+                for (int wisp = 0; wisp < wisps; wisp++) {
+                    float wx = cx + MathUtils.random(-width, width);
+                    float wy = y + MathUtils.random(-3f, 3f);
+                    float brightness = MathUtils.random(0.92f, 1.0f);
+                    float alpha = MathUtils.random(0.70f, 0.98f);
+                    pix.setColor(brightness, brightness, brightness * 0.96f, alpha);
+                    pix.drawPixel((int)wx, (int)wy);
+                }
+            }
+        }
+
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
+        pix.dispose();
+        return tex;
+    }
+
+    /**
+     * Authentic colonial arched window texture: multi-pane glazed window with white stone surround,
+     * transom fanlight, and stone sill.
+     */
+    private Texture createColonialWindow() {
+        int w = 256, h = 512;
+        Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
+
+        // Dark deep reflective colonial glass base with sky sheen
+        pix.setColor(0.08f, 0.12f, 0.16f, 1f);
+        pix.fill();
+
+        for (int y = 0; y < h / 2; y++) {
+            float t = (float) y / (h / 2f);
+            float r = MathUtils.lerp(0.18f, 0.08f, t);
+            float g = MathUtils.lerp(0.24f, 0.12f, t);
+            float b = MathUtils.lerp(0.32f, 0.16f, t);
+            pix.setColor(r, g, b, 1f);
+            pix.drawLine(0, y, w, y);
+        }
+
+        // Cream stone pointed arch surround and frame
+        Color stoneTrim = new Color(0.95f, 0.93f, 0.89f, 1f);
+        pix.setColor(stoneTrim);
+        int border = 14;
+        pix.fillRectangle(0, 0, w, border);
+        pix.fillRectangle(0, h - border * 2, w, border * 2);
+        pix.fillRectangle(0, 0, border, h);
+        pix.fillRectangle(w - border, 0, border, h);
+
+        // Protruding stone sill highlight
+        pix.setColor(0.98f, 0.96f, 0.92f, 1f);
+        pix.fillRectangle(4, h - border * 2 - 2, w - 8, 4);
+
+        // White colonial glazing mullions and transoms
+        Color mullion = new Color(0.92f, 0.90f, 0.86f, 1f);
+        pix.setColor(mullion);
+        pix.fillRectangle(w / 2 - 4, border, 8, h - border * 3);
+        int glassTop = border;
+        int glassH = h - border * 3;
+        for (int i = 1; i <= 3; i++) {
+            int ty = glassTop + (glassH * i) / 4;
+            pix.fillRectangle(border, ty - 3, w - border * 2, 6);
+        }
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        pix.dispose();
+        return tex;
+    }
+
+    /**
+     * Authentic carved teak wooden door texture: double door leaves with recessed panels,
+     * wood grain, and burnished brass ring handles.
+     */
+    private Texture createTeakDoorTexture() {
+        int w = 256, h = 512;
+        Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
+
+        // Burma teak wood grain base
+        pix.setColor(0.28f, 0.15f, 0.09f, 1f);
+        pix.fill();
+
+        for (int x = 0; x < w; x++) {
+            float grain = MathUtils.sin(x * 0.45f) * 0.6f + MathUtils.sin(x * 1.8f) * 0.4f;
+            for (int y = 0; y < h; y++) {
+                float n = grain + MathUtils.sin(y * 0.08f + x * 0.05f) * 0.25f;
+                float r = MathUtils.clamp(0.28f + n * 0.06f, 0.18f, 0.38f);
+                float g = MathUtils.clamp(0.15f + n * 0.04f, 0.09f, 0.22f);
+                float b = MathUtils.clamp(0.09f + n * 0.03f, 0.05f, 0.14f);
+                pix.setColor(r, g, b, 1f);
+                pix.drawPixel(x, y);
+            }
+        }
+
+        // Heavy outer teak frame
+        int border = 16;
+        pix.setColor(0.20f, 0.10f, 0.06f, 1f);
+        pix.fillRectangle(0, 0, w, border);
+        pix.fillRectangle(0, h - border, w, border);
+        pix.fillRectangle(0, 0, border, h);
+        pix.fillRectangle(w - border, 0, border, h);
+
+        // Center meeting stile
+        pix.fillRectangle(w / 2 - 6, 0, 12, h);
+        pix.setColor(0.08f, 0.04f, 0.02f, 1f);
+        pix.drawLine(w / 2, 0, w / 2, h);
+
+        // Recessed carved wood panels
+        int panelW = (w / 2) - border - 12;
+        int upperPanelH = 180;
+        int lowerPanelH = 180;
+        int[] panelX = {border + 6, w / 2 + 6};
+
+        for (int px : panelX) {
+            drawCarvedDoorPanel(pix, px, border + 20, panelW, upperPanelH);
+            drawCarvedDoorPanel(pix, px, h / 2 + 20, panelW, lowerPanelH);
+        }
+
+        // Burnished brass door handles
+        drawBrassDoorHandle(pix, w / 2 - 24, h / 2 + 10);
+        drawBrassDoorHandle(pix, w / 2 + 24, h / 2 + 10);
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        pix.dispose();
+        return tex;
+    }
+
+    private void drawCarvedDoorPanel(Pixmap pix, int x, int y, int pw, int ph) {
+        // Outer beveled frame shadow
+        pix.setColor(0.14f, 0.07f, 0.04f, 1f);
+        pix.fillRectangle(x, y, pw, ph);
+
+        // Inner panel face
+        pix.setColor(0.26f, 0.14f, 0.08f, 1f);
+        pix.fillRectangle(x + 4, y + 4, pw - 8, ph - 8);
+
+        // Top and left bevel highlight
+        pix.setColor(0.38f, 0.22f, 0.13f, 1f);
+        pix.drawLine(x + 2, y + 2, x + pw - 2, y + 2);
+        pix.drawLine(x + 2, y + 2, x + 2, y + ph - 2);
+
+        // Bottom and right bevel shadow
+        pix.setColor(0.10f, 0.05f, 0.03f, 1f);
+        pix.drawLine(x + 2, y + ph - 2, x + pw - 2, y + ph - 2);
+        pix.drawLine(x + pw - 2, y + 2, x + pw - 2, y + ph - 2);
+    }
+
+    private void drawBrassDoorHandle(Pixmap pix, int cx, int cy) {
+        // Brass backplate
+        pix.setColor(0.18f, 0.14f, 0.06f, 1f);
+        pix.fillRectangle(cx - 8, cy - 16, 16, 32);
+
+        // Burnished brass finish
+        pix.setColor(0.92f, 0.78f, 0.25f, 1f);
+        pix.fillRectangle(cx - 6, cy - 14, 12, 28);
+        pix.setColor(1.0f, 0.92f, 0.55f, 1f);
+        pix.drawLine(cx - 3, cy - 12, cx - 3, cy + 12);
+
+        // Brass ring handle
+        pix.setColor(0.95f, 0.82f, 0.28f, 1f);
+        pix.drawCircle(cx, cy + 4, 8);
+        pix.drawCircle(cx, cy + 4, 7);
     }
 
     /**
