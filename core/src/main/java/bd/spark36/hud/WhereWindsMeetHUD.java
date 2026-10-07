@@ -522,13 +522,32 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
 
         // 4. Toast Notification Banner (renders on top of HUD when active)
-        if (!isVictoryOpen && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
+        if (!isVictoryOpen && !isDisqualified && !isDefeated && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
             renderMissionCompleteBanner(w, h);
         }
 
-        // 5. Overlays: Historical Archival Modal, Map, Pause Menu, or Victory Screen
+        // 4b. Boss Health Bar, Dialogue Prompt, and Combat Popups
+        if (helmetGoon != null && !isVictoryOpen && !isDisqualified && !isDefeated && !isPauseMenuOpen && !isMapOpen && activeModalEntry == null) {
+            float dstGoon = player.getPosition().dst(helmetGoon.getPosition());
+            if (helmetGoon.getState() != bd.spark36.character.HelmetGoon.State.STANDOFF || dstGoon <= 28f) {
+                renderBossHealthBar(helmetGoon, w, h);
+            }
+            if (helmetGoon.isChallenging()) {
+                renderBossChallengeDialogue(helmetGoon, w, h);
+            }
+            String combatText = helmetGoon.getCombatPopupText();
+            if (combatText != null) {
+                renderCombatFloatingPopup(combatText, helmetGoon.getCombatPopupColor(), w, h);
+            }
+        }
+
+        // 5. Overlays: Historical Archival Modal, Map, Pause Menu, Victory, Disqualification, or Defeat Screen
         if (isVictoryOpen) {
             renderVictoryScreen(w, h);
+        } else if (isDisqualified) {
+            renderDisqualificationScreen(w, h);
+        } else if (isDefeated) {
+            renderDefeatScreen(w, h);
         } else if (activeModalEntry != null) {
             renderMemorialModal(activeModalEntry, w, h);
         } else if (isMapOpen) {
