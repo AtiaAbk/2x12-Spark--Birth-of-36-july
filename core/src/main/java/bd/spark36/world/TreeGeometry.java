@@ -274,12 +274,63 @@ final class TreeGeometry {
             float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
             float ex = x + ca * 3.6f * s, ey = topY + 1.1f * s, ez = z + sa * 3.6f * s;
             limb(trunk, x, topY - 0.3f * s, z, 0.28f * s, ex, ey, ez, 0.10f * s, 7);
-            foliage(blossom, cards, ex, ey + 0.5f * s, ez, 3.0f * s, 1.3f * s, 3.0f * s, seed + k * 1.9f,
-                KRISHNA_LEAF * s, KRISHNA_CELLS, 0.30f);
+            foliage(blossom, cards, ex, ey + 0.5f * s, ez, 3.2f * s, 1.4f * s, 3.2f * s, seed + k * 1.9f,
+                KRISHNA_LEAF * s, KRISHNA_CELLS, 0.65f);
             foliage(blossom, cards, x + ca * 1.9f * s, topY + 1.3f * s, z + sa * 1.9f * s,
-                2.6f * s, 1.2f * s, 2.6f * s, seed + k * 0.8f + 3f, KRISHNA_LEAF * s, KRISHNA_CELLS, 0.30f);
+                2.8f * s, 1.3f * s, 2.8f * s, seed + k * 0.8f + 3f, KRISHNA_LEAF * s, KRISHNA_CELLS, 0.60f);
         }
-        foliage(blossom, cards, x, topY + 1.5f * s, z, 3.8f * s, 1.5f * s, 3.8f * s, seed + 6f,
-            KRISHNA_LEAF * s, KRISHNA_CELLS, 0.30f);
+        foliage(blossom, cards, x, topY + 1.5f * s, z, 4.0f * s, 1.6f * s, 4.0f * s, seed + 6f,
+            KRISHNA_LEAF * s, KRISHNA_CELLS, 0.60f);
+    }
+
+    private static final float WHITE_LEAF = 0.92f;
+    private static final int[] WHITE_CELLS = {0, 1, 2, 3};
+
+    /**
+     * White Blossom Tree (Magnolia / Cherry / Bokul blossom):
+     * Majestic spreading 3D tree with dark weathered limbs and dense, fluffy white blossom canopies
+     * exactly matching user's uploaded reference image.
+     */
+    static void whiteBlossomTree(MeshPartBuilder trunk, MeshPartBuilder blossomCore, MeshPartBuilder blossomCards,
+                                 float x, float z, float s, float seed) {
+        float lean = 0.22f * s * MathUtils.sin(seed);
+        float leanZ = 0.22f * s * MathUtils.cos(seed * 1.3f);
+        float topY = 3.6f * s;
+        float topX = x + lean, topZ = z + leanZ;
+
+        // Dark gnarled weathered trunk
+        limb(trunk, x, -0.15f, z, 0.88f * s, x, 0.65f * s, z, 0.58f * s, 10);
+        limb(trunk, x, 0.65f * s, z, 0.58f * s, topX, topY, topZ, 0.35f * s, 10);
+
+        for (int k = 0; k < 5; k++) {
+            float ang = seed + k * MathUtils.PI2 / 5f + 0.32f * MathUtils.sin(seed * 2.2f + k);
+            float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
+            float h0 = (2.6f + 0.22f * k) * s;
+            float t = h0 / topY;
+            float sx = x + lean * t, sz = z + leanZ * t;
+
+            float reach = (3.4f + 0.40f * MathUtils.sin(seed + k * 1.8f)) * s;
+            float rise = (1.5f + 0.30f * MathUtils.sin(k * 2.0f + seed)) * s;
+            float ex = sx + ca * reach, ey = h0 + rise, ez = sz + sa * reach;
+            limb(trunk, sx, h0, sz, 0.30f * s, ex, ey, ez, 0.08f * s, 7);
+
+            // Forked sub-branch
+            float fa = ang + (k % 2 == 0 ? 0.65f : -0.65f);
+            float mx = sx + ca * reach * 0.58f, my = h0 + rise * 0.58f, mz = sz + sa * reach * 0.58f;
+            float fx = mx + MathUtils.cos(fa) * 1.85f * s, fy = my + 1.1f * s, fz = mz + MathUtils.sin(fa) * 1.85f * s;
+            limb(trunk, mx, my, mz, 0.14f * s, fx, fy, fz, 0.05f * s, 6);
+
+            // Lush, dense white blossom clusters
+            foliage(blossomCore, blossomCards, ex, ey + 0.8f * s, ez, 2.9f * s, 2.0f * s, 2.9f * s, seed + k,
+                WHITE_LEAF * s, WHITE_CELLS, 0.85f);
+            foliage(blossomCore, blossomCards, fx, fy + 0.6f * s, fz, 2.2f * s, 1.5f * s, 2.2f * s, seed + k * 2.3f,
+                WHITE_LEAF * s, WHITE_CELLS, 0.85f);
+        }
+
+        // Grand central crown
+        foliage(blossomCore, blossomCards, topX, topY + 2.2f * s, topZ, 3.8f * s, 2.4f * s, 3.8f * s, seed + 8f,
+            WHITE_LEAF * s, WHITE_CELLS, 0.90f);
+        foliage(blossomCore, blossomCards, topX, topY + 0.8f * s, topZ, 2.9f * s, 1.6f * s, 2.9f * s, seed + 3f,
+            WHITE_LEAF * s, WHITE_CELLS, 0.85f);
     }
 }
