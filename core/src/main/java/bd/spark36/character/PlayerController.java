@@ -811,14 +811,6 @@ public class PlayerController {
         this.health = Math.max(0f, this.health - amount);
     }
 
-    public float getHealth() {
-        return health;
-    }
-
-    public float getMaxHealth() {
-        return maxHealth;
-    }
-
     public boolean isKnockedOut() {
         return health <= 0f;
     }
