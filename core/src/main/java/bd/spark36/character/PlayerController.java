@@ -819,6 +819,10 @@ public class PlayerController {
         return isBlocking;
     }
 
+    public float getBlockTimer() {
+        return blockTimer;
+    }
+
     public void setBlocking(boolean blocking) {
         this.isBlocking = blocking;
     }
