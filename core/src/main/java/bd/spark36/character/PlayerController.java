@@ -799,6 +799,38 @@ public class PlayerController {
         }
     }
 
+    public boolean isBlocking() {
+        return isBlocking;
+    }
+
+    public void setBlocking(boolean blocking) {
+        this.isBlocking = blocking;
+    }
+
+    public void takeDamage(float amount) {
+        this.health = Math.max(0f, this.health - amount);
+    }
+
+    public float getHealth() {
+        return health;
+    }
+
+    public float getMaxHealth() {
+        return maxHealth;
+    }
+
+    public boolean isKnockedOut() {
+        return health <= 0f;
+    }
+
+    public void resetCombat() {
+        this.health = maxHealth;
+        this.isAttacking = false;
+        this.isBlocking = false;
+        this.attackCombo = 0;
+        this.attackProgress = 0f;
+    }
+
     public int getGender() {
         return gender;
     }
