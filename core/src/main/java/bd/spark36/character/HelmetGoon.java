@@ -48,8 +48,9 @@ public class HelmetGoon implements Disposable {
     private final float maxHealth = 100f;
     private float poise = 100f;
     private final float maxPoise = 100f;
-    private float poiseRegenTimer = 0f;
+    private float poiseRegenCooldown = 0f;
     private boolean isGuardBroken = false;
+    private float guardBreakTimer = 0f;
 
     // Animation & Combat Timers
     private float animTime = 0f;
@@ -186,6 +187,23 @@ public class HelmetGoon implements Disposable {
             return;
         }
 
+        // Poise and posture break recovery update
+        if (isGuardBroken) {
+            guardBreakTimer -= delta;
+            if (guardBreakTimer <= 0f) {
+                isGuardBroken = false;
+                poise = maxPoise;
+                state = State.APPROACHING;
+                attackCooldown = 0.5f;
+            }
+        } else {
+            if (poiseRegenCooldown > 0f) {
+                poiseRegenCooldown -= delta;
+            } else if (poise < maxPoise) {
+                poise = Math.min(maxPoise, poise + delta * 18f);
+            }
+        }
+
         Vector3 pPos = player.getPosition();
         float distToPlayer = position.dst(pPos);
 
@@ -240,7 +258,7 @@ public class HelmetGoon implements Disposable {
                 break;
 
             case STAGGERED:
-                if (staggerTimer <= 0f) {
+                if (staggerTimer <= 0f && !isGuardBroken) {
                     state = State.APPROACHING;
                     attackCooldown = 0.4f;
                 }
@@ -274,17 +292,29 @@ public class HelmetGoon implements Disposable {
         // Strike impact moment occurs midway through swing (0.45 .. 0.65)
         if (!hitDealtThisAttack && attackProgress >= 0.48f && attackProgress <= 0.68f) {
             if (distToPlayer <= 2.6f) {
-                // Determine whether player avoided or blocked the strike!
+                // Determine whether player avoided, parried, or blocked the strike!
                 if (currentAttackType == 1 && player.isCrouching()) {
                     // Player ducked under the horizontal swing!
                     showPopup("DODGED! / ফাঁকি দেওয়া হয়েছে!", Color.CYAN);
                     hitDealtThisAttack = true;
                 } else if (player.isBlocking()) {
-                    // Player blocked the strike!
-                    float blockedDmg = (currentAttackType == 2) ? 6f : 3f;
-                    player.takeDamage(blockedDmg);
-                    showPopup("BLOCKED! / প্রতিহত!", Color.YELLOW);
-                    hitDealtThisAttack = true;
+                    // Timing-based FLASH PARRY (first 0.25s of raising guard)
+                    if (player.getBlockTimer() <= 0.25f) {
+                        hitDealtThisAttack = true;
+                        isAttacking = false;
+                        currentAttackType = 0;
+                        staggerTimer = 0.95f;
+                        state = State.STAGGERED;
+                        damagePoise(40f);
+                        showPopup("⚡ PERFECT FLASH PARRY! / নিখুঁত প্রতিহত! ⚡", Color.GOLD);
+                    } else {
+                        // Standard block: 80% reduced damage, chips goon poise
+                        float blockedDmg = (currentAttackType == 2) ? 6f : 3f;
+                        player.takeDamage(blockedDmg);
+                        damagePoise(10f);
+                        showPopup("BLOCKED! / প্রতিহত!", Color.YELLOW);
+                        hitDealtThisAttack = true;
+                    }
                 } else {
                     // Direct hit on player!
                     float dmg = (currentAttackType == 2) ? 24f : 16f;
@@ -305,21 +335,31 @@ public class HelmetGoon implements Disposable {
     }
 
     /**
-     * Called when the player successfully strikes the Goon with punches or kicks.
+     * Called when the player successfully strikes the Goon with punches, kicks, or sweep counters.
      */
-    public boolean takeHitFromPlayer(float damage, boolean isKick) {
+    public boolean takeHitFromPlayer(float damage, boolean isKick, boolean isSweep) {
         if (state == State.KNOCKED_OUT) return false;
 
-        health -= damage;
+        float finalDmg = damage;
+        if (isGuardBroken) {
+            finalDmg *= 2.2f; // Critical damage bonus while posture is broken!
+        }
+
+        health -= finalDmg;
         hitFlashTimer = 0.25f;
-        staggerTimer = isKick ? 0.65f : 0.40f;
+        staggerTimer = isSweep ? 0.90f : (isKick ? 0.65f : 0.40f);
         state = State.STAGGERED;
         isAttacking = false;
         currentAttackType = 0;
 
+        // Damage poise
+        float poiseDmg = isSweep ? 50f : (isKick ? 32f : 16f);
+        damagePoise(poiseDmg);
+
         // Push goon backward slightly from impact
-        position.x -= MathUtils.sinDeg(heading) * (isKick ? 0.65f : 0.35f);
-        position.z -= MathUtils.cosDeg(heading) * (isKick ? 0.65f : 0.35f);
+        float pushDst = isSweep ? 0.85f : (isKick ? 0.65f : 0.35f);
+        position.x -= MathUtils.sinDeg(heading) * pushDst;
+        position.z -= MathUtils.cosDeg(heading) * pushDst;
 
         if (health <= 0f) {
             health = 0f;
@@ -327,9 +367,32 @@ public class HelmetGoon implements Disposable {
             showPopup("GUNDA DEFEATED / গুন্ডা পরাজিত!", Color.GREEN);
             return true; // Knockout!
         } else {
-            String txt = isKick ? "HEAVY KICK! -" + (int)damage : "MARTIAL PUNCH! -" + (int)damage;
-            showPopup(txt, isKick ? Color.ORANGE : Color.YELLOW);
+            if (isGuardBroken) {
+                showPopup("💥 CRITICAL OPENING! -" + (int)finalDmg, Color.RED);
+            } else if (isSweep) {
+                showPopup("DRAGON LEG SWEEP! / ড্রাগন সুইপ! -" + (int)finalDmg, Color.CYAN);
+            } else if (isKick) {
+                showPopup("HEAVY KICK! -" + (int)finalDmg, Color.ORANGE);
+            } else {
+                showPopup("MARTIAL PUNCH! -" + (int)finalDmg, Color.YELLOW);
+            }
             return false;
+        }
+    }
+
+    public boolean takeHitFromPlayer(float damage, boolean isKick) {
+        return takeHitFromPlayer(damage, isKick, false);
+    }
+
+    public void damagePoise(float amount) {
+        poiseRegenCooldown = 3.0f;
+        poise = Math.max(0f, poise - amount);
+        if (poise <= 0f && !isGuardBroken && state != State.KNOCKED_OUT) {
+            isGuardBroken = true;
+            guardBreakTimer = 2.4f;
+            staggerTimer = 2.4f;
+            state = State.STAGGERED;
+            showPopup("💥 GUARD BROKEN! / ভঙ্গি ভেঙে গেছে! 💥", Color.RED);
         }
     }
 
@@ -458,6 +521,9 @@ public class HelmetGoon implements Disposable {
     public Vector3 getPosition() { return position; }
     public float getHealth() { return health; }
     public float getMaxHealth() { return maxHealth; }
+    public float getPoise() { return poise; }
+    public float getMaxPoise() { return maxPoise; }
+    public boolean isGuardBroken() { return isGuardBroken; }
     public State getState() { return state; }
     public boolean isKnockedOut() { return state == State.KNOCKED_OUT; }
     public boolean isChallenging() { return state == State.CHALLENGING; }
@@ -474,6 +540,10 @@ public class HelmetGoon implements Disposable {
     public void reset(float x, float z) {
         position.set(x, 0f, z);
         health = maxHealth;
+        poise = maxPoise;
+        isGuardBroken = false;
+        guardBreakTimer = 0f;
+        poiseRegenCooldown = 0f;
         state = State.STANDOFF;
         stateTimer = 0f;
         attackCooldown = 0f;

@@ -313,11 +313,11 @@ public class PlayerController {
                 isCrouching = true;
             }
 
-            // MARTIAL ARTS BLOCK / GUARD & PARRY: 'B' key
+            // MARTIAL ARTS BLOCK / GUARD & FLASH PARRY: 'B' key holds guard
             boolean blockHeld = Gdx.input.isKeyPressed(Input.Keys.B);
             if (blockHeld) {
                 if (!isBlocking) {
-                    blockTimer = 0f; // Fresh block activation for perfect parry timing
+                    blockTimer = 0f; // Fresh activation: 0.25s parry window
                 } else {
                     blockTimer += delta;
                 }
@@ -343,7 +343,7 @@ public class PlayerController {
                 isAttacking = true;
                 attackProgress = 0f;
                 if (isCrouching) {
-                    attackCombo = 5; // Low Sweep Counter (Tripping Leg Kick)
+                    attackCombo = 5; // Low Sweep Counter (Tripping leg kick)
                 } else if (comboWindowTimer > 0f) {
                     attackCombo = (attackCombo == 1) ? 2 : 1;
                 } else {
@@ -742,6 +742,11 @@ public class PlayerController {
 
     public float getHeadingDegrees() {
         return headingDegrees;
+    }
+
+    public void setHeadingDegrees(float deg) {
+        this.headingDegrees = deg;
+        this.targetHeadingDegrees = deg;
     }
 
     public float getHealth() {

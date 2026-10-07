@@ -1250,6 +1250,100 @@ public class DhakaCampusWorld implements Disposable {
         waterShimmer.transform.setTranslation(pukurX, 0.145f, pukurZ);
         instances.add(waterShimmer);
 
+        // Floating Lotus Pads (Water Lilies) & Sacred Lotus Blossoms matching media_1791358203326.png
+        Material lotusMat = new Material(
+            TextureAttribute.createDiffuse(textures.lotusAtlas),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1.0f),
+            FloatAttribute.createAlphaTest(0.35f),
+            new DepthTestAttribute(GL20.GL_LEQUAL, false),
+            new IntAttribute(IntAttribute.CullFace, 0)
+        );
+
+        mb.begin();
+        MeshPartBuilder lpb = mb.part("lotusPads", GL20.GL_TRIANGLES, attr, lotusMat);
+
+        float[][] lotusPlacements = {
+            // North-West calm bay
+            {-6.8f, -3.8f, 0.95f, 0, 0}, {-5.5f, -4.2f, 1.15f, 0, 1}, {-4.2f, -3.5f, 0.85f, 1, 0},
+            {-6.2f, -2.5f, 1.30f, 1, 1}, {-5.0f, -2.0f, 0.90f, 0, 0}, {-3.6f, -2.8f, 1.05f, 0, 1},
+            {-7.2f, -1.2f, 1.10f, 1, 0}, {-5.8f, -0.8f, 0.85f, 1, 1}, {-4.5f, -0.4f, 1.20f, 0, 0},
+
+            // North-East calm bay
+            {4.0f, -3.8f, 0.90f, 1, 0}, {5.6f, -4.2f, 1.10f, 0, 1}, {6.8f, -3.6f, 1.25f, 0, 0},
+            {3.5f, -2.5f, 1.05f, 1, 1}, {5.0f, -2.2f, 1.20f, 0, 0}, {6.4f, -2.4f, 0.95f, 0, 1},
+            {4.2f, -0.8f, 0.85f, 0, 0}, {5.8f, -1.0f, 1.15f, 1, 0}, {7.0f, -1.4f, 1.00f, 1, 1},
+
+            // West bank fringes
+            {-7.5f, 1.5f, 1.20f, 0, 0}, {-6.4f, 2.2f, 0.90f, 0, 1}, {-7.2f, 3.4f, 1.10f, 1, 0},
+            {-6.0f, 4.2f, 1.30f, 1, 1}, {-7.4f, 5.6f, 0.95f, 0, 0}, {-6.2f, 6.8f, 1.15f, 0, 1},
+            {-7.0f, 8.2f, 1.05f, 1, 0}, {-5.8f, 9.4f, 1.25f, 1, 1},
+
+            // East bank fringes
+            {7.2f, 1.2f, 1.15f, 1, 0}, {6.2f, 2.0f, 0.85f, 0, 1}, {7.4f, 3.2f, 1.25f, 0, 0},
+            {6.0f, 4.4f, 1.00f, 1, 1}, {7.2f, 5.8f, 1.20f, 0, 0}, {6.4f, 7.0f, 0.90f, 0, 1},
+            {7.5f, 8.4f, 1.10f, 1, 0}, {6.1f, 9.6f, 1.25f, 1, 1},
+
+            // South-West corner (away from ghat)
+            {-6.8f, 11.2f, 1.20f, 0, 0}, {-5.4f, 12.0f, 0.95f, 0, 1}, {-6.5f, 13.2f, 1.15f, 1, 0},
+            {-5.0f, 14.0f, 1.05f, 1, 1}, {-6.2f, 15.0f, 0.85f, 0, 0},
+
+            // South-East corner (away from ghat)
+            {6.8f, 11.0f, 1.10f, 0, 0}, {5.5f, 12.2f, 1.25f, 0, 1}, {6.6f, 13.4f, 0.90f, 1, 0},
+            {5.2f, 14.2f, 1.15f, 1, 1}, {6.4f, 15.2f, 1.00f, 0, 0}
+        };
+
+        for (int i = 0; i < lotusPlacements.length; i++) {
+            float[] lp = lotusPlacements[i];
+            float lx = pukurX + lp[0];
+            float lz = pukurZ + lp[1];
+            float rad = lp[2] * 0.65f;
+            int col = (int) lp[3];
+            int row = (int) lp[4];
+            float ly = 0.138f + (i % 5) * 0.002f;
+
+            float u0 = col * 0.5f, v0 = row * 0.5f;
+            float u1 = u0 + 0.5f, v1 = v0 + 0.5f;
+            float yaw = (i * 1.37f + 0.5f) * MathUtils.PI;
+            float cos = MathUtils.cos(yaw), sin = MathUtils.sin(yaw);
+
+            float x0 = lx + (-rad * cos - -rad * sin);
+            float z0 = lz + (-rad * sin + -rad * cos);
+            float x1 = lx + ( rad * cos - -rad * sin);
+            float z1 = lz + ( rad * sin + -rad * cos);
+            float x2 = lx + ( rad * cos -  rad * sin);
+            float z2 = lz + ( rad * sin +  rad * cos);
+            float x3 = lx + (-rad * cos -  rad * sin);
+            float z3 = lz + (-rad * sin +  rad * cos);
+
+            VertexInfo lv0 = new VertexInfo().setPos(x0, ly, z0).setNor(0f, 1f, 0f).setUV(u0, v1);
+            VertexInfo lv1 = new VertexInfo().setPos(x1, ly, z1).setNor(0f, 1f, 0f).setUV(u1, v1);
+            VertexInfo lv2 = new VertexInfo().setPos(x2, ly, z2).setNor(0f, 1f, 0f).setUV(u1, v0);
+            VertexInfo lv3 = new VertexInfo().setPos(x3, ly, z3).setNor(0f, 1f, 0f).setUV(u0, v0);
+            lpb.rect(lv0, lv1, lv2, lv3);
+
+            // For blooming sacred lotus flowers (Cell 1), add upright 3D petal cross-quads
+            if (col == 0 && row == 1) {
+                float fRad = rad * 0.85f;
+                float fH = 0.28f;
+                VertexInfo fv0 = new VertexInfo().setPos(lx - fRad, ly, lz).setNor(0f, 1f, 0f).setUV(u0, v1);
+                VertexInfo fv1 = new VertexInfo().setPos(lx + fRad, ly, lz).setNor(0f, 1f, 0f).setUV(u1, v1);
+                VertexInfo fv2 = new VertexInfo().setPos(lx + fRad, ly + fH, lz).setNor(0f, 1f, 0f).setUV(u1, v0);
+                VertexInfo fv3 = new VertexInfo().setPos(lx - fRad, ly + fH, lz).setNor(0f, 1f, 0f).setUV(u0, v0);
+                lpb.rect(fv0, fv1, fv2, fv3);
+
+                VertexInfo fz0 = new VertexInfo().setPos(lx, ly, lz - fRad).setNor(0f, 1f, 0f).setUV(u0, v1);
+                VertexInfo fz1 = new VertexInfo().setPos(lx, ly, lz + fRad).setNor(0f, 1f, 0f).setUV(u1, v1);
+                VertexInfo fz2 = new VertexInfo().setPos(lx, ly + fH, lz + fRad).setNor(0f, 1f, 0f).setUV(u1, v0);
+                VertexInfo fz3 = new VertexInfo().setPos(lx, ly + fH, lz - fRad).setNor(0f, 1f, 0f).setUV(u0, v0);
+                lpb.rect(fz0, fz1, fz2, fz3);
+            }
+        }
+
+        Model lotusModel = mb.end();
+        models.add(lotusModel);
+        ModelInstance lotusInst = new ModelInstance(lotusModel);
+        instances.add(lotusInst);
+
         // Curzon Hall Pukur Grand Ghat Steps (South Bank Entrance)
         float ghatZ = pukurZ + pukurL * 0.5f; // 18.0f
         Model ghatStepUpper = mb.createBox(7.2f, 0.32f, 1.4f, stoneCurb, attr);

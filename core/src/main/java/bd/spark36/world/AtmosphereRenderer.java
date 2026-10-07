@@ -24,11 +24,11 @@ public class AtmosphereRenderer implements Disposable {
     private final SpriteBatch spriteBatch = new SpriteBatch();
     private final FontRenderer fonts;
 
-    // ── Sky Colors (Clean Crisp Summer Daylight - No Greenish/Yellow Cast) ────
-    private final Color skyZenith    = new Color(0.18f, 0.44f, 0.84f, 1f); // Deep radiant azure
-    private final Color skyMidBlue   = new Color(0.36f, 0.62f, 0.90f, 1f); // Mid summer sky
-    private final Color skyHorizon   = new Color(0.68f, 0.82f, 0.96f, 1f); // Light clear sky horizon
-    private final Color skyLowHaze   = new Color(0.82f, 0.90f, 0.98f, 1f); // Clean atmospheric horizon mist
+    // ── Sky Colors (Filmic Cinematic Summer Atmosphere - Where Winds Meet / Ghost of Tsushima style) ────
+    private final Color skyZenith    = new Color(0.24f, 0.42f, 0.66f, 1f); // Filmic slate-azure
+    private final Color skyMidBlue   = new Color(0.44f, 0.60f, 0.76f, 1f); // Soft atmospheric summer sky
+    private final Color skyHorizon   = new Color(0.68f, 0.78f, 0.86f, 1f); // Pearlescent sky horizon
+    private final Color skyLowHaze   = new Color(0.84f, 0.88f, 0.92f, 1f); // Soft atmospheric mist
 
     // ── Cloud layers ──────────────────────────────────────────────────
     // 3 layers: high thin, mid fluffy, low haze strips
@@ -152,47 +152,29 @@ public class AtmosphereRenderer implements Disposable {
         shapeRenderer.setColor(0.90f, 0.94f, 1.0f, pulse);
         shapeRenderer.rect(0, h * 0.22f, w, h * 0.14f);
 
-        // ── Cloud Layer 3: Low haze strips (rendered first = farthest) ──
-        for (float[] c : cloudLayer3) {
-            shapeRenderer.setColor(0.98f, 0.95f, 0.88f, c[5]);
-            float cx = c[0] * w;
-            float cy = c[1] * h;
-            float cw = c[2] * w;
-            float ch = c[3] * h;
-            // Soft haze bank: concentric ellipses, each smaller and fainter, so the edge feathers out
-            for (int s = 0; s < 5; s++) {
-                float sf = 1f - s * 0.16f;
-                shapeRenderer.setColor(0.98f, 0.95f, 0.88f, c[5] * 0.35f);
-                shapeRenderer.ellipse(cx - cw * sf / 2f, cy - ch * sf / 2f, cw * sf, ch * sf, 24);
-            }
-        }
-
-        // ── Cloud Layer 2: High soft cumulus (feathered) ────────────────
+        // ── Cloud Layer 2: Soft natural billowing cumulus clouds ────────────
         for (float[] c : cloudLayer2) {
             float cx = c[0] * w;
-            float cy = (0.60f + c[1] * 0.35f) * h;
+            float cy = (0.50f + c[1] * 0.38f) * h;
             float cw = c[2] * w;
-            float ch = c[3] * h * 0.8f;
-            for (int s = 0; s < 5; s++) {
-                float sf = 0.40f + s * 0.08f;
-                float ox = (s - 2f) * cw * 0.18f;
-                float oy = -s * ch * 0.10f;
-                shapeRenderer.setColor(0.96f, 0.97f, 1.0f, c[5] * sf * 0.35f);
-                shapeRenderer.ellipse(cx + ox - ch * 0.5f, cy + oy - ch * 0.3f, ch * (1.2f + s * 0.15f), ch * (0.7f + s * 0.10f), 24);
+            float ch = c[3] * h * 1.4f;
+            for (int s = 0; s < 4; s++) {
+                float ox = (s - 1.5f) * cw * 0.22f;
+                float oy = MathUtils.sin(s * 1.2f) * ch * 0.25f;
+                float cr = ch * (0.80f + s * 0.14f);
+                shapeRenderer.setColor(0.96f, 0.97f, 1.0f, c[5] * 0.20f);
+                shapeRenderer.circle(cx + ox, cy + oy, cr, 24);
             }
         }
 
-        // ── Cloud Layer 1: High thin cirrus ───────────────────────────
+        // ── Cloud Layer 1: High soft cirrus wisps ─────────────────────
         for (float[] c : cloudLayer1) {
             float cx = c[0] * w;
             float cy = c[1] * h;
             float cw = c[2] * w;
-            float ch = c[3] * h;
-            // Thin horizontal wisp: a faint wide ellipse under a tighter brighter one
-            shapeRenderer.setColor(0.95f, 0.96f, 1.00f, c[5] * 0.30f);
-            shapeRenderer.ellipse(cx - cw * 0.1f, cy - ch * 0.9f, cw * 1.2f, ch * 1.8f, 24);
-            shapeRenderer.setColor(0.95f, 0.96f, 1.00f, c[5] * 0.55f);
-            shapeRenderer.ellipse(cx, cy - ch / 2f, cw, ch, 24);
+            float ch = c[3] * h * 1.6f;
+            shapeRenderer.setColor(0.95f, 0.97f, 1.00f, c[5] * 0.16f);
+            shapeRenderer.ellipse(cx - cw * 0.5f, cy - ch * 0.5f, cw, ch, 28);
         }
 
         // ── Bird silhouettes ─────────────────────────────────────────

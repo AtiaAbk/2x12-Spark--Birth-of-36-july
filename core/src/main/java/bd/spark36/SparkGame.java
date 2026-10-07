@@ -99,6 +99,8 @@ public class SparkGame extends ApplicationAdapter {
              System.getProperty("bd.spark36.testSitScreenshot") != null ||
              System.getProperty("bd.spark36.testMapScreenshot") != null ||
              System.getProperty("bd.spark36.testModalScreenshot") != null ||
+             System.getProperty("bd.spark36.testCombatScreenshot") != null ||
+             System.getProperty("bd.spark36.testPondScreenshot") != null ||
              System.getProperty("bd.spark36.testVictory") != null)) {
             startGameplay();
         }
@@ -440,9 +442,10 @@ public class SparkGame extends ApplicationAdapter {
                         // Martial Arts strike against Helmet Goon
                         float dstGoon = player.getPosition().dst(helmetGoon.getPosition());
                         if (dstGoon <= 2.6f) {
+                            boolean isSweep = (player.getAttackCombo() == 5);
                             boolean isKick = (player.getAttackCombo() == 3 || player.getAttackCombo() == 4);
-                            float dmg = isKick ? 32f : 18f;
-                            boolean knockout = helmetGoon.takeHitFromPlayer(dmg, isKick);
+                            float dmg = isSweep ? 26f : (isKick ? 32f : 18f);
+                            boolean knockout = helmetGoon.takeHitFromPlayer(dmg, isKick, isSweep);
                             if (knockout) {
                                 hud.triggerVictory();
                             }
@@ -632,6 +635,33 @@ public class SparkGame extends ApplicationAdapter {
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
                 takeScreenshot("spark36_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testCombatScreenshot") != null) {
+            hud.reset();
+            player.setPosition(0f, 0.15f, 9.2f);
+            player.setHeadingDegrees(180f);
+            if (helmetGoon != null) {
+                helmetGoon.startFightDirectly();
+            }
+            testTimer += delta;
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("helmet_goon_duel");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testPondScreenshot") != null) {
+            hud.reset();
+            player.setPosition(0f, 0.28f, 18.0f);
+            player.setHeadingDegrees(0f); // face north into the pond towards lotus pads and Curzon Hall
+            testTimer += delta;
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("curzon_pond_lotus_verified");
                 autoScreenshotTaken = true;
                 if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
                     Gdx.app.exit();

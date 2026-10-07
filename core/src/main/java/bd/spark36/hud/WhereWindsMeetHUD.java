@@ -647,7 +647,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private void drawMissionCardBg(JulyMemorials memorials, float w, float h) {
         float cardX = 36f;
         float cardY = h - 195f;
-        float cardW = 460f;
+        float cardW = 520f;
         float cardH = 160f;
 
         // See-through smoked glass background with soft gold halo
@@ -664,7 +664,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // Glowing Golden Progress Bar (Dynamic: fills as archives are inspected)
         float barX = cardX + 16f;
         float barY = cardY + 48f;
-        float barW = 360f;
+        float barW = 410f;
         float barH = 5f;
 
         // Track
@@ -702,7 +702,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private void drawMissionCardBorders(float w, float h) {
         float cardX = 36f;
         float cardY = h - 195f;
-        float cardW = 460f;
+        float cardW = 520f;
         float cardH = 160f;
 
         // Crisp thin gold border with gentle breathing glow
@@ -742,6 +742,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private void drawMissionCardText(JulyMemorials memorials, MemorialEntry nearest, float dst, float w, float h) {
         float cardX = 36f;
         float cardY = h - 195f;
+        float cardW = 520f;
 
         int ins = memorials.getInspectedCount();
         int total = memorials.getTotalCount();
@@ -753,9 +754,14 @@ public class WhereWindsMeetHUD implements Disposable {
             String.format("ACTIVE MISSION: %02d / %02d", Math.min(ins + 1, total), total);
         drawOutlined(fonts.smallFont, missionTag, cardX + 28f, cardY + 148f, allDone ? Color.GREEN : goldAccent);
 
-        // 2. MISSION TITLE
+        // 2. MISSION TITLE: dynamically selects font so it NEVER overflows card borders
         String missionTitle = allDone ? "LEVEL 1 ACCOMPLISHED" : (nearest != null ? nearest.title : "EXPLORE CAMPUS");
-        drawOutlined(fonts.titleFont, missionTitle, cardX + 16f, cardY + 124f, 1f, 0.98f, 0.94f, 1f);
+        com.badlogic.gdx.graphics.g2d.BitmapFont titleFontToUse = fonts.titleFont;
+        glyphLayout.setText(titleFontToUse, missionTitle);
+        if (glyphLayout.width > cardW - 38f) {
+            titleFontToUse = fonts.headerFont;
+        }
+        drawOutlined(titleFontToUse, missionTitle, cardX + 16f, cardY + 124f, 1f, 0.98f, 0.94f, 1f);
 
         // 3. Subtitle description / location
         String missionDesc = allDone ?
@@ -2052,15 +2058,15 @@ public class WhereWindsMeetHUD implements Disposable {
     // ==========================================
     private void renderBossHealthBar(bd.spark36.character.HelmetGoon goon, float w, float h) {
         float bw = 560f;
-        float bh = 18f;
+        float bh = 16f;
         float bx = (w - bw) / 2f;
-        float by = h - 56f;
+        float by = h - 54f;
 
         beginShapes(ShapeType.Filled);
-        // Smoked glass panel behind boss bar
-        fillGlassPanel(bx - 16f, by - 26f, bw + 32f, bh + 48f);
+        // Smoked glass panel behind boss bar (accommodates health and posture poise bars)
+        fillGlassPanel(bx - 16f, by - 36f, bw + 32f, bh + 58f);
 
-        // Bar track
+        // Health Bar Track
         shapeRenderer.setColor(0.18f, 0.08f, 0.08f, 0.88f);
         shapeRenderer.rect(bx, by, bw, bh);
 
@@ -2077,6 +2083,22 @@ public class WhereWindsMeetHUD implements Disposable {
             shapeRenderer.rect(bx, by + bh - 3f, fillW, 3f);
         }
 
+        // Boss Posture / Poise Meter (Technical Martial Arts Poise Bar)
+        float py = by - 8f;
+        float ph = 6f;
+        shapeRenderer.setColor(0.14f, 0.10f, 0.06f, 0.90f);
+        shapeRenderer.rect(bx, py, bw, ph);
+
+        float poisePct = MathUtils.clamp(goon.getPoise() / goon.getMaxPoise(), 0f, 1f);
+        float poiseW = bw * poisePct;
+        if (poiseW > 0f) {
+            Color poiseCol = goon.isGuardBroken() ?
+                (animTime % 0.3f < 0.15f ? Color.RED : Color.YELLOW) :
+                new Color(1.0f, 0.68f, 0.18f, 0.95f);
+            shapeRenderer.setColor(poiseCol);
+            shapeRenderer.rect(bx, py, poiseW, ph);
+        }
+
         // Diamond crest at top center
         shapeRenderer.setColor(goldAccent);
         float cdX = bx + bw / 2f;
@@ -2088,6 +2110,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         beginShapes(ShapeType.Line);
         strokeGlassBorder(bx, by, bw, bh);
+        strokeGlassBorder(bx, py, bw, ph);
 
         // Corner teeth
         shapeRenderer.setColor(goldAccent);
@@ -2096,10 +2119,10 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.line(bx - 3f, by + bh + 3f, bx - 3f, by + bh - cL);
         shapeRenderer.line(bx + bw + 3f, by + bh + 3f, bx + bw - cL, by + bh + 3f);
         shapeRenderer.line(bx + bw + 3f, by + bh + 3f, bx + bw + 3f, by + bh - cL);
-        shapeRenderer.line(bx - 3f, by - 3f, bx + cL, by - 3f);
-        shapeRenderer.line(bx - 3f, by - 3f, bx - 3f, by + cL);
-        shapeRenderer.line(bx + bw + 3f, by - 3f, bx + bw - cL, by - 3f);
-        shapeRenderer.line(bx + bw + 3f, by - 3f, bx + bw + 3f, by + cL);
+        shapeRenderer.line(bx - 3f, py - 3f, bx + cL, py - 3f);
+        shapeRenderer.line(bx - 3f, py - 3f, bx - 3f, py + cL);
+        shapeRenderer.line(bx + bw + 3f, py - 3f, bx + bw - cL, py - 3f);
+        shapeRenderer.line(bx + bw + 3f, py - 3f, bx + bw + 3f, py + cL);
         shapeRenderer.end();
 
         spriteBatch.begin();
@@ -2108,9 +2131,11 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.headerFont.setColor(goldAccent);
         fonts.headerFont.draw(spriteBatch, "⚔ HELMET THUG ENFORCER ⚔", bx + 10f, by + bh + 20f);
 
-        String subTitle = "LEAGUE GOON • LATHI WIELDER";
-        fonts.smallFont.setColor(new Color(0.85f, 0.82f, 0.78f, 0.90f));
-        fonts.smallFont.draw(spriteBatch, subTitle, bx + 10f, by - 8f);
+        String subTitle = goon.isGuardBroken() ?
+            "💥 GUARD BROKEN! CRITICAL OPENING! / ভঙ্গি ভেঙে গেছে! 💥" :
+            "LEAGUE GOON • LATHI WIELDER  |  POSTURE: " + (int)goon.getPoise() + "%";
+        fonts.smallFont.setColor(goon.isGuardBroken() ? Color.RED : new Color(0.85f, 0.82f, 0.78f, 0.90f));
+        fonts.smallFont.draw(spriteBatch, subTitle, bx + 10f, by - 16f);
 
         String hpText = goon.isKnockedOut() ? "DEFEATED / KNOCKED OUT" : String.format("HP: %d / %d", (int)goon.getHealth(), (int)goon.getMaxHealth());
         fonts.headerFont.setColor(goon.isKnockedOut() ? Color.GREEN : new Color(1.0f, 0.92f, 0.80f, 1f));
@@ -2457,10 +2482,15 @@ public class WhereWindsMeetHUD implements Disposable {
         // Typography
         spriteBatch.begin();
         fonts.titleFont.setColor(goldAccent);
-        fonts.titleFont.draw(spriteBatch, "CONGRATULATIONS! LEVEL 1 VICTORY ACHIEVED", vx + 35f, vy + vh - 20f);
+        glyphLayout.setText(fonts.titleFont, "CONGRATULATIONS! LEVEL 1 VICTORY ACHIEVED");
+        float titleX = vx + (vw - glyphLayout.width) / 2f;
+        fonts.titleFont.draw(spriteBatch, "CONGRATULATIONS! LEVEL 1 VICTORY ACHIEVED", titleX, vy + vh - 20f);
 
         fonts.headerFont.setColor(new Color(0.95f, 0.90f, 0.80f, 1f));
-        fonts.headerFont.draw(spriteBatch, "36 JULY: THE SPARK OF SOLIDARITY & FREEDOM -- BANGLADESH 2.0", vx + 35f, vy + vh - 48f);
+        String subHeader = "36 JULY: THE SPARK OF SOLIDARITY & FREEDOM -- BANGLADESH 2.0";
+        glyphLayout.setText(fonts.headerFont, subHeader);
+        float subHeaderX = vx + (vw - glyphLayout.width) / 2f;
+        fonts.headerFont.draw(spriteBatch, subHeader, subHeaderX, vy + vh - 48f);
 
         // Historical Tribute Narrative
         fonts.bodyFont.setColor(Color.WHITE);
