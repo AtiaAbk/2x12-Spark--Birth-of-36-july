@@ -69,6 +69,8 @@ public class SparkGame extends ApplicationAdapter {
     private WhereWindsMeetHUD hud;
     private PostProcessor postProcessor;
     private ParticleSystem particleSystem;
+    private bd.spark36.character.HelmetGoon helmetGoon;
+    private boolean attackHitProcessed = false;
     private boolean gameplayInitialized = false;
 
 
@@ -131,6 +133,10 @@ public class SparkGame extends ApplicationAdapter {
         atmosphere = new AtmosphereRenderer(fontRenderer);
         hud = new WhereWindsMeetHUD(fontRenderer);
         hud.setTextures(textures);
+
+        // Antagonist Helmet Goon (Gunda student with lathi & helmet)
+        helmetGoon = new bd.spark36.character.HelmetGoon(textures);
+        hud.setHelmetGoon(helmetGoon);
 
         // AAA post-processing pipeline (bloom + color grade + vignette + grain)
         postProcessor = new PostProcessor(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
@@ -395,6 +401,8 @@ public class SparkGame extends ApplicationAdapter {
         } else if (exitAction == 3) {
             // Replay Level 1
             player.setPosition(0f, 0f, 49.4f);
+            player.resetCombat();
+            if (helmetGoon != null) helmetGoon.reset(0f, 6.0f);
             memorials.reset();
             hud.reset();
             return;
@@ -411,6 +419,45 @@ public class SparkGame extends ApplicationAdapter {
         }
         player.update(delta, camera.getYaw(), canMove);
         crowd.update(delta, player.getPosition());
+
+        // Update Helmet Goon AI & combat simulation
+        if (helmetGoon != null) {
+            if (canMove) {
+                helmetGoon.update(delta, player);
+            }
+
+            // Player combat attack resolution
+            if (player.isAttacking()) {
+                float prog = player.getAttackProgress();
+                if (prog >= 0.40f && prog <= 0.68f && !attackHitProcessed) {
+                    attackHitProcessed = true;
+                    // Campus Peace Rule: Hitting an unarmed, innocent student results in immediate disqualification!
+                    boolean hitInnocent = crowd.checkHitByPlayer(player.getPosition(), player.getHeadingDegrees(), 2.2f);
+                    if (hitInnocent) {
+                        hud.setDisqualified(true, "VIOLATION: You struck an innocent campus student! Unprovoked violence against unarmed peers is strictly forbidden.");
+                    } else {
+                        // Martial Arts strike against Helmet Goon
+                        float dstGoon = player.getPosition().dst(helmetGoon.getPosition());
+                        if (dstGoon <= 2.6f) {
+                            boolean isKick = (player.getAttackCombo() == 3 || player.getAttackCombo() == 4);
+                            float dmg = isKick ? 32f : 18f;
+                            boolean knockout = helmetGoon.takeHitFromPlayer(dmg, isKick);
+                            if (knockout) {
+                                hud.triggerVictory();
+                            }
+                        }
+                    }
+                }
+            } else {
+                attackHitProcessed = false;
+            }
+
+            // Check if player was knocked out by the goon's lathi
+            if (player.isKnockedOut() && !hud.isDefeated() && !hud.isModalOpen()) {
+                hud.setDefeated(true);
+            }
+        }
+
         // Enhanced camera: pass movement state for bob + FOV push + shake
         camera.update(delta, player.getPosition(), canMove,
             player.isMoving(), player.isSprinting(), player.getHeadingDegrees());
@@ -437,6 +484,7 @@ public class SparkGame extends ApplicationAdapter {
             player.isMoving(),
             player.isSprinting(),
             player.isCrouching(),
+            player.isBlocking(),
             player.isAttacking(),
             player.getAttackCombo(),
             player.getAttackProgress(),
@@ -445,6 +493,9 @@ public class SparkGame extends ApplicationAdapter {
             player.getGender()
         );
         crowd.render(shadowBatch, null, studentMesh);
+        if (helmetGoon != null) {
+            helmetGoon.render(shadowBatch, null);
+        }
         shadowBatch.end();
         world.endShadowPass();
         // ModelBatch leaves a higher texture unit active; SpriteBatch (HUD text) assumes unit 0
@@ -477,6 +528,7 @@ public class SparkGame extends ApplicationAdapter {
             player.isMoving(),
             player.isSprinting(),
             player.isCrouching(),
+            player.isBlocking(),
             player.isAttacking(),
             player.getAttackCombo(),
             player.getAttackProgress(),
@@ -485,6 +537,9 @@ public class SparkGame extends ApplicationAdapter {
             player.getGender()
         );
         crowd.render(modelBatch, world.getEnvironment(), studentMesh);
+        if (helmetGoon != null) {
+            helmetGoon.render(modelBatch, world.getEnvironment());
+        }
         modelBatch.end();
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
 
@@ -674,6 +729,7 @@ public class SparkGame extends ApplicationAdapter {
         if (fontRenderer != null) fontRenderer.dispose();
         if (atmosphere != null) atmosphere.dispose();
         if (textures != null) textures.dispose();
+        if (helmetGoon != null) helmetGoon.dispose();
         if (postProcessor != null) postProcessor.dispose();
         if (particleSystem != null) particleSystem.dispose();
     }
