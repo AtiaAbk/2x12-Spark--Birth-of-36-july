@@ -600,74 +600,99 @@ public class DhakaCampusWorld implements Disposable {
         Material curzonWhiteDome = new Material(ColorAttribute.createDiffuse(new Color(0.96f, 0.95f, 0.91f, 1f)));
         Material curzonRedDome = new Material(ColorAttribute.createDiffuse(new Color(0.68f, 0.20f, 0.16f, 1f)));
 
-        Model archNiche = mb.createBox(2.6f, 4.4f, 0.4f, archCavity, attr);
-        Model archFrame = mb.createBox(3.0f, 4.8f, 0.15f, curzonTrimMat, attr);
-        Model archUpperWindow = mb.createBox(2.2f, 3.8f, 0.25f, glassMat, attr);
-        Model archGroundDoor = mb.createBox(2.2f, 4.0f, 0.25f, teakDoor, attr);
-        Model floorBand = mb.createBox(92f, 0.35f, 0.3f, curzonTrimMat, attr);
-        Model sillBand = mb.createBox(2.8f, 0.18f, 0.35f, curzonTrimMat, attr);
+        // Window & Door components for the two-storey Curzon facade
+        Model archNiche = mb.createBox(1.9f, 3.8f, 0.35f, archCavity, attr);
+        Model archUpperWindow = mb.createBox(1.6f, 3.2f, 0.20f, glassMat, attr);
+        Model archGroundDoor = mb.createBox(1.6f, 3.4f, 0.20f, teakDoor, attr);
+        Model archCrown = mb.createBox(2.05f, 0.22f, 0.25f, curzonTrimMat, attr);
+        Model archSill = mb.createBox(2.10f, 0.16f, 0.28f, curzonTrimMat, attr);
+        Model archPilaster = mb.createBox(0.12f, 3.8f, 0.22f, curzonTrimMat, attr);
+        Model floorBand = mb.createBox(92f, 0.30f, 0.25f, curzonTrimMat, attr);
         models.add(archNiche);
-        models.add(archFrame);
         models.add(archUpperWindow);
         models.add(archGroundDoor);
+        models.add(archCrown);
+        models.add(archSill);
+        models.add(archPilaster);
         models.add(floorBand);
-        models.add(sillBand);
 
-        float[] archFloorY = {3.0f, 8.4f};           // niche centres: ground floor verandah, upper floor
+        float[] archFloorY = {3.2f, 8.4f};           // niche centres: ground floor verandah, upper floor
         for (float ay : archFloorY) {
             boolean isGround = (ay < 5f);
-            for (float ax = -44f; ax <= 44.01f; ax += 3.6f) {
-                if (Math.abs(ax) < 8.2f) continue;    // the portico projection covers the centre
-                float fz = -23.45f;
-                // Clean white ornamental stone arch frame
-                ModelInstance frame = new ModelInstance(archFrame);
-                frame.transform.setTranslation(ax, ay, fz);
-                instances.add(frame);
+            for (float ax = -42f; ax <= 42.01f; ax += 5.2f) {
+                if (Math.abs(ax) < 8.6f) continue;    // the portico projection covers the centre
+                float fz = -23.42f;
 
-                // Deep recessed cavity
+                // Deep recessed dark cavity
                 ModelInstance arch = new ModelInstance(archNiche);
-                arch.transform.setTranslation(ax, ay, fz - 0.08f);
+                arch.transform.setTranslation(ax, ay, fz - 0.10f);
                 instances.add(arch);
+
+                // Flanking slim stone pilasters (left & right)
+                ModelInstance pilL = new ModelInstance(archPilaster);
+                pilL.transform.setTranslation(ax - 0.98f, ay, fz);
+                instances.add(pilL);
+                ModelInstance pilR = new ModelInstance(archPilaster);
+                pilR.transform.setTranslation(ax + 0.98f, ay, fz);
+                instances.add(pilR);
+
+                // Top stone arch crown
+                ModelInstance crown = new ModelInstance(archCrown);
+                crown.transform.setTranslation(ax, ay + 1.9f, fz + 0.02f);
+                instances.add(crown);
 
                 if (isGround) {
                     // Ground floor: Carved teak wooden panel door
                     ModelInstance door = new ModelInstance(archGroundDoor);
-                    door.transform.setTranslation(ax, ay - 0.1f, fz - 0.04f);
+                    door.transform.setTranslation(ax, ay - 0.2f, fz);
                     instances.add(door);
                 } else {
-                    // Upper floor: Elegant colonial glazed window with stone sill
+                    // Upper floor: Elegant colonial glazed window with protruding stone sill
                     ModelInstance win = new ModelInstance(archUpperWindow);
-                    win.transform.setTranslation(ax, ay, fz - 0.04f);
+                    win.transform.setTranslation(ax, ay, fz);
                     instances.add(win);
-                    ModelInstance sill = new ModelInstance(sillBand);
-                    sill.transform.setTranslation(ax, ay - 1.9f, fz + 0.08f);
+                    ModelInstance sill = new ModelInstance(archSill);
+                    sill.transform.setTranslation(ax, ay - 1.65f, fz + 0.05f);
                     instances.add(sill);
                 }
             }
         }
+
         // Cream string course between the floors
         ModelInstance bandInst = new ModelInstance(floorBand);
-        bandInst.transform.setTranslation(0f, 6.1f, -23.4f);
+        bandInst.transform.setTranslation(0f, 5.8f, -23.38f);
         instances.add(bandInst);
 
         // Grand Central Portal with Cusped Archway & Heavy Teak Doors
-        Model portalFrame = mb.createBox(6.4f, 9.2f, 0.25f, curzonTrimMat, attr);
-        Model mainArch = mb.createBox(5.4f, 8.4f, 0.8f, archCavity, attr);
-        Model doorLeaf = mb.createBox(4.4f, 7.2f, 0.3f, teakDoor, attr);
-        models.add(portalFrame);
+        Model portalJamb = mb.createBox(0.38f, 8.8f, 0.35f, curzonTrimMat, attr);
+        Model portalHeader = mb.createBox(6.0f, 0.55f, 0.35f, curzonTrimMat, attr);
+        Model mainArch = mb.createBox(5.2f, 8.4f, 0.6f, archCavity, attr);
+        Model doorLeaf = mb.createBox(4.4f, 7.2f, 0.25f, teakDoor, attr);
+        models.add(portalJamb);
+        models.add(portalHeader);
         models.add(mainArch);
         models.add(doorLeaf);
 
-        ModelInstance portalFrameInst = new ModelInstance(portalFrame);
-        portalFrameInst.transform.setTranslation(0f, 4.8f, -20.5f);
-        instances.add(portalFrameInst);
+        // Portal frame jambs (left & right)
+        ModelInstance jambL = new ModelInstance(portalJamb);
+        jambL.transform.setTranslation(-2.8f, 4.6f, -20.55f);
+        instances.add(jambL);
+        ModelInstance jambR = new ModelInstance(portalJamb);
+        jambR.transform.setTranslation(2.8f, 4.6f, -20.55f);
+        instances.add(jambR);
 
+        // Portal header
+        ModelInstance headerInst = new ModelInstance(portalHeader);
+        headerInst.transform.setTranslation(0f, 8.8f, -20.55f);
+        instances.add(headerInst);
+
+        // Deep archway cavity & doors
         ModelInstance mainArchInst = new ModelInstance(mainArch);
-        mainArchInst.transform.setTranslation(0f, 4.6f, -20.8f);
+        mainArchInst.transform.setTranslation(0f, 4.6f, -20.75f);
         instances.add(mainArchInst);
 
         ModelInstance doorInst = new ModelInstance(doorLeaf);
-        doorInst.transform.setTranslation(0f, 4.2f, -20.6f);
+        doorInst.transform.setTranslation(0f, 4.2f, -20.65f);
         instances.add(doorInst);
 
         // Ceremonial Red Carpet on Central Steps leading up to Portal
