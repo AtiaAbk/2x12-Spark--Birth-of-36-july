@@ -26,8 +26,13 @@ public class TextureFactory implements Disposable {
     public final Texture krishnachuraBlossom;
     public final Texture leafClump;
     public final Texture blossomClump;
+    public final Texture whiteBlossomClump;
     public final Texture leafAtlas;
     public final Texture bambooAtlas;
+    public final Texture whiteBlossomAtlas;
+    public final Texture kashfulAtlas;
+    public final Texture colonialWindow;
+    public final Texture teakDoorTexture;
     public final Texture dirtPath;
     public final Texture lightBeam;
     public final Texture rockSurface;
@@ -56,8 +61,13 @@ public class TextureFactory implements Disposable {
         krishnachuraBlossom = createKrishnachuraBlossom();
         leafClump = createLeafClump(false);
         blossomClump = createLeafClump(true);
+        whiteBlossomClump = createWhiteBlossomClump();
         leafAtlas = createLeafAtlas();
         bambooAtlas = createBambooAtlas();
+        whiteBlossomAtlas = createWhiteBlossomAtlas();
+        kashfulAtlas = createKashfulAtlas();
+        colonialWindow = createColonialWindow();
+        teakDoorTexture = createTeakDoorTexture();
         dirtPath = createDirtPath();
         lightBeam = createLightBeam();
         rockSurface = createRockSurface();
@@ -78,7 +88,9 @@ public class TextureFactory implements Disposable {
         mapVisualTarget = createMapVisualTarget();
 
         textures.addAll(brickPavement, curzonBrick, lawnGrass, treeBark,
-                        foliage, krishnachuraBlossom, leafClump, blossomClump, leafAtlas, bambooAtlas, dirtPath, lightBeam, rockSurface, bambooCulm, bambooFoliage,
+                        foliage, krishnachuraBlossom, leafClump, blossomClump, whiteBlossomClump,
+                        leafAtlas, bambooAtlas, whiteBlossomAtlas, kashfulAtlas, colonialWindow, teakDoorTexture,
+                        dirtPath, lightBeam, rockSurface, bambooCulm, bambooFoliage,
                         bushFoliage, weatheredStone, curzonWater, waterRipple,
                         backpackFabric, studentJacket, movementBanner, bdFlag, aparajeyoStone,
                         asphaltRoad, modernistConcrete, canteenTinRoof, mapVisualTarget);
