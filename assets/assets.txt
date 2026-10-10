@@ -24,8 +24,3 @@ shaders/bloom_extract.frag
 shaders/postprocess.frag
 shaders/postprocess.vert
 
-
-
-shaders/bloom_extract.frag
-shaders/postprocess.frag
-shaders/postprocess.vert
