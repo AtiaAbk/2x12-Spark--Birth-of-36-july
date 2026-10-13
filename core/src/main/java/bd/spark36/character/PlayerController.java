@@ -94,6 +94,26 @@ public class PlayerController {
     private boolean isSittingWater = false;
     private float sitProgress = 0f;
 
+    // Combat Dodge & Evasion (Tactical Martial Arts Slip/Sidestep)
+    private boolean isDodging = false;
+    private float dodgeProgress = 0f;
+    private float dodgeTimer = 0f;
+    private float dodgeCooldown = 0f;
+    private final Vector2 dodgeDir = new Vector2();
+    private static final float DODGE_DURATION = 0.22f;
+    private static final float DODGE_SPEED = 7.4f;
+
+    // Combat Target Soft Lock-on & Auto-Facing Alignment
+    private final Vector3 combatTarget = new Vector3();
+    private boolean hasCombatTarget = false;
+
+    // Fluid Combo Buffering (No dropped inputs)
+    private int bufferedAttack = 0; // 0 = none, 1 = punch, 2 = kick
+
+    // Hit Stagger & Dynamic Knockback Physics
+    private float staggerTimer = 0f;
+    private final Vector3 knockbackVel = new Vector3();
+
     // Temp vectors for math
     private final Vector2 moveDir = new Vector2();
     private final Vector3 prevPosition = new Vector3();
@@ -291,10 +311,14 @@ public class PlayerController {
     public void update(float delta, float cameraYawDegrees, boolean inputEnabled) {
         if (delta > 0.1f) delta = 0.1f; // Cap delta spikes
 
+        if (dodgeCooldown > 0f) dodgeCooldown -= delta;
+        if (staggerTimer > 0f) staggerTimer -= delta;
+
         // 1. Read input: Dual scheme (WASD + Arrow Keys)
         moveDir.setZero();
         boolean sprintKey = false;
         boolean jumpKey = false;
+        boolean dodgeKey = false;
 
         if (inputEnabled) {
             boolean up = Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP);
@@ -315,6 +339,11 @@ public class PlayerController {
             if (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
                 isCrouching = true;
             }
+
+            // TACTICAL COMBAT DODGE / SLIP EVASION: 'Z' or Left-ALT or Right-ALT
+            dodgeKey = Gdx.input.isKeyJustPressed(Input.Keys.Z) ||
+                       Gdx.input.isKeyJustPressed(Input.Keys.ALT_LEFT) ||
+                       Gdx.input.isKeyJustPressed(Input.Keys.ALT_RIGHT);
 
             // MARTIAL ARTS BLOCK / GUARD & FLASH PARRY: 'B' key holds guard
             boolean blockHeld = Gdx.input.isKeyPressed(Input.Keys.B);
@@ -342,33 +371,7 @@ public class PlayerController {
             // COMBAT KICKS (Latthi): 'Q' or 'K' key (High Roundhouse Kick -> Low Sweep Kick)
             boolean kickPressed = Gdx.input.isKeyJustPressed(Input.Keys.Q) || Gdx.input.isKeyJustPressed(Input.Keys.K);
 
-            if (punchPressed && !isAttacking && !isSittingWater) {
-                isAttacking = true;
-                attackProgress = 0f;
-                if (isCrouching) {
-                    attackCombo = 5; // Low Sweep Counter (Tripping leg kick)
-                } else if (comboWindowTimer > 0f) {
-                    attackCombo = (attackCombo == 1) ? 2 : 1;
-                } else {
-                    attackCombo = 1; // Left Jab
-                }
-            } else if (kickPressed && !isAttacking && !isSittingWater) {
-                isAttacking = true;
-                attackProgress = 0f;
-                if (isCrouching) {
-                    attackCombo = 5; // Low Sweep Counter
-                } else if (comboWindowTimer > 0f && (attackCombo == 3 || attackCombo == 4)) {
-                    attackCombo = (attackCombo == 3) ? 4 : 3;
-                } else {
-                    attackCombo = 3; // High Martial Arts Kick
-                }
-            }
-
-            // JUMP / DOUBLE JUMP: 'J' or 'SPACE' or 'V'
-            jumpKey = Gdx.input.isKeyJustPressed(Input.Keys.J) ||
-                      Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
-                      Gdx.input.isKeyJustPressed(Input.Keys.V);
-
+            // Movement vector relative to camera
             if (up) moveDir.y += 1f;
             if (down) moveDir.y -= 1f;
             if (left) moveDir.x -= 1f;
@@ -377,6 +380,70 @@ public class PlayerController {
             if (moveDir.len2() > 0.001f) {
                 moveDir.nor();
             }
+
+            // Tactical Dodge Activation (Martial arts slip with i-frames)
+            if (dodgeKey && dodgeCooldown <= 0f && !isSittingWater && isGrounded) {
+                isDodging = true;
+                dodgeTimer = DODGE_DURATION;
+                dodgeProgress = 0f;
+                dodgeCooldown = 0.38f;
+                isAttacking = false; // Evasive slip cancels attack recovery
+                bufferedAttack = 0;
+                attackProgress = 0f;
+
+                float yawRad = cameraYawDegrees * MathUtils.degreesToRadians;
+                float forwardX = -MathUtils.sin(yawRad);
+                float forwardZ = -MathUtils.cos(yawRad);
+                float rightX = MathUtils.cos(yawRad);
+                float rightZ = -MathUtils.sin(yawRad);
+
+                if (moveDir.len2() > 0.001f) {
+                    dodgeDir.set(forwardX * moveDir.y + rightX * moveDir.x, forwardZ * moveDir.y + rightZ * moveDir.x).nor();
+                } else {
+                    // Quick slip backward if stationary
+                    dodgeDir.set(-forwardX, -forwardZ).nor();
+                }
+            }
+
+            // Punches with fluid buffering and soft lock-on orientation
+            if (punchPressed && !isSittingWater && !isDodging) {
+                if (!isAttacking) {
+                    isAttacking = true;
+                    attackProgress = 0f;
+                    bufferedAttack = 0;
+                    if (isCrouching) {
+                        attackCombo = 5; // Low Sweep Counter (Tripping leg kick)
+                    } else if (comboWindowTimer > 0f) {
+                        attackCombo = (attackCombo == 1) ? 2 : 1;
+                    } else {
+                        attackCombo = 1; // Left Jab
+                    }
+                    applyCombatFacing();
+                } else if (attackProgress >= 0.45f) {
+                    bufferedAttack = 1; // Buffer next punch
+                }
+            } else if (kickPressed && !isSittingWater && !isDodging) {
+                if (!isAttacking) {
+                    isAttacking = true;
+                    attackProgress = 0f;
+                    bufferedAttack = 0;
+                    if (isCrouching) {
+                        attackCombo = 5; // Low Sweep Counter
+                    } else if (comboWindowTimer > 0f && (attackCombo == 3 || attackCombo == 4)) {
+                        attackCombo = (attackCombo == 3) ? 4 : 3;
+                    } else {
+                        attackCombo = 3; // High Martial Arts Kick
+                    }
+                    applyCombatFacing();
+                } else if (attackProgress >= 0.45f) {
+                    bufferedAttack = 2; // Buffer next kick
+                }
+            }
+
+            // JUMP / DOUBLE JUMP: 'J' or 'SPACE' or 'V'
+            jumpKey = Gdx.input.isKeyJustPressed(Input.Keys.J) ||
+                      Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
+                      Gdx.input.isKeyJustPressed(Input.Keys.V);
         } else {
             isBlocking = false;
         }
@@ -388,13 +455,43 @@ public class PlayerController {
         staminaExhausted = false;
         isSprinting = isMoving && sprintKey;
 
-        // Handle combat attack timing
+        // Handle Dodge duration & progress
+        if (isDodging) {
+            dodgeTimer -= delta;
+            dodgeProgress = 1.0f - Math.max(0f, dodgeTimer / DODGE_DURATION);
+            if (dodgeTimer <= 0f) {
+                isDodging = false;
+                dodgeProgress = 1.0f;
+            }
+        }
+
+        // Handle combat attack timing & combo buffering
         if (isAttacking) {
-            attackProgress += delta * 3.2f;
+            attackProgress += delta * 3.4f;
             if (attackProgress >= 1.0f) {
-                isAttacking = false;
-                attackProgress = 1.0f;
-                comboWindowTimer = 0.65f;
+                if (bufferedAttack > 0) {
+                    int next = bufferedAttack;
+                    bufferedAttack = 0;
+                    attackProgress = 0f;
+                    if (next == 1) {
+                        if (isCrouching) {
+                            attackCombo = 5;
+                        } else {
+                            attackCombo = (attackCombo == 1) ? 2 : 1;
+                        }
+                    } else {
+                        if (isCrouching) {
+                            attackCombo = 5;
+                        } else {
+                            attackCombo = (attackCombo == 3) ? 4 : 3;
+                        }
+                    }
+                    applyCombatFacing();
+                } else {
+                    isAttacking = false;
+                    attackProgress = 1.0f;
+                    comboWindowTimer = 0.65f;
+                }
             }
         } else if (comboWindowTimer > 0f) {
             comboWindowTimer -= delta;
@@ -409,7 +506,7 @@ public class PlayerController {
             velocity.set(0f, 0f, 0f);
             boolean breakSit = (inputEnabled && (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.S) ||
                                                  Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.D) ||
-                                                 jumpKey || isAttacking));
+                                                 jumpKey || isAttacking || isDodging));
             if (breakSit) {
                 isSittingWater = false;
             }
@@ -424,20 +521,53 @@ public class PlayerController {
         float targetVx = 0f;
         float targetVz = 0f;
 
-        if (isMoving) {
-            float yawRad = cameraYawDegrees * MathUtils.degreesToRadians;
-            float forwardX = -MathUtils.sin(yawRad);
-            float forwardZ = -MathUtils.cos(yawRad);
-            float rightX = MathUtils.cos(yawRad);
-            float rightZ = -MathUtils.sin(yawRad);
+        if (isDodging) {
+            targetVx = dodgeDir.x * DODGE_SPEED;
+            targetVz = dodgeDir.y * DODGE_SPEED;
+        } else {
+            if (isMoving) {
+                float yawRad = cameraYawDegrees * MathUtils.degreesToRadians;
+                float forwardX = -MathUtils.sin(yawRad);
+                float forwardZ = -MathUtils.cos(yawRad);
+                float rightX = MathUtils.cos(yawRad);
+                float rightZ = -MathUtils.sin(yawRad);
 
-            float worldMoveX = forwardX * moveDir.y + rightX * moveDir.x;
-            float worldMoveZ = forwardZ * moveDir.y + rightZ * moveDir.x;
+                float worldMoveX = forwardX * moveDir.y + rightX * moveDir.x;
+                float worldMoveZ = forwardZ * moveDir.y + rightZ * moveDir.x;
 
-            targetVx = worldMoveX * currentSpeed;
-            targetVz = worldMoveZ * currentSpeed;
+                targetVx = worldMoveX * currentSpeed;
+                targetVz = worldMoveZ * currentSpeed;
 
-            targetHeadingDegrees = MathUtils.atan2(worldMoveX, worldMoveZ) * MathUtils.radiansToDegrees;
+                targetHeadingDegrees = MathUtils.atan2(worldMoveX, worldMoveZ) * MathUtils.radiansToDegrees;
+            }
+
+            // Kinetic forward footwork step-in based on active martial arts combo
+            if (isAttacking && isGrounded) {
+                float baseLungeSpeed = (attackCombo == 1) ? 2.4f :
+                                       (attackCombo == 2) ? 3.6f :
+                                       (attackCombo == 3) ? 3.2f :
+                                       (attackCombo == 4) ? 3.8f : 4.4f; // Combo 5 low sweep slide
+                float stepFactor = Math.max(0f, 1.0f - (attackProgress / 0.58f));
+                float lungeSpeed = baseLungeSpeed * stepFactor;
+
+                float lungeVx = MathUtils.sinDeg(headingDegrees) * lungeSpeed;
+                float lungeVz = MathUtils.cosDeg(headingDegrees) * lungeSpeed;
+
+                if (isMoving) {
+                    targetVx = targetVx * 0.40f + lungeVx * 0.70f;
+                    targetVz = targetVz * 0.40f + lungeVz * 0.70f;
+                } else {
+                    targetVx = lungeVx;
+                    targetVz = lungeVz;
+                }
+            }
+        }
+
+        // Apply knockback decay with physical friction
+        if (knockbackVel.len2() > 0.001f) {
+            velocity.x += knockbackVel.x;
+            velocity.z += knockbackVel.z;
+            knockbackVel.scl(Math.max(0f, 1f - 14f * delta));
         }
 
         // Smooth horizontal acceleration with mid-air steering control
@@ -452,12 +582,13 @@ public class PlayerController {
             }
         }
 
-        // Smooth character heading turn
-        if (isMoving) {
+        // Smooth character heading turn with snappy combat alignment
+        if (isMoving || (isAttacking && attackProgress < 0.35f)) {
             float diff = (targetHeadingDegrees - headingDegrees) % 360f;
             if (diff > 180f) diff -= 360f;
             if (diff < -180f) diff += 360f;
-            headingDegrees += diff * Math.min(1f, 15f * delta);
+            float turnSpeed = isAttacking ? 22f : 15f;
+            headingDegrees += diff * Math.min(1f, turnSpeed * delta);
         }
 
         // 4. Jump & Athletic DOUBLE JUMP Physics (Primary Key: 'J')
@@ -835,8 +966,63 @@ public class PlayerController {
         this.isBlocking = blocking;
     }
 
+    public boolean isDodging() {
+        return isDodging;
+    }
+
+    public float getDodgeProgress() {
+        return dodgeProgress;
+    }
+
+    public float getStaggerTimer() {
+        return staggerTimer;
+    }
+
+    public void setCombatTarget(Vector3 target) {
+        if (target != null) {
+            combatTarget.set(target);
+            hasCombatTarget = true;
+        } else {
+            hasCombatTarget = false;
+        }
+    }
+
+    public void clearCombatTarget() {
+        hasCombatTarget = false;
+    }
+
+    /**
+     * Soft lock-on: Aligns character heading directly towards active combat target.
+     */
+    public void applyCombatFacing() {
+        if (hasCombatTarget && isGrounded) {
+            float dst = position.dst(combatTarget);
+            if (dst <= 4.2f && dst > 0.3f) {
+                float dx = combatTarget.x - position.x;
+                float dz = combatTarget.z - position.z;
+                float enemyAngle = MathUtils.atan2(dx, dz) * MathUtils.radiansToDegrees;
+                float diff = (enemyAngle - headingDegrees) % 360f;
+                if (diff > 180f) diff -= 360f;
+                if (diff < -180f) diff += 360f;
+                if (Math.abs(diff) < 130f) {
+                    targetHeadingDegrees = enemyAngle;
+                    headingDegrees = MathUtils.lerpAngleDeg(headingDegrees, enemyAngle, 0.65f);
+                }
+            }
+        }
+    }
+
     public void takeDamage(float amount) {
+        takeDamage(amount, 0f, 0f, 0f);
+    }
+
+    public void takeDamage(float amount, float knockbackDirX, float knockbackDirZ, float knockbackStrength) {
         this.health = Math.max(0f, this.health - amount);
+        this.staggerTimer = isBlocking ? 0.08f : 0.28f;
+        float factor = isBlocking ? 0.30f : 1.0f;
+        if (knockbackStrength > 0f) {
+            this.knockbackVel.set(knockbackDirX * knockbackStrength * factor, 0f, knockbackDirZ * knockbackStrength * factor);
+        }
     }
 
     public boolean isKnockedOut() {
@@ -847,6 +1033,12 @@ public class PlayerController {
         this.health = maxHealth;
         this.isAttacking = false;
         this.isBlocking = false;
+        this.isDodging = false;
+        this.dodgeTimer = 0f;
+        this.dodgeCooldown = 0f;
+        this.staggerTimer = 0f;
+        this.knockbackVel.setZero();
+        this.bufferedAttack = 0;
         this.attackCombo = 0;
         this.attackProgress = 0f;
     }

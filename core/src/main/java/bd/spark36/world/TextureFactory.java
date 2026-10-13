@@ -314,37 +314,40 @@ public class TextureFactory implements Disposable {
     }
 
     /**
-     * Soft, dense canopy texture for the White Blossom Tree:
-     * Deep organic forest-moss base with delicate feathery bipinnate micro-leaflets ("jira jira pata")
-     * and radiant pure white & ivory blossom florets with golden stamens.
+     * Soft, dense canopy texture for the Feathery Bipinnate Tree:
+     * Deep chlorophyll forest-moss base with thousands of delicate micro-leaflets in vibrant
+     * emerald, jade, and sunlit golden-amber tones matching the feathery "jira jira" cards.
      */
     private Texture createWhiteBlossomClump() {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
         // Deep organic forest moss green base
-        pix.setColor(0.05f, 0.14f, 0.05f, 1f);
+        pix.setColor(0.06f, 0.16f, 0.06f, 1f);
         pix.fill();
 
-        for (int i = 0; i < 1500; i++) {
+        for (int i = 0; i < 1600; i++) {
             int x = MathUtils.random(size - 1);
             int y = MathUtils.random(size - 1);
             float t = MathUtils.random();
             int r = MathUtils.random(3, 7);
 
-            if (MathUtils.random() < 0.48f) {
-                // Radiant pure snow-white and ivory blossom florets
-                float shade = 0.94f + 0.06f * t;
-                pix.setColor(shade, shade, shade * 0.96f, 1f);
+            // Layered rich natural chlorophyll greens with warm sunlit foliage tips
+            if (t > 0.65f) {
+                // Sunlit tender golden-green tips
+                pix.setColor(0.18f + 0.08f * t, 0.44f + 0.12f * t, 0.12f + 0.04f * t, 1f);
+            } else if (t > 0.30f) {
+                // Vibrant fresh emerald foliage
+                pix.setColor(0.10f + 0.06f * t, 0.28f + 0.10f * t, 0.08f + 0.03f * t, 1f);
             } else {
-                // Deep organic forest-moss foliage green
-                pix.setColor(0.06f + 0.05f * t, 0.16f + 0.09f * t, 0.05f + 0.03f * t, 1f);
+                // Deep shaded jade interior
+                pix.setColor(0.06f + 0.04f * t, 0.18f + 0.06f * t, 0.05f + 0.02f * t, 1f);
             }
 
             for (int ox = -size; ox <= size; ox += size) {
                 for (int oy = -size; oy <= size; oy += size) {
                     pix.fillCircle(x + ox, y + oy, r);
-                    if (MathUtils.random() < 0.18f) {
-                        pix.setColor(0.98f, 0.85f, 0.28f, 0.95f); // amber gold stamen dot
+                    if (MathUtils.random() < 0.12f) {
+                        pix.setColor(0.24f, 0.52f, 0.15f, 0.90f);
                         pix.drawPixel(x + ox, y + oy);
                     }
                 }
@@ -425,7 +428,7 @@ public class TextureFactory implements Disposable {
 
     /**
      * 2x2 atlas of hanging bamboo leaf sprays (each cell 256px, hung from the top-centre):
-     * Deep organic forest bamboo greens (Ghost of Tsushima / Where Winds Meet style, zero neon).
+     * Vibrant, fresh sunlit bamboo emerald and chartreuse greens matching user's reference image.
      */
     private Texture createBambooAtlas() {
         int cell = 256;
@@ -434,37 +437,37 @@ public class TextureFactory implements Disposable {
         pix.fill();
         final float down = MathUtils.HALF_PI; // pixmap y points down
 
-        // Cell 0: full spray, nine leaves fanning from the pivot in deep organic bamboo jade
+        // Cell 0: full spray, nine leaves fanning from the pivot in vibrant sunlit bamboo emerald
         float[] fan = {-1.15f, -0.85f, -0.55f, -0.25f, 0f, 0.25f, 0.55f, 0.85f, 1.15f};
         float[] fanLen = {150f, 175f, 200f, 215f, 225f, 215f, 200f, 175f, 150f};
         for (int i = 0; i < fan.length; i++) {
-            float shade = (i % 2 == 0) ? 0f : 0.02f;
-            drawLeaf(pix, 0, 0, 128, 10, fanLen[i], 11f, down + fan[i],
-                0.06f + shade, 0.17f + shade, 0.05f, 0.11f + shade, 0.28f, 0.08f);
+            float shade = (i % 2 == 0) ? 0f : 0.04f;
+            drawLeaf(pix, 0, 0, 128, 10, fanLen[i], 12f, down + fan[i],
+                0.10f + shade, 0.32f + shade, 0.08f, 0.22f + shade, 0.58f, 0.14f);
         }
 
-        // Cell 1: airy spray of seven long thin leaves
+        // Cell 1: airy spray of seven long thin leaves in fresh bamboo greens
         for (int i = 0; i < 7; i++) {
             float a = -0.9f + i * 0.3f;
-            drawLeaf(pix, cell, 0, 128, 10, 205f + 20f * (1f - Math.abs(a)), 8f, down + a,
-                0.06f, 0.17f, 0.05f, 0.11f, 0.28f, 0.08f);
+            drawLeaf(pix, cell, 0, 128, 10, 205f + 20f * (1f - Math.abs(a)), 9f, down + a,
+                0.11f, 0.34f, 0.08f, 0.24f, 0.60f, 0.15f);
         }
 
-        // Cell 2: short sprig of five leaves in rich jade
+        // Cell 2: short sprig of five leaves in rich sunlit bamboo jade
         for (int i = 0; i < 5; i++) {
             float a = -0.6f + i * 0.3f;
-            drawLeaf(pix, 0, cell, 128, 10, 120f + 25f * (1f - Math.abs(a)), 10f, down + a,
-                0.07f, 0.19f, 0.06f, 0.13f, 0.30f, 0.09f);
+            drawLeaf(pix, 0, cell, 128, 10, 120f + 25f * (1f - Math.abs(a)), 11f, down + a,
+                0.12f, 0.36f, 0.09f, 0.25f, 0.62f, 0.16f);
         }
 
-        // Cell 3: spray with a few weathered golden-brown dry leaves mixed into deep green
+        // Cell 3: spray with vibrant bamboo and sunlit golden-amber highlights
         for (int i = 0; i < 8; i++) {
             float a = -1.0f + i * 0.285f;
             boolean dry = i % 3 == 1;
             if (dry) {
-                drawLeaf(pix, cell, cell, 128, 10, 185f, 10f, down + a, 0.22f, 0.18f, 0.07f, 0.34f, 0.28f, 0.11f);
+                drawLeaf(pix, cell, cell, 128, 10, 185f, 11f, down + a, 0.28f, 0.38f, 0.10f, 0.44f, 0.54f, 0.14f);
             } else {
-                drawLeaf(pix, cell, cell, 128, 10, 200f, 10f, down + a, 0.06f, 0.17f, 0.05f, 0.11f, 0.28f, 0.08f);
+                drawLeaf(pix, cell, cell, 128, 10, 200f, 11f, down + a, 0.10f, 0.32f, 0.08f, 0.22f, 0.58f, 0.14f);
             }
         }
 
@@ -476,12 +479,12 @@ public class TextureFactory implements Disposable {
     }
 
     /**
-     * 2x2 atlas of white blossom cards (each cell 256px) featuring authentic "jira jira pata"
-     * (feathery bipinnate compound leaflets like Krishnachura/Mimosa) requested by the user:
-     * Cell 0: Main upright feathery bipinnate branch with 17 pairs of delicate leaflets + white blossom florets
-     * Cell 1: Twin fanning feathery fronds with delicate micro-leaflets and blossom sprays
-     * Cell 2: Arching feathery compound branch with 18 pairs of leaflets and white flower clusters
-     * Cell 3: Dense feathery foliage spray with 3 radiating bipinnate fronds and blooming white flowers
+     * 2x2 atlas of authentic "jira jira pata" cards (each cell 256px):
+     * Pure feathery bipinnate compound foliage (like Krishnachura / Delonix regia) requested by user:
+     * Cell 0: Main upright feathery bipinnate frond with 22 pairs of delicate micro-leaflets
+     * Cell 1: Twin arching feathery fronds with spreading micro-leaflets and sunlit tips
+     * Cell 2: Graceful sweeping lateral feathery frond with 24 pairs of micro-leaflets
+     * Cell 3: Dense radiating feathery foliage spray with 3 layered bipinnate fronds
      */
     private Texture createWhiteBlossomAtlas() {
         int cell = 256;
@@ -489,18 +492,20 @@ public class TextureFactory implements Disposable {
         pix.setColor(0f, 0f, 0f, 0f);
         pix.fill();
 
-        // Cell 0: Main upright feathery bipinnate branch ("jira jira pata")
-        drawFeatheryBipinnateBranch(pix, 0, 0, 0f, 0f, 17, 10);
+        // Cell 0: Main upright feathery bipinnate frond ("jira jira pata")
+        drawFeatheryBipinnateBranch(pix, 0, 0, 0f, 0f, 22);
 
         // Cell 1: Twin fanning feathery fronds with delicate micro-leaflets
-        drawFeatheryBipinnateBranch(pix, cell, 0, -0.26f, -0.5f, 15, 8);
-        drawFeatheryBipinnateBranch(pix, cell, 0, 0.26f, 0.5f, 15, 8);
+        drawFeatheryBipinnateBranch(pix, cell, 0, -0.26f, -0.5f, 19);
+        drawFeatheryBipinnateBranch(pix, cell, 0, 0.26f, 0.5f, 19);
 
-        // Cell 2: Arching feathery compound branch with 18 pairs of leaflets
-        drawFeatheryBipinnateBranch(pix, 0, cell, 0.10f, 0.9f, 18, 12);
+        // Cell 2: Arching feathery compound branch with 24 pairs of micro-leaflets
+        drawFeatheryBipinnateBranch(pix, 0, cell, 0.10f, 0.9f, 24);
 
-        // Cell 3: Dense feathery foliage spray with rich white blossom rosettes
-        drawFeatheryBipinnateBranch(pix, cell, cell, -0.12f, 0.3f, 16, 14);
+        // Cell 3: Dense feathery foliage spray with 3 radiating bipinnate fronds
+        drawFeatheryBipinnateBranch(pix, cell, cell, -0.32f, -0.4f, 18);
+        drawFeatheryBipinnateBranch(pix, cell, cell, 0.05f, 0.2f, 20);
+        drawFeatheryBipinnateBranch(pix, cell, cell, 0.34f, 0.5f, 18);
 
         Texture tex = new Texture(pix, Format.RGBA8888, true);
         tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
@@ -511,57 +516,45 @@ public class TextureFactory implements Disposable {
 
     /**
      * Draws authentic feathery bipinnate foliage ("jira jira pata"):
-     * A central rachis with numerous pairs of delicate micro-leaflets in deep organic greens,
-     * interspersed with pure snow-white 5-petal florets and golden amber stamens.
+     * Central slender rachis stem flanked by numerous pairs of delicate micro-leaflets
+     * in rich chlorophyll greens and warm sunlit tips, exactly matching the red Krishnachura tree.
      */
-    private void drawFeatheryBipinnateBranch(Pixmap pix, int ox, int oy, float angle, float curve, int pairs, int blossomCount) {
+    private void drawFeatheryBipinnateBranch(Pixmap pix, int ox, int oy, float angle, float curve, int pairs) {
         final float up = -MathUtils.HALF_PI + angle;
-        float baseR = 0.05f, baseG = 0.15f, baseB = 0.05f;
-        float tipR = 0.10f, tipG = 0.26f, tipB = 0.08f;
+        float baseR = 0.08f, baseG = 0.24f, baseB = 0.07f;
+        float tipR = 0.18f, tipG = 0.42f, tipB = 0.11f;
 
         // Pairs of delicate bipinnate leaflets ("jira jira pata")
         for (int i = 0; i < pairs; i++) {
-            float t = 0.08f + (float) i / (float) pairs * 0.88f;
+            float t = 0.06f + (float) i / (float) pairs * 0.90f;
             float ry = 248f - t * 234f;
             float rx = 128f + MathUtils.sin(t * 2.5f + curve) * 22f;
-            float len = 74f * (1f - 0.44f * t);
-            float hw = 12f * (1f - 0.22f * t);
+            float len = 78f * (1f - 0.44f * t);
+            float hw = 13f * (1f - 0.22f * t);
 
-            // Deep organic forest-moss green leaflets (zero neon)
-            drawLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f, baseR, baseG, baseB, tipR, tipG, tipB);
-            drawLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f, baseR, baseG, baseB, tipR, tipG, tipB);
+            // Alternate slight color variety for rich organic foliage depth
+            float var = (i % 2 == 0) ? 0f : 0.03f;
+            drawLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f,
+                baseR + var, baseG + var, baseB, tipR + var * 1.5f, tipG + var * 1.5f, tipB);
+            drawLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f,
+                baseR + var, baseG + var, baseB, tipR + var * 1.5f, tipG + var * 1.5f, tipB);
 
-            // Dotted white blossom florets nestled between delicate leaflets
-            if (blossomCount > 0 && i % 3 == 0) {
-                float bx = rx + MathUtils.random(-10f, 10f);
-                float by = ry + MathUtils.random(-6f, 6f);
-                for (int p = 0; p < 5; p++) {
-                    float pa = p * MathUtils.PI2 / 5f;
-                    pix.setColor(0.98f, 0.98f, 0.96f, 1f);
-                    pix.fillCircle(ox + (int)(bx + MathUtils.cos(pa) * 5f), oy + (int)(by + MathUtils.sin(pa) * 5f), 4);
-                }
-                pix.setColor(1.0f, 0.88f, 0.22f, 1f); // golden stamen center
-                pix.fillCircle(ox + (int)bx, oy + (int)by, 2);
+            // Secondary micro-leaflets near outer edges for lush fern-like feathery silhouette
+            if (i > 3 && i < pairs - 4 && i % 2 == 0) {
+                float subLen = len * 0.48f;
+                float subHw = hw * 0.75f;
+                float srxL = rx + MathUtils.cos(up - 1.05f) * (len * 0.5f);
+                float sryL = ry + MathUtils.sin(up - 1.05f) * (len * 0.5f);
+                drawLeaf(pix, ox, oy, srxL, sryL, subLen, subHw, up - 0.55f, baseR, baseG, baseB, tipR, tipG, tipB);
+
+                float srxR = rx + MathUtils.cos(up + 1.05f) * (len * 0.5f);
+                float sryR = ry + MathUtils.sin(up + 1.05f) * (len * 0.5f);
+                drawLeaf(pix, ox, oy, srxR, sryR, subLen, subHw, up + 0.55f, baseR, baseG, baseB, tipR, tipG, tipB);
             }
         }
+
         // Main rachis stem (slender woody stalk)
-        drawLeaf(pix, ox, oy, 128, 250, 240, 4, up, 0.16f, 0.22f, 0.08f, 0.20f, 0.30f, 0.10f);
-
-        // Radiant blossom rosettes
-        for (int b = 0; b < blossomCount; b++) {
-            float bt = MathUtils.random(0.12f, 0.88f);
-            float by = 240f - bt * 210f + MathUtils.random(-12f, 12f);
-            float bx = 128f + MathUtils.sin(bt * 2.5f + curve) * 22f + MathUtils.random(-30f, 30f);
-            float rad = MathUtils.random(11f, 18f);
-
-            for (int p = 0; p < 5; p++) {
-                float pa = p * MathUtils.PI2 / 5f + MathUtils.random(-0.1f, 0.1f);
-                pix.setColor(0.99f, 0.99f, 0.97f, 1f);
-                pix.fillCircle(ox + (int)(bx + MathUtils.cos(pa) * (rad * 0.45f)), oy + (int)(by + MathUtils.sin(pa) * (rad * 0.45f)), (int)(rad * 0.48f));
-            }
-            pix.setColor(1.0f, 0.88f, 0.22f, 1f);
-            pix.fillCircle(ox + (int)bx, oy + (int)by, 3);
-        }
+        drawLeaf(pix, ox, oy, 128, 250, 240, 4, up, 0.16f, 0.22f, 0.08f, 0.22f, 0.34f, 0.11f);
     }
 
     /**

@@ -847,6 +847,18 @@ public class StudentMesh implements Disposable {
                        boolean isSittingWater, float sitProgress, int gender) {
         render(batch, env, pos, headingDegrees, walkCycle, isMoving, isSprinting,
                isCrouching, isBlocking, isAttacking, attackCombo, attackProgress,
+               false, 0f, 0f,
+               isSittingWater, sitProgress, gender, 0);
+    }
+
+    public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
+                       float walkCycle, boolean isMoving, boolean isSprinting,
+                       boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,
+                       boolean isDodging, float dodgeProgress, float staggerTimer,
+                       boolean isSittingWater, float sitProgress, int gender) {
+        render(batch, env, pos, headingDegrees, walkCycle, isMoving, isSprinting,
+               isCrouching, isBlocking, isAttacking, attackCombo, attackProgress,
+               isDodging, dodgeProgress, staggerTimer,
                isSittingWater, sitProgress, gender, 0);
     }
 
@@ -861,6 +873,7 @@ public class StudentMesh implements Disposable {
                        boolean isSittingWater, float sitProgress, int gender, int variant) {
         render(batch, env, pos, headingDegrees, walkCycle, isMoving, isSprinting,
                isCrouching, false, isAttacking, attackCombo, attackProgress,
+               false, 0f, 0f,
                isSittingWater, sitProgress, gender, variant);
     }
 
@@ -868,11 +881,23 @@ public class StudentMesh implements Disposable {
                        float walkCycle, boolean isMoving, boolean isSprinting,
                        boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,
                        boolean isSittingWater, float sitProgress, int gender, int variant) {
+        render(batch, env, pos, headingDegrees, walkCycle, isMoving, isSprinting,
+               isCrouching, isBlocking, isAttacking, attackCombo, attackProgress,
+               false, 0f, 0f,
+               isSittingWater, sitProgress, gender, variant);
+    }
+
+    public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
+                       float walkCycle, boolean isMoving, boolean isSprinting,
+                       boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,
+                       boolean isDodging, float dodgeProgress, float staggerTimer,
+                       boolean isSittingWater, float sitProgress, int gender, int variant) {
         tick();
         int g = (gender == 1) ? 1 : 0;
         draw(batch, env, rigFor(g, variant), g, pos, headingDegrees, walkCycle, isMoving, isSprinting,
-             isCrouching, isBlocking, isAttacking, attackCombo, attackProgress, isSittingWater, sitProgress,
-             variant * 1.37f);
+             isCrouching, isBlocking, isAttacking, attackCombo, attackProgress,
+             isDodging, dodgeProgress, staggerTimer,
+             isSittingWater, sitProgress, variant * 1.37f);
     }
 
     /**
@@ -886,6 +911,7 @@ public class StudentMesh implements Disposable {
                        boolean isSittingWater, float sitProgress, int gender, Appearance look) {
         render(batch, env, pos, headingDegrees, walkCycle, isMoving, isSprinting,
                isCrouching, false, isAttacking, attackCombo, attackProgress,
+               false, 0f, 0f,
                isSittingWater, sitProgress, gender, look);
     }
 
@@ -893,17 +919,31 @@ public class StudentMesh implements Disposable {
                        float walkCycle, boolean isMoving, boolean isSprinting,
                        boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,
                        boolean isSittingWater, float sitProgress, int gender, Appearance look) {
+        render(batch, env, pos, headingDegrees, walkCycle, isMoving, isSprinting,
+               isCrouching, isBlocking, isAttacking, attackCombo, attackProgress,
+               false, 0f, 0f,
+               isSittingWater, sitProgress, gender, look);
+    }
+
+    public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
+                       float walkCycle, boolean isMoving, boolean isSprinting,
+                       boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,
+                       boolean isDodging, float dodgeProgress, float staggerTimer,
+                       boolean isSittingWater, float sitProgress, int gender, Appearance look) {
         tick();
         int g = (gender == 1) ? 1 : 0;
         Rig rig = look == null ? baseRigs[g] : rigFor(g, look);
         float phase = look == null ? 0f : (System.identityHashCode(look) % 97) * 0.13f;
         draw(batch, env, rig, g, pos, headingDegrees, walkCycle, isMoving, isSprinting,
-             isCrouching, isBlocking, isAttacking, attackCombo, attackProgress, isSittingWater, sitProgress, phase);
+             isCrouching, isBlocking, isAttacking, attackCombo, attackProgress,
+             isDodging, dodgeProgress, staggerTimer,
+             isSittingWater, sitProgress, phase);
     }
 
     private void draw(ModelBatch batch, Environment env, Rig rig, int g, Vector3 pos, float headingDegrees,
                       float walkCycle, boolean isMoving, boolean isSprinting,
                       boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,
+                      boolean isDodging, float dodgeProgress, float staggerTimer,
                       boolean isSittingWater, float sitProgress, float idlePhase) {
 
         float idle = idleTime + idlePhase;
@@ -915,7 +955,7 @@ public class StudentMesh implements Disposable {
         float headPitch = 0f;
         float torsoTwist = 0f;
 
-        if (isMoving && !isSittingWater) {
+        if (isMoving && !isSittingWater && !isDodging) {
             float cycleSpeed = isSprinting ? 2.3f : 1.4f;
             float phase = walkCycle * cycleSpeed;
             float bobAmp = isSprinting ? 0.038f : 0.018f;
@@ -924,12 +964,28 @@ public class StudentMesh implements Disposable {
             torsoPitch = isSprinting ? 12f : 3f;
         }
 
-        float breathe = (!isMoving && !isAttacking) ? MathUtils.sin(idle * 2.2f) * 0.006f : 0f;
+        float breathe = (!isMoving && !isAttacking && !isDodging) ? MathUtils.sin(idle * 2.2f) * 0.006f : 0f;
 
         if (isCrouching) {
             pelvisHeight = 0.46f;
             torsoPitch = 32f;
             headPitch = -20f;
+        }
+
+        if (isDodging) {
+            // Tactical slip/sidestep: lowered athletic center of gravity, evasive body angle
+            float slipCurve = MathUtils.sin(dodgeProgress * MathUtils.PI);
+            pelvisHeight = MathUtils.lerp(0.87f, 0.54f, slipCurve);
+            torsoPitch = 24f * slipCurve;
+            headPitch = -15f * slipCurve;
+            torsoTwist = 20f * MathUtils.sin(dodgeProgress * MathUtils.PI * 2f);
+        }
+
+        if (staggerTimer > 0f) {
+            // Hit reel / stagger reaction: torso leans backward, head snaps back
+            float stRatio = Math.min(1.0f, staggerTimer / 0.28f);
+            torsoPitch -= 24f * stRatio;
+            headPitch -= 22f * stRatio;
         }
 
         if (isSittingWater) {
@@ -948,33 +1004,62 @@ public class StudentMesh implements Disposable {
             attackArmR = -82f;
             attackForeArmR = -95f;
             torsoPitch += 8f;
+        } else if (isDodging) {
+            // Evasive slip arm tuck: hands protect head/body during slip
+            float slipCurve = MathUtils.sin(dodgeProgress * MathUtils.PI);
+            attackArmL = -68f * slipCurve;
+            attackForeArmL = -92f * slipCurve;
+            attackArmR = -68f * slipCurve;
+            attackForeArmR = -92f * slipCurve;
         } else if (isAttacking) {
             float t = MathUtils.clamp(attackProgress, 0f, 1f);
             float strikePower = MathUtils.sin(t * MathUtils.PI);
 
             if (attackCombo == 1) {
-                torsoTwist = -28f * strikePower;
-                attackArmR = -85f * strikePower;
-                attackForeArmR = -12f * strikePower;
-                attackArmL = -45f * strikePower;
-                attackForeArmL = -85f * strikePower;
+                // Crisp Left Jab: fast snap, right fist protecting jaw
+                float jabPower = (float) Math.sin(Math.pow(t, 0.75) * MathUtils.PI);
+                torsoTwist = 24f * jabPower;
+                torsoPitch = 8f * jabPower;
+                attackArmL = -96f * jabPower;
+                attackForeArmL = -8f * jabPower;
+                attackArmR = -68f;
+                attackForeArmR = -86f;
             } else if (attackCombo == 2) {
-                torsoTwist = 36f * strikePower;
-                attackArmL = -75f * strikePower;
-                attackForeArmL = -80f * strikePower;
-                attackArmR = -50f * strikePower;
-                attackForeArmR = -75f * strikePower;
+                // Heavy Right Cross: full kinetic torso drive, left fist protecting jaw
+                float crossPower = (float) Math.sin(Math.pow(t, 0.8) * MathUtils.PI);
+                torsoTwist = -40f * crossPower;
+                torsoPitch = 14f * crossPower;
+                attackArmR = -98f * crossPower;
+                attackForeArmR = -6f * crossPower;
+                attackArmL = -70f;
+                attackForeArmL = -88f;
             } else if (attackCombo == 3) {
-                torsoPitch = -15f * strikePower;
-                torsoTwist = -45f * strikePower;
-                attackLegR = -90f * strikePower;
-                attackKneeR = 25f * strikePower;
+                // High Martial Arts Kick: Snap front/thrust kick with balance lean
+                torsoPitch = -20f * strikePower;
+                torsoTwist = -35f * strikePower;
+                attackLegR = -105f * strikePower;
+                attackKneeR = 15f * strikePower;
+                attackArmL = -55f * strikePower;
+                attackArmR = -48f * strikePower;
             } else if (attackCombo == 4) {
-                // Low sweeping martial arts kick
-                torsoPitch = 22f * strikePower;
-                torsoTwist = 55f * strikePower;
-                attackLegR = -75f * strikePower;
+                // Spinning / Roundhouse Crescent Kick: High rotational whip
+                torsoPitch = -10f * strikePower;
+                torsoTwist = 72f * strikePower;
+                attackLegR = -88f * strikePower;
                 attackKneeR = 48f * strikePower;
+                attackArmL = -62f * strikePower;
+                attackArmR = -38f * strikePower;
+            } else if (attackCombo == 5) {
+                // Low Crouch Dragon Sweep (Bosepora Sweep): Drops low, sweeps floor
+                pelvisHeight = 0.32f;
+                torsoPitch = 38f * strikePower;
+                torsoTwist = -75f * strikePower;
+                attackLegR = -78f * strikePower;
+                attackKneeR = 20f * strikePower;
+                attackArmL = 28f * strikePower;
+                attackForeArmL = -45f * strikePower;
+                attackArmR = -40f * strikePower;
+                attackForeArmR = -70f * strikePower;
             }
         }
 

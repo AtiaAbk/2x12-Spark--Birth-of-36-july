@@ -33,18 +33,23 @@ import com.badlogic.gdx.utils.Disposable;
  */
 public class DhakaCampusWorld implements Disposable {
 
-    /** Tree placements {x, z, kind}: 0 = rain tree, 1 = krishnachura, 2 = royal palm, 3 = white blossom tree. */
+    /** Tree placements {x, z, kind}: 0 = rain tree, 1 = krishnachura, 2 = royal palm, 3 = feathery jira-jira compound tree. */
     public static final float[][] TREE_LOCATIONS = {
-        // Avenue flanks: Prominent White Blossom trees matching user reference, with a few heritage Krishnachura and Rain trees
-        {-19.5f, -2f, 3}, {19.5f, -2f, 1}, // 1 flame tree at corner
-        {-19.5f, 14f, 3}, {19.5f, 14f, 3},
-        {-13.5f, 32f, 3}, {13.5f, 32f, 3}, // prominent avenue flank: White Blossom trees
-        {-14.5f, 50f, 3}, {14.5f, 50f, 3},
-        {-28.0f, 16f, 0}, {28.0f, 16f, 1}, // 1 flame tree, 1 rain tree
-        {-48.0f, 6f, 3},  {48.0f, 6f, 3},
+        // Prominent heritage trees matching user reference image:
+        // Iconic vibrant Red Krishnachura tree prominently situated in the front-left background!
+        {-19.5f, 14f, 1},  // Iconic Red Krishnachura tree (matches uploaded image background!)
+        {-19.5f, -2f, 1},  // Flame tree flank
+        {19.5f, -2f, 1},   // Flame tree flank
+        {19.5f, 14f, 3},   // Feathery "jira-jira" bipinnate tree
+        {-13.5f, 32f, 3},  // Majestic feathery "jira-jira" compound tree
+        {13.5f, 32f, 1},   // Heritage Red Krishnachura tree
+        {-14.5f, 50f, 3},  // Feathery "jira-jira" compound tree
+        {14.5f, 50f, 1},   // Red Krishnachura tree
+        {-28.0f, 16f, 0}, {28.0f, 16f, 1}, // Rain tree, Krishnachura
+        {-48.0f, 6f, 1},  {48.0f, 6f, 3},
         {-62.0f, 30f, 0}, {62.0f, 30f, 0},
-        {-32.0f, -12f, 3}, {32.0f, -12f, 3},
-        {-22.0f, 68f, 3}, {22.0f, 68f, 3},
+        {-32.0f, -12f, 1}, {32.0f, -12f, 3},
+        {-22.0f, 68f, 3}, {22.0f, 68f, 1},
         {-11.5f, 71f, 0}, // beside (not inside) the main gate
 
         // Royal Palms along perimeter

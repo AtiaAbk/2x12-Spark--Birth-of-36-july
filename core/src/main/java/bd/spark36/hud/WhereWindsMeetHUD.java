@@ -400,6 +400,27 @@ public class WhereWindsMeetHUD implements Disposable {
             isPauseMenuOpen = !isPauseMenuOpen;
         }
 
+        if (isVictoryOpen) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                exitAction = 1; // Return to main menu
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+                exitAction = 3; // Replay Level 1
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.X)) {
+                exitAction = 2; // Quit Game
+            }
+        }
+
+        if (isDisqualified || isDefeated) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.R) || Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+                exitAction = 3; // Retry / Reset
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                exitAction = 1; // Return to main menu
+            }
+        }
+
         // Pause menu actions & shortcuts
         if (isPauseMenuOpen) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
@@ -2078,17 +2099,18 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.bodyFont.draw(spriteBatch, "• J / Space : Athletic Jump (Double-Tap for Mid-Air Double Jump!)", dividerX + 32f, py + ph - 128f);
         fonts.bodyFont.draw(spriteBatch, "• Hold J at Wall : Scale Vertical Walls & Vault onto Roofs", dividerX + 32f, py + ph - 152f);
         fonts.bodyFont.draw(spriteBatch, "• C : Crouch / Duck (Bosepora) — Evades High Lathi Swings", dividerX + 32f, py + ph - 176f);
+        fonts.bodyFont.draw(spriteBatch, "• Z / ALT : Tactical Combat Slip & Evasion (i-frames)", dividerX + 32f, py + ph - 200f);
 
         fonts.smallFont.setColor(new Color(0.85f, 0.82f, 0.75f, 0.95f));
-        fonts.smallFont.draw(spriteBatch, "TECHNICAL MARTIAL ARTS COMBAT", dividerX + 26f, py + ph - 208f);
+        fonts.smallFont.draw(spriteBatch, "TECHNICAL MARTIAL ARTS COMBAT", dividerX + 26f, py + ph - 228f);
 
         fonts.bodyFont.setColor(Color.WHITE);
-        fonts.bodyFont.draw(spriteBatch, "• Left-Click / F : Bare-Handed Punches (Jab -> Cross Combo)", dividerX + 32f, py + ph - 232f);
-        fonts.bodyFont.draw(spriteBatch, "• Q / K : High Martial Arts Kick (Roundhouse Strike)", dividerX + 32f, py + ph - 256f);
-        fonts.bodyFont.draw(spriteBatch, "• C + Attack : Low Dragon Leg Sweep (Tripping Counter Strike)", dividerX + 32f, py + ph - 280f);
-        fonts.bodyFont.draw(spriteBatch, "• B (Hold) : Defensive Guard (Reduces Damage by 80%)", dividerX + 32f, py + ph - 304f);
-        fonts.bodyFont.draw(spriteBatch, "• B (Tap / Timed) : Flash Parry (Stuns Goon & breaks posture!)", dividerX + 32f, py + ph - 328f);
-        fonts.bodyFont.draw(spriteBatch, "• Counter-Hit : Strike during Goon wind-up for 1.5x interrupt damage!", dividerX + 32f, py + ph - 352f);
+        fonts.bodyFont.draw(spriteBatch, "• Left-Click / F : Bare-Handed Punches (Jab -> Cross Combo)", dividerX + 32f, py + ph - 250f);
+        fonts.bodyFont.draw(spriteBatch, "• Q / K : High Martial Arts Kick (Roundhouse Strike)", dividerX + 32f, py + ph - 272f);
+        fonts.bodyFont.draw(spriteBatch, "• C + Attack : Low Dragon Leg Sweep (Tripping Counter Strike)", dividerX + 32f, py + ph - 294f);
+        fonts.bodyFont.draw(spriteBatch, "• B (Hold) : Defensive Guard (Reduces Damage by 80%)", dividerX + 32f, py + ph - 316f);
+        fonts.bodyFont.draw(spriteBatch, "• B (Tap / Timed) : Flash Parry (Stuns Goon & breaks posture!)", dividerX + 32f, py + ph - 338f);
+        fonts.bodyFont.draw(spriteBatch, "• Counter-Hit : Strike during Goon wind-up for 1.5x interrupt damage!", dividerX + 32f, py + ph - 360f);
 
         // Rule of July Text
         fonts.smallFont.setColor(new Color(1.0f, 0.82f, 0.35f, 1f));
@@ -2270,7 +2292,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.headerFont.draw(spriteBatch, "⚔ HELMET THUG: \"Oi shon! Ei campus theke ekhuni bhag, noile lathi diye matha fatiye debo!\"", dx + 18f, dy + dh - 16f);
 
         fonts.promptFont.setColor(goldAccent);
-        fonts.promptFont.draw(spriteBatch, "[F] ACCEPT CHALLENGE   |   [Left-Click] PUNCH   [Q/K] KICK   [C] CROUCH/DODGE   [B] BLOCK", dx + 18f, dy + 22f);
+        fonts.promptFont.draw(spriteBatch, "[F] ACCEPT CHALLENGE   |   [LMB/F] PUNCH   [Q/K] KICK   [Z/ALT] SLIP/EVADE   [C] CROUCH   [B] BLOCK/PARRY", dx + 18f, dy + 22f);
         spriteBatch.end();
     }
 
@@ -2338,6 +2360,10 @@ public class WhereWindsMeetHUD implements Disposable {
         // Button 2: Main Menu
         float b2X = dx + 455f, b2W = 260f;
         boolean b2Hover = (mouseX >= b2X && mouseX <= b2X + b2W && mouseY >= btnY && mouseY <= btnY + btnH);
+        if (Gdx.input.isButtonJustPressed(com.badlogic.gdx.Input.Buttons.LEFT)) {
+            if (b1Hover) exitAction = 3; // Retry
+            else if (b2Hover) exitAction = 1; // Main Menu
+        }
         shapeRenderer.setColor(b2Hover ? new Color(0.35f, 0.25f, 0.10f, 0.90f) : new Color(0.15f, 0.10f, 0.06f, 0.85f));
         shapeRenderer.rect(b2X, btnY, b2W, btnH);
         shapeRenderer.end();

@@ -71,6 +71,7 @@ public class SparkGame extends ApplicationAdapter {
     private ParticleSystem particleSystem;
     private bd.spark36.character.HelmetGoon helmetGoon;
     private boolean attackHitProcessed = false;
+    private float hitStopTimer = 0f;
     private boolean gameplayInitialized = false;
 
 
@@ -391,6 +392,11 @@ public class SparkGame extends ApplicationAdapter {
     // ==========================================
     private void renderGameplay() {
         float delta = Gdx.graphics.getDeltaTime();
+        if (delta > 0.1f) delta = 0.1f;
+        if (hitStopTimer > 0f) {
+            hitStopTimer -= delta;
+            delta *= 0.12f; // Impact micro-freeze pause for kinetic weight
+        }
         int screenW = Gdx.graphics.getBackBufferWidth();
         int screenH = Gdx.graphics.getBackBufferHeight();
 
@@ -406,10 +412,17 @@ public class SparkGame extends ApplicationAdapter {
             // Replay Level 1
             player.setPosition(0f, 0f, 49.4f);
             player.resetCombat();
-            if (helmetGoon != null) helmetGoon.reset(0f, 6.0f);
+            if (helmetGoon != null) helmetGoon.reset(0f, 36.0f);
             memorials.reset();
             hud.reset();
             return;
+        }
+
+        // Pass active boss position to player for smooth martial arts combat facing
+        if (helmetGoon != null && !helmetGoon.isKnockedOut()) {
+            player.setCombatTarget(helmetGoon.getPosition());
+        } else {
+            player.clearCombatTarget();
         }
 
         // 1. Update Game Logic
@@ -442,16 +455,17 @@ public class SparkGame extends ApplicationAdapter {
                     } else {
                         // Martial Arts strike against Helmet Goon
                         float dstGoon = player.getPosition().dst(helmetGoon.getPosition());
-                        if (dstGoon <= 2.6f) {
+                        if (dstGoon <= 2.8f) {
                             boolean isSweep = (player.getAttackCombo() == 5);
                             boolean isKick = (player.getAttackCombo() == 3 || player.getAttackCombo() == 4);
                             float dmg = isSweep ? 26f : (isKick ? 32f : 18f);
+                            hitStopTimer = isSweep ? 0.065f : (isKick ? 0.052f : 0.038f);
                             if (helmetGoon.isWindingUp()) {
                                 camera.addShake(0.12f);
                             } else {
                                 camera.addShake(isSweep ? 0.09f : (isKick ? 0.06f : 0.035f));
                             }
-                            boolean knockout = helmetGoon.takeHitFromPlayer(dmg, isKick, isSweep);
+                            boolean knockout = helmetGoon.takeHitFromPlayer(dmg, isKick, isSweep, player.getHeadingDegrees());
                             if (knockout) {
                                 camera.addShake(0.24f);
                                 hud.triggerVictory();
@@ -499,6 +513,9 @@ public class SparkGame extends ApplicationAdapter {
             player.isAttacking(),
             player.getAttackCombo(),
             player.getAttackProgress(),
+            player.isDodging(),
+            player.getDodgeProgress(),
+            player.getStaggerTimer(),
             player.isSittingWater(),
             player.getSitProgress(),
             player.getGender()
@@ -543,6 +560,9 @@ public class SparkGame extends ApplicationAdapter {
             player.isAttacking(),
             player.getAttackCombo(),
             player.getAttackProgress(),
+            player.isDodging(),
+            player.getDodgeProgress(),
+            player.getStaggerTimer(),
             player.isSittingWater(),
             player.getSitProgress(),
             player.getGender()
@@ -649,9 +669,10 @@ public class SparkGame extends ApplicationAdapter {
             }
         } else if (System.getProperty("bd.spark36.testCombatScreenshot") != null) {
             hud.reset();
-            player.setPosition(0f, 0.15f, 9.2f);
-            player.setHeadingDegrees(180f);
+            player.setPosition(0f, 0f, 39.5f);
+            player.setHeadingDegrees(0f);
             if (helmetGoon != null) {
+                helmetGoon.reset(0f, 36.0f);
                 helmetGoon.startFightDirectly();
             }
             testTimer += delta;

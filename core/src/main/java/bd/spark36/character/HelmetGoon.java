@@ -42,7 +42,7 @@ public class HelmetGoon implements Disposable {
     }
 
     private State state = State.STANDOFF;
-    private final Vector3 position = new Vector3(0f, 0f, 6.0f); // Central avenue facing the player
+    private final Vector3 position = new Vector3(0f, 0f, 36.0f); // Central promenade plaza facing south
     private float heading = 0f; // degrees
     private float health = 100f;
     private final float maxHealth = 100f;
@@ -65,6 +65,7 @@ public class HelmetGoon implements Disposable {
     // Stagger & Hit FX
     private float staggerTimer = 0f;
     private float hitFlashTimer = 0f;
+    private final Vector3 knockbackVel = new Vector3();
     private String combatPopupText = "";
     private float combatPopupTimer = 0f;
     private Color combatPopupColor = Color.WHITE;
@@ -183,6 +184,13 @@ public class HelmetGoon implements Disposable {
         if (hitFlashTimer > 0f) hitFlashTimer -= delta;
         if (combatPopupTimer > 0f) combatPopupTimer -= delta;
 
+        // Apply physics knockback slide
+        if (knockbackVel.len2() > 0.001f) {
+            position.x += knockbackVel.x * delta;
+            position.z += knockbackVel.z * delta;
+            knockbackVel.scl(Math.max(0f, 1f - 11f * delta));
+        }
+
         if (state == State.KNOCKED_OUT) {
             return;
         }
@@ -218,6 +226,17 @@ public class HelmetGoon implements Disposable {
             heading += diff * Math.min(1f, delta * 6f);
         }
 
+        // Mutual character separation physics (prevents clipping through each other)
+        float minCombatDist = 1.35f;
+        if (distToPlayer < minCombatDist && distToPlayer > 0.001f && state != State.KNOCKED_OUT) {
+            float overlap = minCombatDist - distToPlayer;
+            float pushX = (dx / distToPlayer) * overlap;
+            float pushZ = (dz / distToPlayer) * overlap;
+            position.x -= pushX * 0.75f;
+            position.z -= pushZ * 0.75f;
+            distToPlayer = position.dst(pPos);
+        }
+
         // State Machine
         switch (state) {
             case STANDOFF:
@@ -237,14 +256,20 @@ public class HelmetGoon implements Disposable {
                 break;
 
             case APPROACHING:
-                if (distToPlayer > 2.2f) {
-                    // Walk toward player
+                if (distToPlayer > 2.05f) {
+                    // Advance toward player
                     float speed = 2.4f;
                     walkCycle += delta * 7f;
                     position.x += MathUtils.sinDeg(heading) * speed * delta;
                     position.z += MathUtils.cosDeg(heading) * speed * delta;
+                } else if (distToPlayer < 1.40f) {
+                    // Tactical martial arts step-back to maintain striking range
+                    float backSpeed = 1.5f;
+                    walkCycle -= delta * 5f;
+                    position.x -= MathUtils.sinDeg(heading) * backSpeed * delta;
+                    position.z -= MathUtils.cosDeg(heading) * backSpeed * delta;
                 } else {
-                    // In striking range: choose an attack!
+                    // In optimal striking distance: choose an attack!
                     if (attackCooldown <= 0f) {
                         chooseAttack();
                     }
@@ -293,7 +318,11 @@ public class HelmetGoon implements Disposable {
         if (!hitDealtThisAttack && attackProgress >= 0.48f && attackProgress <= 0.68f) {
             if (distToPlayer <= 2.6f) {
                 // Determine whether player avoided, parried, or blocked the strike!
-                if (currentAttackType == 1 && player.isCrouching()) {
+                if (player.isDodging()) {
+                    // Player executed a tactical slip/dodge!
+                    showPopup("⚡ EVADED! / চাতুর্যের সাথে এড়ানো হয়েছে! ⚡", Color.CYAN);
+                    hitDealtThisAttack = true;
+                } else if (currentAttackType == 1 && player.isCrouching()) {
                     // Player ducked under the horizontal swing!
                     showPopup("DODGED! / ফাঁকি দেওয়া হয়েছে!", Color.CYAN);
                     hitDealtThisAttack = true;
@@ -310,7 +339,9 @@ public class HelmetGoon implements Disposable {
                     } else {
                         // Standard block: 80% reduced damage, chips goon poise
                         float blockedDmg = (currentAttackType == 2) ? 6f : 3f;
-                        player.takeDamage(blockedDmg);
+                        float kbX = MathUtils.sinDeg(heading);
+                        float kbZ = MathUtils.cosDeg(heading);
+                        player.takeDamage(blockedDmg, kbX, kbZ, 2.8f);
                         damagePoise(10f);
                         showPopup("BLOCKED! / প্রতিহত!", Color.YELLOW);
                         hitDealtThisAttack = true;
@@ -318,7 +349,10 @@ public class HelmetGoon implements Disposable {
                 } else {
                     // Direct hit on player!
                     float dmg = (currentAttackType == 2) ? 24f : 16f;
-                    player.takeDamage(dmg);
+                    float kbX = MathUtils.sinDeg(heading);
+                    float kbZ = MathUtils.cosDeg(heading);
+                    float kbStrength = (currentAttackType == 2) ? 6.5f : 4.2f;
+                    player.takeDamage(dmg, kbX, kbZ, kbStrength);
                     showPopup("HIT! -" + (int)dmg + " HP", Color.RED);
                     hitDealtThisAttack = true;
                 }
@@ -337,7 +371,7 @@ public class HelmetGoon implements Disposable {
     /**
      * Called when the player successfully strikes the Goon with punches, kicks, or sweep counters.
      */
-    public boolean takeHitFromPlayer(float damage, boolean isKick, boolean isSweep) {
+    public boolean takeHitFromPlayer(float damage, boolean isKick, boolean isSweep, float attackHeading) {
         if (state == State.KNOCKED_OUT) return false;
 
         boolean wasWindingUp = isWindingUp();
@@ -360,10 +394,10 @@ public class HelmetGoon implements Disposable {
         if (wasWindingUp) poiseDmg += 20f;
         damagePoise(poiseDmg);
 
-        // Push goon backward slightly from impact
-        float pushDst = isSweep ? 0.85f : (isKick ? 0.65f : 0.35f);
-        position.x -= MathUtils.sinDeg(heading) * pushDst;
-        position.z -= MathUtils.cosDeg(heading) * pushDst;
+        // Apply physics knockback impulse along the attack trajectory
+        float knockbackForce = isSweep ? 6.2f : (isKick ? 4.8f : 3.2f);
+        if (isGuardBroken) knockbackForce *= 1.4f;
+        knockbackVel.set(MathUtils.sinDeg(attackHeading) * knockbackForce, 0f, MathUtils.cosDeg(attackHeading) * knockbackForce);
 
         if (health <= 0f) {
             health = 0f;
@@ -384,6 +418,10 @@ public class HelmetGoon implements Disposable {
             }
             return false;
         }
+    }
+
+    public boolean takeHitFromPlayer(float damage, boolean isKick, boolean isSweep) {
+        return takeHitFromPlayer(damage, isKick, isSweep, heading + 180f);
     }
 
     public boolean takeHitFromPlayer(float damage, boolean isKick) {
@@ -546,6 +584,7 @@ public class HelmetGoon implements Disposable {
 
     public void reset(float x, float z) {
         position.set(x, 0f, z);
+        knockbackVel.setZero();
         health = maxHealth;
         poise = maxPoise;
         isGuardBroken = false;

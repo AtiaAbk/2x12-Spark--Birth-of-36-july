@@ -35,13 +35,13 @@ public class PostProcessor implements Disposable {
     private int sceneW, sceneH;
     private int bloomW, bloomH;
 
-    // Parameters (Filmic, natural wuxia cinematic tuning matching Ghost of Tsushima & Where Winds Meet)
-    public float bloomStrength   = 0.20f;
-    public float bloomThreshold  = 0.72f;
-    public float vignetteStrength = 0.38f;
-    public float vignetteRadius  = 0.82f;
-    public float exposure        = 1.02f;
-    public float saturation      = 0.98f;
+    // Parameters (Filmic, vibrant wuxia cinematic tuning matching user reference image)
+    public float bloomStrength   = 0.24f;
+    public float bloomThreshold  = 0.70f;
+    public float vignetteStrength = 0.36f;
+    public float vignetteRadius  = 0.85f;
+    public float exposure        = 1.08f;
+    public float saturation      = 1.16f;
     private float time = 0f;
 
     private boolean valid = false;
