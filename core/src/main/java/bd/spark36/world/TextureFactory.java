@@ -72,6 +72,8 @@ public class TextureFactory implements Disposable {
         lotusAtlas = createLotusAtlas();
         colonialWindow = createColonialWindow();
         teakDoorTexture = createTeakDoorTexture();
+        curzonGrandPortal = createCurzonGrandPortal();
+        curzonPorticoTripleWindow = createCurzonPorticoTripleWindow();
         dirtPath = createDirtPath();
         lightBeam = createLightBeam();
         rockSurface = createRockSurface();
@@ -93,7 +95,8 @@ public class TextureFactory implements Disposable {
 
         textures.addAll(brickPavement, curzonBrick, lawnGrass, treeBark,
                         foliage, krishnachuraBlossom, leafClump, blossomClump, whiteBlossomClump,
-                        leafAtlas, bambooAtlas, whiteBlossomAtlas, kashfulAtlas, lotusAtlas, colonialWindow, teakDoorTexture,
+                        leafAtlas, bambooAtlas, whiteBlossomAtlas, kashfulAtlas, lotusAtlas,
+                        colonialWindow, teakDoorTexture, curzonGrandPortal, curzonPorticoTripleWindow,
                         dirtPath, lightBeam, rockSurface, bambooCulm, bambooFoliage,
                         bushFoliage, weatheredStone, curzonWater, waterRipple,
                         backpackFabric, studentJacket, movementBanner, bdFlag, aparajeyoStone,
