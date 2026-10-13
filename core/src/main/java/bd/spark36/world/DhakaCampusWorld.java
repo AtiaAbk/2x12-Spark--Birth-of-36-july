@@ -80,6 +80,8 @@ public class DhakaCampusWorld implements Disposable {
     private final java.util.List<float[]> colliders = new java.util.ArrayList<>();
     // Instances that must never block: ground, water, sparkles and the merged foliage meshes
     private final java.util.Set<ModelInstance> nonSolid = new java.util.HashSet<>();
+    // Architectural facade panels excluded from shadow pass to eliminate self-shadow acne and jagged cuts
+    private final java.util.Set<ModelInstance> shadowExclusions = new java.util.HashSet<>();
 
     // Translucent effects (light shafts): drawn after the scene, never cast shadows or collide
     private final Array<ModelInstance> effects = new Array<>();
@@ -101,16 +103,16 @@ public class DhakaCampusWorld implements Disposable {
 
         // Warm daylight sun with rich, cinematic shadow contrast (prevents washed-out pastel)
         sunLight = new DirectionalShadowLight(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 120f, 120f, 1f, 140f);
-        sunLight.set(new Color(1.10f, 1.05f, 0.95f, 1f), new Vector3(-0.55f, -0.65f, -0.55f).nor());
+        sunLight.set(new Color(1.04f, 1.02f, 0.96f, 1f), new Vector3(-0.45f, -0.75f, -0.45f).nor());
         environment.add(sunLight);
         environment.shadowMap = sunLight;
 
         // Rich daylight ambient with natural blue sky bounce
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.36f, 0.38f, 0.42f, 1f));
+        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.32f, 0.35f, 0.40f, 1f));
 
         // Soft front fill light for natural character and facade illumination
         DirectionalLight fillLight = new DirectionalLight();
-        fillLight.set(new Color(0.24f, 0.24f, 0.26f, 1f), new Vector3(0.20f, -0.30f, 0.92f).nor());
+        fillLight.set(new Color(0.20f, 0.22f, 0.25f, 1f), new Vector3(0.20f, -0.30f, 0.92f).nor());
         environment.add(fillLight);
 
         // Clean atmospheric sky-blue depth haze
@@ -273,21 +275,21 @@ public class DhakaCampusWorld implements Disposable {
             TextureAttribute.createDiffuse(textures.leafClump),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.92f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.05f, 0.09f, 0.03f, 1f))
+            ColorAttribute.createEmissive(new Color(0.015f, 0.035f, 0.01f, 1f))
         );
 
         Material blossomClumpMat = new Material(
             TextureAttribute.createDiffuse(textures.blossomClump),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 0.97f, 0.94f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.08f, 0.05f, 0.03f, 1f))
+            ColorAttribute.createEmissive(new Color(0.03f, 0.02f, 0.01f, 1f))
         );
 
         Material whiteBlossomClumpMat = new Material(
             TextureAttribute.createDiffuse(textures.whiteBlossomClump),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.12f, 0.12f, 0.10f, 1f))
+            ColorAttribute.createEmissive(new Color(0.03f, 0.03f, 0.025f, 1f))
         );
 
         Material whiteBlossomCardMat = new Material(
@@ -296,7 +298,7 @@ public class DhakaCampusWorld implements Disposable {
             FloatAttribute.createAlphaTest(0.5f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.14f, 0.14f, 0.12f, 1f))
+            ColorAttribute.createEmissive(new Color(0.03f, 0.03f, 0.025f, 1f))
         );
 
         Material kashfulCardMat = new Material(
@@ -305,29 +307,51 @@ public class DhakaCampusWorld implements Disposable {
             FloatAttribute.createAlphaTest(0.35f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.12f, 0.12f, 0.10f, 1f))
+            ColorAttribute.createEmissive(new Color(0.03f, 0.03f, 0.025f, 1f))
         );
 
         Material colonialWindowMat = new Material(
-            TextureAttribute.createDiffuse(textures.colonialWindow)
+            TextureAttribute.createDiffuse(textures.colonialWindow),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            FloatAttribute.createAlphaTest(0.35f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
         Material teakDoorMat = new Material(
-            TextureAttribute.createDiffuse(textures.teakDoorTexture)
+            TextureAttribute.createDiffuse(textures.teakDoorTexture),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            FloatAttribute.createAlphaTest(0.35f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
+        );
+
+        Material grandPortalMat = new Material(
+            TextureAttribute.createDiffuse(textures.curzonGrandPortal),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            FloatAttribute.createAlphaTest(0.35f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
+        );
+
+        Material porticoTripleWinMat = new Material(
+            TextureAttribute.createDiffuse(textures.curzonPorticoTripleWindow),
+            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
+            FloatAttribute.createAlphaTest(0.35f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
         // Individual leaf cards: cut out by alpha (no blending, so no sorting artefacts) and seen
         // from both sides. The cutout also shapes the shadows into dappled leaf patterns.
-        // libGDX's default shader only applies the alpha cutout (colour AND shadow) to materials
-        // flagged as blended, so every cutout card carries a BlendingAttribute.
         Material leafCardMat = new Material(
             TextureAttribute.createDiffuse(textures.leafAtlas),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.5f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            // Sunlight shining through leaves: a soft green glow so shaded foliage isn't black
-            ColorAttribute.createEmissive(new Color(0.10f, 0.17f, 0.05f, 1f))
+            // Subtle daylight transmission glow
+            ColorAttribute.createEmissive(new Color(0.02f, 0.04f, 0.015f, 1f))
         );
 
         // Bamboo canes are built as open tubes, so draw both sides
@@ -343,7 +367,7 @@ public class DhakaCampusWorld implements Disposable {
             FloatAttribute.createAlphaTest(0.5f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.10f, 0.16f, 0.05f, 1f))
+            ColorAttribute.createEmissive(new Color(0.02f, 0.04f, 0.015f, 1f))
         );
 
         Material rockMat = new Material(
@@ -633,73 +657,47 @@ public class DhakaCampusWorld implements Disposable {
         Material curzonRedDome = new Material(ColorAttribute.createDiffuse(new Color(0.68f, 0.20f, 0.16f, 1f)));
 
         // Window & Door components for the two-storey Curzon facade (Authentic Mughal-Gothic)
-        Model archNiche = mb.createBox(2.0f, 4.0f, 0.40f, archCavity, attr);
-        Model archUpperWindow = mb.createBox(1.7f, 3.4f, 0.16f, colonialWindowMat, attr);
-        Model archGroundDoor = mb.createBox(1.8f, 3.6f, 0.18f, teakDoorMat, attr);
-        Model archCrown = mb.createBox(2.15f, 0.22f, 0.32f, curzonTrimMat, attr);
-        Model archKeystone = mb.createBox(0.35f, 0.36f, 0.36f, curzonTrimMat, attr);
-        Model archSill = mb.createBox(2.20f, 0.18f, 0.35f, curzonTrimMat, attr);
-        Model archCorbel = mb.createBox(0.16f, 0.26f, 0.24f, curzonTrimMat, attr);
-        Model archPilaster = mb.createBox(0.18f, 3.6f, 0.26f, curzonTrimMat, attr);
-        Model floorBand = mb.createBox(92f, 0.18f, 0.22f, curzonTrimMat, attr);
-        models.add(archNiche);
+        Model archUpperWindow = mb.createBox(2.20f, 4.10f, 0.01f, colonialWindowMat, attr);
+        Model archGroundDoor = mb.createBox(2.20f, 4.10f, 0.01f, teakDoorMat, attr);
+        Model archSill = mb.createBox(2.36f, 0.16f, 0.20f, curzonTrimMat, attr);
+        Model archCorbel = mb.createBox(0.18f, 0.26f, 0.14f, curzonTrimMat, attr);
+        Model floorBand = mb.createBox(92f, 0.18f, 0.20f, curzonTrimMat, attr);
         models.add(archUpperWindow);
         models.add(archGroundDoor);
-        models.add(archCrown);
-        models.add(archKeystone);
         models.add(archSill);
         models.add(archCorbel);
-        models.add(archPilaster);
         models.add(floorBand);
 
-        float[] archFloorY = {3.2f, 8.4f};           // niche centres: ground floor verandah, upper floor
+        float[] archFloorY = {3.25f, 8.50f};           // niche centres: ground floor verandah, upper floor
         for (float ay : archFloorY) {
             boolean isGround = (ay < 5f);
             for (float ax = -42f; ax <= 42.01f; ax += 5.2f) {
                 if (Math.abs(ax) < 8.6f) continue;    // the portico projection covers the centre
-                float fz = -23.42f;
-
-                // Deep recessed dark cavity
-                ModelInstance arch = new ModelInstance(archNiche);
-                arch.transform.setTranslation(ax, ay, fz - 0.12f);
-                instances.add(arch);
-
-                // Flanking stone pilasters (left & right)
-                ModelInstance pilL = new ModelInstance(archPilaster);
-                pilL.transform.setTranslation(ax - 0.98f, ay, fz);
-                instances.add(pilL);
-                ModelInstance pilR = new ModelInstance(archPilaster);
-                pilR.transform.setTranslation(ax + 0.98f, ay, fz);
-                instances.add(pilR);
-
-                // Top stone arch crown & keystone
-                ModelInstance crown = new ModelInstance(archCrown);
-                crown.transform.setTranslation(ax, ay + 1.82f, fz + 0.04f);
-                instances.add(crown);
-                ModelInstance kstone = new ModelInstance(archKeystone);
-                kstone.transform.setTranslation(ax, ay + 1.88f, fz + 0.08f);
-                instances.add(kstone);
+                float fz = -23.49f;
 
                 if (isGround) {
                     // Ground floor: Authentic carved Burma teak wooden double door with brass knockers
                     ModelInstance door = new ModelInstance(archGroundDoor);
-                    door.transform.setTranslation(ax, ay - 0.2f, fz);
+                    door.transform.setTranslation(ax, ay, fz);
                     instances.add(door);
+                    shadowExclusions.add(door);
                 } else {
-                    // Upper floor: Stately colonial glazed window with white mullions and stone sill
+                    // Upper floor: Stately colonial glazed window with pointed cusped arch and stone sill
                     ModelInstance win = new ModelInstance(archUpperWindow);
                     win.transform.setTranslation(ax, ay, fz);
                     instances.add(win);
+                    shadowExclusions.add(win);
+
                     ModelInstance sill = new ModelInstance(archSill);
-                    sill.transform.setTranslation(ax, ay - 1.72f, fz + 0.06f);
+                    sill.transform.setTranslation(ax, ay - 2.10f, fz + 0.06f);
                     instances.add(sill);
 
                     // Decorative twin stone brackets supporting the window sill
                     ModelInstance corbL = new ModelInstance(archCorbel);
-                    corbL.transform.setTranslation(ax - 0.65f, ay - 1.90f, fz + 0.03f);
+                    corbL.transform.setTranslation(ax - 0.70f, ay - 2.26f, fz + 0.03f);
                     instances.add(corbL);
                     ModelInstance corbR = new ModelInstance(archCorbel);
-                    corbR.transform.setTranslation(ax + 0.65f, ay - 1.90f, fz + 0.03f);
+                    corbR.transform.setTranslation(ax + 0.70f, ay - 2.26f, fz + 0.03f);
                     instances.add(corbR);
                 }
             }
@@ -710,44 +708,18 @@ public class DhakaCampusWorld implements Disposable {
         bandInst.transform.setTranslation(0f, 5.8f, -23.38f);
         instances.add(bandInst);
 
-        // Grand Central Portal with Cusped Archway & Heavy Teak Doors
-        Model portalJamb = mb.createBox(0.48f, 8.8f, 0.45f, curzonTrimMat, attr);
-        Model portalHeader = mb.createBox(6.4f, 0.65f, 0.45f, curzonTrimMat, attr);
-        Model mainArch = mb.createBox(5.2f, 8.4f, 0.6f, archCavity, attr);
-        Model doorLeaf = mb.createBox(3.8f, 7.2f, 0.25f, teakDoorMat, attr);
-        models.add(portalJamb);
-        models.add(portalHeader);
-        models.add(mainArch);
-        models.add(doorLeaf);
-
-        // Portal frame jambs (left & right)
-        ModelInstance jambL = new ModelInstance(portalJamb);
-        jambL.transform.setTranslation(-2.6f, 4.6f, -20.55f);
-        instances.add(jambL);
-        ModelInstance jambR = new ModelInstance(portalJamb);
-        jambR.transform.setTranslation(2.6f, 4.6f, -20.55f);
-        instances.add(jambR);
-
-        // Portal header
-        ModelInstance headerInst = new ModelInstance(portalHeader);
-        headerInst.transform.setTranslation(0f, 8.8f, -20.55f);
-        instances.add(headerInst);
-
-        // Deep archway cavity & doors
-        ModelInstance mainArchInst = new ModelInstance(mainArch);
-        mainArchInst.transform.setTranslation(0f, 4.6f, -20.75f);
-        instances.add(mainArchInst);
-
-        ModelInstance doorInst = new ModelInstance(doorLeaf);
-        doorInst.transform.setTranslation(0f, 4.2f, -20.65f);
-        instances.add(doorInst);
+        // Grand Central Portal with Monumental Pointed Iwan Archway & Ceremonial Teak Gates
+        Model grandPortalModel = mb.createBox(3.80f, 5.20f, 0.01f, grandPortalMat, attr);
+        models.add(grandPortalModel);
+        ModelInstance portalInst = new ModelInstance(grandPortalModel);
+        portalInst.transform.setTranslation(0f, 3.20f, -20.59f);
+        instances.add(portalInst);
+        shadowExclusions.add(portalInst);
 
         // Ceremonial Red Carpet on Central Steps leading up to Portal
         Model redCarpet = mb.createBox(3.8f, 0.04f, 4.6f, redCarpetMat, attr);
         models.add(redCarpet);
         ModelInstance carpetInst = new ModelInstance(redCarpet);
-        carpetInst.transform.setTranslation(0f, 0.62f, -19.5f);
-        instances.add(carpetInst);
         carpetInst.transform.setTranslation(0f, 0.62f, -19.5f);
         instances.add(carpetInst);
 
@@ -772,36 +744,13 @@ public class DhakaCampusWorld implements Disposable {
         bRailR.transform.setTranslation(4.15f, 9.75f, -19.95f);
         instances.add(bRailR);
 
-        // Triple Mughal Colonial Windows on Portico Upper Storey
-        Model porticoWinCenter = mb.createBox(2.2f, 3.8f, 0.20f, colonialWindowMat, attr);
-        Model porticoWinSide = mb.createBox(1.4f, 3.0f, 0.20f, colonialWindowMat, attr);
-        Model porticoCrownCenter = mb.createBox(2.6f, 0.30f, 0.25f, curzonTrimMat, attr);
-        Model porticoCrownSide = mb.createBox(1.7f, 0.25f, 0.25f, curzonTrimMat, attr);
-        models.add(porticoWinCenter);
-        models.add(porticoWinSide);
-        models.add(porticoCrownCenter);
-        models.add(porticoCrownSide);
-
-        ModelInstance pwc = new ModelInstance(porticoWinCenter);
-        pwc.transform.setTranslation(0f, 11.6f, -20.50f);
-        instances.add(pwc);
-        ModelInstance pwcCrown = new ModelInstance(porticoCrownCenter);
-        pwcCrown.transform.setTranslation(0f, 13.65f, -20.48f);
-        instances.add(pwcCrown);
-
-        ModelInstance pwL = new ModelInstance(porticoWinSide);
-        pwL.transform.setTranslation(-2.4f, 11.2f, -20.50f);
-        instances.add(pwL);
-        ModelInstance pwLCrown = new ModelInstance(porticoCrownSide);
-        pwLCrown.transform.setTranslation(-2.4f, 12.85f, -20.48f);
-        instances.add(pwLCrown);
-
-        ModelInstance pwR = new ModelInstance(porticoWinSide);
-        pwR.transform.setTranslation(2.4f, 11.2f, -20.50f);
-        instances.add(pwR);
-        ModelInstance pwRCrown = new ModelInstance(porticoCrownSide);
-        pwRCrown.transform.setTranslation(2.4f, 12.85f, -20.48f);
-        instances.add(pwRCrown);
+        // Triple Pointed Mughal Windows on Portico Upper Storey
+        Model porticoTripleWinModel = mb.createBox(7.20f, 3.80f, 0.01f, porticoTripleWinMat, attr);
+        models.add(porticoTripleWinModel);
+        ModelInstance ptwInst = new ModelInstance(porticoTripleWinModel);
+        ptwInst.transform.setTranslation(0f, 11.40f, -20.59f);
+        instances.add(ptwInst);
+        shadowExclusions.add(ptwInst);
 
         // Projecting carved stone Chhajja (sunshade eaves overhang) above Portico windows
         Model porticoChhajja = mb.createBox(9.6f, 0.22f, 1.2f, curzonTrimMat, attr);
@@ -2126,6 +2075,7 @@ public class DhakaCampusWorld implements Disposable {
         for (int i = 1; i < instances.size; i++) {
             ModelInstance inst = instances.get(i);
             if (inst == waterSurface || inst == waterShimmer) continue;
+            if (shadowExclusions.contains(inst)) continue;
             depthBatch.render(inst);
         }
     }

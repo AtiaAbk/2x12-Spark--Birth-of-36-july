@@ -445,8 +445,14 @@ public class SparkGame extends ApplicationAdapter {
                             boolean isSweep = (player.getAttackCombo() == 5);
                             boolean isKick = (player.getAttackCombo() == 3 || player.getAttackCombo() == 4);
                             float dmg = isSweep ? 26f : (isKick ? 32f : 18f);
+                            if (helmetGoon.isWindingUp()) {
+                                camera.addShake(0.12f);
+                            } else {
+                                camera.addShake(isSweep ? 0.09f : (isKick ? 0.06f : 0.035f));
+                            }
                             boolean knockout = helmetGoon.takeHitFromPlayer(dmg, isKick, isSweep);
                             if (knockout) {
+                                camera.addShake(0.24f);
                                 hud.triggerVictory();
                             }
                         }

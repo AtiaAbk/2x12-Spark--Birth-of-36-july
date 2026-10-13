@@ -42,9 +42,9 @@ public class WhereWindsMeetHUD implements Disposable {
     private final Color staminaBg = new Color(0.06f, 0.22f, 0.16f, 0.85f);
 
     // ── Glass HUD panel theme (mission card, checklist, compass tag, map button, keycaps) ──
-    // See-through smoked glass: vertical gradient, ~0.14 at top fading to ~0.08 at the bottom.
-    private final Color panelGlassTop = new Color(0.04f, 0.06f, 0.09f, 0.14f);
-    private final Color panelGlassBottom = new Color(0.02f, 0.03f, 0.05f, 0.08f);
+    // Luxurious smoked obsidian glass: vertical gradient ~0.78 at top to ~0.65 at bottom
+    private final Color panelGlassTop = new Color(0.04f, 0.06f, 0.09f, 0.78f);
+    private final Color panelGlassBottom = new Color(0.02f, 0.03f, 0.05f, 0.65f);
     private final Color panelSheen = new Color(1.0f, 0.86f, 0.45f, 0.05f);      // faint warm top sheen
     private final Color panelSheenClear = new Color(1.0f, 0.86f, 0.45f, 0f);
     private final Color panelGlow = new Color(1.0f, 0.80f, 0.35f, 0.07f);       // soft outer gold halo
@@ -752,7 +752,7 @@ public class WhereWindsMeetHUD implements Disposable {
         String missionTag = allDone ?
             "ALL ARCHIVES UNLOCKED: 05 / 05" :
             String.format("ACTIVE MISSION: %02d / %02d", Math.min(ins + 1, total), total);
-        drawOutlined(fonts.smallFont, missionTag, cardX + 28f, cardY + 148f, allDone ? Color.GREEN : goldAccent);
+        drawOutlined(fonts.smallFont, missionTag, cardX + 18f, cardY + 142f, allDone ? Color.GREEN : new Color(1.0f, 0.75f, 0.30f, 1f));
 
         // 2. MISSION TITLE: dynamically selects font so it NEVER overflows card borders
         String missionTitle = allDone ? "LEVEL 1 ACCOMPLISHED" : (nearest != null ? nearest.title : "EXPLORE CAMPUS");
@@ -761,17 +761,17 @@ public class WhereWindsMeetHUD implements Disposable {
         if (glyphLayout.width > cardW - 38f) {
             titleFontToUse = fonts.headerFont;
         }
-        drawOutlined(titleFontToUse, missionTitle, cardX + 16f, cardY + 124f, 1f, 0.98f, 0.94f, 1f);
+        drawOutlined(titleFontToUse, missionTitle, cardX + 18f, cardY + 118f, goldAccent);
 
         // 3. Subtitle description / location
         String missionDesc = allDone ?
             "All 5 historical archives secured. Victory achieved!" :
             (nearest != null ? "Target: " + nearest.location : "Investigate Dhaka University archives");
-        drawOutlined(fonts.bodyFont, missionDesc, cardX + 16f, cardY + 92f, 1f, 1f, 1f, 1f);
+        drawOutlined(fonts.bodyFont, missionDesc, cardX + 18f, cardY + 84f, Color.WHITE);
 
         // 4. DISTANCE
         String distStr = allDone ? "STATUS: COMPLETED" : String.format("DISTANCE: %.1f M", dst);
-        drawOutlined(fonts.headerFont, distStr, cardX + 16f, cardY + 30f, goldAccent);
+        drawOutlined(fonts.headerFont, distStr, cardX + 18f, cardY + 30f, goldAccent);
     }
 
     // =======================================================
@@ -1252,14 +1252,19 @@ public class WhereWindsMeetHUD implements Disposable {
     // HISTORICAL MEMORIAL FLOATING OVERLAY (100% Transparent, No Black Box)
     // ==========================================
     private void renderMemorialModal(MemorialEntry entry, float w, float h) {
-        // ZERO full-screen black overlay: Curzon Hall, flag, and 3D campus remain 100% visible!
-        float mw = 780f;
-        float mh = 225f;
+        // Frosted transparent glassmorphic panel with gold filigree and generous margins
+        float mw = 880f;
+        float mh = 250f;
         float mx = (w - mw) / 2f;
-        float my = 48f; // Floating in lower area of screen
+        float my = 42f; // Floating in lower area of screen
+
+        // Smoked glass panel backing with soft glow and top sheen
+        beginShapes(ShapeType.Filled);
+        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.85f);
+        shapeRenderer.rect(mx, my, mw, mh);
+        fillGlassPanel(mx, my, mw, mh);
 
         // Thin golden top line
-        beginShapes(ShapeType.Filled);
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(mx, my + mh - 2f, mw, 2f);
         shapeRenderer.end();
@@ -1280,31 +1285,31 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Essential Text with drop shadow for 100% readability directly against 3D world
         spriteBatch.begin();
-        float textX = mx + 25f;
+        float textX = mx + 32f;
 
-        // Header Title
-        fonts.titleFont.setColor(0f, 0f, 0f, 0.92f);
-        fonts.titleFont.draw(spriteBatch, entry.title, textX + 2f, my + mh - 16f);
+        // Header Title: strictly positioned with generous padding inside top border
+        fonts.titleFont.setColor(0f, 0f, 0f, 0.98f);
+        fonts.titleFont.draw(spriteBatch, entry.title, textX + 2f, my + mh - 34f);
         fonts.titleFont.setColor(goldAccent);
-        fonts.titleFont.draw(spriteBatch, entry.title, textX, my + mh - 14f);
+        fonts.titleFont.draw(spriteBatch, entry.title, textX, my + mh - 32f);
 
         // Subtitle: Date & Location
-        fonts.smallFont.setColor(0f, 0f, 0f, 0.92f);
-        fonts.smallFont.draw(spriteBatch, entry.date + "   |   " + entry.location, textX + 1f, my + mh - 45f);
+        fonts.smallFont.setColor(0f, 0f, 0f, 0.98f);
+        fonts.smallFont.draw(spriteBatch, entry.date + "   |   " + entry.location, textX + 1.5f, my + mh - 67.5f);
         fonts.smallFont.setColor(new Color(0.95f, 0.90f, 0.70f, 1f));
-        fonts.smallFont.draw(spriteBatch, entry.date + "   |   " + entry.location, textX, my + mh - 44f);
+        fonts.smallFont.draw(spriteBatch, entry.date + "   |   " + entry.location, textX, my + mh - 66f);
 
         // Description narrative
-        fonts.bodyFont.setColor(0f, 0f, 0f, 0.92f);
-        fonts.bodyFont.draw(spriteBatch, entry.description, textX + 1.5f, my + mh - 73.5f, mw - 50f, 10, true);
+        fonts.bodyFont.setColor(0f, 0f, 0f, 0.98f);
+        fonts.bodyFont.draw(spriteBatch, entry.description, textX + 1.5f, my + mh - 97.5f, mw - 64f, 10, true);
         fonts.bodyFont.setColor(Color.WHITE);
-        fonts.bodyFont.draw(spriteBatch, entry.description, textX, my + mh - 72f, mw - 50f, 10, true);
+        fonts.bodyFont.draw(spriteBatch, entry.description, textX, my + mh - 96f, mw - 64f, 10, true);
 
         // Close prompt
-        fonts.promptFont.setColor(0f, 0f, 0f, 0.92f);
-        fonts.promptFont.draw(spriteBatch, "[E] / [ESC] Close Archive", mx + mw - 218f, my + 27f);
+        fonts.promptFont.setColor(0f, 0f, 0f, 0.98f);
+        fonts.promptFont.draw(spriteBatch, "[E] / [ESC] Close Archive", mx + mw - 238f, my + 27f);
         fonts.promptFont.setColor(goldAccent);
-        fonts.promptFont.draw(spriteBatch, "[E] / [ESC] Close Archive", mx + mw - 220f, my + 28f);
+        fonts.promptFont.draw(spriteBatch, "[E] / [ESC] Close Archive", mx + mw - 240f, my + 28f);
 
         spriteBatch.end();
     }

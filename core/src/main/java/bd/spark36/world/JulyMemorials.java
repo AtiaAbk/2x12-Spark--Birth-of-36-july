@@ -58,7 +58,7 @@ public class JulyMemorials implements Disposable {
             "July 1, 2024",
             "Curzon Hall Central Arcade",
             "Here on the historic red-brick verandahs of Curzon Hall, Dhaka University science students joined arts and social science peers to launch peaceful demonstrations. Demanding reform in the civil service quota system, they declared: 'Merit over privilege. Equality for all citizens.'",
-            new Vector3(0f, 0f, -16f)
+            new Vector3(3.6f, 0f, -16.8f)
         ));
 
         entries.add(new MemorialEntry(

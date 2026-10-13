@@ -95,8 +95,18 @@ public class PostProcessor implements Disposable {
     }
 
     private ShaderProgram loadShader(String vertPath, String fragPath) {
-        String vert = Gdx.files.internal(vertPath).readString();
-        String frag = Gdx.files.internal(fragPath).readString();
+        com.badlogic.gdx.files.FileHandle vFile = Gdx.files.internal(vertPath);
+        if (!vFile.exists()) vFile = Gdx.files.internal("assets/" + vertPath);
+        com.badlogic.gdx.files.FileHandle fFile = Gdx.files.internal(fragPath);
+        if (!fFile.exists()) fFile = Gdx.files.internal("assets/" + fragPath);
+
+        if (!vFile.exists() || !fFile.exists()) {
+            Gdx.app.error("PostProcessor", "Shader files not found: " + vertPath + " / " + fragPath);
+            return null;
+        }
+
+        String vert = vFile.readString();
+        String frag = fFile.readString();
         ShaderProgram.pedantic = false;
         ShaderProgram shader = new ShaderProgram(vert, frag);
         if (!shader.isCompiled()) {

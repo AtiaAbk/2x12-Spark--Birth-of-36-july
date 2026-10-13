@@ -340,9 +340,12 @@ public class HelmetGoon implements Disposable {
     public boolean takeHitFromPlayer(float damage, boolean isKick, boolean isSweep) {
         if (state == State.KNOCKED_OUT) return false;
 
+        boolean wasWindingUp = isWindingUp();
         float finalDmg = damage;
         if (isGuardBroken) {
             finalDmg *= 2.2f; // Critical damage bonus while posture is broken!
+        } else if (wasWindingUp) {
+            finalDmg *= 1.5f; // Counter-Hit bonus on interrupting enemy swing!
         }
 
         health -= finalDmg;
@@ -354,6 +357,7 @@ public class HelmetGoon implements Disposable {
 
         // Damage poise
         float poiseDmg = isSweep ? 50f : (isKick ? 32f : 16f);
+        if (wasWindingUp) poiseDmg += 20f;
         damagePoise(poiseDmg);
 
         // Push goon backward slightly from impact
@@ -369,6 +373,8 @@ public class HelmetGoon implements Disposable {
         } else {
             if (isGuardBroken) {
                 showPopup("💥 CRITICAL OPENING! -" + (int)finalDmg, Color.RED);
+            } else if (wasWindingUp) {
+                showPopup("⚡ COUNTER-HIT INTERRUPT! / পাল্টা আঘাত! -" + (int)finalDmg, Color.GOLD);
             } else if (isSweep) {
                 showPopup("DRAGON LEG SWEEP! / ড্রাগন সুইপ! -" + (int)finalDmg, Color.CYAN);
             } else if (isKick) {
@@ -527,6 +533,7 @@ public class HelmetGoon implements Disposable {
     public State getState() { return state; }
     public boolean isKnockedOut() { return state == State.KNOCKED_OUT; }
     public boolean isChallenging() { return state == State.CHALLENGING; }
+    public boolean isWindingUp() { return isAttacking && attackProgress < 0.48f; }
     public String getCombatPopupText() { return combatPopupTimer > 0f ? combatPopupText : null; }
     public Color getCombatPopupColor() { return combatPopupColor; }
 

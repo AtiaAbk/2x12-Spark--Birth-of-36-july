@@ -218,7 +218,7 @@ public class TextureFactory implements Disposable {
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
         // Deep organic forest moss-green base (Ghost of Tsushima & Where Winds Meet style, zero catceta/neon)
-        pix.setColor(0.07f, 0.18f, 0.07f, 1f);
+        pix.setColor(0.05f, 0.14f, 0.05f, 1f);
         pix.fill();
 
         // Multi-frequency organic turf blades and deep loam variations
@@ -227,12 +227,12 @@ public class TextureFactory implements Disposable {
                 float n1 = (MathUtils.sin(x * 0.18f) * MathUtils.cos(y * 0.20f)
                           + MathUtils.sin((x + y) * 0.38f) * 0.5f);
                 float n2 = (MathUtils.sin(x * 0.65f + y * 0.35f) * 0.25f);
-                float speckle = MathUtils.random(-0.03f, 0.03f);
+                float speckle = MathUtils.random(-0.02f, 0.02f);
 
                 // Deep, natural chlorophyll shades (zero artificial neon/catceta tint)
-                float r = MathUtils.clamp(0.08f + (n1 + n2) * 0.03f + speckle, 0.05f, 0.15f);
-                float g = MathUtils.clamp(0.22f + (n1 + n2) * 0.07f + speckle, 0.14f, 0.32f);
-                float b = MathUtils.clamp(0.07f + (n1 + n2) * 0.02f + speckle * 0.5f, 0.04f, 0.12f);
+                float r = MathUtils.clamp(0.05f + (n1 + n2) * 0.02f + speckle, 0.04f, 0.10f);
+                float g = MathUtils.clamp(0.14f + (n1 + n2) * 0.04f + speckle, 0.10f, 0.22f);
+                float b = MathUtils.clamp(0.05f + (n1 + n2) * 0.015f + speckle * 0.5f, 0.03f, 0.08f);
 
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
@@ -244,10 +244,10 @@ public class TextureFactory implements Disposable {
             int bx = MathUtils.random(size - 1);
             int by = MathUtils.random(size - 12);
             int len = MathUtils.random(4, 10);
-            float shade = MathUtils.random(-0.03f, 0.05f);
-            pix.setColor(MathUtils.clamp(0.07f + shade, 0.04f, 0.14f),
-                         MathUtils.clamp(0.25f + shade * 1.4f, 0.16f, 0.35f),
-                         MathUtils.clamp(0.08f + shade, 0.05f, 0.13f), 1f);
+            float shade = MathUtils.random(-0.02f, 0.03f);
+            pix.setColor(MathUtils.clamp(0.05f + shade, 0.03f, 0.09f),
+                         MathUtils.clamp(0.16f + shade * 1.1f, 0.11f, 0.24f),
+                         MathUtils.clamp(0.05f + shade, 0.03f, 0.08f), 1f);
             pix.drawLine(bx, by, bx + MathUtils.random(-1, 1), by + len);
         }
 
@@ -256,9 +256,9 @@ public class TextureFactory implements Disposable {
             int px = MathUtils.random(size - 6);
             int py = MathUtils.random(size - 6);
             int pr = MathUtils.random(2, 4);
-            pix.setColor(0.96f, 0.96f, 0.93f, 0.88f);
+            pix.setColor(0.94f, 0.94f, 0.92f, 0.85f);
             pix.fillCircle(px, py, pr);
-            pix.setColor(1.0f, 0.90f, 0.35f, 0.75f);
+            pix.setColor(0.98f, 0.88f, 0.35f, 0.70f);
             pix.drawPixel(px, py);
         }
 
@@ -276,7 +276,7 @@ public class TextureFactory implements Disposable {
     private Texture createLeafClump(boolean blossoms) {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
-        pix.setColor(0.06f, 0.18f, 0.06f, 1f);
+        pix.setColor(0.05f, 0.14f, 0.05f, 1f);
         pix.fill();
 
         for (int i = 0; i < 1300; i++) {
@@ -287,19 +287,19 @@ public class TextureFactory implements Disposable {
 
             if (blossoms && MathUtils.random() < 0.65f) {
                 // High-contrast, fiery scarlet-crimson Krishnachura blossoms
-                float rCol = MathUtils.clamp(0.96f + 0.04f * t, 0.92f, 1.0f);
-                float gCol = MathUtils.clamp(0.12f + 0.16f * t, 0.08f, 0.32f);
+                float rCol = MathUtils.clamp(0.94f + 0.06f * t, 0.88f, 1.0f);
+                float gCol = MathUtils.clamp(0.10f + 0.12f * t, 0.06f, 0.24f);
                 float bCol = 0.04f;
                 pix.setColor(rCol, gCol, bCol, 1f);
             } else {
                 // Deep organic forest jade-green (zero neon/catceta)
-                pix.setColor(0.08f + 0.08f * t, 0.22f + 0.14f * t, 0.06f + 0.05f * t, 1f);
+                pix.setColor(0.06f + 0.05f * t, 0.16f + 0.09f * t, 0.05f + 0.03f * t, 1f);
             }
             for (int ox = -size; ox <= size; ox += size) {
                 for (int oy = -size; oy <= size; oy += size) {
                     pix.fillCircle(x + ox, y + oy, r);
                     if (blossoms && MathUtils.random() < 0.20f) {
-                        pix.setColor(1.0f, 0.92f, 0.28f, 1f); // golden stamen center
+                        pix.setColor(0.98f, 0.88f, 0.26f, 1f); // golden stamen center
                         pix.drawPixel(x + ox, y + oy);
                     }
                 }
@@ -322,7 +322,7 @@ public class TextureFactory implements Disposable {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
         // Deep organic forest moss green base
-        pix.setColor(0.06f, 0.18f, 0.06f, 1f);
+        pix.setColor(0.05f, 0.14f, 0.05f, 1f);
         pix.fill();
 
         for (int i = 0; i < 1500; i++) {
@@ -337,14 +337,14 @@ public class TextureFactory implements Disposable {
                 pix.setColor(shade, shade, shade * 0.96f, 1f);
             } else {
                 // Deep organic forest-moss foliage green
-                pix.setColor(0.07f + 0.08f * t, 0.20f + 0.14f * t, 0.06f + 0.05f * t, 1f);
+                pix.setColor(0.06f + 0.05f * t, 0.16f + 0.09f * t, 0.05f + 0.03f * t, 1f);
             }
 
             for (int ox = -size; ox <= size; ox += size) {
                 for (int oy = -size; oy <= size; oy += size) {
                     pix.fillCircle(x + ox, y + oy, r);
                     if (MathUtils.random() < 0.18f) {
-                        pix.setColor(1.0f, 0.88f, 0.30f, 0.95f); // amber gold stamen dot
+                        pix.setColor(0.98f, 0.85f, 0.28f, 0.95f); // amber gold stamen dot
                         pix.drawPixel(x + ox, y + oy);
                     }
                 }
@@ -370,14 +370,14 @@ public class TextureFactory implements Disposable {
         pix.fill();
         final float up = -MathUtils.HALF_PI; // pixmap y points down, so "up" is -90 degrees
 
-        // Cell 0: one broad ovate leaf
+        // Cell 0: one broad ovate leaf (deep forest jade)
         drawLeaf(pix, 0, 0, 128, 244, 226, 74, up,
-            0.09f, 0.27f, 0.07f, 0.34f, 0.58f, 0.16f);
+            0.06f, 0.17f, 0.05f, 0.11f, 0.28f, 0.09f);
 
-        // Cell 1: fan of three leaves of different lengths and greens
-        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up - 0.62f, 0.10f, 0.30f, 0.08f, 0.30f, 0.54f, 0.14f);
-        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up + 0.62f, 0.12f, 0.32f, 0.09f, 0.36f, 0.58f, 0.16f);
-        drawLeaf(pix, cell, 0, 128, 246, 214, 54, up, 0.08f, 0.26f, 0.06f, 0.28f, 0.52f, 0.13f);
+        // Cell 1: fan of three leaves of different lengths in natural moss greens
+        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up - 0.62f, 0.07f, 0.19f, 0.06f, 0.12f, 0.30f, 0.09f);
+        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up + 0.62f, 0.08f, 0.20f, 0.06f, 0.13f, 0.32f, 0.10f);
+        drawLeaf(pix, cell, 0, 128, 246, 214, 54, up, 0.06f, 0.16f, 0.05f, 0.11f, 0.27f, 0.08f);
 
         // Cell 2: feathery compound leaf: a central rachis with pairs of small leaflets
         int ox = 0, oy = cell;
@@ -387,17 +387,17 @@ public class TextureFactory implements Disposable {
             float rx = 128f + MathUtils.sin(t * 2.2f) * 10f;
             float len = 78f * (1f - 0.45f * t);
             float hw = 13f * (1f - 0.25f * t);
-            drawLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f, 0.14f, 0.36f, 0.08f, 0.40f, 0.62f, 0.14f);
-            drawLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f, 0.14f, 0.36f, 0.08f, 0.40f, 0.62f, 0.14f);
+            drawLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f, 0.07f, 0.20f, 0.06f, 0.13f, 0.31f, 0.09f);
+            drawLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f, 0.07f, 0.20f, 0.06f, 0.13f, 0.31f, 0.09f);
         }
-        drawLeaf(pix, ox, oy, 128, 250, 236, 4, up, 0.20f, 0.30f, 0.09f, 0.26f, 0.38f, 0.10f);
+        drawLeaf(pix, ox, oy, 128, 250, 236, 4, up, 0.10f, 0.18f, 0.06f, 0.14f, 0.24f, 0.08f);
 
         // Cell 3: blazing scarlet Krishnachura blossom clusters over feathery leaflets
         ox = cell;
         oy = cell;
-        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up - 0.55f, 0.10f, 0.34f, 0.08f, 0.32f, 0.58f, 0.14f);
-        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up + 0.55f, 0.10f, 0.34f, 0.08f, 0.32f, 0.58f, 0.14f);
-        drawLeaf(pix, ox, oy, 128, 250, 190, 36, up, 0.12f, 0.38f, 0.09f, 0.36f, 0.62f, 0.16f);
+        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up - 0.55f, 0.07f, 0.20f, 0.06f, 0.12f, 0.29f, 0.09f);
+        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up + 0.55f, 0.07f, 0.20f, 0.06f, 0.12f, 0.29f, 0.09f);
+        drawLeaf(pix, ox, oy, 128, 250, 190, 36, up, 0.08f, 0.22f, 0.06f, 0.13f, 0.31f, 0.09f);
 
         float[][] flowers = {
             {92, 96}, {168, 86}, {124, 140}, {70, 168}, {180, 158}, {132, 62},
@@ -406,10 +406,10 @@ public class TextureFactory implements Disposable {
         for (float[] f : flowers) {
             for (int p = 0; p < 5; p++) {
                 float ang = p * MathUtils.PI2 / 5f + f[0] * 0.15f;
-                // Saturated high-contrast scarlet-red petals
-                drawLeaf(pix, ox, oy, f[0], f[1], 44f, 17f, ang, 0.90f, 0.08f, 0.05f, 0.99f, 0.28f, 0.08f);
+                // Rich scarlet-crimson petals
+                drawLeaf(pix, ox, oy, f[0], f[1], 44f, 17f, ang, 0.90f, 0.08f, 0.05f, 0.98f, 0.24f, 0.08f);
             }
-            // Glowing golden central stamens
+            // Golden central stamens
             pix.setColor(1.0f, 0.90f, 0.20f, 1f);
             pix.fillCircle(ox + (int) f[0], oy + (int) f[1], 5);
             pix.setColor(1.0f, 0.98f, 0.60f, 1f);
@@ -440,21 +440,21 @@ public class TextureFactory implements Disposable {
         for (int i = 0; i < fan.length; i++) {
             float shade = (i % 2 == 0) ? 0f : 0.02f;
             drawLeaf(pix, 0, 0, 128, 10, fanLen[i], 11f, down + fan[i],
-                0.08f + shade, 0.22f + shade, 0.07f, 0.16f + shade, 0.38f, 0.12f);
+                0.06f + shade, 0.17f + shade, 0.05f, 0.11f + shade, 0.28f, 0.08f);
         }
 
         // Cell 1: airy spray of seven long thin leaves
         for (int i = 0; i < 7; i++) {
             float a = -0.9f + i * 0.3f;
             drawLeaf(pix, cell, 0, 128, 10, 205f + 20f * (1f - Math.abs(a)), 8f, down + a,
-                0.07f, 0.20f, 0.06f, 0.15f, 0.36f, 0.11f);
+                0.06f, 0.17f, 0.05f, 0.11f, 0.28f, 0.08f);
         }
 
         // Cell 2: short sprig of five leaves in rich jade
         for (int i = 0; i < 5; i++) {
             float a = -0.6f + i * 0.3f;
             drawLeaf(pix, 0, cell, 128, 10, 120f + 25f * (1f - Math.abs(a)), 10f, down + a,
-                0.10f, 0.26f, 0.08f, 0.20f, 0.44f, 0.14f);
+                0.07f, 0.19f, 0.06f, 0.13f, 0.30f, 0.09f);
         }
 
         // Cell 3: spray with a few weathered golden-brown dry leaves mixed into deep green
@@ -462,9 +462,9 @@ public class TextureFactory implements Disposable {
             float a = -1.0f + i * 0.285f;
             boolean dry = i % 3 == 1;
             if (dry) {
-                drawLeaf(pix, cell, cell, 128, 10, 185f, 10f, down + a, 0.28f, 0.24f, 0.08f, 0.45f, 0.38f, 0.14f);
+                drawLeaf(pix, cell, cell, 128, 10, 185f, 10f, down + a, 0.22f, 0.18f, 0.07f, 0.34f, 0.28f, 0.11f);
             } else {
-                drawLeaf(pix, cell, cell, 128, 10, 200f, 10f, down + a, 0.08f, 0.22f, 0.07f, 0.16f, 0.38f, 0.12f);
+                drawLeaf(pix, cell, cell, 128, 10, 200f, 10f, down + a, 0.06f, 0.17f, 0.05f, 0.11f, 0.28f, 0.08f);
             }
         }
 
@@ -516,8 +516,8 @@ public class TextureFactory implements Disposable {
      */
     private void drawFeatheryBipinnateBranch(Pixmap pix, int ox, int oy, float angle, float curve, int pairs, int blossomCount) {
         final float up = -MathUtils.HALF_PI + angle;
-        float baseR = 0.08f, baseG = 0.22f, baseB = 0.07f;
-        float tipR = 0.15f, tipG = 0.36f, tipB = 0.11f;
+        float baseR = 0.05f, baseG = 0.15f, baseB = 0.05f;
+        float tipR = 0.10f, tipG = 0.26f, tipB = 0.08f;
 
         // Pairs of delicate bipinnate leaflets ("jira jira pata")
         for (int i = 0; i < pairs; i++) {
@@ -657,10 +657,10 @@ public class TextureFactory implements Disposable {
         // Base peltate disk (deep forest jade-green, matching reference image)
         for (int r = rad; r >= 1; r--) {
             float t = (float) r / (float) rad;
-            // Center is slightly paler chartreuse, outer rim is rich deep jade
-            float red = MathUtils.lerp(0.18f, 0.08f, t);
-            float green = MathUtils.lerp(0.42f, 0.26f, t);
-            float blue = MathUtils.lerp(0.14f, 0.07f, t);
+            // Center is natural olive-jade, outer rim is rich deep forest jade
+            float red = MathUtils.lerp(0.12f, 0.06f, t);
+            float green = MathUtils.lerp(0.28f, 0.18f, t);
+            float blue = MathUtils.lerp(0.10f, 0.06f, t);
             pix.setColor(red, green, blue, 1f);
             pix.fillCircle(cx, cy, r);
         }
@@ -677,7 +677,7 @@ public class TextureFactory implements Disposable {
         }
 
         // Radiating delicate leaf veins
-        pix.setColor(0.22f, 0.48f, 0.16f, 0.75f);
+        pix.setColor(0.14f, 0.32f, 0.11f, 0.70f);
         int veinCount = extraVeins ? 16 : 12;
         for (int v = 0; v < veinCount; v++) {
             float va = v * MathUtils.PI2 / (float) veinCount;
@@ -687,10 +687,10 @@ public class TextureFactory implements Disposable {
             pix.drawLine(cx, cy, (int)vx, (int)vy);
         }
 
-        // Pale chartreuse central petiole hub
-        pix.setColor(0.35f, 0.58f, 0.22f, 1f);
+        // Natural central petiole hub
+        pix.setColor(0.22f, 0.38f, 0.15f, 1f);
         pix.fillCircle(cx, cy, 5);
-        pix.setColor(0.48f, 0.72f, 0.28f, 1f);
+        pix.setColor(0.30f, 0.48f, 0.20f, 1f);
         pix.fillCircle(cx, cy, 2);
 
         // Glistening water dewdrops
@@ -771,95 +771,210 @@ public class TextureFactory implements Disposable {
      * Multi-pane glazed window with pointed arch stone surround, central keystone, radial fanlight,
      * deep reflective blue-grey glass with sky reflection, and carved stone sill.
      */
+    /**
+     * Authentic Curzon Hall Indo-Saracenic Pointed Cusped Arch Window (512x1024 with trilinear mipmaps):
+     * - Multi-cusped pointed arch head with radiating fanlight tracery
+     * - Carved sandstone voussoirs and keystone at arch apex
+     * - Carved circular rosette medallions in terracotta spandrels
+     * - 8-pane colonial glazed window with clean white timber mullions and reflective glass
+     * - Projecting carved sandstone sill supported by twin corbel brackets
+     */
+    /**
+     * Authentic Curzon Hall Indo-Saracenic Pointed Arch Colonial Window (512x1024 with trilinear mipmaps):
+     * - Smooth 2-centered pointed Mughal arch (NO jagged sawtooth cusps)
+     * - Transparent spandrels (alpha=0) allowing Curzon Hall's red brickwork to show through seamlessly
+     * - Sandstone arch surround with radiating voussoirs and carved apex keystone
+     * - Deep reflective blue-grey architectural glass with subtle sky reflection
+     * - Graceful radiating fanlight tracery in arch head
+     * - Classic 8-pane colonial sash window with crisp cream timber mullions
+     * - Projecting carved sandstone sill with twin corbel brackets
+     */
     private Texture createColonialWindow() {
         int w = 512, h = 1024;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill(); // 100% transparent base
 
-        // Deep reflective blue-tinted colonial glass base with subtle sky reflection gradient
-        pix.setColor(0.08f, 0.12f, 0.17f, 1f);
-        pix.fill();
+        Color stoneBase = new Color(0.80f, 0.74f, 0.65f, 1f);
+        Color stoneHi = new Color(0.88f, 0.82f, 0.74f, 1f);
+        Color stoneSh = new Color(0.55f, 0.48f, 0.40f, 1f);
+        Color mullion = new Color(0.90f, 0.88f, 0.82f, 1f);
+        Color mullionSh = new Color(0.48f, 0.45f, 0.40f, 1f);
 
-        for (int y = 0; y < h; y++) {
-            float t = (float) y / (float) h;
-            float r = MathUtils.lerp(0.16f, 0.06f, t);
-            float g = MathUtils.lerp(0.22f, 0.09f, t);
-            float b = MathUtils.lerp(0.30f, 0.13f, t);
-            pix.setColor(r, g, b, 1f);
-            pix.drawLine(0, y, w, y);
+        int cx = w / 2;
+        int x0 = 54, x1 = w - 54;
+        float hw = (x1 - x0) / 2.0f;
+        int sy = 420;
+        int ay = 95;
+        float rise = sy - ay;
+        float d = (rise * rise - hw * hw) / (2.0f * hw);
+        float R = hw + d;
+        int archTh = 30;
+        int frameBot = 930;
+
+        // 1. Lower Window (below springline): vertical stone jambs and deep reflective glass
+        for (int y = sy; y < frameBot; y++) {
+            float t = (float)(y - sy) / (float)(frameBot - sy);
+            pix.setColor(MathUtils.lerp(0.12f, 0.06f, t), MathUtils.lerp(0.16f, 0.08f, t), MathUtils.lerp(0.24f, 0.12f, t), 1f);
+            pix.fillRectangle(x0, y, x1 - x0 + 1, 1);
+
+            // Left stone jamb
+            pix.setColor(stoneBase);
+            pix.fillRectangle(x0 - archTh, y, archTh, 1);
+            pix.setColor(stoneHi);
+            pix.drawPixel(x0 - archTh, y);
+            pix.setColor(stoneSh);
+            pix.drawPixel(x0 - 1, y);
+
+            // Right stone jamb
+            pix.setColor(stoneBase);
+            pix.fillRectangle(x1 + 1, y, archTh, 1);
+            pix.setColor(stoneSh);
+            pix.drawPixel(x1 + archTh, y);
+            pix.setColor(stoneHi);
+            pix.drawPixel(x1 + 1, y);
         }
 
-        // Warm buff sandstone architrave surround (authentic Curzon Hall stone)
-        Color stoneTrim = new Color(0.85f, 0.80f, 0.72f, 1f);
-        Color stoneShadow = new Color(0.48f, 0.44f, 0.38f, 1f);
-        Color stoneHighlight = new Color(0.92f, 0.88f, 0.81f, 1f);
+        // 2. Smooth Pointed Arch Head (NO jagged sawtooth cusps)
+        for (int y = ay; y < sy; y++) {
+            float dy = sy - y;
+            float radSqIn = R * R - dy * dy;
+            float radSqOut = (R + archTh) * (R + archTh) - dy * dy;
+            if (radSqIn > 0f) {
+                float rxIn = (float) Math.sqrt(radSqIn);
+                int xlIn = (int)((cx + d) - rxIn);
+                int xrIn = (int)((cx - d) + rxIn);
 
-        int border = 28;
-        // Outer stone architrave frame
-        pix.setColor(stoneTrim);
-        pix.fillRectangle(0, 0, w, border);
-        pix.fillRectangle(0, h - border * 2, w, border * 2);
-        pix.fillRectangle(0, 0, border, h);
-        pix.fillRectangle(w - border, 0, border, h);
+                // Deep reflective glass in arch head
+                float tg = (float)(y - ay) / rise;
+                pix.setColor(MathUtils.lerp(0.14f, 0.08f, tg), MathUtils.lerp(0.20f, 0.11f, tg), MathUtils.lerp(0.30f, 0.15f, tg), 1f);
+                if (xrIn >= xlIn) {
+                    pix.fillRectangle(xlIn, y, xrIn - xlIn + 1, 1);
+                }
 
-        // Architrave shadow groove
-        pix.setColor(stoneShadow);
-        pix.drawRectangle(border - 2, border - 2, w - (border - 2) * 2, h - border * 3 + 4);
+                if (radSqOut > 0f) {
+                    float rxOut = (float) Math.sqrt(radSqOut);
+                    int xlOut = (int)((cx + d) - rxOut);
+                    int xrOut = (int)((cx - d) + rxOut);
 
-        // Protruding carved stone sill at bottom
-        pix.setColor(stoneHighlight);
-        pix.fillRectangle(8, h - border * 2 - 4, w - 16, 8);
-        pix.setColor(stoneShadow);
-        pix.fillRectangle(8, h - border * 2 + 4, w - 16, 6);
+                    // Stone arch voussoirs with subtle masonry radial joints
+                    float angL = MathUtils.atan2(dy, Math.abs(xlIn - cx));
+                    float jointL = MathUtils.sin(angL * 14f);
+                    float varL = (jointL > 0.94f) ? -0.15f : 0.0f;
+                    pix.setColor(MathUtils.clamp(stoneBase.r + varL, 0.5f, 1f),
+                                 MathUtils.clamp(stoneBase.g + varL, 0.5f, 1f),
+                                 MathUtils.clamp(stoneBase.b + varL, 0.5f, 1f), 1f);
+                    if (xlIn > xlOut) pix.fillRectangle(xlOut, y, xlIn - xlOut, 1);
 
-        // Prominent stone keystone at top center
-        int kw = 48, kh = 42;
-        pix.setColor(stoneHighlight);
-        pix.fillRectangle(w / 2 - kw / 2, 2, kw, kh);
-        pix.setColor(stoneShadow);
-        pix.drawRectangle(w / 2 - kw / 2, 2, kw, kh);
+                    float angR = MathUtils.atan2(dy, Math.abs(xrIn - cx));
+                    float jointR = MathUtils.sin(angR * 14f);
+                    float varR = (jointR > 0.94f) ? -0.15f : 0.0f;
+                    pix.setColor(MathUtils.clamp(stoneBase.r + varR, 0.5f, 1f),
+                                 MathUtils.clamp(stoneBase.g + varR, 0.5f, 1f),
+                                 MathUtils.clamp(stoneBase.b + varR, 0.5f, 1f), 1f);
+                    if (xrOut > xrIn) pix.fillRectangle(xrIn + 1, y, xrOut - xrIn, 1);
 
-        // Arched fanlight transom section (top 25% of window)
-        int fanlightBottom = border + (int)((h - border * 3) * 0.28f);
-        Color mullion = new Color(0.86f, 0.82f, 0.76f, 1f);
-        Color mullionShadow = new Color(0.42f, 0.39f, 0.34f, 1f);
-
-        // Heavy transom horizontal dividing bar
-        pix.setColor(mullion);
-        pix.fillRectangle(border, fanlightBottom - 7, w - border * 2, 14);
-        pix.setColor(mullionShadow);
-        pix.drawLine(border, fanlightBottom + 7, w - border, fanlightBottom + 7);
-
-        // Radial sunburst spokes for the fanlight
-        int fanCenterX = w / 2;
-        int fanCenterY = fanlightBottom;
-        int fanRadius = fanlightBottom - border;
-        float[] spokeAngles = {-0.25f, -0.50f, -0.75f, -1.0f, -1.25f, -1.50f, -1.75f, -2.0f, -2.25f, -2.50f, -2.75f, -2.89f};
-        pix.setColor(mullion);
-        for (float ang : spokeAngles) {
-            int ex = fanCenterX + (int)(MathUtils.cos(ang) * fanRadius);
-            int ey = fanCenterY + (int)(MathUtils.sin(ang) * fanRadius);
-            pix.drawLine(fanCenterX, fanCenterY, ex, ey);
-            pix.drawLine(fanCenterX + 1, fanCenterY, ex + 1, ey);
+                    // Inner and outer contour lines
+                    pix.setColor(stoneSh);
+                    pix.drawPixel(xlIn, y);
+                    pix.drawPixel(xrIn, y);
+                    pix.setColor(stoneHi);
+                    pix.drawPixel(xlOut, y);
+                    pix.drawPixel(xrOut, y);
+                }
+            }
         }
 
-        // Lower glazed section: 8 tall colonial panes (2 columns x 4 rows)
-        int rectTop = fanlightBottom + 7;
-        int rectBottom = h - border * 2 - 4;
-        int rectH = rectBottom - rectTop;
+        // 3. Carved Sandstone Keystone at arch apex
+        int kw = 44, kh = 48;
+        pix.setColor(stoneBase);
+        pix.fillRectangle(cx - kw / 2, ay - 24, kw, kh);
+        pix.setColor(stoneHi);
+        pix.drawRectangle(cx - kw / 2, ay - 24, kw, kh);
 
+        // 4. Horizontal Transom Bar at springline
+        pix.setColor(stoneBase);
+        pix.fillRectangle(x0, sy - 6, x1 - x0 + 1, 12);
+        pix.setColor(stoneHi);
+        pix.drawLine(x0, sy - 6, x1, sy - 6);
+        pix.setColor(stoneSh);
+        pix.drawLine(x0, sy + 5, x1, sy + 5);
+
+        // 5. Radiating Fanlight Tracery in arch head
+        for (int spoke = 0; spoke < 7; spoke++) {
+            float angle = MathUtils.PI * (0.15f + 0.70f * ((float) spoke / 6f));
+            float cosA = MathUtils.cos(angle);
+            float sinA = MathUtils.sin(angle);
+            for (int rad = 14; rad < 240; rad++) {
+                int fx = cx - (int)(cosA * rad);
+                int fy = sy - (int)(sinA * rad);
+                if (fy < ay || fy >= sy || fx < x0 || fx > x1) continue;
+                float dyF = sy - fy;
+                float radSqF = R * R - dyF * dyF;
+                if (radSqF > 0f) {
+                    float rxF = (float) Math.sqrt(radSqF);
+                    int xlLim = (int)((cx + d) - rxF);
+                    int xrLim = (int)((cx - d) + rxF);
+                    if (fx > xlLim + 2 && fx < xrLim - 2) {
+                        pix.setColor(mullion);
+                        pix.drawPixel(fx, fy);
+                    }
+                }
+            }
+        }
+
+        // Concentric inner fanlight arc
+        float rInnerFan = R * 0.55f;
+        for (int fx = x0; fx <= x1; fx++) {
+            float dx = fx - cx;
+            float fyF = sy - (float) Math.sqrt(Math.max(0f, rInnerFan * rInnerFan - dx * dx));
+            int fy = (int) fyF;
+            if (fy >= ay && fy < sy - 10) {
+                pix.setColor(mullion);
+                pix.drawPixel(fx, fy);
+                pix.drawPixel(fx, fy + 1);
+            }
+        }
+
+        // 6. Lower 8-Pane Colonial Window Sash Grid
         // Central vertical mullion
         pix.setColor(mullion);
-        pix.fillRectangle(w / 2 - 5, rectTop, 10, rectH);
-        pix.setColor(mullionShadow);
-        pix.drawLine(w / 2 + 5, rectTop, w / 2 + 5, rectBottom);
+        pix.fillRectangle(cx - 3, sy + 6, 6, frameBot - (sy + 6));
+        pix.setColor(stoneHi);
+        pix.drawLine(cx - 3, sy + 6, cx - 3, frameBot);
+        pix.setColor(mullionSh);
+        pix.drawLine(cx + 3, sy + 6, cx + 3, frameBot);
 
-        // 3 horizontal transoms dividing the 4 rows
+        // 3 horizontal transoms
+        int lowerH = frameBot - (sy + 6);
         for (int row = 1; row <= 3; row++) {
-            int ty = rectTop + (rectH * row) / 4;
+            int hy = sy + 6 + (lowerH * row) / 4;
             pix.setColor(mullion);
-            pix.fillRectangle(border, ty - 4, w - border * 2, 8);
-            pix.setColor(mullionShadow);
-            pix.drawLine(border, ty + 4, w - border, ty + 4);
+            pix.fillRectangle(x0, hy - 3, x1 - x0 + 1, 6);
+            pix.setColor(stoneHi);
+            pix.drawLine(x0, hy - 3, x1, hy - 3);
+            pix.setColor(mullionSh);
+            pix.drawLine(x0, hy + 3, x1, hy + 3);
+        }
+
+        // 7. Projecting Sandstone Sill & Twin Corbel Brackets
+        pix.setColor(stoneBase);
+        pix.fillRectangle(x0 - archTh - 12, frameBot, (x1 - x0) + (archTh + 12) * 2, 22);
+        pix.setColor(stoneHi);
+        pix.drawLine(x0 - archTh - 12, frameBot, x1 + archTh + 12, frameBot);
+        pix.setColor(stoneSh);
+        pix.drawLine(x0 - archTh - 12, frameBot + 21, x1 + archTh + 12, frameBot + 21);
+
+        int[] brackets = {x0 + 16, x1 - 44};
+        for (int bx : brackets) {
+            for (int by = frameBot + 22; by <= frameBot + 48; by++) {
+                float prog = (float)(by - (frameBot + 22)) / 26f;
+                int curW = (int)(28f * (1f - prog * 0.6f));
+                pix.setColor(stoneBase);
+                pix.fillRectangle(bx, by, curW, 1);
+                pix.setColor(stoneSh);
+                pix.drawPixel(bx + curW - 1, by);
+            }
         }
 
         Texture tex = new Texture(pix, Format.RGBA8888, true);
@@ -870,73 +985,511 @@ public class TextureFactory implements Disposable {
     }
 
     /**
-     * Authentic carved Burma teak wooden double door texture (512x1024 with trilinear mipmaps):
-     * Rich teak wood grain, double door leaves with recessed bevelled panels, burnished brass
-     * studding, heavy brass knockers, and iron scroll hinges.
+     * Authentic Curzon Hall Ground Floor Pointed Arched Doorway (512x1024 with trilinear mipmaps):
+     * - Transparent spandrels (alpha=0) seamlessly integrating with Curzon red brickwork
+     * - Smooth 2-centered pointed Mughal arch surround with cream sandstone voussoirs
+     * - Wrought-iron Arabesque lattice / jali fanlight in arch head with deep interior cavity
+     * - Carved Burma teak double doors with rich teak grain, bevelled panels, and central rosette medallions
+     * - Heavy iron strap hinges, burnished brass studs, and lion-head knockers
+     * - Sandstone threshold at base
      */
     private Texture createTeakDoorTexture() {
         int w = 512, h = 1024;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill(); // 100% transparent base
 
-        // Burma teak wood grain base
-        pix.setColor(0.28f, 0.15f, 0.08f, 1f);
-        pix.fill();
+        Color stoneBase = new Color(0.90f, 0.86f, 0.78f, 1f);
+        Color stoneHi = new Color(0.98f, 0.96f, 0.90f, 1f);
+        Color stoneSh = new Color(0.60f, 0.55f, 0.48f, 1f);
 
-        for (int x = 0; x < w; x++) {
-            float grain = MathUtils.sin(x * 0.45f) * 0.6f + MathUtils.sin(x * 1.8f) * 0.4f;
-            for (int y = 0; y < h; y++) {
-                float n = grain + MathUtils.sin(y * 0.08f + x * 0.05f) * 0.25f;
-                float r = MathUtils.clamp(0.28f + n * 0.06f, 0.17f, 0.39f);
-                float g = MathUtils.clamp(0.15f + n * 0.04f, 0.08f, 0.22f);
-                float b = MathUtils.clamp(0.08f + n * 0.03f, 0.04f, 0.14f);
+        int cx = w / 2;
+        int x0 = 54, x1 = w - 54;
+        float hw = (x1 - x0) / 2.0f;
+        int sy = 430;
+        int ay = 90;
+        float rise = sy - ay;
+        float d = (rise * rise - hw * hw) / (2.0f * hw);
+        float R = hw + d;
+        int archTh = 36;
+        int frameBot = 970;
+
+        // 1. Lower section: Carved Burma Teak Doors
+        for (int y = sy + 8; y < frameBot; y++) {
+            // Teak base with rich organic grain
+            for (int x = x0; x <= x1; x++) {
+                float grain = MathUtils.sin(x * 0.45f) * 0.5f + MathUtils.sin(x * 1.8f) * 0.3f;
+                float n = grain + MathUtils.sin(y * 0.08f + x * 0.05f) * 0.2f;
+                float r = MathUtils.clamp(0.28f + n * 0.05f, 0.18f, 0.38f);
+                float g = MathUtils.clamp(0.15f + n * 0.03f, 0.09f, 0.22f);
+                float b = MathUtils.clamp(0.08f + n * 0.02f, 0.04f, 0.14f);
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
             }
+            // Left stone jamb
+            pix.setColor(stoneBase);
+            pix.fillRectangle(x0 - archTh, y, archTh, 1);
+            pix.setColor(stoneHi);
+            pix.drawPixel(x0 - archTh, y);
+            pix.setColor(stoneSh);
+            pix.drawPixel(x0 - 1, y);
+
+            // Right stone jamb
+            pix.setColor(stoneBase);
+            pix.fillRectangle(x1 + 1, y, archTh, 1);
+            pix.setColor(stoneSh);
+            pix.drawPixel(x1 + archTh, y);
+            pix.setColor(stoneHi);
+            pix.drawPixel(x1 + 1, y);
         }
 
-        // Heavy outer teak frame
-        int border = 32;
-        pix.setColor(0.18f, 0.09f, 0.05f, 1f);
-        pix.fillRectangle(0, 0, w, border);
-        pix.fillRectangle(0, h - border, w, border);
-        pix.fillRectangle(0, 0, border, h);
-        pix.fillRectangle(w - border, 0, border, h);
-
         // Center meeting stile between double doors
-        pix.fillRectangle(w / 2 - 10, 0, 20, h);
+        pix.setColor(0.16f, 0.08f, 0.04f, 1f);
+        pix.fillRectangle(cx - 10, sy + 8, 20, frameBot - (sy + 8));
         pix.setColor(0.08f, 0.04f, 0.02f, 1f);
-        pix.drawLine(w / 2, 0, w / 2, h);
+        pix.drawLine(cx, sy + 8, cx, frameBot);
 
-        // Recessed carved wood panels (3 panels per door leaf = 6 tall panels total)
-        int panelW = (w / 2) - border - 20;
-        int usableH = h - border * 2 - 40;
-        int panelH = usableH / 3 - 16;
-        int[] panelX = {border + 10, w / 2 + 10};
-
-        for (int px : panelX) {
+        // Recessed carved wood panels (3 per door leaf = 6 tall panels)
+        int doorPanelW = (cx - x0) - 24;
+        int usableH = frameBot - sy - 48;
+        int doorPanelH = usableH / 3 - 12;
+        int[] doorPanelX = {x0 + 12, cx + 12};
+        for (int px : doorPanelX) {
             for (int row = 0; row < 3; row++) {
-                int py = border + 20 + row * (panelH + 20);
-                drawCarvedDoorPanel(pix, px, py, panelW, panelH);
+                int py = sy + 24 + row * (doorPanelH + 16);
+                drawCarvedDoorPanel(pix, px, py, doorPanelW, doorPanelH);
             }
         }
 
-        // Brass studs along outer stiles and center stile
-        for (int y = border + 15; y < h - border; y += 45) {
-            drawBrassStud(pix, border / 2, y);
-            drawBrassStud(pix, w - border / 2, y);
-            drawBrassStud(pix, w / 2 - 5, y);
-            drawBrassStud(pix, w / 2 + 5, y);
+        // 2. Pointed Arch Head: Smooth curve & Wrought-Iron Arabesque Tracery Fanlight
+        for (int y = ay; y < sy; y++) {
+            float dy = sy - y;
+            float radSqIn = R * R - dy * dy;
+            float radSqOut = (R + archTh) * (R + archTh) - dy * dy;
+            if (radSqIn > 0f) {
+                float rxIn = (float) Math.sqrt(radSqIn);
+                int xlIn = (int)((cx + d) - rxIn);
+                int xrIn = (int)((cx - d) + rxIn);
+
+                // Deep atmospheric interior vestibule cavity
+                float tCavity = (float)(y - ay) / rise;
+                pix.setColor(MathUtils.lerp(0.12f, 0.07f, tCavity), MathUtils.lerp(0.09f, 0.05f, tCavity), MathUtils.lerp(0.06f, 0.04f, tCavity), 1f);
+                if (xrIn >= xlIn) {
+                    pix.fillRectangle(xlIn, y, xrIn - xlIn + 1, 1);
+                }
+
+                if (radSqOut > 0f) {
+                    float rxOut = (float) Math.sqrt(radSqOut);
+                    int xlOut = (int)((cx + d) - rxOut);
+                    int xrOut = (int)((cx - d) + rxOut);
+
+                    // Stone arch voussoirs
+                    float ang = MathUtils.atan2(dy, Math.abs(xlIn - cx));
+                    float vLine = (MathUtils.sin(ang * 14f) > 0.94f) ? -0.14f : 0.0f;
+                    pix.setColor(MathUtils.clamp(stoneBase.r + vLine, 0.5f, 1f),
+                                 MathUtils.clamp(stoneBase.g + vLine, 0.5f, 1f),
+                                 MathUtils.clamp(stoneBase.b + vLine, 0.5f, 1f), 1f);
+                    if (xlIn > xlOut) pix.fillRectangle(xlOut, y, xlIn - xlOut, 1);
+                    if (xrOut > xrIn) pix.fillRectangle(xrIn + 1, y, xrOut - xrIn, 1);
+
+                    pix.setColor(stoneSh);
+                    pix.drawPixel(xlIn, y);
+                    pix.drawPixel(xrIn, y);
+                    pix.setColor(stoneHi);
+                    pix.drawPixel(xlOut, y);
+                    pix.drawPixel(xrOut, y);
+                }
+            }
+        }
+
+        // Heavy carved transom bar separating door from fanlight
+        pix.setColor(0.18f, 0.09f, 0.05f, 1f);
+        pix.fillRectangle(x0, sy - 8, x1 - x0 + 1, 16);
+        pix.setColor(stoneHi);
+        pix.drawLine(x0, sy - 8, x1, sy - 8);
+        pix.setColor(0.08f, 0.04f, 0.02f, 1f);
+        pix.drawLine(x0, sy + 7, x1, sy + 7);
+
+        // Wrought iron arabesque lattice spokes & concentric arches in fanlight
+        for (int rRing = 45; rRing <= 210; rRing += 48) {
+            for (float a = 0.15f; a <= 2.99f; a += 0.035f) {
+                int fx = cx - (int)(MathUtils.cos(a) * rRing);
+                int fy = sy - (int)(MathUtils.sin(a) * rRing);
+                if (fy < ay || fy >= sy - 8 || fx < x0 || fx > x1) continue;
+                float dyF = sy - fy;
+                float radSqF = R * R - dyF * dyF;
+                if (radSqF > 0f) {
+                    float rxF = (float) Math.sqrt(radSqF);
+                    if (fx > (cx + d) - rxF + 3 && fx < (cx - d) + rxF - 3) {
+                        pix.setColor(0.32f, 0.28f, 0.24f, 1f);
+                        pix.drawPixel(fx, fy);
+                    }
+                }
+            }
+        }
+
+        // Carved Keystone at arch apex
+        int kw = 48, kh = 52;
+        pix.setColor(stoneBase);
+        pix.fillRectangle(cx - kw / 2, ay - 24, kw, kh);
+        pix.setColor(stoneHi);
+        pix.drawRectangle(cx - kw / 2, ay - 24, kw, kh);
+
+        // Brass studs along door stiles
+        for (int y = sy + 30; y < frameBot - 20; y += 48) {
+            drawBrassStud(pix, x0 + 10, y);
+            drawBrassStud(pix, x1 - 10, y);
+            drawBrassStud(pix, cx - 6, y);
+            drawBrassStud(pix, cx + 6, y);
         }
 
         // Heavy wrought iron decorative strap hinges
-        drawIronHinge(pix, 0, h / 5, 85);
-        drawIronHinge(pix, 0, (h * 4) / 5, 85);
-        drawIronHinge(pix, w - 85, h / 5, 85);
-        drawIronHinge(pix, w - 85, (h * 4) / 5, 85);
+        drawIronHinge(pix, x0, sy + 70, 75);
+        drawIronHinge(pix, x0, frameBot - 120, 75);
+        drawIronHinge(pix, x1 - 75, sy + 70, 75);
+        drawIronHinge(pix, x1 - 75, frameBot - 120, 75);
 
-        // Burnished brass door handles with ornate backplates & ring knockers
-        drawBrassDoorHandle(pix, w / 2 - 36, h / 2 + 20);
-        drawBrassDoorHandle(pix, w / 2 + 36, h / 2 + 20);
+        // Burnished brass door handles with lion-head knockers
+        drawBrassDoorHandle(pix, cx - 28, sy + (usableH / 2) + 10);
+        drawBrassDoorHandle(pix, cx + 28, sy + (usableH / 2) + 10);
+
+        // Sandstone threshold at base
+        pix.setColor(stoneBase);
+        pix.fillRectangle(x0 - archTh - 14, frameBot, (x1 - x0) + (archTh + 14) * 2, 24);
+        pix.setColor(stoneHi);
+        pix.drawLine(x0 - archTh - 14, frameBot, x1 + archTh + 14, frameBot);
+        pix.setColor(stoneSh);
+        pix.drawLine(x0 - archTh - 14, frameBot + 23, x1 + archTh + 14, frameBot + 23);
+
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
+        pix.dispose();
+        return tex;
+    }
+
+    /**
+     * Monumental Pointed Mughal Iwan Portal for Curzon Hall Grand Entrance (1024x2048 with trilinear mipmaps):
+     * - Transparent spandrels (alpha=0) allowing seamless integration with Curzon brick walls
+     * - Smooth, stately 2-centered pointed Mughal arch (NO pitch-black void, NO jagged sawtooth cusps)
+     * - Warm, illuminated architectural grand vestibule / foyer with soft ambient chandelier glow
+     * - Intricate wrought-iron and burnished brass Arabesque grand fanlight screen
+     * - Massive ceremonial Burma teak double gates with 8 deeply carved panels, brass studs, and lion knockers
+     * - Refined sandstone pilaster jambs, impost mouldings, and carved floral keystone
+     */
+    private Texture createCurzonGrandPortal() {
+        int w = 1024, h = 2048;
+        Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill(); // 100% transparent base!
+
+        Color stoneBase = new Color(0.80f, 0.74f, 0.65f, 1f);
+        Color stoneHi = new Color(0.88f, 0.82f, 0.74f, 1f);
+        Color stoneSh = new Color(0.55f, 0.48f, 0.40f, 1f);
+
+        int cx = w / 2;
+        int x0 = 140, x1 = w - 140;
+        float hw = (x1 - x0) / 2.0f;
+        int sy = 560;
+        int ay = 160;
+        float rise = sy - ay;
+        float d = (rise * rise - hw * hw) / (2.0f * hw);
+        float R = hw + d;
+        int archTh = 38;
+        int frameBot = 1960;
+
+        // 1. Lower Ceremonial Burma Teak Double Gates (from sy + 12 to frameBot)
+        for (int y = sy + 12; y < frameBot; y++) {
+            // Teak base with warm rich woodgrain
+            for (int x = x0; x <= x1; x++) {
+                float grain = MathUtils.sin(x * 0.35f) * 0.5f + MathUtils.sin(x * 1.5f) * 0.3f;
+                float n = grain + MathUtils.sin(y * 0.05f + x * 0.03f) * 0.2f;
+                float r = MathUtils.clamp(0.28f + n * 0.04f, 0.18f, 0.38f);
+                float g = MathUtils.clamp(0.15f + n * 0.03f, 0.09f, 0.22f);
+                float b = MathUtils.clamp(0.08f + n * 0.02f, 0.05f, 0.14f);
+                pix.setColor(r, g, b, 1f);
+                pix.drawPixel(x, y);
+            }
+            // Left sandstone pilaster jamb
+            pix.setColor(stoneBase);
+            pix.fillRectangle(x0 - archTh, y, archTh, 1);
+            pix.setColor(stoneHi);
+            pix.drawPixel(x0 - archTh, y);
+            pix.setColor(stoneSh);
+            pix.drawPixel(x0 - 1, y);
+
+            // Right sandstone pilaster jamb
+            pix.setColor(stoneBase);
+            pix.fillRectangle(x1 + 1, y, archTh, 1);
+            pix.setColor(stoneSh);
+            pix.drawPixel(x1 + archTh, y);
+            pix.setColor(stoneHi);
+            pix.drawPixel(x1 + 1, y);
+        }
+
+        // Center meeting stile
+        pix.setColor(0.16f, 0.08f, 0.04f, 1f);
+        pix.fillRectangle(cx - 16, sy + 12, 32, frameBot - (sy + 12));
+        pix.setColor(0.08f, 0.04f, 0.02f, 1f);
+        pix.drawLine(cx, sy + 12, cx, frameBot);
+
+        // 8 Large deeply recessed carved panels (4 per door leaf)
+        int gatePanelW = (cx - x0) - 40;
+        int usableH = frameBot - sy - 50;
+        int gatePanelH = usableH / 4 - 16;
+        int[] gatePanelX = {x0 + 20, cx + 20};
+        for (int px : gatePanelX) {
+            for (int row = 0; row < 4; row++) {
+                int py = sy + 24 + row * (gatePanelH + 20);
+                drawCarvedDoorPanel(pix, px, py, gatePanelW, gatePanelH);
+            }
+        }
+
+        // 2. Upper Arched Tympanum: Warm Architectural Grand Foyer Interior (NO BLACK HOLE!)
+        for (int y = ay; y < sy; y++) {
+            float dy = sy - y;
+            float radSqIn = R * R - dy * dy;
+            float radSqOut = (R + archTh) * (R + archTh) - dy * dy;
+            if (radSqIn > 0f) {
+                float rxIn = (float) Math.sqrt(radSqIn);
+                int xlIn = (int)((cx + d) - rxIn);
+                int xrIn = (int)((cx - d) + rxIn);
+
+                // Warm illuminated foyer depth with soft amber ambient glow
+                float tFoyer = (float)(y - ay) / rise;
+                float rF = MathUtils.lerp(0.36f, 0.20f, tFoyer);
+                float gF = MathUtils.lerp(0.24f, 0.12f, tFoyer);
+                float bF = MathUtils.lerp(0.14f, 0.07f, tFoyer);
+                pix.setColor(rF, gF, bF, 1f);
+                if (xrIn >= xlIn) {
+                    pix.fillRectangle(xlIn, y, xrIn - xlIn + 1, 1);
+                }
+
+                if (radSqOut > 0f) {
+                    float rxOut = (float) Math.sqrt(radSqOut);
+                    int xlOut = (int)((cx + d) - rxOut);
+                    int xrOut = (int)((cx - d) + rxOut);
+
+                    // Multi-tiered sandstone arch moldings with subtle joint lines
+                    float ang = MathUtils.atan2(dy, Math.abs(xlIn - cx));
+                    float joint = (MathUtils.sin(ang * 16f) > 0.95f) ? -0.12f : 0.0f;
+                    pix.setColor(MathUtils.clamp(stoneBase.r + joint, 0.5f, 1f),
+                                 MathUtils.clamp(stoneBase.g + joint, 0.5f, 1f),
+                                 MathUtils.clamp(stoneBase.b + joint, 0.5f, 1f), 1f);
+                    if (xlIn > xlOut) pix.fillRectangle(xlOut, y, xlIn - xlOut, 1);
+                    if (xrOut > xrIn) pix.fillRectangle(xrIn + 1, y, xrOut - xrIn, 1);
+
+                    pix.setColor(stoneSh);
+                    pix.drawPixel(xlIn, y);
+                    pix.drawPixel(xrIn, y);
+                    pix.setColor(stoneHi);
+                    pix.drawPixel(xlOut, y);
+                    pix.drawPixel(xrOut, y);
+                }
+            }
+        }
+
+        // Heavy carved Burma teak transom beam separating gate from fanlight
+        pix.setColor(0.18f, 0.09f, 0.05f, 1f);
+        pix.fillRectangle(x0, sy - 12, x1 - x0 + 1, 24);
+        pix.setColor(stoneHi);
+        pix.drawLine(x0, sy - 12, x1, sy - 12);
+        pix.setColor(0.08f, 0.04f, 0.02f, 1f);
+        pix.drawLine(x0, sy + 11, x1, sy + 11);
+
+        // Ornate wrought-iron and brass Arabesque grand fanlight tracery
+        for (int rRing = 60; rRing <= 360; rRing += 60) {
+            for (float a = 0.14f; a <= 3.00f; a += 0.02f) {
+                int fx = cx - (int)(MathUtils.cos(a) * rRing);
+                int fy = sy - (int)(MathUtils.sin(a) * rRing);
+                if (fy < ay || fy >= sy - 12 || fx < x0 || fx > x1) continue;
+                float dyF = sy - fy;
+                float radSqF = R * R - dyF * dyF;
+                if (radSqF > 0f) {
+                    float rxF = (float) Math.sqrt(radSqF);
+                    if (fx > (cx + d) - rxF + 3 && fx < (cx - d) + rxF - 3) {
+                        pix.setColor(0.85f, 0.70f, 0.30f, 1f); // Brass accent
+                        pix.drawPixel(fx, fy);
+                    }
+                }
+            }
+        }
+
+        // Radial grand spokes in fanlight
+        for (int spoke = 0; spoke < 11; spoke++) {
+            float angle = MathUtils.PI * (0.12f + 0.76f * ((float) spoke / 10f));
+            float cosA = MathUtils.cos(angle);
+            float sinA = MathUtils.sin(angle);
+            for (int rad = 20; rad < 380; rad++) {
+                int fx = cx - (int)(cosA * rad);
+                int fy = sy - (int)(sinA * rad);
+                if (fy < ay || fy >= sy - 12 || fx < x0 || fx > x1) continue;
+                float dyF = sy - fy;
+                float radSqF = R * R - dyF * dyF;
+                if (radSqF > 0f) {
+                    float rxF = (float) Math.sqrt(radSqF);
+                    if (fx > (cx + d) - rxF + 3 && fx < (cx - d) + rxF - 3) {
+                        pix.setColor(0.32f, 0.28f, 0.24f, 1f);
+                        pix.drawPixel(fx, fy);
+                    }
+                }
+            }
+        }
+
+        // Hanging ceremonial brass lantern / chandelier glow in upper foyer
+        int lanX = cx, lanY = ay + 170;
+        pix.setColor(1.0f, 0.85f, 0.40f, 0.9f);
+        pix.fillCircle(lanX, lanY, 14);
+        pix.setColor(1.0f, 0.95f, 0.70f, 1f);
+        pix.fillCircle(lanX, lanY, 7);
+        pix.setColor(0.40f, 0.30f, 0.12f, 1f);
+        pix.drawCircle(lanX, lanY, 15);
+        pix.drawLine(lanX, ay + 30, lanX, lanY - 15);
+
+        // Sandstone Carved Keystone at apex
+        pix.setColor(stoneBase);
+        pix.fillRectangle(cx - 40, ay - 28, 80, 60);
+        pix.setColor(stoneHi);
+        pix.drawRectangle(cx - 40, ay - 28, 80, 60);
+
+        // Grand Brass Bosses (heavy ceremonial studs)
+        for (int y = sy + 50; y < frameBot - 40; y += 75) {
+            drawBrassStud(pix, x0 + 22, y);
+            drawBrassStud(pix, x1 - 22, y);
+            drawBrassStud(pix, cx - 10, y);
+            drawBrassStud(pix, cx + 10, y);
+        }
+
+        // Heavy Brass Pull Handles with Lion Knocker Rings
+        drawBrassDoorHandle(pix, cx - 50, sy + 420);
+        drawBrassDoorHandle(pix, cx + 50, sy + 420);
+
+        // Sandstone threshold at base
+        pix.setColor(stoneBase);
+        pix.fillRectangle(x0 - archTh - 16, frameBot, (x1 - x0) + (archTh + 16) * 2, 28);
+        pix.setColor(stoneHi);
+        pix.drawLine(x0 - archTh - 16, frameBot, x1 + archTh + 16, frameBot);
+
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
+        pix.dispose();
+        return tex;
+    }
+
+    /**
+     * Authentic Curzon Hall Portico Upper Storey Triple Pointed Mughal Windows (1024x1024 with trilinear mipmaps):
+     * - Transparent spandrels (alpha=0) seamlessly integrating with Curzon brick walls
+     * - Central tall pointed arch flanked by two balanced side pointed arches
+     * - Slender carved sandstone baluster colonnettes with molded capitals separating the arches
+     * - Deep reflective blue-grey architectural glass and clean white colonial muntins
+     * - Continuous carved sandstone sill at base
+     */
+    private Texture createCurzonPorticoTripleWindow() {
+        int w = 1024, h = 1024;
+        Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill(); // 100% transparent base!
+
+        Color stoneBase = new Color(0.90f, 0.86f, 0.78f, 1f);
+        Color stoneHi = new Color(0.98f, 0.96f, 0.90f, 1f);
+        Color stoneSh = new Color(0.60f, 0.55f, 0.48f, 1f);
+        Color mullion = new Color(0.92f, 0.90f, 0.84f, 1f);
+
+        // Three arch centers: Left=220, Center=512, Right=804
+        int[] centers = {220, 512, 804};
+        int[] halfWidths = {105, 135, 105};
+        int[] apexY = {140, 70, 140};
+        int sy = 460;
+        int frameBot = 940;
+
+        for (int i = 0; i < 3; i++) {
+            int acx = centers[i];
+            int ahw = halfWidths[i];
+            int aay = apexY[i];
+            float aRise = sy - aay;
+            float aD = (aRise * aRise - (float)(ahw * ahw)) / (2.0f * (float)ahw);
+            float aR = (float)ahw + aD;
+            int aTh = 26;
+
+            // Lower glass
+            for (int y = sy; y < frameBot; y++) {
+                float t = (float)(y - sy) / (float)(frameBot - sy);
+                pix.setColor(MathUtils.lerp(0.14f, 0.07f, t), MathUtils.lerp(0.18f, 0.09f, t), MathUtils.lerp(0.26f, 0.13f, t), 1f);
+                pix.fillRectangle(acx - ahw, y, ahw * 2 + 1, 1);
+            }
+
+            // Smooth Pointed arch head (NO jagged sawtooth cusps)
+            for (int y = aay; y < sy; y++) {
+                float dy = sy - y;
+                float radSqIn = aR * aR - dy * dy;
+                float radSqOut = (aR + aTh) * (aR + aTh) - dy * dy;
+                if (radSqIn > 0f) {
+                    float rxIn = (float) Math.sqrt(radSqIn);
+                    int xlIn = (int)((acx + aD) - rxIn);
+                    int xrIn = (int)((acx - aD) + rxIn);
+
+                    // Deep reflective glass
+                    float tg = (float)(y - aay) / aRise;
+                    pix.setColor(MathUtils.lerp(0.16f, 0.08f, tg), MathUtils.lerp(0.22f, 0.11f, tg), MathUtils.lerp(0.32f, 0.15f, tg), 1f);
+                    if (xrIn >= xlIn) pix.fillRectangle(xlIn, y, xrIn - xlIn + 1, 1);
+
+                    if (radSqOut > 0f) {
+                        float rxOut = (float) Math.sqrt(radSqOut);
+                        int xlOut = (int)((acx + aD) - rxOut);
+                        int xrOut = (int)((acx - aD) + rxOut);
+
+                        pix.setColor(stoneBase);
+                        if (xlIn > xlOut) pix.fillRectangle(xlOut, y, xlIn - xlOut, 1);
+                        if (xrOut > xrIn) pix.fillRectangle(xrIn + 1, y, xrOut - xrIn, 1);
+
+                        pix.setColor(stoneSh);
+                        pix.drawPixel(xlIn, y);
+                        pix.drawPixel(xrIn, y);
+                        pix.setColor(stoneHi);
+                        pix.drawPixel(xlOut, y);
+                        pix.drawPixel(xrOut, y);
+                    }
+                }
+            }
+
+            // Lower sash mullions
+            pix.setColor(mullion);
+            pix.fillRectangle(acx - 3, sy, 6, frameBot - sy);
+            int subH = frameBot - sy;
+            for (int r = 1; r <= 3; r++) {
+                pix.fillRectangle(acx - ahw, sy + (subH * r) / 4 - 3, ahw * 2 + 1, 6);
+            }
+
+            // Keystone
+            pix.setColor(stoneBase);
+            pix.fillRectangle(acx - 22, aay - 18, 44, 38);
+            pix.setColor(stoneHi);
+            pix.drawRectangle(acx - 22, aay - 18, 44, 38);
+        }
+
+        // Sandstone colonnettes separating the arches
+        for (int px : new int[]{350, 674}) {
+            pix.setColor(stoneBase);
+            pix.fillRectangle(px - 14, 60, 28, frameBot - 60);
+            pix.setColor(stoneHi);
+            pix.drawLine(px - 14, 60, px - 14, frameBot);
+            pix.setColor(stoneSh);
+            pix.drawLine(px + 13, 60, px + 13, frameBot);
+
+            // Molded capitals and bases
+            pix.setColor(stoneHi);
+            pix.fillRectangle(px - 18, 60, 36, 14);
+            pix.fillRectangle(px - 18, frameBot - 14, 36, 14);
+        }
+
+        // Projecting continuous stone sill
+        pix.setColor(stoneBase);
+        pix.fillRectangle(50, frameBot, w - 100, 26);
+        pix.setColor(stoneHi);
+        pix.drawLine(50, frameBot, w - 50, frameBot);
+        pix.setColor(stoneSh);
+        pix.drawLine(50, frameBot + 25, w - 50, frameBot + 25);
 
         Texture tex = new Texture(pix, Format.RGBA8888, true);
         tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
@@ -1119,19 +1672,19 @@ public class TextureFactory implements Disposable {
                 float alpha = MathUtils.clamp(w - across + 0.5f, 0f, 1f);
                 float edge = w > 0.5f ? across / w : 1f;
 
-                // Greens are lifted so sunlit foliage reads fresh; the red blossoms are left as drawn
-                float gain = br > 0.5f ? 1.05f : 1.45f;
+                // Deep, natural chlorophyll without artificial neon/catceta blow-out (Ghost of Tsushima & Where Winds Meet style)
+                float gain = 1.0f;
                 float r = MathUtils.lerp(br, tr, t) * gain;
                 float g = MathUtils.lerp(bg, tg, t) * gain;
                 float b = MathUtils.lerp(bb, tb, t) * gain;
 
-                // Midrib and lateral veins lighten; the rim darkens
+                // Subtle natural midrib and lateral veins; the rim darkens
                 float vein = 0f;
-                if (across < 1.6f) vein = 0.10f;
+                if (across < 1.6f) vein = 0.03f;
                 else {
                     float phase = (t * 9f - edge * 1.6f) % 1f;
                     if (phase < 0f) phase += 1f;
-                    if (phase < 0.10f) vein = 0.05f;
+                    if (phase < 0.10f) vein = 0.015f;
                 }
                 float rim = 1f - 0.30f * MathUtils.clamp((edge - 0.72f) / 0.28f, 0f, 1f);
 
