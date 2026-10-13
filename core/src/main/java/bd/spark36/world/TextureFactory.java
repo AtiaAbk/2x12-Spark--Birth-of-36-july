@@ -34,6 +34,8 @@ public class TextureFactory implements Disposable {
     public final Texture lotusAtlas;
     public final Texture colonialWindow;
     public final Texture teakDoorTexture;
+    public final Texture curzonGrandPortal;
+    public final Texture curzonPorticoTripleWindow;
     public final Texture dirtPath;
     public final Texture lightBeam;
     public final Texture rockSurface;
