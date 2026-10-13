@@ -353,10 +353,17 @@ public class WhereWindsMeetHUD implements Disposable {
                 // Trigger checkpoint gold flash!
                 checkpointFlashAlpha = 1.0f;
 
-                // If all memorials inspected and victory hasn't triggered yet, open Victory Screen!
-                if (memorials.isAllInspected() && !victoryShown) {
-                    isVictoryOpen = true;
-                    victoryShown = true;
+                // Check climax progression: if all 5 archives secured and Goon defeated, open victory;
+                // otherwise guide player to Curzon Hall plaza for the final confrontation!
+                if (memorials.isAllInspected()) {
+                    boolean goonKnockedOut = (helmetGoon != null && helmetGoon.getState() == bd.spark36.character.HelmetGoon.State.KNOCKED_OUT);
+                    if (goonKnockedOut && !victoryShown) {
+                        isVictoryOpen = true;
+                        victoryShown = true;
+                    } else if (!victoryShown) {
+                        missionBannerTitle = "CLIMAX: CONFRONT THE ENFORCER";
+                        missionBannerCount = 5;
+                    }
                 }
             }
         }
@@ -364,9 +371,15 @@ public class WhereWindsMeetHUD implements Disposable {
         if (activeModalEntry != null && Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             activeModalEntry = null;
             missionBannerTime = 6.0f;
-            if (memorials.isAllInspected() && !victoryShown) {
-                isVictoryOpen = true;
-                victoryShown = true;
+            if (memorials.isAllInspected()) {
+                boolean goonKnockedOut = (helmetGoon != null && helmetGoon.getState() == bd.spark36.character.HelmetGoon.State.KNOCKED_OUT);
+                if (goonKnockedOut && !victoryShown) {
+                    isVictoryOpen = true;
+                    victoryShown = true;
+                } else if (!victoryShown) {
+                    missionBannerTitle = "CLIMAX: CONFRONT THE ENFORCER";
+                    missionBannerCount = 5;
+                }
             }
         }
 
@@ -377,6 +390,7 @@ public class WhereWindsMeetHUD implements Disposable {
         if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
             if (activeModalEntry == null && !isVictoryOpen) {
                 isMapOpen = !isMapOpen;
+                if (isMapOpen) isPauseMenuOpen = false;
             }
         }
 
@@ -386,8 +400,18 @@ public class WhereWindsMeetHUD implements Disposable {
             isPauseMenuOpen = !isPauseMenuOpen;
         }
 
-        // Pause menu exit actions
+        // Pause menu actions & shortcuts
         if (isPauseMenuOpen) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
+                isMapOpen = true;
+                isPauseMenuOpen = false;
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
+                parametersVisible = !parametersVisible;
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.G)) {
+                player.setGender(player.getGender() == 0 ? 1 : 0);
+            }
             if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
                 exitAction = 1; // Return to main menu
                 isPauseMenuOpen = false;
@@ -505,7 +529,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
             // 3. Draw Typography & Glyphs
             spriteBatch.begin();
-            drawMissionCardText(memorials, nearest, dstToNearest, w, h);
+            drawMissionCardText(player, memorials, nearest, dstToNearest, w, h);
             if (parametersVisible) {
                 drawMissionChecklistText(player, memorials, w, h);
             } else {
@@ -647,7 +671,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private void drawMissionCardBg(JulyMemorials memorials, float w, float h) {
         float cardX = 36f;
         float cardY = h - 195f;
-        float cardW = 520f;
+        float cardW = 490f;
         float cardH = 160f;
 
         // See-through smoked glass background with soft gold halo
@@ -664,7 +688,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // Glowing Golden Progress Bar (Dynamic: fills as archives are inspected)
         float barX = cardX + 16f;
         float barY = cardY + 48f;
-        float barW = 410f;
+        float barW = 390f;
         float barH = 5f;
 
         // Track
@@ -691,7 +715,7 @@ public class WhereWindsMeetHUD implements Disposable {
         }
 
         // Waypoint Compass Needle Icon Circle (next to DISTANCE)
-        float cX = cardX + cardW - 38f;
+        float cX = cardX + cardW - 36f;
         float cY = cardY + 22f;
         shapeRenderer.setColor(0.08f, 0.18f, 0.22f, 0.40f);
         shapeRenderer.circle(cX, cY, 15f, 20);
@@ -702,7 +726,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private void drawMissionCardBorders(float w, float h) {
         float cardX = 36f;
         float cardY = h - 195f;
-        float cardW = 520f;
+        float cardW = 490f;
         float cardH = 160f;
 
         // Crisp thin gold border with gentle breathing glow
@@ -729,7 +753,7 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.line(cardX + cardW + 2, cardY - 2, cardX + cardW + 2, cardY + cLen);
 
         // Waypoint Compass Needle Icon Ring
-        float cX = cardX + cardW - 38f;
+        float cX = cardX + cardW - 36f;
         float cY = cardY + 22f;
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.circle(cX, cY, 15f, 24);
@@ -739,39 +763,49 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.line(cX, cY, cX + 11f * MathUtils.cos(nAngle), cY + 11f * MathUtils.sin(nAngle));
     }
 
-    private void drawMissionCardText(JulyMemorials memorials, MemorialEntry nearest, float dst, float w, float h) {
+    private void drawMissionCardText(PlayerController player, JulyMemorials memorials, MemorialEntry nearest, float dst, float w, float h) {
         float cardX = 36f;
         float cardY = h - 195f;
-        float cardW = 520f;
+        float cardW = 490f;
 
         int ins = memorials.getInspectedCount();
         int total = memorials.getTotalCount();
         boolean allDone = ins >= total;
+        boolean goonKnockedOut = (helmetGoon != null && helmetGoon.getState() == bd.spark36.character.HelmetGoon.State.KNOCKED_OUT);
 
-        // 1. ACTIVE MISSION TAG
-        String missionTag = allDone ?
-            "ALL ARCHIVES UNLOCKED: 05 / 05" :
-            String.format("ACTIVE MISSION: %02d / %02d", Math.min(ins + 1, total), total);
-        drawOutlined(fonts.smallFont, missionTag, cardX + 18f, cardY + 142f, allDone ? Color.GREEN : new Color(1.0f, 0.75f, 0.30f, 1f));
+        if (allDone && !goonKnockedOut) {
+            // Climax Boss confrontation
+            drawOutlined(fonts.smallFont, "★ CLIMAX OBJECTIVE: LEVEL 1 BOSS", cardX + 18f, cardY + 142f, new Color(1.0f, 0.45f, 0.25f, 1f));
+            String bossTitle = "CONFRONT THE ENFORCER";
+            drawOutlined(fonts.titleFont, bossTitle, cardX + 18f, cardY + 118f, goldAccent);
+            drawOutlined(fonts.bodyFont, "Target: Curzon Hall Plaza — Disarm the Helmet Thug", cardX + 18f, cardY + 84f, Color.WHITE);
+            float goonDst = (helmetGoon != null && helmetGoon.getPosition() != null) ?
+                (player != null ? player.getPosition().dst(helmetGoon.getPosition()) : dst) : dst;
+            drawOutlined(fonts.headerFont, String.format("DISTANCE: %.1f M", goonDst), cardX + 18f, cardY + 30f, goldAccent);
+        } else if (allDone && goonKnockedOut) {
+            drawOutlined(fonts.smallFont, "ALL ARCHIVES UNLOCKED: 05 / 05", cardX + 18f, cardY + 142f, Color.GREEN);
+            drawOutlined(fonts.titleFont, "LEVEL 1 ACCOMPLISHED", cardX + 18f, cardY + 118f, goldAccent);
+            drawOutlined(fonts.bodyFont, "All 5 archives secured & Enforcer neutralized. Campus liberated!", cardX + 18f, cardY + 84f, Color.WHITE);
+            drawOutlined(fonts.headerFont, "STATUS: COMPLETED", cardX + 18f, cardY + 30f, Color.GREEN);
+        } else {
+            // Standard archive progression
+            String missionTag = String.format("ACTIVE MISSION: %02d / %02d", Math.min(ins + 1, total), total);
+            drawOutlined(fonts.smallFont, missionTag, cardX + 18f, cardY + 142f, new Color(1.0f, 0.75f, 0.30f, 1f));
 
-        // 2. MISSION TITLE: dynamically selects font so it NEVER overflows card borders
-        String missionTitle = allDone ? "LEVEL 1 ACCOMPLISHED" : (nearest != null ? nearest.title : "EXPLORE CAMPUS");
-        com.badlogic.gdx.graphics.g2d.BitmapFont titleFontToUse = fonts.titleFont;
-        glyphLayout.setText(titleFontToUse, missionTitle);
-        if (glyphLayout.width > cardW - 38f) {
-            titleFontToUse = fonts.headerFont;
+            String missionTitle = (nearest != null ? nearest.title : "EXPLORE CAMPUS");
+            com.badlogic.gdx.graphics.g2d.BitmapFont titleFontToUse = fonts.titleFont;
+            glyphLayout.setText(titleFontToUse, missionTitle);
+            if (glyphLayout.width > cardW - 38f) {
+                titleFontToUse = fonts.headerFont;
+            }
+            drawOutlined(titleFontToUse, missionTitle, cardX + 18f, cardY + 118f, goldAccent);
+
+            String missionDesc = (nearest != null ? "Target: " + nearest.location : "Investigate Dhaka University archives");
+            drawOutlined(fonts.bodyFont, missionDesc, cardX + 18f, cardY + 84f, Color.WHITE);
+
+            String distStr = String.format("DISTANCE: %.1f M", dst);
+            drawOutlined(fonts.headerFont, distStr, cardX + 18f, cardY + 30f, goldAccent);
         }
-        drawOutlined(titleFontToUse, missionTitle, cardX + 18f, cardY + 118f, goldAccent);
-
-        // 3. Subtitle description / location
-        String missionDesc = allDone ?
-            "All 5 historical archives secured. Victory achieved!" :
-            (nearest != null ? "Target: " + nearest.location : "Investigate Dhaka University archives");
-        drawOutlined(fonts.bodyFont, missionDesc, cardX + 18f, cardY + 84f, Color.WHITE);
-
-        // 4. DISTANCE
-        String distStr = allDone ? "STATUS: COMPLETED" : String.format("DISTANCE: %.1f M", dst);
-        drawOutlined(fonts.headerFont, distStr, cardX + 18f, cardY + 30f, goldAccent);
     }
 
     // =======================================================
@@ -1956,45 +1990,111 @@ public class WhereWindsMeetHUD implements Disposable {
     // ==========================================
     private void renderPauseMenu(float w, float h) {
         beginShapes(ShapeType.Filled);
-        shapeRenderer.setColor(0f, 0f, 0f, 0.78f);
+        shapeRenderer.setColor(0f, 0f, 0f, 0.82f);
         shapeRenderer.rect(0, 0, w, h);
 
-        float pw = 420f;
-        float ph = 360f;
+        float pw = 980f;
+        float ph = 520f;
         float px = (w - pw) / 2f;
         float py = (h - ph) / 2f;
 
-        shapeRenderer.setColor(glassBg);
-        shapeRenderer.rect(px, py, pw, ph);
+        // Smoked obsidian glass backing
+        fillGlassPanel(px, py, pw, ph);
 
-        // Gold accent bar at top
+        // Radiant Gold Top Accent
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(px, py + ph - 4f, pw, 4f);
+
+        // Vertical Divider between Menu options and Codex
+        float dividerX = px + 360f;
+        shapeRenderer.setColor(goldDark.r, goldDark.g, goldDark.b, 0.40f);
+        shapeRenderer.rect(dividerX, py + 24f, 1.5f, ph - 48f);
+
+        // Rule of July Highlight Box at bottom of right column
+        float ruleX = dividerX + 24f;
+        float ruleY = py + 24f;
+        float ruleW = pw - (dividerX - px) - 48f;
+        float ruleH = 58f;
+        shapeRenderer.setColor(0.18f, 0.08f, 0.04f, 0.70f);
+        shapeRenderer.rect(ruleX, ruleY, ruleW, ruleH);
+        shapeRenderer.setColor(goldAccent.r, goldAccent.g, goldAccent.b, 0.12f);
+        shapeRenderer.rect(ruleX, ruleY + ruleH - 2f, ruleW, 2f);
         shapeRenderer.end();
 
         beginShapes(ShapeType.Line);
-        shapeRenderer.setColor(goldBorder);
-        shapeRenderer.rect(px, py, pw, ph);
-        // Separator line below title
-        shapeRenderer.line(px + 20f, py + ph - 62f, px + pw - 20f, py + ph - 62f);
+        strokeGlassBorder(px, py, pw, ph);
+
+        // Border around Rule box
+        shapeRenderer.setColor(0.92f, 0.55f, 0.22f, 0.80f);
+        shapeRenderer.rect(ruleX, ruleY, ruleW, ruleH);
+
+        // Decorative corner brackets
+        float cb = 16f;
+        shapeRenderer.setColor(goldAccent);
+        shapeRenderer.line(px - 4f, py + ph + 4f, px - 4f + cb, py + ph + 4f);
+        shapeRenderer.line(px - 4f, py + ph + 4f, px - 4f, py + ph + 4f - cb);
+        shapeRenderer.line(px + pw + 4f, py + ph + 4f, px + pw + 4f - cb, py + ph + 4f);
+        shapeRenderer.line(px + pw + 4f, py + ph + 4f, px + pw + 4f, py + ph + 4f - cb);
+        shapeRenderer.line(px - 4f, py - 4f, px - 4f + cb, py - 4f);
+        shapeRenderer.line(px - 4f, py - 4f, px - 4f, py - 4f + cb);
+        shapeRenderer.line(px + pw + 4f, py - 4f, px + pw + 4f - cb, py - 4f);
+        shapeRenderer.line(px + pw + 4f, py - 4f, px + pw + 4f, py - 4f + cb);
         shapeRenderer.end();
 
         spriteBatch.begin();
+        // Left Column: Menu Header
         fonts.titleFont.setColor(goldAccent);
-        fonts.titleFont.draw(spriteBatch, "GAME PAUSED", px + 115f, py + ph - 22f);
-
-        fonts.headerFont.setColor(Color.WHITE);
-        fonts.headerFont.draw(spriteBatch, "[ESC]  Resume Game", px + 80f, py + 250f);
-        fonts.headerFont.draw(spriteBatch, "[M]    Campus Map", px + 80f, py + 210f);
-
-        fonts.headerFont.setColor(new Color(1f, 0.75f, 0.35f, 1f));
-        fonts.headerFont.draw(spriteBatch, "[Q]    Exit to Main Menu", px + 80f, py + 160f);
-
-        fonts.headerFont.setColor(new Color(0.95f, 0.35f, 0.30f, 1f));
-        fonts.headerFont.draw(spriteBatch, "[X]    Quit Game", px + 80f, py + 120f);
+        fonts.titleFont.draw(spriteBatch, "GAME PAUSED", px + 36f, py + ph - 24f);
 
         fonts.smallFont.setColor(goldMuted);
-        fonts.smallFont.draw(spriteBatch, "2x12: Spark -- Birth of 36 July", px + 108f, py + 52f);
+        fonts.smallFont.draw(spriteBatch, "2x12: Spark • Birth of 36 July", px + 38f, py + ph - 54f);
+
+        // Menu items
+        fonts.headerFont.setColor(Color.WHITE);
+        fonts.headerFont.draw(spriteBatch, "[ESC]  Resume Game", px + 40f, py + ph - 105f);
+        fonts.headerFont.draw(spriteBatch, "[M]    Campus Map", px + 40f, py + ph - 150f);
+        fonts.headerFont.draw(spriteBatch, "[P]    Toggle Parameters", px + 40f, py + ph - 195f);
+        fonts.headerFont.draw(spriteBatch, "[G]    Switch Gender (M/F)", px + 40f, py + ph - 240f);
+
+        fonts.headerFont.setColor(new Color(1f, 0.78f, 0.38f, 1f));
+        fonts.headerFont.draw(spriteBatch, "[Q]    Exit to Main Menu", px + 40f, py + ph - 305f);
+
+        fonts.headerFont.setColor(new Color(0.96f, 0.40f, 0.35f, 1f));
+        fonts.headerFont.draw(spriteBatch, "[X]    Quit to Desktop", px + 40f, py + ph - 350f);
+
+        fonts.smallFont.setColor(new Color(0.60f, 0.58f, 0.55f, 0.85f));
+        fonts.smallFont.draw(spriteBatch, "Dhaka University Campus • July 2024", px + 40f, py + 36f);
+
+        // Right Column: Martial Arts & Controls Codex
+        fonts.headerFont.setColor(goldAccent);
+        fonts.headerFont.draw(spriteBatch, "MARTIAL ARTS & CONTROLS CODEX", dividerX + 26f, py + ph - 24f);
+
+        fonts.smallFont.setColor(new Color(0.85f, 0.82f, 0.75f, 0.95f));
+        fonts.smallFont.draw(spriteBatch, "NAVIGATION & ATHLETICS", dividerX + 26f, py + ph - 56f);
+
+        fonts.bodyFont.setColor(Color.WHITE);
+        fonts.bodyFont.draw(spriteBatch, "• WASD / Arrows : Movement (Camera-Relative Direction)", dividerX + 32f, py + ph - 80f);
+        fonts.bodyFont.draw(spriteBatch, "• Shift / R : Free Sprint (Unlimited Exploration Stamina)", dividerX + 32f, py + ph - 104f);
+        fonts.bodyFont.draw(spriteBatch, "• J / Space : Athletic Jump (Double-Tap for Mid-Air Double Jump!)", dividerX + 32f, py + ph - 128f);
+        fonts.bodyFont.draw(spriteBatch, "• Hold J at Wall : Scale Vertical Walls & Vault onto Roofs", dividerX + 32f, py + ph - 152f);
+        fonts.bodyFont.draw(spriteBatch, "• C : Crouch / Duck (Bosepora) — Evades High Lathi Swings", dividerX + 32f, py + ph - 176f);
+
+        fonts.smallFont.setColor(new Color(0.85f, 0.82f, 0.75f, 0.95f));
+        fonts.smallFont.draw(spriteBatch, "TECHNICAL MARTIAL ARTS COMBAT", dividerX + 26f, py + ph - 208f);
+
+        fonts.bodyFont.setColor(Color.WHITE);
+        fonts.bodyFont.draw(spriteBatch, "• Left-Click / F : Bare-Handed Punches (Jab -> Cross Combo)", dividerX + 32f, py + ph - 232f);
+        fonts.bodyFont.draw(spriteBatch, "• Q / K : High Martial Arts Kick (Roundhouse Strike)", dividerX + 32f, py + ph - 256f);
+        fonts.bodyFont.draw(spriteBatch, "• C + Attack : Low Dragon Leg Sweep (Tripping Counter Strike)", dividerX + 32f, py + ph - 280f);
+        fonts.bodyFont.draw(spriteBatch, "• B (Hold) : Defensive Guard (Reduces Damage by 80%)", dividerX + 32f, py + ph - 304f);
+        fonts.bodyFont.draw(spriteBatch, "• B (Tap / Timed) : Flash Parry (Stuns Goon & breaks posture!)", dividerX + 32f, py + ph - 328f);
+        fonts.bodyFont.draw(spriteBatch, "• Counter-Hit : Strike during Goon wind-up for 1.5x interrupt damage!", dividerX + 32f, py + ph - 352f);
+
+        // Rule of July Text
+        fonts.smallFont.setColor(new Color(1.0f, 0.82f, 0.35f, 1f));
+        fonts.smallFont.draw(spriteBatch, "CAMPUS RULE OF JULY:", ruleX + 16f, ruleY + ruleH - 14f);
+        fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.88f, 0.90f));
+        fonts.smallFont.draw(spriteBatch, "Striking unarmed, innocent students results in instant disqualification.", ruleX + 16f, ruleY + ruleH - 34f);
         spriteBatch.end();
     }
 
@@ -2062,14 +2162,14 @@ public class WhereWindsMeetHUD implements Disposable {
     // 4b. BOSS HEALTH BAR & COMBAT HUD
     // ==========================================
     private void renderBossHealthBar(bd.spark36.character.HelmetGoon goon, float w, float h) {
-        float bw = 560f;
+        float bw = 500f;
         float bh = 16f;
         float bx = (w - bw) / 2f;
-        float by = h - 54f;
+        float by = h - 50f;
 
         beginShapes(ShapeType.Filled);
         // Smoked glass panel behind boss bar (accommodates health and posture poise bars)
-        fillGlassPanel(bx - 16f, by - 36f, bw + 32f, bh + 58f);
+        fillGlassPanel(bx - 14f, by - 34f, bw + 28f, bh + 54f);
 
         // Health Bar Track
         shapeRenderer.setColor(0.18f, 0.08f, 0.08f, 0.88f);
@@ -2151,9 +2251,9 @@ public class WhereWindsMeetHUD implements Disposable {
 
     private void renderBossChallengeDialogue(bd.spark36.character.HelmetGoon goon, float w, float h) {
         float dw = 760f;
-        float dh = 70f;
+        float dh = 72f;
         float dx = (w - dw) / 2f;
-        float dy = h - 145f;
+        float dy = 110f; // Positioned cleanly at lower-center cinematic subtitle zone
 
         beginShapes(ShapeType.Filled);
         fillGlassPanel(dx, dy, dw, dh);
@@ -2541,6 +2641,11 @@ public class WhereWindsMeetHUD implements Disposable {
     /** Open memorial modal directly (used for automated visual verification) */
     public void openMemorialModal(MemorialEntry entry) {
         this.activeModalEntry = entry;
+    }
+
+    /** Open pause menu directly (used for automated visual verification) */
+    public void openPauseMenuForTest() {
+        this.isPauseMenuOpen = true;
     }
 
     public boolean isModalOpen() {

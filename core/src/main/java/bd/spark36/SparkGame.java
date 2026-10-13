@@ -101,6 +101,7 @@ public class SparkGame extends ApplicationAdapter {
              System.getProperty("bd.spark36.testModalScreenshot") != null ||
              System.getProperty("bd.spark36.testCombatScreenshot") != null ||
              System.getProperty("bd.spark36.testPondScreenshot") != null ||
+             System.getProperty("bd.spark36.testPauseScreenshot") != null ||
              System.getProperty("bd.spark36.testVictory") != null)) {
             startGameplay();
         }
@@ -707,6 +708,18 @@ public class SparkGame extends ApplicationAdapter {
             }
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
                 takeScreenshot("spark36_map_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testPauseScreenshot") != null) {
+            testTimer += delta;
+            if (testTimer >= 1.0f && !hud.isModalOpen()) {
+                hud.openPauseMenuForTest();
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("spark36_pause_verified");
                 autoScreenshotTaken = true;
                 if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
                     Gdx.app.exit();
