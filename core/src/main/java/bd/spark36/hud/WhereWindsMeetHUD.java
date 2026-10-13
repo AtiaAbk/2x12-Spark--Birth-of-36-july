@@ -84,6 +84,9 @@ public class WhereWindsMeetHUD implements Disposable {
     private boolean isPauseMenuOpen = false;
     private boolean isVictoryOpen = false;
     private boolean victoryShown = false;
+    private boolean congratulationsPopupActive = false;
+    private float congratulationsPopupTimer = 0f;
+    private float victoryTransitionTimer = 0f;
     private float animTime = 0f;
 
     // Toast Notification Banner (triggered on memorial inspection)
@@ -146,8 +149,15 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     public void triggerVictory() {
-        this.isVictoryOpen = true;
+        this.congratulationsPopupActive = true;
+        this.congratulationsPopupTimer = 3.2f;
+        this.victoryTransitionTimer = 2.4f;
         this.victoryShown = true;
+        this.isVictoryOpen = false;
+    }
+
+    public boolean isCongratulationsPopupActive() {
+        return congratulationsPopupActive;
     }
 
     private com.badlogic.gdx.graphics.Texture getCinematicFinishTexture() {
@@ -217,6 +227,23 @@ public class WhereWindsMeetHUD implements Disposable {
 
         if (missionBannerTime > 0f && activeModalEntry == null) {
             missionBannerTime -= delta;
+        }
+
+        // Celebratory Congratulations Toast & Victory Screen transition
+        if (congratulationsPopupActive) {
+            congratulationsPopupTimer -= delta;
+            if (victoryTransitionTimer > 0f) {
+                victoryTransitionTimer -= delta;
+                if ((Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) && victoryTransitionTimer < 2.0f) {
+                    victoryTransitionTimer = 0f;
+                }
+                if (victoryTransitionTimer <= 0f) {
+                    isVictoryOpen = true;
+                }
+            }
+            if (congratulationsPopupTimer <= 0f) {
+                congratulationsPopupActive = false;
+            }
         }
 
         // Mouse click navigation for Tactical Map button and Close buttons
@@ -358,8 +385,7 @@ public class WhereWindsMeetHUD implements Disposable {
                 if (memorials.isAllInspected()) {
                     boolean goonKnockedOut = (helmetGoon != null && helmetGoon.getState() == bd.spark36.character.HelmetGoon.State.KNOCKED_OUT);
                     if (goonKnockedOut && !victoryShown) {
-                        isVictoryOpen = true;
-                        victoryShown = true;
+                        triggerVictory();
                     } else if (!victoryShown) {
                         missionBannerTitle = "CLIMAX: CONFRONT THE ENFORCER";
                         missionBannerCount = 5;
@@ -374,8 +400,7 @@ public class WhereWindsMeetHUD implements Disposable {
             if (memorials.isAllInspected()) {
                 boolean goonKnockedOut = (helmetGoon != null && helmetGoon.getState() == bd.spark36.character.HelmetGoon.State.KNOCKED_OUT);
                 if (goonKnockedOut && !victoryShown) {
-                    isVictoryOpen = true;
-                    victoryShown = true;
+                    triggerVictory();
                 } else if (!victoryShown) {
                     missionBannerTitle = "CLIMAX: CONFRONT THE ENFORCER";
                     missionBannerCount = 5;
@@ -570,11 +595,16 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // 4. Toast Notification Banner (renders on top of HUD when active)
         if (!isVictoryOpen && !isDisqualified && !isDefeated && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
-            renderMissionCompleteBanner(w, h);
+            if (congratulationsPopupActive) {
+                renderCongratulationsPopup(w, h);
+            } else {
+                renderMissionCompleteBanner(w, h);
+            }
         }
 
         // 4b. Boss Health Bar, Dialogue Prompt, and Combat Popups
-        if (helmetGoon != null && !isVictoryOpen && !isDisqualified && !isDefeated && !isPauseMenuOpen && !isMapOpen && activeModalEntry == null) {
+        if (helmetGoon != null && !isVictoryOpen && !isDisqualified && !isDefeated && !isPauseMenuOpen && !isMapOpen && activeModalEntry == null
+            && !congratulationsPopupActive && !helmetGoon.isKnockedOut()) {
             float dstGoon = player.getPosition().dst(helmetGoon.getPosition());
             if (helmetGoon.getState() != bd.spark36.character.HelmetGoon.State.STANDOFF || dstGoon <= 28f) {
                 renderBossHealthBar(helmetGoon, w, h);
@@ -2181,6 +2211,101 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     // ==========================================
+    // CELEBRATORY TOAST: CONGRATULATIONS POPUP
+    // ==========================================
+    private void renderCongratulationsPopup(float w, float h) {
+        if (congratulationsPopupTimer <= 0f) return;
+
+        // Fade in (first 0.35s) and fade out (last 0.45s)
+        float alpha = 1f;
+        float elapsed = 3.2f - congratulationsPopupTimer;
+        if (elapsed < 0.35f) {
+            alpha = elapsed / 0.35f;
+        } else if (congratulationsPopupTimer < 0.45f) {
+            alpha = congratulationsPopupTimer / 0.45f;
+        }
+        alpha = MathUtils.clamp(alpha, 0f, 1f);
+
+        float pw = 840f;
+        float ph = 96f;
+        float px = (w - pw) / 2f;
+        float py = h - 114f;
+
+        // Frosted translucent dark backing with soft gold tint
+        beginShapes(ShapeType.Filled);
+        shapeRenderer.setColor(0.02f, 0.04f, 0.08f, 0.92f * alpha);
+        shapeRenderer.rect(px, py, pw, ph);
+
+        // Warm gold header banner stripe
+        shapeRenderer.setColor(0.24f, 0.18f, 0.06f, 0.92f * alpha);
+        shapeRenderer.rect(px, py + ph - 28f, pw, 28f);
+
+        // Gold top accent line
+        shapeRenderer.setColor(1.0f, 0.86f, 0.38f, 0.98f * alpha);
+        shapeRenderer.rect(px, py + ph - 3f, pw, 3f);
+
+        // Side diamond accents
+        float leftDiaX = px + 28f;
+        float rightDiaX = px + pw - 28f;
+        float diaY = py + ph / 2f;
+        float ds = 10f;
+        shapeRenderer.triangle(leftDiaX, diaY + ds, leftDiaX + ds, diaY, leftDiaX, diaY - ds);
+        shapeRenderer.triangle(leftDiaX, diaY + ds, leftDiaX - ds, diaY, leftDiaX, diaY - ds);
+        shapeRenderer.triangle(rightDiaX, diaY + ds, rightDiaX + ds, diaY, rightDiaX, diaY - ds);
+        shapeRenderer.triangle(rightDiaX, diaY + ds, rightDiaX - ds, diaY, rightDiaX, diaY - ds);
+        shapeRenderer.end();
+
+        // Elegant double borders
+        beginShapes(ShapeType.Line);
+        shapeRenderer.setColor(0.92f, 0.78f, 0.34f, 0.92f * alpha);
+        shapeRenderer.rect(px, py, pw, ph);
+        shapeRenderer.setColor(0.60f, 0.50f, 0.20f, 0.50f * alpha);
+        shapeRenderer.rect(px + 4f, py + 4f, pw - 8f, ph - 8f);
+
+        // Corner filigree brackets
+        float cLen = 14f;
+        shapeRenderer.setColor(1.0f, 0.88f, 0.40f, alpha);
+        shapeRenderer.line(px - 2f, py + ph + 2f, px + cLen, py + ph + 2f);
+        shapeRenderer.line(px - 2f, py + ph + 2f, px - 2f, py + ph - cLen);
+        shapeRenderer.line(px + pw + 2f, py + ph + 2f, px + pw - cLen, py + ph + 2f);
+        shapeRenderer.line(px + pw + 2f, py + ph + 2f, px + pw + 2f, py + ph - cLen);
+        shapeRenderer.line(px - 2f, py - 2f, px + cLen, py - 2f);
+        shapeRenderer.line(px - 2f, py - 2f, px - 2f, py + cLen);
+        shapeRenderer.line(px + pw + 2f, py - 2f, px + pw - cLen, py - 2f);
+        shapeRenderer.line(px + pw + 2f, py - 2f, px + pw + 2f, py + cLen);
+        shapeRenderer.end();
+
+        // Typography
+        spriteBatch.begin();
+        // Title
+        String titleStr = "* CONGRATULATIONS! LEVEL 1 COMPLETE *";
+        glyphLayout.setText(fonts.titleFont, titleStr);
+        float titleX = px + (pw - glyphLayout.width) / 2f;
+        fonts.titleFont.setColor(0f, 0f, 0f, 0.90f * alpha);
+        fonts.titleFont.draw(spriteBatch, titleStr, titleX + 2f, py + ph - 7f);
+        fonts.titleFont.setColor(1.0f, 0.88f, 0.38f, alpha);
+        fonts.titleFont.draw(spriteBatch, titleStr, titleX, py + ph - 5f);
+
+        // Subtitle
+        String subStr = "Campus Liberated: The Intimidation Enforcer Has Been Neutralized!";
+        glyphLayout.setText(fonts.headerFont, subStr);
+        float subX = px + (pw - glyphLayout.width) / 2f;
+        fonts.headerFont.setColor(0f, 0f, 0f, 0.90f * alpha);
+        fonts.headerFont.draw(spriteBatch, subStr, subX + 1.5f, py + 41f);
+        fonts.headerFont.setColor(1f, 1f, 1f, 0.95f * alpha);
+        fonts.headerFont.draw(spriteBatch, subStr, subX, py + 42f);
+
+        // Status Prompt
+        String promptStr = "Preparing Final Mission Debrief... [ENTER / CLICK to Proceed]";
+        glyphLayout.setText(fonts.smallFont, promptStr);
+        float promptX = px + (pw - glyphLayout.width) / 2f;
+        float pulse = 0.75f + 0.25f * MathUtils.sin(animTime * 6f);
+        fonts.smallFont.setColor(0.95f, 0.85f, 0.45f, alpha * pulse);
+        fonts.smallFont.draw(spriteBatch, promptStr, promptX, py + 18f);
+        spriteBatch.end();
+    }
+
+    // ==========================================
     // 4b. BOSS HEALTH BAR & COMBAT HUD
     // ==========================================
     private void renderBossHealthBar(bd.spark36.character.HelmetGoon goon, float w, float h) {
@@ -2659,9 +2784,16 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
+    /** Trigger celebratory toast directly (used for automated visual verification) */
+    public void triggerCongratulationsToastForTest() {
+        congratulationsPopupActive = true;
+        congratulationsPopupTimer = 3.0f;
+    }
+
     /** Trigger victory screen directly (used for automated visual verification) */
     public void triggerVictoryForTest() {
         isVictoryOpen = true;
+        victoryShown = true;
     }
 
     /** Open memorial modal directly (used for automated visual verification) */
@@ -2687,6 +2819,9 @@ public class WhereWindsMeetHUD implements Disposable {
         isDisqualified = false;
         isDefeated = false;
         victoryShown = false;
+        congratulationsPopupActive = false;
+        congratulationsPopupTimer = 0f;
+        victoryTransitionTimer = 0f;
         missionBannerTime = 0f;
         exitAction = 0;
     }

@@ -103,6 +103,7 @@ public class SparkGame extends ApplicationAdapter {
              System.getProperty("bd.spark36.testCombatScreenshot") != null ||
              System.getProperty("bd.spark36.testPondScreenshot") != null ||
              System.getProperty("bd.spark36.testPauseScreenshot") != null ||
+             System.getProperty("bd.spark36.testCongratulations") != null ||
              System.getProperty("bd.spark36.testVictory") != null)) {
             startGameplay();
         }
@@ -690,6 +691,18 @@ public class SparkGame extends ApplicationAdapter {
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
                 takeScreenshot("curzon_pond_lotus_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testCongratulations") != null) {
+            testTimer += delta;
+            if (testTimer >= 0.8f && !hud.isCongratulationsPopupActive()) {
+                hud.triggerCongratulationsToastForTest();
+            }
+            if (!autoScreenshotTaken && testTimer >= 1.8f) {
+                takeScreenshot("spark36_congratulations_toast_verified");
                 autoScreenshotTaken = true;
                 if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
                     Gdx.app.exit();
