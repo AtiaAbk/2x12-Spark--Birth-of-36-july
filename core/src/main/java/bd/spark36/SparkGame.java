@@ -671,7 +671,7 @@ public class SparkGame extends ApplicationAdapter {
         } else if (System.getProperty("bd.spark36.testCombatScreenshot") != null) {
             hud.reset();
             player.setPosition(0f, 0f, 39.5f);
-            player.setHeadingDegrees(0f);
+            player.setHeadingDegrees(180f); // Face north directly towards Helmet Goon
             if (helmetGoon != null) {
                 helmetGoon.reset(0f, 36.0f);
                 helmetGoon.startFightDirectly();
@@ -687,7 +687,7 @@ public class SparkGame extends ApplicationAdapter {
         } else if (System.getProperty("bd.spark36.testPondScreenshot") != null) {
             hud.reset();
             player.setPosition(0f, 0.28f, 18.0f);
-            player.setHeadingDegrees(0f); // face north into the pond towards lotus pads and Curzon Hall
+            player.setHeadingDegrees(180f); // face north into the pond towards lotus pads and Curzon Hall
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
                 takeScreenshot("curzon_pond_lotus_verified");

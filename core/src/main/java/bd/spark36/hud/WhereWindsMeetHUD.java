@@ -695,21 +695,10 @@ public class WhereWindsMeetHUD implements Disposable {
                               float r, float g, float b, float a) {
         x = Math.round(x);
         y = Math.round(y);
-        boolean large = font == fonts.titleFont || font == fonts.headerFont;
-        if (large) {
-            font.setColor(textOutline.r, textOutline.g, textOutline.b, textOutline.a * a);
-            font.draw(spriteBatch, text, x - 1f, y);
-            font.draw(spriteBatch, text, x + 1f, y);
-            font.draw(spriteBatch, text, x, y + 1f);
-            font.draw(spriteBatch, text, x, y - 1f);
-            font.setColor(textShadow.r, textShadow.g, textShadow.b, textShadow.a * a);
-            font.draw(spriteBatch, text, x + 2f, y - 2f);
-        } else {
-            // Very faint 1px outline (alpha 0.30) + crisp 1px drop shadow
-            font.setColor(0f, 0f, 0f, 0.30f * a);
-            font.draw(spriteBatch, text, x - 1f, y);
-            font.draw(spriteBatch, text, x, y + 1f);
-            font.setColor(0f, 0f, 0f, 0.95f * a);
+        boolean hasBuiltInOutline = font == fonts.titleFont || font == fonts.headerFont;
+        if (!hasBuiltInOutline) {
+            // Clean 1px drop shadow for fonts without built-in FreeType border
+            font.setColor(0f, 0f, 0f, 0.85f * a);
             font.draw(spriteBatch, text, x + 1f, y - 1f);
         }
         font.setColor(r, g, b, a);
@@ -722,7 +711,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private void drawMissionCardBg(JulyMemorials memorials, float w, float h) {
         float cardX = 36f;
         float cardY = h - 195f;
-        float cardW = 490f;
+        float cardW = 540f;
         float cardH = 160f;
 
         // See-through smoked glass background with soft gold halo
@@ -739,7 +728,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // Glowing Golden Progress Bar (Dynamic: fills as archives are inspected)
         float barX = cardX + 16f;
         float barY = cardY + 48f;
-        float barW = 390f;
+        float barW = 430f;
         float barH = 5f;
 
         // Track
@@ -777,7 +766,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private void drawMissionCardBorders(float w, float h) {
         float cardX = 36f;
         float cardY = h - 195f;
-        float cardW = 490f;
+        float cardW = 540f;
         float cardH = 160f;
 
         // Crisp thin gold border with gentle breathing glow
@@ -817,7 +806,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private void drawMissionCardText(PlayerController player, JulyMemorials memorials, MemorialEntry nearest, float dst, float w, float h) {
         float cardX = 36f;
         float cardY = h - 195f;
-        float cardW = 490f;
+        float cardW = 540f;
 
         int ins = memorials.getInspectedCount();
         int total = memorials.getTotalCount();
@@ -828,14 +817,14 @@ public class WhereWindsMeetHUD implements Disposable {
             // Climax Boss confrontation
             drawOutlined(fonts.smallFont, "★ CLIMAX OBJECTIVE: LEVEL 1 BOSS", cardX + 18f, cardY + 142f, new Color(1.0f, 0.45f, 0.25f, 1f));
             String bossTitle = "CONFRONT THE ENFORCER";
-            drawOutlined(fonts.titleFont, bossTitle, cardX + 18f, cardY + 118f, goldAccent);
+            drawOutlined(fonts.headerFont, bossTitle, cardX + 18f, cardY + 118f, goldAccent);
             drawOutlined(fonts.bodyFont, "Target: Curzon Hall Plaza — Disarm the Helmet Thug", cardX + 18f, cardY + 84f, Color.WHITE);
             float goonDst = (helmetGoon != null && helmetGoon.getPosition() != null) ?
                 (player != null ? player.getPosition().dst(helmetGoon.getPosition()) : dst) : dst;
             drawOutlined(fonts.headerFont, String.format("DISTANCE: %.1f M", goonDst), cardX + 18f, cardY + 30f, goldAccent);
         } else if (allDone && goonKnockedOut) {
             drawOutlined(fonts.smallFont, "ALL ARCHIVES UNLOCKED: 05 / 05", cardX + 18f, cardY + 142f, Color.GREEN);
-            drawOutlined(fonts.titleFont, "LEVEL 1 ACCOMPLISHED", cardX + 18f, cardY + 118f, goldAccent);
+            drawOutlined(fonts.headerFont, "LEVEL 1 ACCOMPLISHED", cardX + 18f, cardY + 118f, goldAccent);
             drawOutlined(fonts.bodyFont, "All 5 archives secured & Enforcer neutralized. Campus liberated!", cardX + 18f, cardY + 84f, Color.WHITE);
             drawOutlined(fonts.headerFont, "STATUS: COMPLETED", cardX + 18f, cardY + 30f, Color.GREEN);
         } else {
@@ -844,12 +833,7 @@ public class WhereWindsMeetHUD implements Disposable {
             drawOutlined(fonts.smallFont, missionTag, cardX + 18f, cardY + 142f, new Color(1.0f, 0.75f, 0.30f, 1f));
 
             String missionTitle = (nearest != null ? nearest.title : "EXPLORE CAMPUS");
-            com.badlogic.gdx.graphics.g2d.BitmapFont titleFontToUse = fonts.titleFont;
-            glyphLayout.setText(titleFontToUse, missionTitle);
-            if (glyphLayout.width > cardW - 38f) {
-                titleFontToUse = fonts.headerFont;
-            }
-            drawOutlined(titleFontToUse, missionTitle, cardX + 18f, cardY + 118f, goldAccent);
+            drawOutlined(fonts.headerFont, missionTitle, cardX + 18f, cardY + 118f, goldAccent);
 
             String missionDesc = (nearest != null ? "Target: " + nearest.location : "Investigate Dhaka University archives");
             drawOutlined(fonts.bodyFont, missionDesc, cardX + 18f, cardY + 84f, Color.WHITE);
@@ -892,7 +876,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float baseW1 = 12f;
 
         for (int i = 0; i < 4; i++) {
-            float angleDeg = i * 90f - yaw + 90f;
+            float angleDeg = 90f - (i * 90f) + yaw;
             float tipRad = angleDeg * MathUtils.degreesToRadians;
             float leftRad = (angleDeg - 25f) * MathUtils.degreesToRadians;
             float rightRad = (angleDeg + 25f) * MathUtils.degreesToRadians;
@@ -918,7 +902,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float baseW2 = 8f;
 
         for (int i = 0; i < 4; i++) {
-            float angleDeg = i * 90f + 45f - yaw + 90f;
+            float angleDeg = 90f - (i * 90f + 45f) + yaw;
             float tipRad = angleDeg * MathUtils.degreesToRadians;
             float leftRad = (angleDeg - 25f) * MathUtils.degreesToRadians;
             float rightRad = (angleDeg + 25f) * MathUtils.degreesToRadians;
@@ -955,7 +939,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Degree tick marks
         for (int i = 0; i < 360; i += 15) {
-            float tickRad = (i - yaw + 90f) * MathUtils.degreesToRadians;
+            float tickRad = (90f - i + yaw) * MathUtils.degreesToRadians;
             float inner = (i % 90 == 0) ? r - 12f : ((i % 45 == 0) ? r - 9f : r - 5f);
             shapeRenderer.setColor(i == 0 ? healthRed : goldBorder);
             shapeRenderer.line(
@@ -984,7 +968,7 @@ public class WhereWindsMeetHUD implements Disposable {
         Color[] cardColors = {healthRed, goldAccent, goldAccent, goldAccent};
 
         for (int i = 0; i < 4; i++) {
-            float rad = (i * 90f - yaw + 90f) * MathUtils.degreesToRadians;
+            float rad = (90f - i * 90f + yaw) * MathUtils.degreesToRadians;
             float lx = cx + (r - 18f) * MathUtils.cos(rad) - 5f;
             float ly = cy + (r - 18f) * MathUtils.sin(rad) + 5f;
 

@@ -103,6 +103,13 @@ public class CinematicCamera {
         boolean testMode = System.getProperty("bd.spark36.testScreenshot") != null ||
                            System.getProperty("bd.spark36.testHeroScreenshot") != null ||
                            System.getProperty("bd.spark36.testSitScreenshot") != null ||
+                           System.getProperty("bd.spark36.testCongratulations") != null ||
+                           System.getProperty("bd.spark36.testCombatScreenshot") != null ||
+                           System.getProperty("bd.spark36.testPondScreenshot") != null ||
+                           System.getProperty("bd.spark36.testPauseScreenshot") != null ||
+                           System.getProperty("bd.spark36.testVictory") != null ||
+                           System.getProperty("bd.spark36.testModalScreenshot") != null ||
+                           System.getProperty("bd.spark36.testMapScreenshot") != null ||
                            System.getProperty("bd.spark36.noMouseLook") != null;
         if (inputEnabled && mouseLookActive && !testMode) {
             if (!Gdx.input.isCursorCatched()) Gdx.input.setCursorCatched(true);
@@ -118,7 +125,9 @@ public class CinematicCamera {
                 float deltaY = MathUtils.clamp(rawDeltaY, -100f, 100f);
                 if (Math.abs(deltaX) > 0.001f || Math.abs(deltaY) > 0.001f) {
                     yaw -= deltaX * mouseSensitivity;
-                    pitch -= deltaY * mouseSensitivity;
+                    boolean invertPitch = "true".equalsIgnoreCase(System.getProperty("bd.spark36.invertPitch", "false"));
+                    float pitchSign = invertPitch ? -1f : 1f;
+                    pitch += deltaY * mouseSensitivity * pitchSign;
                     yaw = (yaw % 360f + 360f) % 360f;
                     pitch = MathUtils.clamp(pitch, minPitch, maxPitch);
                 }
@@ -163,18 +172,19 @@ public class CinematicCamera {
             shakeOffset.setZero();
         }
 
-        // 6. Target focus = player chest + look-ahead
+        // 6. Target focus = player chest + look-ahead + dynamic vertical pitch elevation
+        float pitchRad = pitch * MathUtils.degreesToRadians;
+        float sinPitch = MathUtils.sin(pitchRad);
+        float pitchElevation = -sinPitch * 0.85f;
         targetFocus.set(
             playerPos.x + lookAheadOffset.x,
-            playerPos.y + targetHeight + currentBob,
+            playerPos.y + targetHeight + currentBob + pitchElevation,
             playerPos.z + lookAheadOffset.z
         );
 
         // 7. Spherical orbit
         float yawRad   = yaw * MathUtils.degreesToRadians;
-        float pitchRad = pitch * MathUtils.degreesToRadians;
         float cosPitch = MathUtils.cos(pitchRad);
-        float sinPitch = MathUtils.sin(pitchRad);
         float cosYaw   = MathUtils.cos(yawRad);
         float sinYaw   = MathUtils.sin(yawRad);
 
