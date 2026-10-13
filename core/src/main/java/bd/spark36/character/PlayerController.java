@@ -116,6 +116,9 @@ public class PlayerController {
         {-7.5f, 0f, -24.4f, 7.5f, 15.6f, -20.6f},
         // Grand Access Steps: (0, 0.3, -19.5), size (16, 0.6, 4.2)
         {-8f, 0f, -21.6f, 8f, 0.6f, -17.4f},
+        // Continuous Raised Wing Plinth Bases: height 0.60m matching Grand Access Steps
+        {-46f, 0f, -23.5f, -8f, 0.6f, -21.7f},
+        {8f, 0f, -23.5f, 46f, 0.6f, -21.7f},
 
         // ======== BENCHES (3) — height 0.8m (JUMPABLE!) ========
         {-17.95f, 0f, 4.9f, -17.25f, 0.8f, 7.1f},

@@ -648,6 +648,48 @@ public class DhakaCampusWorld implements Disposable {
         stepRailR.transform.setTranslation(8.2f, 0.75f, -19.5f);
         instances.add(stepRailR);
 
+        // Authentic Continuous Raised Plinth Base & Stone Coping (Mughal-Gothic Podium)
+        // Elevates Curzon Hall 0.60m above ground level across the entire north elevation (96m)
+        Model plinthWingBase = mb.createBox(38.0f, 0.52f, 1.8f, curzonBrickMat, attr);
+        Model plinthWingCoping = mb.createBox(38.2f, 0.10f, 2.0f, stoneCurb, attr);
+        Model plinthReturnBase = mb.createBox(1.8f, 0.52f, 15.0f, curzonBrickMat, attr);
+        Model plinthReturnCoping = mb.createBox(2.0f, 0.10f, 15.2f, stoneCurb, attr);
+        models.add(plinthWingBase);
+        models.add(plinthWingCoping);
+        models.add(plinthReturnBase);
+        models.add(plinthReturnCoping);
+
+        // West Wing Plinth & Coping
+        ModelInstance plinthWest = new ModelInstance(plinthWingBase);
+        plinthWest.transform.setTranslation(-27.0f, 0.26f, -22.6f);
+        instances.add(plinthWest);
+        ModelInstance copeWest = new ModelInstance(plinthWingCoping);
+        copeWest.transform.setTranslation(-27.0f, 0.55f, -22.5f);
+        instances.add(copeWest);
+
+        // East Wing Plinth & Coping
+        ModelInstance plinthEast = new ModelInstance(plinthWingBase);
+        plinthEast.transform.setTranslation(27.0f, 0.26f, -22.6f);
+        instances.add(plinthEast);
+        ModelInstance copeEast = new ModelInstance(plinthWingCoping);
+        copeEast.transform.setTranslation(27.0f, 0.55f, -22.5f);
+        instances.add(copeEast);
+
+        // Outer Wing Returns at X = ±46m
+        ModelInstance plinthRetW = new ModelInstance(plinthReturnBase);
+        plinthRetW.transform.setTranslation(-46.0f, 0.26f, -31.0f);
+        instances.add(plinthRetW);
+        ModelInstance copeRetW = new ModelInstance(plinthReturnCoping);
+        copeRetW.transform.setTranslation(-46.0f, 0.55f, -31.0f);
+        instances.add(copeRetW);
+
+        ModelInstance plinthRetE = new ModelInstance(plinthReturnBase);
+        plinthRetE.transform.setTranslation(46.0f, 0.26f, -31.0f);
+        instances.add(plinthRetE);
+        ModelInstance copeRetE = new ModelInstance(plinthReturnCoping);
+        copeRetE.transform.setTranslation(46.0f, 0.55f, -31.0f);
+        instances.add(copeRetE);
+
         // Two-storey arcades of pointed Indo-Saracenic arches across the main block and both wings.
         // Clean authentic architecture: ground floor deep arched verandah openings with teak doors,
         // and upper floor stately colonial arched windows with cream stone surrounds.
@@ -662,45 +704,133 @@ public class DhakaCampusWorld implements Disposable {
         Model archSill = mb.createBox(2.36f, 0.16f, 0.20f, curzonTrimMat, attr);
         Model archCorbel = mb.createBox(0.18f, 0.26f, 0.14f, curzonTrimMat, attr);
         Model floorBand = mb.createBox(92f, 0.18f, 0.20f, curzonTrimMat, attr);
+
+        // Projecting Mughal Chhajja Sunshade Eaves and Brackets for Upper Windows
+        Model winChhajjaSlab = mb.createBox(3.10f, 0.14f, 0.82f, curzonTrimMat, attr);
+        Model winChhajjaBracket = mb.createBox(0.20f, 0.48f, 0.65f, curzonTrimMat, attr);
+
         models.add(archUpperWindow);
         models.add(archGroundDoor);
         models.add(archSill);
         models.add(archCorbel);
         models.add(floorBand);
+        models.add(winChhajjaSlab);
+        models.add(winChhajjaBracket);
 
-        float[] archFloorY = {3.25f, 8.50f};           // niche centres: ground floor verandah, upper floor
-        for (float ay : archFloorY) {
-            boolean isGround = (ay < 5f);
-            for (float ax = -42f; ax <= 42.01f; ax += 5.2f) {
-                if (Math.abs(ax) < 8.6f) continue;    // the portico projection covers the centre
-                float fz = -23.49f;
+        // Perfectly symmetric 14 arcade bays (7 West Wing, 7 East Wing, each 5.2m spacing)
+        float[] facadeBays = {
+            -41.6f, -36.4f, -31.2f, -26.0f, -20.8f, -15.6f, -10.4f,
+             10.4f,  15.6f,  20.8f,  26.0f,  31.2f,  36.4f,  41.6f
+        };
 
-                if (isGround) {
-                    // Ground floor: Authentic carved Burma teak wooden double door with brass knockers
-                    ModelInstance door = new ModelInstance(archGroundDoor);
-                    door.transform.setTranslation(ax, ay, fz);
-                    instances.add(door);
-                    shadowExclusions.add(door);
-                } else {
-                    // Upper floor: Stately colonial glazed window with pointed cusped arch and stone sill
-                    ModelInstance win = new ModelInstance(archUpperWindow);
-                    win.transform.setTranslation(ax, ay, fz);
-                    instances.add(win);
-                    shadowExclusions.add(win);
+        for (float ax : facadeBays) {
+            float fz = -23.49f;
 
-                    ModelInstance sill = new ModelInstance(archSill);
-                    sill.transform.setTranslation(ax, ay - 2.10f, fz + 0.06f);
-                    instances.add(sill);
+            // Ground floor: Authentic carved Burma teak wooden double door with brass knockers
+            ModelInstance door = new ModelInstance(archGroundDoor);
+            door.transform.setTranslation(ax, 3.25f, fz);
+            instances.add(door);
+            shadowExclusions.add(door);
 
-                    // Decorative twin stone brackets supporting the window sill
-                    ModelInstance corbL = new ModelInstance(archCorbel);
-                    corbL.transform.setTranslation(ax - 0.70f, ay - 2.26f, fz + 0.03f);
-                    instances.add(corbL);
-                    ModelInstance corbR = new ModelInstance(archCorbel);
-                    corbR.transform.setTranslation(ax + 0.70f, ay - 2.26f, fz + 0.03f);
-                    instances.add(corbR);
-                }
-            }
+            // Upper floor: Stately colonial glazed window with pointed cusped arch and stone sill
+            ModelInstance win = new ModelInstance(archUpperWindow);
+            win.transform.setTranslation(ax, 8.50f, fz);
+            instances.add(win);
+            shadowExclusions.add(win);
+
+            ModelInstance sill = new ModelInstance(archSill);
+            sill.transform.setTranslation(ax, 6.40f, fz + 0.06f);
+            instances.add(sill);
+
+            // Decorative twin stone brackets supporting the window sill
+            ModelInstance corbL = new ModelInstance(archCorbel);
+            corbL.transform.setTranslation(ax - 0.70f, 6.24f, fz + 0.03f);
+            instances.add(corbL);
+            ModelInstance corbR = new ModelInstance(archCorbel);
+            corbR.transform.setTranslation(ax + 0.70f, 6.24f, fz + 0.03f);
+            instances.add(corbR);
+
+            // Projecting Sandstone Chhajja Sunshade Eaves Overhang (Authentic Mughal Climate Architecture)
+            ModelInstance chhajja = new ModelInstance(winChhajjaSlab);
+            chhajja.transform.setTranslation(ax, 10.75f, -23.09f);
+            instances.add(chhajja);
+            nonSolid.add(chhajja);
+
+            // Twin carved corbel brackets supporting the window chhajja
+            ModelInstance wbrkL = new ModelInstance(winChhajjaBracket);
+            wbrkL.transform.setTranslation(ax - 1.05f, 10.45f, -23.18f);
+            instances.add(wbrkL);
+            nonSolid.add(wbrkL);
+
+            ModelInstance wbrkR = new ModelInstance(winChhajjaBracket);
+            wbrkR.transform.setTranslation(ax + 1.05f, 10.45f, -23.18f);
+            instances.add(wbrkR);
+            nonSolid.add(wbrkR);
+        }
+
+        // 3D Engaged Brick Pilasters (Vertical Buttress Piers) with Molded Bases, Belts, and Capitals
+        // Breaks flat facade into richly articulated Indo-Saracenic bays with real depth & shadows
+        Model pilasterShaftWing = mb.createBox(0.65f, 11.2f, 0.24f, curzonBrickMat, attr);
+        Model pilasterShaftCenter = mb.createBox(0.65f, 13.2f, 0.24f, curzonBrickMat, attr);
+        Model pilasterBase = mb.createBox(0.78f, 0.48f, 0.32f, curzonTrimMat, attr);
+        Model pilasterBelt = mb.createBox(0.74f, 0.22f, 0.30f, curzonTrimMat, attr);
+        Model pilasterCapital = mb.createBox(0.82f, 0.42f, 0.36f, curzonTrimMat, attr);
+
+        models.add(pilasterShaftWing);
+        models.add(pilasterShaftCenter);
+        models.add(pilasterBase);
+        models.add(pilasterBelt);
+        models.add(pilasterCapital);
+
+        float[] pilasterPositions = {
+            -44.2f, -39.0f, -33.8f, -28.6f, -23.4f, -18.2f, -13.0f,
+             13.0f,  18.2f,  23.4f,  28.6f,  33.8f,  39.0f,  44.2f
+        };
+
+        for (float px : pilasterPositions) {
+            boolean isCenter = (Math.abs(px) <= 15.0f);
+            float shaftH = isCenter ? 13.2f : 11.2f;
+            float shaftY = isCenter ? 7.40f : 6.40f;
+            float capY = isCenter ? 14.0f : 12.0f;
+            float pz = -23.36f;
+
+            // Brick Pilaster Shaft
+            ModelInstance pShaft = new ModelInstance(isCenter ? pilasterShaftCenter : pilasterShaftWing);
+            pShaft.transform.setTranslation(px, shaftY, pz);
+            instances.add(pShaft);
+            nonSolid.add(pShaft);
+
+            // Molded Stone Base resting upon Plinth
+            ModelInstance pBase = new ModelInstance(pilasterBase);
+            pBase.transform.setTranslation(px, 0.84f, pz + 0.04f);
+            instances.add(pBase);
+            nonSolid.add(pBase);
+
+            // Stone Mid-Floor Belt Block
+            ModelInstance pBelt = new ModelInstance(pilasterBelt);
+            pBelt.transform.setTranslation(px, 5.80f, pz + 0.03f);
+            instances.add(pBelt);
+            nonSolid.add(pBelt);
+
+            // Carved Sandstone Corbel Capital meeting Roof Cornice
+            ModelInstance pCap = new ModelInstance(pilasterCapital);
+            pCap.transform.setTranslation(px, capY, pz + 0.06f);
+            instances.add(pCap);
+            nonSolid.add(pCap);
+        }
+
+        // Stepped Parapet Battlements (Mughal-Gothic Kanguras) along Roofline
+        Model kanguraMerlon = mb.createBox(0.68f, 0.40f, 0.22f, curzonTrimMat, attr);
+        models.add(kanguraMerlon);
+
+        for (float kx = -44.2f; kx <= 44.21f; kx += 2.6f) {
+            if (Math.abs(kx) < 8.6f) continue; // portico center
+            boolean isCenter = (Math.abs(kx) <= 18.5f);
+            float ky = isCenter ? 14.85f : 13.50f;
+            ModelInstance km = new ModelInstance(kanguraMerlon);
+            km.transform.setTranslation(kx, ky, -22.60f);
+            instances.add(km);
+            nonSolid.add(km);
         }
 
         // Refined sandstone string course between the floors
@@ -849,13 +979,17 @@ public class DhakaCampusWorld implements Disposable {
         flagInst.transform.setTranslation(1.7f, 20.0f, -26.5f);
         instances.add(flagInst);
 
-        // Chhatris along the parapet: four slim cream pillars under a small red dome
-        Model chhatriDome = mb.createSphere(2.2f, 1.8f, 2.2f, 16, 12, curzonRedDome, attr);
+        // Authentic Mughal Chhatris along the parapet: 4 pillars, molded capitals, flared chhajja eaves, octagonal drums and bulbous red domes
+        Model chhatriDome = mb.createSphere(2.30f, 1.85f, 2.30f, 18, 14, curzonRedDome, attr);
         Model chhatriPillar = mb.createBox(0.28f, 2.2f, 0.28f, curzonTrimMat, attr);
-        Model chhatriSlab = mb.createBox(2.3f, 0.2f, 2.3f, curzonTrimMat, attr);
+        Model chhatriCapital = mb.createBox(0.40f, 0.16f, 0.40f, curzonTrimMat, attr);
+        Model chhatriChhajja = mb.createBox(2.85f, 0.14f, 2.85f, curzonTrimMat, attr);
+        Model chhatriDrum = mb.createCylinder(2.20f, 0.24f, 2.20f, 8, curzonTrimMat, attr);
         models.add(chhatriDome);
         models.add(chhatriPillar);
-        models.add(chhatriSlab);
+        models.add(chhatriCapital);
+        models.add(chhatriChhajja);
+        models.add(chhatriDrum);
 
         float[][] chhatriPos = {                       // {x, parapet top y}
             {-18.5f, 14f}, {18.5f, 14f},               // corners of the taller central block
@@ -870,17 +1004,37 @@ public class DhakaCampusWorld implements Disposable {
                     ModelInstance cp = new ModelInstance(chhatriPillar);
                     cp.transform.setTranslation(cx + px, baseY + 1.1f, cz + pz);
                     instances.add(cp);
+                    nonSolid.add(cp);
+
+                    ModelInstance ccap = new ModelInstance(chhatriCapital);
+                    ccap.transform.setTranslation(cx + px, baseY + 2.28f, cz + pz);
+                    instances.add(ccap);
+                    nonSolid.add(ccap);
                 }
             }
-            ModelInstance slab = new ModelInstance(chhatriSlab);
-            slab.transform.setTranslation(cx, baseY + 2.3f, cz);
-            instances.add(slab);
+            // Flared projecting chhajja sunshade eaves slab
+            ModelInstance chhatriChhajjaInst = new ModelInstance(chhatriChhajja);
+            chhatriChhajjaInst.transform.setTranslation(cx, baseY + 2.38f, cz);
+            instances.add(chhatriChhajjaInst);
+            nonSolid.add(chhatriChhajjaInst);
+
+            // Octagonal masonry drum beneath cupola
+            ModelInstance chhatriDrumInst = new ModelInstance(chhatriDrum);
+            chhatriDrumInst.transform.setTranslation(cx, baseY + 2.55f, cz);
+            instances.add(chhatriDrumInst);
+            nonSolid.add(chhatriDrumInst);
+
+            // Mughal bulbous cupola dome
             ModelInstance cd = new ModelInstance(chhatriDome);
-            cd.transform.setTranslation(cx, baseY + 2.8f, cz);
+            cd.transform.setTranslation(cx, baseY + 3.10f, cz);
             instances.add(cd);
+            nonSolid.add(cd);
+
+            // Golden lotus finial atop cupola
             ModelInstance cf = new ModelInstance(smallFinial);
-            cf.transform.setTranslation(cx, baseY + 4.0f, cz);
+            cf.transform.setTranslation(cx, baseY + 4.25f, cz);
             instances.add(cf);
+            nonSolid.add(cf);
         }
 
         // 4. REALISTIC DHAKA UNIVERSITY CAMPUS VEGETATION & LANDMARKS
