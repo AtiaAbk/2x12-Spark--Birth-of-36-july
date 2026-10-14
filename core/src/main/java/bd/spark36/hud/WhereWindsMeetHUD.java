@@ -502,14 +502,22 @@ public class WhereWindsMeetHUD implements Disposable {
                 checkpointFlashAlpha = 1.0f;
 
                 // Check climax progression: if all 5 archives secured and Goon defeated, open victory;
-                // otherwise guide player to Curzon Hall plaza for the final confrontation!
+                // in peaceful mode, securing all 5 archives completes the reconnaissance mission directly!
                 if (memorials.isAllInspected()) {
-                    boolean goonKnockedOut = (helmetGoon != null && helmetGoon.getState() == bd.spark36.character.HelmetGoon.State.KNOCKED_OUT);
-                    if (goonKnockedOut && !victoryShown) {
-                        triggerVictory();
-                    } else if (!victoryShown) {
-                        missionBannerTitle = "CLIMAX: CONFRONT THE ENFORCER";
-                        missionBannerCount = 5;
+                    if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
+                        boolean goonKnockedOut = (helmetGoon != null && helmetGoon.getState() == bd.spark36.character.HelmetGoon.State.KNOCKED_OUT);
+                        if (goonKnockedOut && !victoryShown) {
+                            triggerVictory();
+                        } else if (!victoryShown) {
+                            missionBannerTitle = "CLIMAX: CONFRONT THE AGGRESSOR";
+                            missionBannerCount = 5;
+                        }
+                    } else {
+                        if (!victoryShown) {
+                            triggerVictory();
+                            missionBannerTitle = "CAMPUS RECONNAISSANCE COMPLETE";
+                            missionBannerCount = 5;
+                        }
                     }
                 }
             }
@@ -519,12 +527,20 @@ public class WhereWindsMeetHUD implements Disposable {
             activeModalEntry = null;
             missionBannerTime = 6.0f;
             if (memorials.isAllInspected()) {
-                boolean goonKnockedOut = (helmetGoon != null && helmetGoon.getState() == bd.spark36.character.HelmetGoon.State.KNOCKED_OUT);
-                if (goonKnockedOut && !victoryShown) {
-                    triggerVictory();
-                } else if (!victoryShown) {
-                    missionBannerTitle = "CLIMAX: CONFRONT THE ENFORCER";
-                    missionBannerCount = 5;
+                if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
+                    boolean goonKnockedOut = (helmetGoon != null && helmetGoon.getState() == bd.spark36.character.HelmetGoon.State.KNOCKED_OUT);
+                    if (goonKnockedOut && !victoryShown) {
+                        triggerVictory();
+                    } else if (!victoryShown) {
+                        missionBannerTitle = "CLIMAX: CONFRONT THE AGGRESSOR";
+                        missionBannerCount = 5;
+                    }
+                } else {
+                    if (!victoryShown) {
+                        triggerVictory();
+                        missionBannerTitle = "CAMPUS RECONNAISSANCE COMPLETE";
+                        missionBannerCount = 5;
+                    }
                 }
             }
         }
@@ -724,7 +740,7 @@ public class WhereWindsMeetHUD implements Disposable {
         }
 
         // 4b. Boss Health Bar, Dialogue Prompt, and Combat Popups
-        if (helmetGoon != null && !isVictoryOpen && !isDisqualified && !isDefeated && !isPauseMenuOpen && !isMapOpen && activeModalEntry == null
+        if (bd.spark36.level.LevelConfig.isCombatEnabled() && helmetGoon != null && !isVictoryOpen && !isDisqualified && !isDefeated && !isPauseMenuOpen && !isMapOpen && activeModalEntry == null
             && !congratulationsPopupActive && !helmetGoon.isKnockedOut()) {
             float dstGoon = player.getPosition().dst(helmetGoon.getPosition());
             if (helmetGoon.getState() != bd.spark36.character.HelmetGoon.State.STANDOFF || dstGoon <= 28f) {
@@ -941,18 +957,26 @@ public class WhereWindsMeetHUD implements Disposable {
         boolean goonKnockedOut = (helmetGoon != null && helmetGoon.getState() == bd.spark36.character.HelmetGoon.State.KNOCKED_OUT);
 
         if (allDone && !goonKnockedOut) {
-            // Climax Boss confrontation
-            drawOutlined(fonts.smallFont, "CLIMAX OBJECTIVE: CONFRONTATION", cardX + 18f, cardY + cardH - 18f, new Color(1.0f, 0.45f, 0.25f, 1f));
-            String bossTitle = "CONFRONT THE ENFORCER";
-            drawOutlined(fonts.headerFont, bossTitle, cardX + 18f, cardY + cardH - 42f, goldAccent);
-            drawOutlined(fonts.bodyFont, "Target: Curzon Hall Plaza — Disarm the Helmet Thug", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
-            float goonDst = (helmetGoon != null && helmetGoon.getPosition() != null) ?
-                (player != null ? player.getPosition().dst(helmetGoon.getPosition()) : dst) : dst;
-            drawOutlined(fonts.headerFont, String.format("DISTANCE: %.1f M", goonDst), cardX + 18f, cardY + 24f, goldAccent);
+            if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
+                // Climax Combat Confrontation (Arena Mode)
+                drawOutlined(fonts.smallFont, "CLIMAX OBJECTIVE: CONFRONTATION", cardX + 18f, cardY + cardH - 18f, new Color(1.0f, 0.45f, 0.25f, 1f));
+                String bossTitle = "CONFRONT THE AGGRESSOR";
+                drawOutlined(fonts.headerFont, bossTitle, cardX + 18f, cardY + cardH - 42f, goldAccent);
+                drawOutlined(fonts.bodyFont, "Target: Curzon Hall Plaza — Disarm the Helmeted Attacker", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
+                float goonDst = (helmetGoon != null && helmetGoon.getPosition() != null) ?
+                    (player != null ? player.getPosition().dst(helmetGoon.getPosition()) : dst) : dst;
+                drawOutlined(fonts.headerFont, String.format("DISTANCE: %.1f M", goonDst), cardX + 18f, cardY + 24f, goldAccent);
+            } else {
+                // Peaceful Campus Reconnaissance Completion (Level 1 Story Mode)
+                drawOutlined(fonts.smallFont, "ALL ARCHIVES UNLOCKED: 05 / 05", cardX + 18f, cardY + cardH - 18f, Color.GREEN);
+                drawOutlined(fonts.headerFont, "RECONNAISSANCE COMPLETE", cardX + 18f, cardY + cardH - 42f, goldAccent);
+                drawOutlined(fonts.bodyFont, "All 5 historical archives secured. Proceed to Curzon Hall promenade.", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
+                drawOutlined(fonts.headerFont, "STATUS: MISSION ACCOMPLISHED", cardX + 18f, cardY + 24f, goldAccent);
+            }
         } else if (allDone && goonKnockedOut) {
             drawOutlined(fonts.smallFont, "ALL ARCHIVES UNLOCKED: 05 / 05", cardX + 18f, cardY + cardH - 18f, Color.GREEN);
             drawOutlined(fonts.headerFont, "LEVEL 1 ACCOMPLISHED", cardX + 18f, cardY + cardH - 42f, goldAccent);
-            drawOutlined(fonts.bodyFont, "All 5 archives secured & Enforcer neutralized. Campus liberated!", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
+            drawOutlined(fonts.bodyFont, "All 5 archives secured & Aggressor neutralized. Campus liberated!", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
             drawOutlined(fonts.headerFont, "STATUS: COMPLETED", cardX + 18f, cardY + 24f, Color.GREEN);
         } else {
             // Standard archive progression
@@ -1438,8 +1462,13 @@ public class WhereWindsMeetHUD implements Disposable {
         drawOutlined(fonts.smallFont, "MAP", kBaseX + 75f, kBaseY + 15f, Color.WHITE);
         drawOutlined(fonts.smallFont, "PAUSE", kBaseX + 156f, kBaseY + 15f, Color.WHITE);
 
-        // Action Hints: Crouch, Attack, Gender, and Hide Parameters (anchored within safe margins)
-        String hint = "HOLD [J] AT WALL: CLIMB  |  [C] CROUCH  |  [F] ATTACK  |  [G] GENDER (M/F)  |  [P] PARAMETERS";
+        // Action Hints: Crouch, Attack (Arena mode only), Gender, and Hide Parameters (anchored within safe margins)
+        String hint;
+        if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
+            hint = "HOLD [J] AT WALL: CLIMB  |  [C] CROUCH  |  [F] ATTACK  |  [G] GENDER (M/F)  |  [P] PARAMETERS";
+        } else {
+            hint = "HOLD [J] AT WALL: CLIMB  |  [C] CROUCH / SIT  |  [G] GENDER (M/F)  |  [P] PARAMETERS";
+        }
         glyphLayout.setText(fonts.smallFont, hint);
         float hintX = w - currentLayout.safeMarginX - glyphLayout.width;
         drawOutlined(fonts.smallFont, hint, hintX, currentLayout.hintLineY, goldAccent);
@@ -2519,11 +2548,17 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.end();
 
         spriteBatch.begin();
+        bd.spark36.level.DialogueRepository.DialogueLine diag = bd.spark36.level.DialogueRepository.AGGRESSOR_CHALLENGE;
         fonts.headerFont.setColor(new Color(1.0f, 0.65f, 0.30f, 1f));
-        fonts.headerFont.draw(spriteBatch, "HELMETED AGGRESSOR: \"Leave this campus immediately, or face the consequences!\"", dx + 18f, dy + dh - 16f);
+        fonts.headerFont.draw(spriteBatch, diag.getSpeaker() + " :", dx + 18f, dy + dh - 16f);
+
+        // Authentic Bengali threat subtitle
+        com.badlogic.gdx.graphics.g2d.BitmapFont bFont = (fonts.bengaliFont != null) ? fonts.bengaliFont : fonts.headerFont;
+        bFont.setColor(Color.WHITE);
+        bFont.draw(spriteBatch, "\"" + diag.getTextBengali() + "\"", dx + 265f, dy + dh - 16f);
 
         fonts.promptFont.setColor(goldAccent);
-        fonts.promptFont.draw(spriteBatch, "[F] ACCEPT CHALLENGE   |   [LMB/F] PUNCH   [Q/K] KICK   [Z/ALT] SLIP/EVADE   [C] CROUCH   [B] BLOCK/PARRY", dx + 18f, dy + 22f);
+        fonts.promptFont.draw(spriteBatch, "\"" + diag.getTextEnglish() + "\"  |  [F] ACCEPT CHALLENGE   [LMB/F] PUNCH   [Q/K] KICK   [C] DUCK", dx + 18f, dy + 22f);
         spriteBatch.end();
     }
 
@@ -2630,7 +2665,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         fonts.smallFont.setColor(new Color(1.0f, 0.90f, 0.85f, 1f));
         fonts.smallFont.draw(spriteBatch,
-            "Self-defense is permitted only against armed enforcers (e.g. Helmet Thugs). Defend unarmed peers, never harm them.",
+            "Self-defense is permitted only against armed aggressors (e.g. Helmeted Attackers). Defend unarmed peers, never harm them.",
             sx + 18f, sy + 32f);
 
         fonts.headerFont.setColor(b1Hover ? Color.WHITE : new Color(1f, 0.80f, 0.80f, 1f));
@@ -2856,9 +2891,10 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Historical Tribute Narrative
         fonts.bodyFont.setColor(Color.WHITE);
-        fonts.bodyFont.draw(spriteBatch,
-            "You have documented all 5 historical archives of the July 2024 Student Mass Uprising and successfully repelled the campus intimidation enforcer with bare-handed martial arts courage!",
-            nx + 18f, ny + nh - 18f, nw - 36f, 10, true);
+        String victoryNarrative = bd.spark36.level.LevelConfig.isCombatEnabled() ?
+            "You have documented all 5 historical archives of the July 2024 Student Mass Uprising and successfully repelled the campus intimidation enforcer with bare-handed martial arts courage!" :
+            "You have documented all 5 historical archives of the July 2024 Student Movement across Dhaka University campus through peaceful student solidarity and moral courage!";
+        fonts.bodyFont.draw(spriteBatch, victoryNarrative, nx + 18f, ny + nh - 18f, nw - 36f, 10, true);
 
         fonts.bodyFont.setColor(new Color(0.88f, 0.88f, 0.92f, 1f));
         fonts.bodyFont.draw(spriteBatch,
@@ -2871,7 +2907,10 @@ public class WhereWindsMeetHUD implements Disposable {
 
         fonts.smallFont.setColor(Color.WHITE);
         fonts.smallFont.draw(spriteBatch, "Historical Archives Documented: 5 / 5 (100% Complete)", sx + 20f, sy + 76f);
-        fonts.smallFont.draw(spriteBatch, "Campus Defense: Helmet Goon Neutralized (Unarmed Martial Arts)", sx + 20f, sy + 52f);
+        String defenseStat = bd.spark36.level.LevelConfig.isCombatEnabled() ?
+            "Campus Defense: Helmeted Aggressor Neutralized (Martial Arts)" :
+            "Campus Discipline: Peaceful Solidarity Maintained (Zero Violations)";
+        fonts.smallFont.draw(spriteBatch, defenseStat, sx + 20f, sy + 52f);
         fonts.smallFont.draw(spriteBatch, "Campus Peace Rule: Upheld (0 Innocent Students Harmed)", sx + 20f, sy + 28f);
 
         fonts.headerFont.setColor(Color.GREEN);
@@ -2972,9 +3011,9 @@ public class WhereWindsMeetHUD implements Disposable {
         com.badlogic.gdx.math.Rectangle rMapBtn = (!isMapOpen && !isPauseMenuOpen && activeModalEntry == null) ?
             new com.badlogic.gdx.math.Rectangle(l.mapBtnX, l.mapBtnY, l.mapBtnW, l.mapBtnH) : null;
         com.badlogic.gdx.math.Rectangle rKeycaps = new com.badlogic.gdx.math.Rectangle(l.keyBaseX - 10f, l.hintLineY - 8f, l.virtW - l.safeMarginX - (l.keyBaseX - 10f), l.keyClusterH + 40f);
-        com.badlogic.gdx.math.Rectangle rBoss = (helmetGoon != null && helmetGoon.getState() != bd.spark36.character.HelmetGoon.State.STANDOFF && !helmetGoon.isKnockedOut()) ?
+        com.badlogic.gdx.math.Rectangle rBoss = (bd.spark36.level.LevelConfig.isCombatEnabled() && helmetGoon != null && helmetGoon.getState() != bd.spark36.character.HelmetGoon.State.STANDOFF && !helmetGoon.isKnockedOut()) ?
             new com.badlogic.gdx.math.Rectangle(l.bossX - 14f, l.bossY - 34f, l.bossW + 28f, l.bossH + 54f) : null;
-        com.badlogic.gdx.math.Rectangle rDial = (helmetGoon != null && helmetGoon.isChallenging()) ?
+        com.badlogic.gdx.math.Rectangle rDial = (bd.spark36.level.LevelConfig.isCombatEnabled() && helmetGoon != null && helmetGoon.isChallenging()) ?
             new com.badlogic.gdx.math.Rectangle(l.dialX, l.dialY, l.dialW, l.dialH) : null;
 
         com.badlogic.gdx.math.Rectangle[] panels = {rCard, rCheck, rCompass, rMapBtn, rKeycaps, rBoss, rDial};

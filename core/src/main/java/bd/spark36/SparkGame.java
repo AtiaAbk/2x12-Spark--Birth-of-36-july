@@ -140,8 +140,11 @@ public class SparkGame extends ApplicationAdapter {
         hud = new WhereWindsMeetHUD(fontRenderer);
         hud.setTextures(textures);
 
-        // Antagonist Helmet Goon (Gunda student with lathi & helmet)
+        // Antagonist / Campus NPC (Campus Security in peaceful Level 1, Helmeted Aggressor in Arena Mode)
         helmetGoon = new bd.spark36.character.HelmetGoon(textures);
+        helmetGoon.setRole(bd.spark36.level.LevelConfig.isCombatEnabled() ?
+            bd.spark36.character.HelmetGoon.Role.HELMETED_AGGRESSOR :
+            bd.spark36.character.HelmetGoon.Role.CAMPUS_SECURITY);
         hud.setHelmetGoon(helmetGoon);
 
         // AAA post-processing pipeline (bloom + color grade + vignette + grain)
@@ -153,12 +156,31 @@ public class SparkGame extends ApplicationAdapter {
         gameplayInitialized = true;
     }
 
-    /** Transitions from Main Menu to Gameplay */
+    /** Transitions from Main Menu to Peaceful Exploration Campaign */
     public void startGameplay() {
         initGameplay();
+        if (helmetGoon != null) {
+            helmetGoon.setRole(bd.spark36.level.LevelConfig.isCombatEnabled() ?
+                bd.spark36.character.HelmetGoon.Role.HELMETED_AGGRESSOR :
+                bd.spark36.character.HelmetGoon.Role.CAMPUS_SECURITY);
+        }
         hud.reset();
         gameState = GameState.PLAYING;
         Gdx.input.setCursorCatched(true);
+    }
+
+    /** Transitions from Main Menu to Arena Combat Mode */
+    public void startArenaMode() {
+        bd.spark36.level.LevelConfig.reset(1, bd.spark36.level.LevelConfig.GameMode.ARENA);
+        startGameplay();
+        if (helmetGoon != null) {
+            helmetGoon.reset(0f, 36.0f);
+            helmetGoon.startFightDirectly();
+        }
+        player.setPosition(0f, 0f, 39.5f);
+        player.setHeadingDegrees(180f);
+        camera.setAngles(0f, -6f);
+        camera.setDistance(4.2f);
     }
 
     /** Transitions from Gameplay back to Main Menu */
@@ -199,14 +221,18 @@ public class SparkGame extends ApplicationAdapter {
 
         // Handle menu navigation (WASD + Arrow Keys + ENTER/SPACE)
         if (Gdx.input.isKeyJustPressed(Input.Keys.UP) || Gdx.input.isKeyJustPressed(Input.Keys.W)) {
-            menuSelection = 0;
+            menuSelection = (menuSelection - 1 + 3) % 3;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) || Gdx.input.isKeyJustPressed(Input.Keys.S)) {
-            menuSelection = 1;
+            menuSelection = (menuSelection + 1) % 3;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.J)) {
             if (menuSelection == 0) {
+                bd.spark36.level.LevelConfig.reset(1, bd.spark36.level.LevelConfig.GameMode.STORY);
                 startGameplay();
+                return;
+            } else if (menuSelection == 1) {
+                startArenaMode();
                 return;
             } else {
                 Gdx.app.exit();
@@ -271,28 +297,40 @@ public class SparkGame extends ApplicationAdapter {
         shapeRenderer.rect(centerX - 120f, titleBlockY + 55f, 240f, 1.5f);
 
         // --- Menu Buttons ---
-        float btnW = 340f;
-        float btnH = 52f;
+        float btnW = 480f;
+        float btnH = 50f;
         float btnX = centerX - btnW / 2f;
-        float playBtnY = h * 0.38f;
-        float exitBtnY = playBtnY - btnH - 18f;
+        float playBtnY = h * 0.40f;
+        float arenaBtnY = playBtnY - btnH - 16f;
+        float exitBtnY = arenaBtnY - btnH - 16f;
 
-        // PLAY button background
+        // 1. PLAY CAMPAIGN (Peaceful)
         if (menuSelection == 0) {
             shapeRenderer.setColor(menuSelectedBg);
             shapeRenderer.rect(btnX - 4f, playBtnY - 4f, btnW + 8f, btnH + 8f);
-            shapeRenderer.setColor(menuGoldAccent.r, menuGoldAccent.g, menuGoldAccent.b, 0.06f);
+            shapeRenderer.setColor(menuGoldAccent.r, menuGoldAccent.g, menuGoldAccent.b, 0.08f);
             shapeRenderer.rect(btnX, playBtnY, btnW, btnH);
         } else {
             shapeRenderer.setColor(menuGlassBg);
             shapeRenderer.rect(btnX, playBtnY, btnW, btnH);
         }
 
-        // EXIT button background
+        // 2. ARENA COMBAT MODE
         if (menuSelection == 1) {
             shapeRenderer.setColor(menuSelectedBg);
+            shapeRenderer.rect(btnX - 4f, arenaBtnY - 4f, btnW + 8f, btnH + 8f);
+            shapeRenderer.setColor(menuGoldAccent.r, menuGoldAccent.g, menuGoldAccent.b, 0.08f);
+            shapeRenderer.rect(btnX, arenaBtnY, btnW, btnH);
+        } else {
+            shapeRenderer.setColor(menuGlassBg);
+            shapeRenderer.rect(btnX, arenaBtnY, btnW, btnH);
+        }
+
+        // 3. EXIT button
+        if (menuSelection == 2) {
+            shapeRenderer.setColor(menuSelectedBg);
             shapeRenderer.rect(btnX - 4f, exitBtnY - 4f, btnW + 8f, btnH + 8f);
-            shapeRenderer.setColor(menuGoldAccent.r, menuGoldAccent.g, menuGoldAccent.b, 0.06f);
+            shapeRenderer.setColor(menuGoldAccent.r, menuGoldAccent.g, menuGoldAccent.b, 0.08f);
             shapeRenderer.rect(btnX, exitBtnY, btnW, btnH);
         } else {
             shapeRenderer.setColor(menuGlassBg);
@@ -306,22 +344,21 @@ public class SparkGame extends ApplicationAdapter {
         shapeRenderer.rect(btnX, playBtnY, btnW, btnH);
 
         shapeRenderer.setColor(menuSelection == 1 ? menuGoldAccent : menuGoldBorder);
+        shapeRenderer.rect(btnX, arenaBtnY, btnW, btnH);
+
+        shapeRenderer.setColor(menuSelection == 2 ? menuGoldAccent : menuGoldBorder);
         shapeRenderer.rect(btnX, exitBtnY, btnW, btnH);
 
         // Decorative corner brackets on selected button
-        float selY = menuSelection == 0 ? playBtnY : exitBtnY;
+        float selY = (menuSelection == 0) ? playBtnY : ((menuSelection == 1) ? arenaBtnY : exitBtnY);
         shapeRenderer.setColor(menuGoldAccent);
         float cbLen = 14f;
-        // Top-left corner bracket
         shapeRenderer.line(btnX - 6f, selY + btnH + 6f, btnX - 6f, selY + btnH + 6f - cbLen);
         shapeRenderer.line(btnX - 6f, selY + btnH + 6f, btnX - 6f + cbLen, selY + btnH + 6f);
-        // Top-right corner bracket
         shapeRenderer.line(btnX + btnW + 6f, selY + btnH + 6f, btnX + btnW + 6f, selY + btnH + 6f - cbLen);
         shapeRenderer.line(btnX + btnW + 6f, selY + btnH + 6f, btnX + btnW + 6f - cbLen, selY + btnH + 6f);
-        // Bottom-left corner bracket
         shapeRenderer.line(btnX - 6f, selY - 6f, btnX - 6f, selY - 6f + cbLen);
         shapeRenderer.line(btnX - 6f, selY - 6f, btnX - 6f + cbLen, selY - 6f);
-        // Bottom-right corner bracket
         shapeRenderer.line(btnX + btnW + 6f, selY - 6f, btnX + btnW + 6f, selY - 6f + cbLen);
         shapeRenderer.line(btnX + btnW + 6f, selY - 6f, btnX + btnW + 6f - cbLen, selY - 6f);
         shapeRenderer.end();
@@ -347,14 +384,20 @@ public class SparkGame extends ApplicationAdapter {
         fontRenderer.smallFont.draw(menuBatch, "July 2024  •  Dhaka University Campus",
             centerX - glyphLayout.width / 2f, titleBlockY - 14f);
 
-        // PLAY button text
+        // Button 1: Campaign
         fontRenderer.headerFont.setColor(menuSelection == 0 ? menuGoldAccent : new Color(0.85f, 0.82f, 0.75f, 1f));
-        glyphLayout.setText(fontRenderer.headerFont, "START JOURNEY");
-        fontRenderer.headerFont.draw(menuBatch, "START JOURNEY",
+        glyphLayout.setText(fontRenderer.headerFont, "START CAMPAIGN (PEACEFUL)");
+        fontRenderer.headerFont.draw(menuBatch, "START CAMPAIGN (PEACEFUL)",
             centerX - glyphLayout.width / 2f, playBtnY + btnH / 2f + 8f);
 
-        // EXIT button text
-        fontRenderer.headerFont.setColor(menuSelection == 1 ? new Color(0.95f, 0.40f, 0.35f, 1f) : new Color(0.70f, 0.65f, 0.60f, 1f));
+        // Button 2: Arena
+        fontRenderer.headerFont.setColor(menuSelection == 1 ? menuGoldAccent : new Color(0.85f, 0.82f, 0.75f, 1f));
+        glyphLayout.setText(fontRenderer.headerFont, "MARTIAL ARTS ARENA (COMBAT)");
+        fontRenderer.headerFont.draw(menuBatch, "MARTIAL ARTS ARENA (COMBAT)",
+            centerX - glyphLayout.width / 2f, arenaBtnY + btnH / 2f + 8f);
+
+        // Button 3: Exit
+        fontRenderer.headerFont.setColor(menuSelection == 2 ? new Color(0.95f, 0.40f, 0.35f, 1f) : new Color(0.70f, 0.65f, 0.60f, 1f));
         glyphLayout.setText(fontRenderer.headerFont, "EXIT GAME");
         fontRenderer.headerFont.draw(menuBatch, "EXIT GAME",
             centerX - glyphLayout.width / 2f, exitBtnY + btnH / 2f + 8f);
@@ -419,8 +462,8 @@ public class SparkGame extends ApplicationAdapter {
             return;
         }
 
-        // Pass active boss position to player for smooth martial arts combat facing
-        if (helmetGoon != null && !helmetGoon.isKnockedOut()) {
+        // Pass active boss position to player for smooth martial arts combat facing (Arena mode only)
+        if (bd.spark36.level.LevelConfig.isCombatEnabled() && helmetGoon != null && !helmetGoon.isKnockedOut()) {
             player.setCombatTarget(helmetGoon.getPosition());
         } else {
             player.clearCombatTarget();
@@ -438,14 +481,14 @@ public class SparkGame extends ApplicationAdapter {
         player.update(delta, camera.getYaw(), canMove);
         crowd.update(delta, player.getPosition());
 
-        // Update Helmet Goon AI & combat simulation
+        // Update Helmet Goon / Campus Security AI & combat simulation
         if (helmetGoon != null) {
             if (canMove) {
                 helmetGoon.update(delta, player);
             }
 
-            // Player combat attack resolution
-            if (player.isAttacking()) {
+            // Player combat attack resolution (active in Arena mode)
+            if (bd.spark36.level.LevelConfig.isCombatEnabled() && player.isAttacking()) {
                 float prog = player.getAttackProgress();
                 if (prog >= 0.40f && prog <= 0.68f && !attackHitProcessed) {
                     attackHitProcessed = true;
@@ -454,7 +497,7 @@ public class SparkGame extends ApplicationAdapter {
                     if (hitInnocent) {
                         hud.setDisqualified(true, "VIOLATION: You struck an innocent campus student! Unprovoked violence against unarmed peers is strictly forbidden.");
                     } else {
-                        // Martial Arts strike against Helmet Goon
+                        // Martial Arts strike against Helmeted Aggressor
                         float dstGoon = player.getPosition().dst(helmetGoon.getPosition());
                         if (dstGoon <= 2.8f) {
                             boolean isSweep = (player.getAttackCombo() == 5);
@@ -478,8 +521,8 @@ public class SparkGame extends ApplicationAdapter {
                 attackHitProcessed = false;
             }
 
-            // Check if player was knocked out by the goon's lathi
-            if (player.isKnockedOut() && !hud.isDefeated() && !hud.isModalOpen()) {
+            // Check if player was knocked out (Arena mode only)
+            if (bd.spark36.level.LevelConfig.isCombatEnabled() && player.isKnockedOut() && !hud.isDefeated() && !hud.isModalOpen()) {
                 hud.setDefeated(true);
             }
         }
@@ -763,10 +806,15 @@ public class SparkGame extends ApplicationAdapter {
             String viewpoint = System.getProperty("bd.spark36.baseline");
             hud.reset();
             if ("spawn".equalsIgnoreCase(viewpoint)) {
+                bd.spark36.level.LevelConfig.reset(1, bd.spark36.level.LevelConfig.GameMode.STORY);
                 player.setPosition(0f, 0f, 72f);
                 player.setHeadingDegrees(180f);
                 camera.setAngles(0f, -4f);
                 camera.setDistance(4.5f);
+                if (helmetGoon != null) {
+                    helmetGoon.setRole(bd.spark36.character.HelmetGoon.Role.CAMPUS_SECURITY);
+                    helmetGoon.reset(0f, 36.0f);
+                }
             } else if ("curzon_front".equalsIgnoreCase(viewpoint)) {
                 player.setPosition(0f, 0f, -12f);
                 player.setHeadingDegrees(180f);
@@ -793,6 +841,7 @@ public class SparkGame extends ApplicationAdapter {
                 camera.setAngles(0f, -2f);
                 camera.setDistance(1.6f);
             } else if ("boss_fight".equalsIgnoreCase(viewpoint)) {
+                bd.spark36.level.LevelConfig.reset(1, bd.spark36.level.LevelConfig.GameMode.ARENA);
                 player.setPosition(0f, 0f, 39.5f);
                 player.setHeadingDegrees(180f);
                 camera.setAngles(0f, -6f);

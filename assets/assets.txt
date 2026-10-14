@@ -25,6 +25,7 @@ screenshots/fix01/00_before.png
 screenshots/fix01/01_missing_glyphs.png
 screenshots/fix01/02_hud_1280x720.png
 screenshots/fix01/02_hud_1920x1080.png
+screenshots/fix01/02_hud_2560x1600.png
 screenshots/fix01/02_hud_layout.png
 screenshots/helmet_goon_duel.png
 screenshots/spark36_congratulations_toast_verified.png

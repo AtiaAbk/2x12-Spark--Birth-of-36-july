@@ -340,21 +340,27 @@ public class PlayerController {
                 isCrouching = true;
             }
 
-            // TACTICAL COMBAT DODGE / SLIP EVASION: 'Z' or Left-ALT or Right-ALT
-            dodgeKey = Gdx.input.isKeyJustPressed(Input.Keys.Z) ||
-                       Gdx.input.isKeyJustPressed(Input.Keys.ALT_LEFT) ||
-                       Gdx.input.isKeyJustPressed(Input.Keys.ALT_RIGHT);
+            // TACTICAL COMBAT DODGE / SLIP EVASION: Only when combat enabled
+            if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
+                dodgeKey = Gdx.input.isKeyJustPressed(Input.Keys.Z) ||
+                           Gdx.input.isKeyJustPressed(Input.Keys.ALT_LEFT) ||
+                           Gdx.input.isKeyJustPressed(Input.Keys.ALT_RIGHT);
 
-            // MARTIAL ARTS BLOCK / GUARD & FLASH PARRY: 'B' key holds guard
-            boolean blockHeld = Gdx.input.isKeyPressed(Input.Keys.B);
-            if (blockHeld) {
-                if (!isBlocking) {
-                    blockTimer = 0f; // Fresh activation: 0.25s parry window
+                // MARTIAL ARTS BLOCK / GUARD & FLASH PARRY: 'B' key holds guard
+                boolean blockHeld = Gdx.input.isKeyPressed(Input.Keys.B);
+                if (blockHeld) {
+                    if (!isBlocking) {
+                        blockTimer = 0f; // Fresh activation: 0.25s parry window
+                    } else {
+                        blockTimer += delta;
+                    }
+                    isBlocking = true;
                 } else {
-                    blockTimer += delta;
+                    isBlocking = false;
+                    blockTimer = 0f;
                 }
-                isBlocking = true;
             } else {
+                dodgeKey = false;
                 isBlocking = false;
                 blockTimer = 0f;
             }
@@ -364,12 +370,14 @@ public class PlayerController {
                 gender = (gender == 0) ? 1 : 0;
             }
 
-            // COMBAT PUNCHES (Ghusi): 'F' key or Left-Click (Jab -> Cross)
-            boolean punchPressed = Gdx.input.isKeyJustPressed(Input.Keys.F) ||
-                                   (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && !isSittingWater);
-
-            // COMBAT KICKS (Latthi): 'Q' or 'K' key (High Roundhouse Kick -> Low Sweep Kick)
-            boolean kickPressed = Gdx.input.isKeyJustPressed(Input.Keys.Q) || Gdx.input.isKeyJustPressed(Input.Keys.K);
+            // COMBAT PUNCHES & KICKS (Only when combat enabled)
+            boolean punchPressed = false;
+            boolean kickPressed = false;
+            if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
+                punchPressed = Gdx.input.isKeyJustPressed(Input.Keys.F) ||
+                               (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && !isSittingWater);
+                kickPressed = Gdx.input.isKeyJustPressed(Input.Keys.Q) || Gdx.input.isKeyJustPressed(Input.Keys.K);
+            }
 
             // Movement vector relative to camera
             if (up) moveDir.y += 1f;
@@ -1017,6 +1025,9 @@ public class PlayerController {
     }
 
     public void takeDamage(float amount, float knockbackDirX, float knockbackDirZ, float knockbackStrength) {
+        if (!bd.spark36.level.LevelConfig.isCombatEnabled()) {
+            return; // No damage or player death in peaceful levels!
+        }
         this.health = Math.max(0f, this.health - amount);
         this.staggerTimer = isBlocking ? 0.08f : 0.28f;
         float factor = isBlocking ? 0.30f : 1.0f;

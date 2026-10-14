@@ -30,6 +30,11 @@ import bd.spark36.world.TextureFactory;
  */
 public class HelmetGoon implements Disposable {
 
+    public enum Role {
+        CAMPUS_SECURITY,     // Non-hostile campus security / warden observing campus (Peaceful Level 1)
+        HELMETED_AGGRESSOR   // Hostile antagonist with helmet and lathi (Arena Combat Mode)
+    }
+
     public enum State {
         STANDOFF,       // Waiting at post, challenges when player nears
         CHALLENGING,    // Warning dialogue before combat
@@ -41,6 +46,7 @@ public class HelmetGoon implements Disposable {
         KNOCKED_OUT     // Defeated / collapsed on ground
     }
 
+    private Role role = Role.CAMPUS_SECURITY;
     private State state = State.STANDOFF;
     private final Vector3 position = new Vector3(0f, 0f, 36.0f); // Central promenade plaza facing south
     private float heading = 0f; // degrees
@@ -90,6 +96,10 @@ public class HelmetGoon implements Disposable {
     private Model lathiStickModel;
     private Model lathiTipModel;
 
+    // Campus Security / Proctor Uniform Primitives (Peaceful Role)
+    private Model securityCapModel;
+    private Model securityBadgeModel;
+
     // ModelInstances
     private ModelInstance torsoInst;
     private ModelInstance headInst;
@@ -99,6 +109,7 @@ public class HelmetGoon implements Disposable {
     private ModelInstance bootLInst, bootRInst;
     private ModelInstance helmetShellInst, helmetVisorInst, helmetStripeInst;
     private ModelInstance lathiStickInst, lathiTipTopInst, lathiTipBottomInst;
+    private ModelInstance securityCapInst, securityBadgeInst;
 
     // Transform matrices for skeletal hierarchy
     private final Matrix4 rootTransform = new Matrix4();
@@ -149,8 +160,15 @@ public class HelmetGoon implements Disposable {
         lathiStickModel = mb.createCylinder(0.052f, 1.60f, 0.052f, 12, lathiWoodMat, attr);
         lathiTipModel = mb.createCylinder(0.058f, 0.08f, 0.058f, 12, brassMat, attr);
 
+        // Build Campus Security / Proctor Uniform Primitives (Peaceful Role)
+        Material capMat = new Material(ColorAttribute.createDiffuse(new Color(0.10f, 0.14f, 0.22f, 1f)));
+        Material badgeMat = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.75f, 0.25f, 1f)));
+        securityCapModel = mb.createCylinder(0.30f, 0.09f, 0.30f, 16, capMat, attr);
+        securityBadgeModel = mb.createBox(0.06f, 0.06f, 0.03f, badgeMat, attr);
+
         models.addAll(torsoModel, headModel, upperArmModel, foreArmModel, legModel, bootModel,
-                      helmetShellModel, helmetVisorModel, helmetStripeModel, lathiStickModel, lathiTipModel);
+                      helmetShellModel, helmetVisorModel, helmetStripeModel, lathiStickModel, lathiTipModel,
+                      securityCapModel, securityBadgeModel);
 
         // Instantiate
         torsoInst = new ModelInstance(torsoModel);
@@ -171,6 +189,9 @@ public class HelmetGoon implements Disposable {
         lathiStickInst = new ModelInstance(lathiStickModel);
         lathiTipTopInst = new ModelInstance(lathiTipModel);
         lathiTipBottomInst = new ModelInstance(lathiTipModel);
+
+        securityCapInst = new ModelInstance(securityCapModel);
+        securityBadgeInst = new ModelInstance(securityBadgeModel);
     }
 
     /**
@@ -178,6 +199,25 @@ public class HelmetGoon implements Disposable {
      */
     public void update(float delta, PlayerController player) {
         animTime += delta;
+        if (role == Role.CAMPUS_SECURITY) {
+            // Peaceful Campus Security / Proctor AI: stands watch calmly, zero combat aggression
+            state = State.STANDOFF;
+            isAttacking = false;
+            Vector3 pPos = player.getPosition();
+            float distToPlayer = position.dst(pPos);
+            // Smoothly turn to face player when player is nearby
+            if (distToPlayer <= 12f && distToPlayer >= 1.2f) {
+                float dx = pPos.x - position.x;
+                float dz = pPos.z - position.z;
+                float targetHeading = MathUtils.atan2(dx, dz) * MathUtils.radiansToDegrees;
+                float diff = (targetHeading - heading) % 360f;
+                if (diff > 180f) diff -= 360f;
+                if (diff < -180f) diff += 360f;
+                heading += diff * Math.min(1f, delta * 3.5f);
+            }
+            return;
+        }
+
         stateTimer += delta;
         if (attackCooldown > 0f) attackCooldown -= delta;
         if (staggerTimer > 0f) staggerTimer -= delta;
@@ -372,7 +412,7 @@ public class HelmetGoon implements Disposable {
      * Called when the player successfully strikes the Goon with punches, kicks, or sweep counters.
      */
     public boolean takeHitFromPlayer(float damage, boolean isKick, boolean isSweep, float attackHeading) {
-        if (state == State.KNOCKED_OUT) return false;
+        if (role != Role.HELMETED_AGGRESSOR || state == State.KNOCKED_OUT) return false;
 
         boolean wasWindingUp = isWindingUp();
         float finalDmg = damage;
@@ -402,7 +442,7 @@ public class HelmetGoon implements Disposable {
         if (health <= 0f) {
             health = 0f;
             state = State.KNOCKED_OUT;
-            showPopup("GUNDA DEFEATED / গুন্ডা পরাজিত!", Color.GREEN);
+            showPopup("AGGRESSOR DEFEATED / আক্রমণকারী পরাজিত!", Color.GREEN);
             return true; // Knockout!
         } else {
             if (isGuardBroken) {
@@ -470,17 +510,26 @@ public class HelmetGoon implements Disposable {
         torsoInst.transform.set(torsoTransform);
         renderWithTint(batch, env, torsoInst, flashTint);
 
-        // 2. Head & Helmet (He wears a protective helmet with visor & danger stripe)
+        // 2. Head & Headwear
         headTransform.set(torsoTransform).translate(0f, 0.42f, 0f);
         headInst.transform.set(headTransform);
         renderWithTint(batch, env, headInst, flashTint);
 
-        helmetShellInst.transform.set(headTransform).translate(0f, 0.04f, -0.01f);
-        helmetVisorInst.transform.set(headTransform).translate(0f, 0.03f, 0.16f);
-        helmetStripeInst.transform.set(headTransform).translate(0f, 0.05f, 0f);
-        renderWithTint(batch, env, helmetShellInst, flashTint);
-        renderWithTint(batch, env, helmetVisorInst, null);
-        renderWithTint(batch, env, helmetStripeInst, null);
+        if (role == Role.CAMPUS_SECURITY) {
+            // Peaceful role: smart campus security cap with gold crest/badge
+            securityCapInst.transform.set(headTransform).translate(0f, 0.12f, -0.01f);
+            securityBadgeInst.transform.set(headTransform).translate(0f, 0.12f, 0.15f);
+            renderWithTint(batch, env, securityCapInst, null);
+            renderWithTint(batch, env, securityBadgeInst, null);
+        } else {
+            // Combat role: riot motorcycle helmet with dark visor & caution stripe
+            helmetShellInst.transform.set(headTransform).translate(0f, 0.04f, -0.01f);
+            helmetVisorInst.transform.set(headTransform).translate(0f, 0.03f, 0.16f);
+            helmetStripeInst.transform.set(headTransform).translate(0f, 0.05f, 0f);
+            renderWithTint(batch, env, helmetShellInst, flashTint);
+            renderWithTint(batch, env, helmetVisorInst, null);
+            renderWithTint(batch, env, helmetStripeInst, null);
+        }
 
         // 3. Legs
         float legSwing = (state == State.APPROACHING) ? MathUtils.sin(walkCycle) * 32f : 0f;
@@ -496,55 +545,75 @@ public class HelmetGoon implements Disposable {
         renderWithTint(batch, env, bootLInst, flashTint);
         renderWithTint(batch, env, bootRInst, flashTint);
 
-        // 4. Arms & Lathi Weapon
-        // Left arm: aggressive guard/posture
-        leftUpperArmTransform.set(torsoTransform).translate(-0.30f, 0.18f, 0.04f).rotate(Vector3.X, -20f).rotate(Vector3.Z, 15f);
-        leftForeArmTransform.set(leftUpperArmTransform).translate(0f, -0.28f, 0.08f).rotate(Vector3.X, -65f);
-        armUpperLInst.transform.set(leftUpperArmTransform);
-        armForeLInst.transform.set(leftForeArmTransform);
-        renderWithTint(batch, env, armUpperLInst, flashTint);
-        renderWithTint(batch, env, armForeLInst, flashTint);
+        // 4. Arms & Equipment
+        if (role == Role.CAMPUS_SECURITY) {
+            // Peaceful relaxed posture: arms hanging naturally at sides with gentle breathing swing
+            float breath = MathUtils.sin(animTime * 1.8f) * 2f;
+            leftUpperArmTransform.set(torsoTransform).translate(-0.30f, 0.18f, 0.04f).rotate(Vector3.X, 8f + breath).rotate(Vector3.Z, 6f);
+            leftForeArmTransform.set(leftUpperArmTransform).translate(0f, -0.28f, 0.04f).rotate(Vector3.X, -10f);
+            armUpperLInst.transform.set(leftUpperArmTransform);
+            armForeLInst.transform.set(leftForeArmTransform);
+            renderWithTint(batch, env, armUpperLInst, flashTint);
+            renderWithTint(batch, env, armForeLInst, flashTint);
 
-        // Right arm: holds the lathi!
-        float armPitch = -15f;
-        float armYaw = 0f;
-        float armRoll = 0f;
+            rightUpperArmTransform.set(torsoTransform).translate(0.30f, 0.18f, 0.04f).rotate(Vector3.X, 8f + breath).rotate(Vector3.Z, -6f);
+            rightForeArmTransform.set(rightUpperArmTransform).translate(0f, -0.28f, 0.04f).rotate(Vector3.X, -10f);
+            armUpperRInst.transform.set(rightUpperArmTransform);
+            armForeRInst.transform.set(rightForeArmTransform);
+            renderWithTint(batch, env, armUpperRInst, flashTint);
+            renderWithTint(batch, env, armForeRInst, flashTint);
 
-        if (state == State.HIGH_SWING) {
-            float t = MathUtils.clamp(attackProgress, 0f, 1f);
-            float swingAngle = MathUtils.lerp(65f, -95f, t); // Powerful horizontal sweep
-            armPitch = -35f;
-            armYaw = swingAngle;
-        } else if (state == State.OVERHEAD_SLAM) {
-            float t = MathUtils.clamp(attackProgress, 0f, 1f);
-            float slamAngle = (t < 0.4f) ? MathUtils.lerp(-20f, -120f, t / 0.4f) : MathUtils.lerp(-120f, 40f, (t - 0.4f) / 0.6f);
-            armPitch = slamAngle;
-        } else if (state == State.CHALLENGING) {
-            // Raising lathi high above head to intimidate
-            armPitch = -115f + MathUtils.sin(animTime * 3f) * 12f;
-        } else if (state == State.STAGGERED) {
-            armPitch = 20f;
-            armRoll = 35f;
+            // Campus security is unarmed — no lathi rendered
+        } else {
+            // Left arm: aggressive guard/posture
+            leftUpperArmTransform.set(torsoTransform).translate(-0.30f, 0.18f, 0.04f).rotate(Vector3.X, -20f).rotate(Vector3.Z, 15f);
+            leftForeArmTransform.set(leftUpperArmTransform).translate(0f, -0.28f, 0.08f).rotate(Vector3.X, -65f);
+            armUpperLInst.transform.set(leftUpperArmTransform);
+            armForeLInst.transform.set(leftForeArmTransform);
+            renderWithTint(batch, env, armUpperLInst, flashTint);
+            renderWithTint(batch, env, armForeLInst, flashTint);
+
+            // Right arm: holds the lathi!
+            float armPitch = -15f;
+            float armYaw = 0f;
+            float armRoll = 0f;
+
+            if (state == State.HIGH_SWING) {
+                float t = MathUtils.clamp(attackProgress, 0f, 1f);
+                float swingAngle = MathUtils.lerp(65f, -95f, t); // Powerful horizontal sweep
+                armPitch = -35f;
+                armYaw = swingAngle;
+            } else if (state == State.OVERHEAD_SLAM) {
+                float t = MathUtils.clamp(attackProgress, 0f, 1f);
+                float slamAngle = (t < 0.4f) ? MathUtils.lerp(-20f, -120f, t / 0.4f) : MathUtils.lerp(-120f, 40f, (t - 0.4f) / 0.6f);
+                armPitch = slamAngle;
+            } else if (state == State.CHALLENGING) {
+                // Raising lathi high above head to intimidate
+                armPitch = -115f + MathUtils.sin(animTime * 3f) * 12f;
+            } else if (state == State.STAGGERED) {
+                armPitch = 20f;
+                armRoll = 35f;
+            }
+
+            rightUpperArmTransform.set(torsoTransform).translate(0.30f, 0.18f, 0.04f)
+                .rotate(Vector3.X, armPitch).rotate(Vector3.Y, armYaw).rotate(Vector3.Z, armRoll);
+            rightForeArmTransform.set(rightUpperArmTransform).translate(0f, -0.28f, 0f).rotate(Vector3.X, -30f);
+
+            armUpperRInst.transform.set(rightUpperArmTransform);
+            armForeRInst.transform.set(rightForeArmTransform);
+            renderWithTint(batch, env, armUpperRInst, flashTint);
+            renderWithTint(batch, env, armForeRInst, flashTint);
+
+            // Lathi in right hand (held securely at lower grip)
+            lathiTransform.set(rightForeArmTransform).translate(0f, -0.16f, 0.38f).rotate(Vector3.X, 90f);
+            lathiStickInst.transform.set(lathiTransform);
+            lathiTipTopInst.transform.set(lathiTransform).translate(0f, 0.78f, 0f);
+            lathiTipBottomInst.transform.set(lathiTransform).translate(0f, -0.78f, 0f);
+
+            renderWithTint(batch, env, lathiStickInst, null);
+            renderWithTint(batch, env, lathiTipTopInst, null);
+            renderWithTint(batch, env, lathiTipBottomInst, null);
         }
-
-        rightUpperArmTransform.set(torsoTransform).translate(0.30f, 0.18f, 0.04f)
-            .rotate(Vector3.X, armPitch).rotate(Vector3.Y, armYaw).rotate(Vector3.Z, armRoll);
-        rightForeArmTransform.set(rightUpperArmTransform).translate(0f, -0.28f, 0f).rotate(Vector3.X, -30f);
-
-        armUpperRInst.transform.set(rightUpperArmTransform);
-        armForeRInst.transform.set(rightForeArmTransform);
-        renderWithTint(batch, env, armUpperRInst, flashTint);
-        renderWithTint(batch, env, armForeRInst, flashTint);
-
-        // Lathi in right hand (held securely at lower grip)
-        lathiTransform.set(rightForeArmTransform).translate(0f, -0.16f, 0.38f).rotate(Vector3.X, 90f);
-        lathiStickInst.transform.set(lathiTransform);
-        lathiTipTopInst.transform.set(lathiTransform).translate(0f, 0.78f, 0f);
-        lathiTipBottomInst.transform.set(lathiTransform).translate(0f, -0.78f, 0f);
-
-        renderWithTint(batch, env, lathiStickInst, null);
-        renderWithTint(batch, env, lathiTipTopInst, null);
-        renderWithTint(batch, env, lathiTipBottomInst, null);
     }
 
     private void renderWithTint(ModelBatch batch, Environment env, ModelInstance inst, Color tint) {
@@ -567,19 +636,27 @@ public class HelmetGoon implements Disposable {
     public float getMaxHealth() { return maxHealth; }
     public float getPoise() { return poise; }
     public float getMaxPoise() { return maxPoise; }
-    public boolean isGuardBroken() { return isGuardBroken; }
+    public Role getRole() { return role; }
+    public void setRole(Role role) {
+        this.role = role;
+        if (role == Role.CAMPUS_SECURITY) {
+            this.state = State.STANDOFF;
+            this.isAttacking = false;
+        }
+    }
+    public boolean isGuardBroken() { return role == Role.HELMETED_AGGRESSOR && isGuardBroken; }
     public State getState() { return state; }
-    public boolean isKnockedOut() { return state == State.KNOCKED_OUT; }
-    public boolean isChallenging() { return state == State.CHALLENGING; }
-    public boolean isWindingUp() { return isAttacking && attackProgress < 0.48f; }
-    public String getCombatPopupText() { return combatPopupTimer > 0f ? combatPopupText : null; }
+    public boolean isKnockedOut() { return role == Role.HELMETED_AGGRESSOR && state == State.KNOCKED_OUT; }
+    public boolean isChallenging() { return role == Role.HELMETED_AGGRESSOR && state == State.CHALLENGING; }
+    public boolean isWindingUp() { return role == Role.HELMETED_AGGRESSOR && isAttacking && attackProgress < 0.48f; }
+    public String getCombatPopupText() { return (role == Role.HELMETED_AGGRESSOR && combatPopupTimer > 0f) ? combatPopupText : null; }
     public Color getCombatPopupColor() { return combatPopupColor; }
 
     public void startFightDirectly() {
-        if (state == State.STANDOFF || state == State.CHALLENGING) {
-            state = State.APPROACHING;
-            stateTimer = 0f;
-        }
+        this.role = Role.HELMETED_AGGRESSOR;
+        state = State.APPROACHING;
+        stateTimer = 0f;
+        attackCooldown = 0.4f;
     }
 
     public void reset(float x, float z) {
