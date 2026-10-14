@@ -5,4 +5,15 @@ lwjgl3/build/
 .idea/
 *.iml
 .DS_Store
+**/.DS_Store
 *.log
+*.class
+**/*.class
+bin/
+**/bin/
+core/bin/
+lwjgl3/bin/
+.vscode/
+.settings/
+.project
+.classpath
