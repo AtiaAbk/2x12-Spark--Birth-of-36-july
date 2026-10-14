@@ -2363,13 +2363,13 @@ public class WhereWindsMeetHUD implements Disposable {
 
         spriteBatch.begin();
         fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
-        fonts.headerFont.draw(spriteBatch, "⚔ HELMET THUG ENFORCER ⚔", bx + 10f + 1f, by + bh + 19f);
+        fonts.headerFont.draw(spriteBatch, "◆ HELMETED AGGRESSOR ENFORCER ◆", bx + 10f + 1f, by + bh + 19f);
         fonts.headerFont.setColor(goldAccent);
-        fonts.headerFont.draw(spriteBatch, "⚔ HELMET THUG ENFORCER ⚔", bx + 10f, by + bh + 20f);
+        fonts.headerFont.draw(spriteBatch, "◆ HELMETED AGGRESSOR ENFORCER ◆", bx + 10f, by + bh + 20f);
 
         String subTitle = goon.isGuardBroken() ?
-            "💥 GUARD BROKEN! CRITICAL OPENING! / ভঙ্গি ভেঙে গেছে! 💥" :
-            "LEAGUE GOON • LATHI WIELDER  |  POSTURE: " + (int)goon.getPoise() + "%";
+            "[!] GUARD BROKEN! CRITICAL OPENING! [!]" :
+            "HELMETED AGGRESSOR • LATHI WIELDER  |  POSTURE: " + (int)goon.getPoise() + "%";
         fonts.smallFont.setColor(goon.isGuardBroken() ? Color.RED : new Color(0.85f, 0.82f, 0.78f, 0.90f));
         fonts.smallFont.draw(spriteBatch, subTitle, bx + 10f, by - 16f);
 
@@ -2398,7 +2398,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         spriteBatch.begin();
         fonts.headerFont.setColor(new Color(1.0f, 0.65f, 0.30f, 1f));
-        fonts.headerFont.draw(spriteBatch, "⚔ HELMET THUG: \"Oi shon! Ei campus theke ekhuni bhag, noile lathi diye matha fatiye debo!\"", dx + 18f, dy + dh - 16f);
+        fonts.headerFont.draw(spriteBatch, "◆ HELMETED AGGRESSOR: \"Leave this campus immediately, or face the consequences!\"", dx + 18f, dy + dh - 16f);
 
         fonts.promptFont.setColor(goldAccent);
         fonts.promptFont.draw(spriteBatch, "[F] ACCEPT CHALLENGE   |   [LMB/F] PUNCH   [Q/K] KICK   [Z/ALT] SLIP/EVADE   [C] CROUCH   [B] BLOCK/PARRY", dx + 18f, dy + 22f);
