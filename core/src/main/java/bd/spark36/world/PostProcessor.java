@@ -56,6 +56,8 @@ public class PostProcessor implements Disposable {
         sceneH = screenH;
         bloomW = screenW / 2;
         bloomH = screenH / 2;
+        bd.spark36.render.GraphicsTier tier = bd.spark36.render.GraphicsTier.fromSystemProperty();
+        bloomStrength = tier.enableBloom ? tier.bloomStrength : 0f;
         if (bloomW < 1) bloomW = 1;
         if (bloomH < 1) bloomH = 1;
 

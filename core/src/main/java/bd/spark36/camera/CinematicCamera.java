@@ -78,7 +78,7 @@ public class CinematicCamera {
         targetHeight = Float.parseFloat(System.getProperty("bd.spark36.cameraTargetHeight", String.valueOf(targetHeight)));
         camera = new PerspectiveCamera(baseFov, viewportWidth, viewportHeight);
         camera.near = 0.2f;
-        camera.far = 350f;
+        camera.far = 280f;
         camera.position.set(0.28f, 1.85f, 52.7f);
         camera.lookAt(0f, 1.32f, 49.4f);
         camera.update();

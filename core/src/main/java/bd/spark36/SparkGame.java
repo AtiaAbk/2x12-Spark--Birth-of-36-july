@@ -809,7 +809,11 @@ public class SparkGame extends ApplicationAdapter {
             }
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
-                takeScreenshot("00_baseline/" + viewpoint);
+                String shotName = System.getProperty("bd.spark36.screenshotName");
+                if (shotName == null || shotName.isEmpty()) {
+                    shotName = "00_baseline/" + viewpoint;
+                }
+                takeScreenshot(shotName);
                 autoScreenshotTaken = true;
                 if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
                     Gdx.app.exit();

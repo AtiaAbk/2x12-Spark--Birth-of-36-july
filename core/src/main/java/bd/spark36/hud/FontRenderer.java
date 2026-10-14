@@ -21,16 +21,27 @@ public class FontRenderer implements Disposable {
     public BitmapFont promptFont;
     public BitmapFont keyFont;
 
+    public BitmapFont bengaliFont;
+    public BitmapFont bengaliTitleFont;
+
     private FreeTypeFontGenerator boldGen;
     private FreeTypeFontGenerator regularGen;
+    private FreeTypeFontGenerator bengaliGen;
+
+    public static final String BENGALI_CHARS =
+        "ঁংঃঅআইঈউঊঋএঐওঔকখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহ়ািীুূৃেৈোৌ্ৎৗড়ঢ়য়০১২৩৪৫৬৭৮৯।॥“”—’‘… ";
+    public static final String EXTENDED_CHARS =
+        FreeTypeFontGenerator.DEFAULT_CHARS + "—◆•°–|[]/\\:><=*+-~_!@#$%^&()'\";.,?` ";
 
     public FontRenderer() {
         initFonts();
+        runStartupGlyphCheck();
     }
 
     private void initFonts() {
         FileHandle boldFile = Gdx.files.internal("fonts/LiberationSans-Bold.ttf");
         FileHandle regFile = Gdx.files.internal("fonts/LiberationSans-Regular.ttf");
+        FileHandle benFile = Gdx.files.internal("fonts/NotoSansBengali-Variable.ttf");
 
         if (boldFile.exists() && regFile.exists()) {
             try {
@@ -42,7 +53,7 @@ public class FontRenderer implements Disposable {
                 p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
                 p.genMipMaps = true;
 
-                String chars = FreeTypeFontGenerator.DEFAULT_CHARS + "—◆•°–|[]/\\:";
+                String chars = EXTENDED_CHARS;
 
                 // Title: large bold for modal titles and headers
                 p.size = 26;
@@ -112,6 +123,26 @@ public class FontRenderer implements Disposable {
                 p.color = new Color(1f, 0.88f, 0.45f, 1f); // Warm gold
                 keyFont = boldGen.generateFont(p);
 
+                // Load Noto Sans Bengali if present
+                if (benFile.exists()) {
+                    bengaliGen = new FreeTypeFontGenerator(benFile);
+                    FreeTypeFontParameter bp = new FreeTypeFontParameter();
+                    bp.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                    bp.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+                    bp.genMipMaps = true;
+                    bp.characters = FreeTypeFontGenerator.DEFAULT_CHARS + BENGALI_CHARS;
+                    bp.size = 16;
+                    bp.color = Color.WHITE;
+                    bengaliFont = bengaliGen.generateFont(bp);
+
+                    bp.size = 24;
+                    bengaliTitleFont = bengaliGen.generateFont(bp);
+                    Gdx.app.log("FontRenderer", "Loaded Noto Sans Bengali font successfully.");
+                } else {
+                    bengaliFont = bodyFont;
+                    bengaliTitleFont = titleFont;
+                }
+
                 return;
             } catch (Exception e) {
                 Gdx.app.error("FontRenderer", "Failed to generate FreeType fonts, using fallback", e);
@@ -128,6 +159,45 @@ public class FontRenderer implements Disposable {
         smallFont.getData().setScale(0.85f);
         promptFont = new BitmapFont();
         keyFont = new BitmapFont();
+        bengaliFont = bodyFont;
+        bengaliTitleFont = titleFont;
+    }
+
+    /**
+     * Scans critical HUD and dialogue strings against loaded font glyph sets
+     * to guarantee zero missing-glyph boxes ("▯") at runtime.
+     */
+    public void runStartupGlyphCheck() {
+        String[] testStrings = {
+            "ACTIVE MISSION: 01 / 05",
+            "THE SPARK OF SOLIDARITY",
+            "Target: Curzon Hall Central Arcade",
+            "HELMETED AGGRESSOR ENFORCER",
+            "CAMPUS MAP",
+            "CURZON HALL W",
+            "[E] INTERACT",
+            "[M] MAP",
+            "[ESC] PAUSE",
+            "HP: 100 / 100",
+            "POSTURE: 100%",
+            "—◆•°–|[]/\\:><=*+-~_!@#$%^&()'\";.,?` "
+        };
+
+        int missingCount = 0;
+        for (String s : testStrings) {
+            for (int i = 0; i < s.length(); i++) {
+                char ch = s.charAt(i);
+                if (headerFont != null && !headerFont.getData().hasGlyph(ch)) {
+                    Gdx.app.error("FontRenderer", String.format("MISSING GLYPH: '%c' (U+%04X) in string \"%s\"", ch, (int)ch, s));
+                    missingCount++;
+                }
+            }
+        }
+        if (missingCount == 0) {
+            Gdx.app.log("FontRenderer", "Startup glyph self-check PASSED: 0 missing glyphs detected.");
+        } else {
+            Gdx.app.error("FontRenderer", "Startup glyph self-check FAILED: " + missingCount + " missing glyphs detected.");
+        }
     }
 
     @Override
@@ -138,8 +208,11 @@ public class FontRenderer implements Disposable {
         if (smallFont != null) smallFont.dispose();
         if (promptFont != null) promptFont.dispose();
         if (keyFont != null) keyFont.dispose();
+        if (bengaliFont != null && bengaliFont != bodyFont) bengaliFont.dispose();
+        if (bengaliTitleFont != null && bengaliTitleFont != titleFont) bengaliTitleFont.dispose();
 
         if (boldGen != null) boldGen.dispose();
         if (regularGen != null) regularGen.dispose();
+        if (bengaliGen != null) bengaliGen.dispose();
     }
 }

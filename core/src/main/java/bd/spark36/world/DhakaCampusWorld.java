@@ -58,7 +58,7 @@ public class DhakaCampusWorld implements Disposable {
     };
 
     public static final Vector3 BOUNDARY_STONE_POS = new Vector3(7.8f, 0f, 36.5f);
-    private static final int SHADOW_MAP_SIZE = 4096;
+    private static final int SHADOW_MAP_SIZE = bd.spark36.render.GraphicsTier.fromSystemProperty().shadowMapSize;
 
     private final Environment environment;
     private final DirectionalShadowLight sunLight;
@@ -120,8 +120,8 @@ public class DhakaCampusWorld implements Disposable {
         fillLight.set(new Color(0.20f, 0.22f, 0.25f, 1f), new Vector3(0.20f, -0.30f, 0.92f).nor());
         environment.add(fillLight);
 
-        // Clean atmospheric sky-blue depth haze
-        environment.set(new ColorAttribute(ColorAttribute.Fog, 0.72f, 0.82f, 0.94f, 1f));
+        // Clean atmospheric sky-blue depth haze (matches AtmosphereRenderer skyLowHaze)
+        environment.set(new ColorAttribute(ColorAttribute.Fog, 0.84f, 0.88f, 0.92f, 1f));
 
         buildCampus(textures);
         buildColliders();
@@ -1724,6 +1724,9 @@ public class DhakaCampusWorld implements Disposable {
         ModelInstance nrInst = new ModelInstance(northRoad);
         nrInst.transform.setTranslation(0f, 0.02f, -50f);
         instances.add(nrInst);
+
+        // Build complete East and West perimeter walls and dense backdrop treelines
+        PerimeterEnclosure.build(mb, attr, curzonBrickMat, stoneCurb, barkTwoSidedMat, leafClumpMat, leafCardMat, blossomClumpMat, models, instances, colliders, this::registerFoliage);
 
         // ==========================================
         // 8. WEST HUB: CENTRAL LIBRARY BUILDING (WITH INNER COURTYARD)
