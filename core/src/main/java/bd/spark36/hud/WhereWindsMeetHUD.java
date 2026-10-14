@@ -815,7 +815,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         if (allDone && !goonKnockedOut) {
             // Climax Boss confrontation
-            drawOutlined(fonts.smallFont, "★ CLIMAX OBJECTIVE: LEVEL 1 BOSS", cardX + 18f, cardY + 142f, new Color(1.0f, 0.45f, 0.25f, 1f));
+            drawOutlined(fonts.smallFont, "◆ CLIMAX OBJECTIVE: CONFRONTATION", cardX + 18f, cardY + 142f, new Color(1.0f, 0.45f, 0.25f, 1f));
             String bossTitle = "CONFRONT THE ENFORCER";
             drawOutlined(fonts.headerFont, bossTitle, cardX + 18f, cardY + 118f, goldAccent);
             drawOutlined(fonts.bodyFont, "Target: Curzon Hall Plaza — Disarm the Helmet Thug", cardX + 18f, cardY + 84f, Color.WHITE);
