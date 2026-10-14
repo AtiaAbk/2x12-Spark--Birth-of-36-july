@@ -815,7 +815,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         if (allDone && !goonKnockedOut) {
             // Climax Boss confrontation
-            drawOutlined(fonts.smallFont, "◆ CLIMAX OBJECTIVE: CONFRONTATION", cardX + 18f, cardY + 142f, new Color(1.0f, 0.45f, 0.25f, 1f));
+            drawOutlined(fonts.smallFont, "CLIMAX OBJECTIVE: CONFRONTATION", cardX + 18f, cardY + 142f, new Color(1.0f, 0.45f, 0.25f, 1f));
             String bossTitle = "CONFRONT THE ENFORCER";
             drawOutlined(fonts.headerFont, bossTitle, cardX + 18f, cardY + 118f, goldAccent);
             drawOutlined(fonts.bodyFont, "Target: Curzon Hall Plaza — Disarm the Helmet Thug", cardX + 18f, cardY + 84f, Color.WHITE);
@@ -2363,9 +2363,9 @@ public class WhereWindsMeetHUD implements Disposable {
 
         spriteBatch.begin();
         fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
-        fonts.headerFont.draw(spriteBatch, "◆ HELMETED AGGRESSOR ENFORCER ◆", bx + 10f + 1f, by + bh + 19f);
+        fonts.headerFont.draw(spriteBatch, "HELMETED AGGRESSOR ENFORCER", bx + 10f + 1f, by + bh + 19f);
         fonts.headerFont.setColor(goldAccent);
-        fonts.headerFont.draw(spriteBatch, "◆ HELMETED AGGRESSOR ENFORCER ◆", bx + 10f, by + bh + 20f);
+        fonts.headerFont.draw(spriteBatch, "HELMETED AGGRESSOR ENFORCER", bx + 10f, by + bh + 20f);
 
         String subTitle = goon.isGuardBroken() ?
             "[!] GUARD BROKEN! CRITICAL OPENING! [!]" :
@@ -2398,7 +2398,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         spriteBatch.begin();
         fonts.headerFont.setColor(new Color(1.0f, 0.65f, 0.30f, 1f));
-        fonts.headerFont.draw(spriteBatch, "◆ HELMETED AGGRESSOR: \"Leave this campus immediately, or face the consequences!\"", dx + 18f, dy + dh - 16f);
+        fonts.headerFont.draw(spriteBatch, "HELMETED AGGRESSOR: \"Leave this campus immediately, or face the consequences!\"", dx + 18f, dy + dh - 16f);
 
         fonts.promptFont.setColor(goldAccent);
         fonts.promptFont.draw(spriteBatch, "[F] ACCEPT CHALLENGE   |   [LMB/F] PUNCH   [Q/K] KICK   [Z/ALT] SLIP/EVADE   [C] CROUCH   [B] BLOCK/PARRY", dx + 18f, dy + 22f);
