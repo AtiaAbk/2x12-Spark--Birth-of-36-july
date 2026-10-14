@@ -759,6 +759,62 @@ public class SparkGame extends ApplicationAdapter {
                     Gdx.app.exit();
                 }
             }
+        } else if (System.getProperty("bd.spark36.baseline") != null) {
+            String viewpoint = System.getProperty("bd.spark36.baseline");
+            hud.reset();
+            if ("spawn".equalsIgnoreCase(viewpoint)) {
+                player.setPosition(0f, 0f, 72f);
+                player.setHeadingDegrees(180f);
+                camera.setAngles(0f, -4f);
+                camera.setDistance(4.5f);
+            } else if ("curzon_front".equalsIgnoreCase(viewpoint)) {
+                player.setPosition(0f, 0f, -12f);
+                player.setHeadingDegrees(180f);
+                camera.setAngles(0f, -2f);
+                camera.setDistance(5.5f);
+            } else if ("curzon_side".equalsIgnoreCase(viewpoint)) {
+                player.setPosition(32f, 0f, -32f);
+                player.setHeadingDegrees(270f);
+                camera.setAngles(90f, -2f);
+                camera.setDistance(6.0f);
+            } else if ("pond_ghat".equalsIgnoreCase(viewpoint)) {
+                player.setPosition(0f, 0.28f, 18.0f);
+                player.setHeadingDegrees(180f);
+                camera.setAngles(0f, -8f);
+                camera.setDistance(4.0f);
+            } else if ("tsc".equalsIgnoreCase(viewpoint)) {
+                player.setPosition(52f, 0f, 48f);
+                player.setHeadingDegrees(90f);
+                camera.setAngles(270f, -4f);
+                camera.setDistance(5.0f);
+            } else if ("student_closeup".equalsIgnoreCase(viewpoint)) {
+                player.setPosition(0f, 0f, 70f);
+                player.setHeadingDegrees(180f);
+                camera.setAngles(0f, -2f);
+                camera.setDistance(1.6f);
+            } else if ("boss_fight".equalsIgnoreCase(viewpoint)) {
+                player.setPosition(0f, 0f, 39.5f);
+                player.setHeadingDegrees(180f);
+                camera.setAngles(0f, -6f);
+                camera.setDistance(4.2f);
+                if (helmetGoon != null) {
+                    helmetGoon.reset(0f, 36.0f);
+                    helmetGoon.startFightDirectly();
+                }
+            } else if ("world_edge".equalsIgnoreCase(viewpoint)) {
+                player.setPosition(-100f, 0f, 72f);
+                player.setHeadingDegrees(45f);
+                camera.setAngles(225f, -4f);
+                camera.setDistance(5.0f);
+            }
+            testTimer += delta;
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("00_baseline/" + viewpoint);
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
         }
     }
 
@@ -776,6 +832,9 @@ public class SparkGame extends ApplicationAdapter {
             com.badlogic.gdx.files.FileHandle file = Gdx.files.local("screenshots/" + name + ".png");
             if (!file.parent().exists()) {
                 file = Gdx.files.local("assets/screenshots/" + name + ".png");
+            }
+            if (!file.parent().exists()) {
+                file.parent().mkdirs();
             }
             com.badlogic.gdx.graphics.PixmapIO.writePNG(file, flipped);
             pixmap.dispose();

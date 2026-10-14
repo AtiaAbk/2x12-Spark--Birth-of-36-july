@@ -110,6 +110,7 @@ public class CinematicCamera {
                            System.getProperty("bd.spark36.testVictory") != null ||
                            System.getProperty("bd.spark36.testModalScreenshot") != null ||
                            System.getProperty("bd.spark36.testMapScreenshot") != null ||
+                           System.getProperty("bd.spark36.baseline") != null ||
                            System.getProperty("bd.spark36.noMouseLook") != null;
         if (inputEnabled && mouseLookActive && !testMode) {
             if (!Gdx.input.isCursorCatched()) Gdx.input.setCursorCatched(true);
@@ -276,6 +277,13 @@ public class CinematicCamera {
     public PerspectiveCamera getCamera() { return camera; }
     public float getYaw() { return yaw; }
     public float getPitch() { return pitch; }
+    public void setAngles(float yaw, float pitch) {
+        this.yaw = (yaw % 360f + 360f) % 360f;
+        this.pitch = MathUtils.clamp(pitch, minPitch, maxPitch);
+    }
+    public void setDistance(float distance) {
+        this.distance = MathUtils.clamp(distance, 1.2f, 18.0f);
+    }
     public float getCurrentFov() { return currentFov; }
     public void setMouseLookActive(boolean active) { mouseLookActive = active; }
     public boolean isMouseLookActive() { return mouseLookActive; }
