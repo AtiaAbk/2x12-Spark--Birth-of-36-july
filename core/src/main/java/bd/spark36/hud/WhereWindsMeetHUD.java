@@ -117,6 +117,122 @@ public class WhereWindsMeetHUD implements Disposable {
     private String disqualifyReason = "VIOLATION: You assaulted an innocent campus student!";
     private boolean isDefeated = false;
 
+    // ── HUD Scaled Viewport & Anchor Layout (Fix Pack 01 Item 2) ──
+    public static class HUDLayout {
+        public float virtW;
+        public float virtH;
+        public float safeMarginX;
+        public float safeMarginY;
+
+        // Top-Left: Mission Card
+        public float cardX, cardY, cardW, cardH;
+
+        // Top-Center: Boss / Event Health Bar
+        public float bossX, bossY, bossW, bossH;
+
+        // Top-Right: Compass Rose
+        public float compassCx, compassCy, compassR;
+        // Top-Right: Waypoint Pill
+        public float pillX, pillY, pillW, pillH;
+        // Top-Right: Tactical Map HUD Button
+        public float mapBtnX, mapBtnY, mapBtnW, mapBtnH;
+
+        // Bottom-Left: Mission Parameters Checklist
+        public float checkX, checkY, checkW, checkH;
+
+        // Bottom-Center: Dialogue / Challenge Subtitle Box
+        public float dialX, dialY, dialW, dialH;
+
+        // Bottom-Right: Keycaps Cluster
+        public float keyBaseX, keyBaseY, keyClusterW, keyClusterH;
+        public float hintLineY;
+
+        public static HUDLayout compute(float backbufferW, float backbufferH, float scale) {
+            HUDLayout l = new HUDLayout();
+            float s = Math.max(0.5f, scale);
+            l.virtW = 1920f / s;
+            l.virtH = (1920f * (backbufferH / Math.max(1f, backbufferW))) / s;
+
+            // Safe margins: at least 3.5% of virtual width & height
+            l.safeMarginX = Math.max(50f, l.virtW * 0.035f);
+            l.safeMarginY = Math.max(38f, l.virtH * 0.035f);
+
+            // 1. Top-Left Mission Card
+            l.cardW = 520f;
+            l.cardH = 158f;
+            l.cardX = l.safeMarginX;
+            l.cardY = l.virtH - l.safeMarginY - l.cardH;
+
+            // 2. Top-Center Boss Bar
+            l.bossW = 540f;
+            l.bossH = 46f;
+            l.bossX = (l.virtW - l.bossW) / 2f;
+            l.bossY = l.virtH - l.safeMarginY - l.bossH;
+
+            // 3. Top-Right Compass Rose & Controls
+            l.compassR = 64f;
+            l.compassCx = l.virtW - l.safeMarginX - l.compassR;
+            l.compassCy = l.virtH - l.safeMarginY - l.compassR - 4f;
+
+            // Waypoint Ticker Pill (left of compass, aligned on compass equator)
+            l.pillW = 168f;
+            l.pillH = 28f;
+            l.pillX = l.compassCx - l.compassR - l.pillW - 14f;
+            l.pillY = l.compassCy - l.pillH / 2f;
+
+            // Tactical Map HUD Button (stacked vertically below compass rose with generous margin)
+            l.mapBtnW = 180f;
+            l.mapBtnH = 34f;
+            l.mapBtnX = l.compassCx + l.compassR - l.mapBtnW;
+            l.mapBtnY = l.compassCy - l.compassR - 48f;
+
+            // 4. Bottom-Left Mission Parameters Checklist
+            l.checkW = 400f;
+            l.checkH = 162f;
+            l.checkX = l.safeMarginX;
+            l.checkY = l.safeMarginY;
+
+            // 5. Bottom-Center Cinematic Subtitle / Challenge Dialogue
+            l.dialW = 780f;
+            l.dialH = 74f;
+            l.dialX = (l.virtW - l.dialW) / 2f;
+            l.dialY = l.safeMarginY + 20f;
+
+            // 6. Bottom-Right Keycaps Cluster
+            l.keyClusterW = 285f;
+            l.keyClusterH = 118f;
+            l.keyBaseX = l.virtW - l.safeMarginX - l.keyClusterW;
+            l.keyBaseY = l.safeMarginY + 28f;
+            l.hintLineY = l.safeMarginY + 6f;
+
+            return l;
+        }
+    }
+
+    private float uiScale = 1.0f;
+    private boolean debugOverlayEnabled = false;
+    private HUDLayout currentLayout = HUDLayout.compute(1920f, 1080f, 1.0f);
+
+    public void setUiScale(float scale) {
+        this.uiScale = MathUtils.clamp(scale, 0.75f, 1.5f);
+    }
+
+    public float getUiScale() {
+        return uiScale;
+    }
+
+    public void toggleDebugOverlay() {
+        debugOverlayEnabled = !debugOverlayEnabled;
+    }
+
+    public boolean isDebugOverlayEnabled() {
+        return debugOverlayEnabled;
+    }
+
+    public void setDebugOverlayEnabled(boolean enabled) {
+        this.debugOverlayEnabled = enabled;
+    }
+
     // Cinematic finish screen background texture
     private com.badlogic.gdx.graphics.Texture cinematicFinishTex = null;
     private boolean cinematicFinishLoadTried = false;
@@ -246,11 +362,17 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
+        // Debug overlay toggle
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F3) || Gdx.input.isKeyJustPressed(Input.Keys.GRAVE)) {
+            toggleDebugOverlay();
+        }
+
         // Mouse click navigation for Tactical Map button and Close buttons
         float backbufferW = (float) Gdx.graphics.getBackBufferWidth();
         float backbufferH = (float) Gdx.graphics.getBackBufferHeight();
-        float virtW = 1600f;
-        float virtH = 1600f * (backbufferH / backbufferW);
+        currentLayout = HUDLayout.compute(backbufferW, backbufferH, uiScale);
+        float virtW = currentLayout.virtW;
+        float virtH = currentLayout.virtH;
         float mouseX = ((float) Gdx.input.getX() / backbufferW) * virtW;
         float mouseY = (1.0f - (float) Gdx.input.getY() / backbufferH) * virtH;
 
@@ -298,9 +420,8 @@ public class WhereWindsMeetHUD implements Disposable {
                 }
             } else if (activeModalEntry == null && !isPauseMenuOpen && !isVictoryOpen && !isDisqualified && !isDefeated) {
                 // Click tactical map HUD button
-                float mbX = virtW - 215f;
-                float mbY = virtH - 230f;
-                if (mouseX >= mbX && mouseX <= mbX + 195f && mouseY >= mbY && mouseY <= mbY + 38f) {
+                if (mouseX >= currentLayout.mapBtnX && mouseX <= currentLayout.mapBtnX + currentLayout.mapBtnW &&
+                    mouseY >= currentLayout.mapBtnY && mouseY <= currentLayout.mapBtnY + currentLayout.mapBtnH) {
                     isMapOpen = true;
                 }
             }
@@ -487,9 +608,9 @@ public class WhereWindsMeetHUD implements Disposable {
         int backbufferW = Gdx.graphics.getBackBufferWidth();
         int backbufferH = Gdx.graphics.getBackBufferHeight();
 
-        // Virtual coordinates scaling: 1600 baseline
-        float w = 1600f;
-        float h = 1600f * ((float) backbufferH / (float) backbufferW);
+        currentLayout = HUDLayout.compute((float) backbufferW, (float) backbufferH, uiScale);
+        float w = currentLayout.virtW;
+        float h = currentLayout.virtH;
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -632,6 +753,11 @@ public class WhereWindsMeetHUD implements Disposable {
         } else if (isPauseMenuOpen) {
             renderPauseMenu(w, h);
         }
+
+        // 6. Debug Bounds & Overlap Check Overlay (Toggle via F3 / Grave `)
+        if (debugOverlayEnabled) {
+            drawDebugOverlay(currentLayout, w, h);
+        }
     }
 
     // ==========================================
@@ -709,15 +835,15 @@ public class WhereWindsMeetHUD implements Disposable {
     // 1. TOP-LEFT MISSION CARD (Matching Mockup)
     // ==========================================
     private void drawMissionCardBg(JulyMemorials memorials, float w, float h) {
-        float cardX = 36f;
-        float cardY = h - 195f;
-        float cardW = 540f;
-        float cardH = 160f;
+        float cardX = currentLayout.cardX;
+        float cardY = currentLayout.cardY;
+        float cardW = currentLayout.cardW;
+        float cardH = currentLayout.cardH;
 
         // See-through smoked glass background with soft gold halo
         fillGlassPanel(cardX, cardY, cardW, cardH);
 
-        // Gold Diamond Icon for "◆ ACTIVE MISSION"
+        // Gold Diamond Icon for "ACTIVE MISSION"
         shapeRenderer.setColor(goldAccent);
         float dX = cardX + 18f;
         float dY = cardY + cardH - 18f;
@@ -726,9 +852,9 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.triangle(dX, dY + dS, dX - dS, dY, dX, dY - dS);
 
         // Glowing Golden Progress Bar (Dynamic: fills as archives are inspected)
-        float barX = cardX + 16f;
+        float barX = cardX + 18f;
         float barY = cardY + 48f;
-        float barW = 430f;
+        float barW = cardW - 36f;
         float barH = 5f;
 
         // Track
@@ -756,7 +882,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Waypoint Compass Needle Icon Circle (next to DISTANCE)
         float cX = cardX + cardW - 36f;
-        float cY = cardY + 22f;
+        float cY = cardY + 24f;
         shapeRenderer.setColor(0.08f, 0.18f, 0.22f, 0.40f);
         shapeRenderer.circle(cX, cY, 15f, 20);
         shapeRenderer.setColor(goldAccent);
@@ -764,10 +890,10 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     private void drawMissionCardBorders(float w, float h) {
-        float cardX = 36f;
-        float cardY = h - 195f;
-        float cardW = 540f;
-        float cardH = 160f;
+        float cardX = currentLayout.cardX;
+        float cardY = currentLayout.cardY;
+        float cardW = currentLayout.cardW;
+        float cardH = currentLayout.cardH;
 
         // Crisp thin gold border with gentle breathing glow
         strokeGlassBorder(cardX, cardY, cardW, cardH);
@@ -794,7 +920,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Waypoint Compass Needle Icon Ring
         float cX = cardX + cardW - 36f;
-        float cY = cardY + 22f;
+        float cY = cardY + 24f;
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.circle(cX, cY, 15f, 24);
 
@@ -804,9 +930,10 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     private void drawMissionCardText(PlayerController player, JulyMemorials memorials, MemorialEntry nearest, float dst, float w, float h) {
-        float cardX = 36f;
-        float cardY = h - 195f;
-        float cardW = 540f;
+        float cardX = currentLayout.cardX;
+        float cardY = currentLayout.cardY;
+        float cardW = currentLayout.cardW;
+        float cardH = currentLayout.cardH;
 
         int ins = memorials.getInspectedCount();
         int total = memorials.getTotalCount();
@@ -815,31 +942,31 @@ public class WhereWindsMeetHUD implements Disposable {
 
         if (allDone && !goonKnockedOut) {
             // Climax Boss confrontation
-            drawOutlined(fonts.smallFont, "CLIMAX OBJECTIVE: CONFRONTATION", cardX + 18f, cardY + 142f, new Color(1.0f, 0.45f, 0.25f, 1f));
+            drawOutlined(fonts.smallFont, "CLIMAX OBJECTIVE: CONFRONTATION", cardX + 18f, cardY + cardH - 18f, new Color(1.0f, 0.45f, 0.25f, 1f));
             String bossTitle = "CONFRONT THE ENFORCER";
-            drawOutlined(fonts.headerFont, bossTitle, cardX + 18f, cardY + 118f, goldAccent);
-            drawOutlined(fonts.bodyFont, "Target: Curzon Hall Plaza — Disarm the Helmet Thug", cardX + 18f, cardY + 84f, Color.WHITE);
+            drawOutlined(fonts.headerFont, bossTitle, cardX + 18f, cardY + cardH - 42f, goldAccent);
+            drawOutlined(fonts.bodyFont, "Target: Curzon Hall Plaza — Disarm the Helmet Thug", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
             float goonDst = (helmetGoon != null && helmetGoon.getPosition() != null) ?
                 (player != null ? player.getPosition().dst(helmetGoon.getPosition()) : dst) : dst;
-            drawOutlined(fonts.headerFont, String.format("DISTANCE: %.1f M", goonDst), cardX + 18f, cardY + 30f, goldAccent);
+            drawOutlined(fonts.headerFont, String.format("DISTANCE: %.1f M", goonDst), cardX + 18f, cardY + 24f, goldAccent);
         } else if (allDone && goonKnockedOut) {
-            drawOutlined(fonts.smallFont, "ALL ARCHIVES UNLOCKED: 05 / 05", cardX + 18f, cardY + 142f, Color.GREEN);
-            drawOutlined(fonts.headerFont, "LEVEL 1 ACCOMPLISHED", cardX + 18f, cardY + 118f, goldAccent);
-            drawOutlined(fonts.bodyFont, "All 5 archives secured & Enforcer neutralized. Campus liberated!", cardX + 18f, cardY + 84f, Color.WHITE);
-            drawOutlined(fonts.headerFont, "STATUS: COMPLETED", cardX + 18f, cardY + 30f, Color.GREEN);
+            drawOutlined(fonts.smallFont, "ALL ARCHIVES UNLOCKED: 05 / 05", cardX + 18f, cardY + cardH - 18f, Color.GREEN);
+            drawOutlined(fonts.headerFont, "LEVEL 1 ACCOMPLISHED", cardX + 18f, cardY + cardH - 42f, goldAccent);
+            drawOutlined(fonts.bodyFont, "All 5 archives secured & Enforcer neutralized. Campus liberated!", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
+            drawOutlined(fonts.headerFont, "STATUS: COMPLETED", cardX + 18f, cardY + 24f, Color.GREEN);
         } else {
             // Standard archive progression
             String missionTag = String.format("ACTIVE MISSION: %02d / %02d", Math.min(ins + 1, total), total);
-            drawOutlined(fonts.smallFont, missionTag, cardX + 18f, cardY + 142f, new Color(1.0f, 0.75f, 0.30f, 1f));
+            drawOutlined(fonts.smallFont, missionTag, cardX + 18f, cardY + cardH - 18f, new Color(1.0f, 0.75f, 0.30f, 1f));
 
             String missionTitle = (nearest != null ? nearest.title : "EXPLORE CAMPUS");
-            drawOutlined(fonts.headerFont, missionTitle, cardX + 18f, cardY + 118f, goldAccent);
+            drawOutlined(fonts.headerFont, missionTitle, cardX + 18f, cardY + cardH - 42f, goldAccent);
 
             String missionDesc = (nearest != null ? "Target: " + nearest.location : "Investigate Dhaka University archives");
-            drawOutlined(fonts.bodyFont, missionDesc, cardX + 18f, cardY + 84f, Color.WHITE);
+            drawOutlined(fonts.bodyFont, missionDesc, cardX + 18f, cardY + cardH - 74f, Color.WHITE);
 
             String distStr = String.format("DISTANCE: %.1f M", dst);
-            drawOutlined(fonts.headerFont, distStr, cardX + 18f, cardY + 30f, goldAccent);
+            drawOutlined(fonts.headerFont, distStr, cardX + 18f, cardY + 24f, goldAccent);
         }
     }
 
@@ -847,19 +974,19 @@ public class WhereWindsMeetHUD implements Disposable {
     // 2. TOP-RIGHT ANTIQUE 8-POINT COMPASS ROSE (Matching Mockup)
     // =======================================================
     private void drawAntiqueCompassRoseFilled(float w, float h, float yaw) {
-        float cx = w - 105f;
-        float cy = h - 105f;
-        float r = 70f;
+        float cx = currentLayout.compassCx;
+        float cy = currentLayout.compassCy;
+        float r = currentLayout.compassR;
 
         // Circular transparent glass background
-        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.16f);
+        shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.22f);
         shapeRenderer.circle(cx, cy, r, 48);
 
         // Waypoint Ticker Pill to the left ("◆ CURZON HALL  W")
-        float pillW = 165f;
-        float pillH = 28f;
-        float pillX = cx - r - pillW - 14f;
-        float pillY = cy - pillH / 2f;
+        float pillW = currentLayout.pillW;
+        float pillH = currentLayout.pillH;
+        float pillX = currentLayout.pillX;
+        float pillY = currentLayout.pillY;
         fillGlassPanel(pillX, pillY, pillW, pillH);
 
         // Diamond marker on ticker
@@ -927,9 +1054,9 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     private void drawAntiqueCompassRoseLines(float w, float h, float yaw) {
-        float cx = w - 105f;
-        float cy = h - 105f;
-        float r = 70f;
+        float cx = currentLayout.compassCx;
+        float cy = currentLayout.compassCy;
+        float r = currentLayout.compassR;
 
         // Outer ornate gold rims
         shapeRenderer.setColor(goldBorder);
@@ -951,17 +1078,17 @@ public class WhereWindsMeetHUD implements Disposable {
         }
 
         // Waypoint Ticker Border
-        float pillW = 165f;
-        float pillH = 28f;
-        float pillX = cx - r - pillW - 14f;
-        float pillY = cy - pillH / 2f;
+        float pillW = currentLayout.pillW;
+        float pillH = currentLayout.pillH;
+        float pillX = currentLayout.pillX;
+        float pillY = currentLayout.pillY;
         strokeGlassBorder(pillX, pillY, pillW, pillH);
     }
 
     private void drawAntiqueCompassRoseText(float w, float h, float yaw) {
-        float cx = w - 105f;
-        float cy = h - 105f;
-        float r = 70f;
+        float cx = currentLayout.compassCx;
+        float cy = currentLayout.compassCy;
+        float r = currentLayout.compassR;
 
         // Cardinal Letters (N, E, S, W)
         String[] cardinals = {"N", "E", "S", "W"};
@@ -979,22 +1106,21 @@ public class WhereWindsMeetHUD implements Disposable {
         // Degree readout beneath
         int displayYaw = (int) ((yaw % 360 + 360) % 360);
         fonts.smallFont.setColor(goldAccent);
-        fonts.smallFont.draw(spriteBatch, displayYaw + " deg", cx - 18f, cy - r - 8f);
+        fonts.smallFont.draw(spriteBatch, displayYaw + " deg", cx - 20f, cy - r - 8f);
 
         // Waypoint Ticker Text ("CURZON HALL   W")
-        float pillW = 165f;
-        float pillX = cx - r - pillW - 14f;
-        drawOutlined(fonts.smallFont, "CURZON HALL   W", pillX + 28f, cy + 6f, goldAccent);
+        float pillX = currentLayout.pillX;
+        drawOutlined(fonts.smallFont, "CURZON HALL   W", pillX + 28f, cy + 5f, goldAccent);
     }
 
     // ========================================================
     // 3. BOTTOM-LEFT LIVE MISSION PARAMETERS CHECKLIST & COUNTER
     // ========================================================
     private void drawMissionChecklistBg(PlayerController player, JulyMemorials memorials, float w, float h) {
-        float bx = 36f;
-        float by = 36f;
-        float bw = 390f;
-        float bh = 158f;
+        float bx = currentLayout.checkX;
+        float by = currentLayout.checkY;
+        float bw = currentLayout.checkW;
+        float bh = currentLayout.checkH;
 
         // See-through smoked glass backing with soft gold halo
         fillGlassPanel(bx, by, bw, bh);
@@ -1050,10 +1176,10 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     private void drawMissionChecklistBorders(PlayerController player, JulyMemorials memorials, float w, float h) {
-        float bx = 36f;
-        float by = 36f;
-        float bw = 390f;
-        float bh = 158f;
+        float bx = currentLayout.checkX;
+        float by = currentLayout.checkY;
+        float bw = currentLayout.checkW;
+        float bh = currentLayout.checkH;
 
         // Crisp thin gold border with gentle breathing glow
         strokeGlassBorder(bx, by, bw, bh);
@@ -1089,10 +1215,10 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     private void drawMissionChecklistText(PlayerController player, JulyMemorials memorials, float w, float h) {
-        float bx = 36f;
-        float by = 36f;
-        float bw = 390f;
-        float bh = 158f;
+        float bx = currentLayout.checkX;
+        float by = currentLayout.checkY;
+        float bw = currentLayout.checkW;
+        float bh = currentLayout.checkH;
 
         int ins = memorials.getInspectedCount();
         int tot = memorials.getTotalCount();
@@ -1231,8 +1357,8 @@ public class WhereWindsMeetHUD implements Disposable {
     // 5. BOTTOM-RIGHT SLEEK KEYCAPS (Matching Mockup)
     // ========================================================
     private void drawKeycapsBg(float w, float h) {
-        float kBaseX = w - 240f;
-        float kBaseY = 16f;
+        float kBaseX = currentLayout.keyBaseX;
+        float kBaseY = currentLayout.keyBaseY;
 
         // Keycap button boxes (see-through smoked glass with gold halo)
         // [W]
@@ -1243,13 +1369,13 @@ public class WhereWindsMeetHUD implements Disposable {
         fillGlassPanel(kBaseX + 100f, kBaseY + 54f, 28f, 26f);
 
         // [SHIFT]
-        fillGlassPanel(kBaseX + 140f, kBaseY + 54f, 48f, 26f);
+        fillGlassPanel(kBaseX + 138f, kBaseY + 54f, 48f, 26f);
 
         // [J] (Jump / Double Jump)
         fillGlassPanel(kBaseX + 16f, kBaseY + 26f, 26f, 22f);
 
         // [E]
-        fillGlassPanel(kBaseX + 140f, kBaseY + 26f, 26f, 22f);
+        fillGlassPanel(kBaseX + 138f, kBaseY + 26f, 26f, 22f);
 
         // [M]
         fillGlassPanel(kBaseX + 44f, kBaseY, 26f, 20f);
@@ -1259,8 +1385,8 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     private void drawKeycapsBorders(float w, float h) {
-        float kBaseX = w - 240f;
-        float kBaseY = 16f;
+        float kBaseX = currentLayout.keyBaseX;
+        float kBaseY = currentLayout.keyBaseY;
 
         float breathe = easedPulse(1.6f);
         shapeRenderer.setColor(panelBorder.r, panelBorder.g, panelBorder.b, 0.78f + 0.17f * breathe);
@@ -1273,13 +1399,13 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.rect(kBaseX + 100f, kBaseY + 54f, 28f, 26f);
 
         // [SHIFT]
-        shapeRenderer.rect(kBaseX + 140f, kBaseY + 54f, 48f, 26f);
+        shapeRenderer.rect(kBaseX + 138f, kBaseY + 54f, 48f, 26f);
 
         // [J] (Jump / Double Jump)
         shapeRenderer.rect(kBaseX + 16f, kBaseY + 26f, 26f, 22f);
 
         // [E]
-        shapeRenderer.rect(kBaseX + 140f, kBaseY + 26f, 26f, 22f);
+        shapeRenderer.rect(kBaseX + 138f, kBaseY + 26f, 26f, 22f);
 
         // [M]
         shapeRenderer.rect(kBaseX + 44f, kBaseY, 26f, 20f);
@@ -1289,8 +1415,8 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     private void drawKeycapsText(float w, float h) {
-        float kBaseX = w - 240f;
-        float kBaseY = 16f;
+        float kBaseX = currentLayout.keyBaseX;
+        float kBaseY = currentLayout.keyBaseY;
 
         // Button letter labels
         drawOutlined(fonts.keyFont, "W", kBaseX + 76f, kBaseY + 102f, goldAccent);
@@ -1298,23 +1424,25 @@ public class WhereWindsMeetHUD implements Disposable {
         drawOutlined(fonts.keyFont, "S", kBaseX + 77f, kBaseY + 72f, goldAccent);
         drawOutlined(fonts.keyFont, "D", kBaseX + 108f, kBaseY + 72f, goldAccent);
 
-        drawOutlined(fonts.keyFont, "SHIFT", kBaseX + 146f, kBaseY + 72f, goldAccent);
+        drawOutlined(fonts.keyFont, "SHIFT", kBaseX + 144f, kBaseY + 72f, goldAccent);
         drawOutlined(fonts.keyFont, "J", kBaseX + 25f, kBaseY + 42f, goldAccent);
-        drawOutlined(fonts.keyFont, "E", kBaseX + 149f, kBaseY + 42f, goldAccent);
+        drawOutlined(fonts.keyFont, "E", kBaseX + 147f, kBaseY + 42f, goldAccent);
         drawOutlined(fonts.keyFont, "M", kBaseX + 51f, kBaseY + 15f, goldAccent);
         drawOutlined(fonts.keyFont, "ESC", kBaseX + 118f, kBaseY + 15f, goldAccent);
 
         // Action sub-labels matching updated keybinds:
         drawOutlined(fonts.smallFont, "MOVE", kBaseX - 6f, kBaseY + 72f, Color.WHITE);
-        drawOutlined(fonts.smallFont, "SPRINT", kBaseX + 194f, kBaseY + 72f, Color.WHITE);
+        drawOutlined(fonts.smallFont, "SPRINT", kBaseX + 192f, kBaseY + 72f, Color.WHITE);
         drawOutlined(fonts.smallFont, "JUMP (2X)", kBaseX + 48f, kBaseY + 42f, Color.WHITE);
-        drawOutlined(fonts.smallFont, "INTERACT", kBaseX + 172f, kBaseY + 42f, Color.WHITE);
+        drawOutlined(fonts.smallFont, "INTERACT", kBaseX + 170f, kBaseY + 42f, Color.WHITE);
         drawOutlined(fonts.smallFont, "MAP", kBaseX + 75f, kBaseY + 15f, Color.WHITE);
         drawOutlined(fonts.smallFont, "PAUSE", kBaseX + 156f, kBaseY + 15f, Color.WHITE);
 
-        // Action Hints: Crouch, Attack, Gender, and Hide Parameters
-        drawOutlined(fonts.smallFont, "HOLD [J] AT WALL: CLIMB  |  [C] CROUCH  |  [F] ATTACK  |  [G] GENDER (M/F)  |  [P] PARAMETERS",
-            kBaseX - 170f, kBaseY - 2f, goldAccent);
+        // Action Hints: Crouch, Attack, Gender, and Hide Parameters (anchored within safe margins)
+        String hint = "HOLD [J] AT WALL: CLIMB  |  [C] CROUCH  |  [F] ATTACK  |  [G] GENDER (M/F)  |  [P] PARAMETERS";
+        glyphLayout.setText(fonts.smallFont, hint);
+        float hintX = w - currentLayout.safeMarginX - glyphLayout.width;
+        drawOutlined(fonts.smallFont, hint, hintX, currentLayout.hintLineY, goldAccent);
     }
 
     // ==========================================
@@ -1387,18 +1515,14 @@ public class WhereWindsMeetHUD implements Disposable {
     // TACTICAL MAP HUD BUTTON (Top-Right under Compass)
     // ========================================================
     private void drawTacticalMapButtonBg(float w, float h) {
-        float mbX = w - 215f;
-        float mbY = h - 230f;
-        float mbW = 195f;
-        float mbH = 34f;
-        fillGlassPanel(mbX, mbY, mbW, mbH);
+        fillGlassPanel(currentLayout.mapBtnX, currentLayout.mapBtnY, currentLayout.mapBtnW, currentLayout.mapBtnH);
     }
 
     private void drawTacticalMapButtonBorder(float w, float h) {
-        float mbX = w - 215f;
-        float mbY = h - 230f;
-        float mbW = 195f;
-        float mbH = 34f;
+        float mbX = currentLayout.mapBtnX;
+        float mbY = currentLayout.mapBtnY;
+        float mbW = currentLayout.mapBtnW;
+        float mbH = currentLayout.mapBtnH;
         strokeGlassBorder(mbX, mbY, mbW, mbH);
 
         float cLen = 7f;
@@ -1414,9 +1538,7 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     private void drawTacticalMapButtonText(float w, float h) {
-        float mbX = w - 215f;
-        float mbY = h - 230f;
-        drawOutlined(fonts.keyFont, "[M]  CAMPUS MAP", mbX + 20f, mbY + 24f, goldAccent);
+        drawOutlined(fonts.keyFont, "[M]  CAMPUS MAP", currentLayout.mapBtnX + 18f, currentLayout.mapBtnY + 23f, goldAccent);
     }
 
     // ==========================================
@@ -2293,10 +2415,10 @@ public class WhereWindsMeetHUD implements Disposable {
     // 4b. BOSS HEALTH BAR & COMBAT HUD
     // ==========================================
     private void renderBossHealthBar(bd.spark36.character.HelmetGoon goon, float w, float h) {
-        float bw = 500f;
+        float bw = currentLayout.bossW;
         float bh = 16f;
-        float bx = (w - bw) / 2f;
-        float by = h - 50f;
+        float bx = currentLayout.bossX;
+        float by = currentLayout.bossY + 18f;
 
         beginShapes(ShapeType.Filled);
         // Smoked glass panel behind boss bar (accommodates health and posture poise bars)
@@ -2381,10 +2503,10 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     private void renderBossChallengeDialogue(bd.spark36.character.HelmetGoon goon, float w, float h) {
-        float dw = 760f;
-        float dh = 72f;
-        float dx = (w - dw) / 2f;
-        float dy = 110f; // Positioned cleanly at lower-center cinematic subtitle zone
+        float dw = currentLayout.dialW;
+        float dh = currentLayout.dialH;
+        float dx = currentLayout.dialX;
+        float dy = currentLayout.dialY;
 
         beginShapes(ShapeType.Filled);
         fillGlassPanel(dx, dy, dw, dh);
@@ -2819,12 +2941,68 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     private void drawParametersHiddenPrompt(float w, float h) {
-        float bx = 36f;
-        float by = 36f;
+        float bx = currentLayout.checkX;
+        float by = currentLayout.checkY;
         fonts.keyFont.setColor(0f, 0f, 0f, 0.90f);
         fonts.keyFont.draw(spriteBatch, "[P] SHOW MISSION PARAMETERS", bx + 1f, by + 19f);
         fonts.keyFont.setColor(goldAccent);
         fonts.keyFont.draw(spriteBatch, "[P] SHOW MISSION PARAMETERS", bx, by + 20f);
+    }
+
+    /**
+     * Diagnostic debug overlay (toggle via F3 or Grave `):
+     * Draws safe margins in cyan, panel bounding boxes in green (or red on collision),
+     * and performs real-time collision detection across all active HUD panels.
+     */
+    private void drawDebugOverlay(HUDLayout l, float w, float h) {
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        shapeRenderer.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
+        shapeRenderer.begin(ShapeType.Line);
+
+        // 1. Safe Margin Boundary (Cyan)
+        shapeRenderer.setColor(0f, 0.9f, 1f, 0.85f);
+        shapeRenderer.rect(l.safeMarginX, l.safeMarginY, l.virtW - 2f * l.safeMarginX, l.virtH - 2f * l.safeMarginY);
+
+        // 2. Active Panel Rectangles
+        com.badlogic.gdx.math.Rectangle rCard = new com.badlogic.gdx.math.Rectangle(l.cardX, l.cardY, l.cardW, l.cardH);
+        com.badlogic.gdx.math.Rectangle rCheck = parametersVisible ? new com.badlogic.gdx.math.Rectangle(l.checkX, l.checkY, l.checkW, l.checkH) : null;
+        com.badlogic.gdx.math.Rectangle rCompass = new com.badlogic.gdx.math.Rectangle(l.pillX, l.compassCy - l.compassR - 10f, l.virtW - l.safeMarginX - l.pillX, 2f * l.compassR + 20f);
+        com.badlogic.gdx.math.Rectangle rMapBtn = (!isMapOpen && !isPauseMenuOpen && activeModalEntry == null) ?
+            new com.badlogic.gdx.math.Rectangle(l.mapBtnX, l.mapBtnY, l.mapBtnW, l.mapBtnH) : null;
+        com.badlogic.gdx.math.Rectangle rKeycaps = new com.badlogic.gdx.math.Rectangle(l.keyBaseX - 10f, l.hintLineY - 8f, l.virtW - l.safeMarginX - (l.keyBaseX - 10f), l.keyClusterH + 40f);
+        com.badlogic.gdx.math.Rectangle rBoss = (helmetGoon != null && helmetGoon.getState() != bd.spark36.character.HelmetGoon.State.STANDOFF && !helmetGoon.isKnockedOut()) ?
+            new com.badlogic.gdx.math.Rectangle(l.bossX - 14f, l.bossY - 34f, l.bossW + 28f, l.bossH + 54f) : null;
+        com.badlogic.gdx.math.Rectangle rDial = (helmetGoon != null && helmetGoon.isChallenging()) ?
+            new com.badlogic.gdx.math.Rectangle(l.dialX, l.dialY, l.dialW, l.dialH) : null;
+
+        com.badlogic.gdx.math.Rectangle[] panels = {rCard, rCheck, rCompass, rMapBtn, rKeycaps, rBoss, rDial};
+
+        int overlaps = 0;
+        for (int i = 0; i < panels.length; i++) {
+            if (panels[i] == null) continue;
+            boolean hasOverlap = false;
+            for (int j = i + 1; j < panels.length; j++) {
+                if (panels[j] == null) continue;
+                if (panels[i].overlaps(panels[j])) {
+                    hasOverlap = true;
+                    overlaps++;
+                }
+            }
+            shapeRenderer.setColor(hasOverlap ? Color.RED : Color.GREEN);
+            shapeRenderer.rect(panels[i].x, panels[i].y, panels[i].width, panels[i].height);
+        }
+        shapeRenderer.end();
+
+        // 3. Status readout
+        spriteBatch.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
+        spriteBatch.begin();
+        fonts.smallFont.setColor(overlaps == 0 ? Color.GREEN : Color.RED);
+        String status = String.format("HUD DEBUG OVERLAY | Res: %dx%d (Virtual: %.0fx%.0f, Scale: %.2f) | SafeMargin: 3.5%% | Overlaps: %d (%s) | [F3] Toggle",
+            Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), l.virtW, l.virtH, uiScale, overlaps, overlaps == 0 ? "PASSED" : "COLLISION DETECTED");
+        fonts.smallFont.draw(spriteBatch, status, l.safeMarginX, l.virtH - 12f);
+        spriteBatch.end();
     }
 
 }

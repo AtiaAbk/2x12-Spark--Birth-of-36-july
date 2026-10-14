@@ -47,12 +47,6 @@ public class AtmosphereRenderer implements Disposable {
     private final float[] birdPhase = new float[BIRD_COUNT]; // wing flap phase
     private final float[] birdSize = new float[BIRD_COUNT];
 
-    // ── Floating Landmark Labels ───────────────────────────────────────
-    private final Vector3 curzonWorldPos   = new Vector3(0f, 42.0f, -22.5f);
-    private final Vector3 libraryWorldPos  = new Vector3(28f, 16.0f, 10f);
-    private final Vector3 tscWorldPos      = new Vector3(-56f, 12.0f, 8f);
-    private final Vector3 screenCoords     = new Vector3();
-
     private float time = 0f;
     private int screenW, screenH;
 
@@ -208,47 +202,6 @@ public class AtmosphereRenderer implements Disposable {
         time += delta;
         updateClouds(delta);
         updateBirds(delta);
-
-        // Floating In-World Landmark Labels
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        renderFloatingLabel(camera, curzonWorldPos, "Curzon Hall", w, h);
-        renderFloatingLabel(camera, libraryWorldPos, "Central Library", w, h);
-        renderFloatingLabel(camera, tscWorldPos, "TSC", w, h);
-    }
-
-    private void renderFloatingLabel(Camera camera, Vector3 worldPos, String text, int w, int h) {
-        screenCoords.set(worldPos);
-        camera.project(screenCoords);
-        if (screenCoords.z > 0 && screenCoords.z < 1.0f) {
-            float lx = screenCoords.x;
-            float ly = screenCoords.y;
-            if (lx >= 50 && lx <= w - 50 && ly >= 50 && ly <= h - 50) {
-                // Distance fade: closer = more visible
-                float depthFade = (float) Math.pow(1f - screenCoords.z, 2.0);
-                GlyphLayout layout = new GlyphLayout(fonts.smallFont, text);
-                float pw = layout.width + 28f;
-                float ph = 24f;
-
-                spriteBatch.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
-                spriteBatch.begin();
-                // Backdrop pill
-                // (drawn separately via shapeRenderer before spriteBatch)
-                spriteBatch.end();
-
-                shapeRenderer.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
-                shapeRenderer.begin(ShapeType.Filled);
-                shapeRenderer.setColor(0.05f, 0.06f, 0.08f, 0.72f * depthFade);
-                shapeRenderer.rect(lx - pw / 2f, ly - ph / 2f, pw, ph);
-                shapeRenderer.end();
-
-                spriteBatch.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
-                spriteBatch.begin();
-                fonts.smallFont.setColor(1f, 0.90f, 0.65f, depthFade * 0.90f);
-                fonts.smallFont.draw(spriteBatch, text, lx - layout.width / 2f, ly + layout.height / 2f);
-                spriteBatch.end();
-            }
-        }
     }
 
     @Override

@@ -56,14 +56,14 @@ public class FontRenderer implements Disposable {
                 String chars = EXTENDED_CHARS;
 
                 // Title: large bold for modal titles and headers
-                p.size = 26;
+                p.size = 28;
                 p.characters = chars;
                 p.color = Color.WHITE;
-                p.borderWidth = 1.4f;
-                p.borderColor = new Color(0f, 0f, 0f, 0.8f);
+                p.borderWidth = 1.5f;
+                p.borderColor = new Color(0f, 0f, 0f, 0.90f);
                 p.shadowOffsetX = 1;
                 p.shadowOffsetY = 1;
-                p.shadowColor = new Color(0f, 0f, 0f, 0.6f);
+                p.shadowColor = new Color(0f, 0f, 0f, 0.75f);
                 titleFont = boldGen.generateFont(p);
 
                 // Header: medium bold for quest cards and titles
@@ -72,10 +72,10 @@ public class FontRenderer implements Disposable {
                 p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
                 p.genMipMaps = true;
                 p.characters = chars;
-                p.size = 18;
+                p.size = 20;
                 p.color = Color.WHITE;
-                p.borderWidth = 1.1f;
-                p.borderColor = new Color(0f, 0f, 0f, 0.7f);
+                p.borderWidth = 1.2f;
+                p.borderColor = new Color(0f, 0f, 0f, 0.85f);
                 headerFont = boldGen.generateFont(p);
 
                 // Body: regular text for narrative stories
@@ -84,11 +84,11 @@ public class FontRenderer implements Disposable {
                 p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
                 p.genMipMaps = true;
                 p.characters = chars;
-                p.size = 15;
-                p.color = new Color(0.94f, 0.94f, 0.96f, 1f);
+                p.size = 16;
+                p.color = Color.WHITE;
                 p.shadowOffsetX = 1;
                 p.shadowOffsetY = 1;
-                p.shadowColor = new Color(0f, 0f, 0f, 0.5f);
+                p.shadowColor = new Color(0f, 0f, 0f, 0.80f);
                 bodyFont = regularGen.generateFont(p);
 
                 // Small: UI badges, distance counters, sub-labels
@@ -97,8 +97,11 @@ public class FontRenderer implements Disposable {
                 p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
                 p.genMipMaps = true;
                 p.characters = chars;
-                p.size = 12;
-                p.color = new Color(0.90f, 0.90f, 0.92f, 0.95f);
+                p.size = 14;
+                p.color = new Color(0.96f, 0.96f, 0.98f, 1f);
+                p.shadowOffsetX = 1;
+                p.shadowOffsetY = 1;
+                p.shadowColor = new Color(0f, 0f, 0f, 0.80f);
                 smallFont = regularGen.generateFont(p);
 
                 // Prompt: interactive key prompts e.g. "[E] Inspect Memorial"

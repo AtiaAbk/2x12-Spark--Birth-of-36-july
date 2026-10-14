@@ -57,8 +57,12 @@ public class DesktopLauncher {
         // Native Retina Display 1:1 Pixel HDPI Mode for razor-sharp rendering on macOS
         configuration.setHdpiMode(com.badlogic.gdx.graphics.glutils.HdpiMode.Pixels);
 
-        // Launch directly in Fullscreen mode as requested by user
-        if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.windowed"))) {
+        // Launch mode: windowed with optional custom dimensions or fullscreen
+        int customW = Integer.getInteger("bd.spark36.width", 0);
+        int customH = Integer.getInteger("bd.spark36.height", 0);
+        if (customW > 0 && customH > 0) {
+            configuration.setWindowedMode(customW, customH);
+        } else if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.windowed"))) {
             configuration.setWindowedMode(1440, 900);
         } else {
             try {
