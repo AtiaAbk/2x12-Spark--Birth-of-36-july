@@ -42,7 +42,9 @@ screenshots/fix02/02_fixed_spawn.png
 screenshots/fix02/02_fixed_wing_bay.png
 screenshots/fix02/02_testcard_centre_window.png
 screenshots/fix02/02_testcard_wing_bay.png
+screenshots/fix02/03_3d_openings_closeup.png
 screenshots/fix02/03_3d_openings_side.png
+screenshots/fix02/03_3d_openings_spawn.png
 screenshots/helmet_goon_duel.png
 screenshots/spark36_congratulations_toast_verified.png
 screenshots/spark36_female_sitting_verified.png
