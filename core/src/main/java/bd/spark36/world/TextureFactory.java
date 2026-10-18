@@ -54,6 +54,7 @@ public class TextureFactory implements Disposable {
     public final Texture modernistConcrete;
     public final Texture canteenTinRoof;
     public final Texture mapVisualTarget;
+    public final Texture debugOrientationTestCard;
 
     public TextureFactory() {
         brickPavement = createBrickPavement();
@@ -92,6 +93,7 @@ public class TextureFactory implements Disposable {
         modernistConcrete = createModernistConcrete();
         canteenTinRoof = createCanteenTinRoof();
         mapVisualTarget = createMapVisualTarget();
+        debugOrientationTestCard = createDebugOrientationTestCard();
 
         textures.addAll(brickPavement, curzonBrick, lawnGrass, treeBark,
                         foliage, krishnachuraBlossom, leafClump, blossomClump, whiteBlossomClump,
@@ -100,7 +102,7 @@ public class TextureFactory implements Disposable {
                         dirtPath, lightBeam, rockSurface, bambooCulm, bambooFoliage,
                         bushFoliage, weatheredStone, curzonWater, waterRipple,
                         backpackFabric, studentJacket, movementBanner, bdFlag, aparajeyoStone,
-                        asphaltRoad, modernistConcrete, canteenTinRoof, mapVisualTarget);
+                        asphaltRoad, modernistConcrete, canteenTinRoof, mapVisualTarget, debugOrientationTestCard);
     }
 
     private Texture createBrickPavement() {
@@ -2487,6 +2489,137 @@ public class TextureFactory implements Disposable {
         tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         pix.dispose();
         return tex;
+    }
+
+    /**
+     * Debug Orientation Test Card (Fix Pack 02)
+     * Provides an unambiguous, asymmetric visual reference to test UV mapping,
+     * winding order, and texture orientation on 3D meshes.
+     * Features:
+     *  - Corner markers: Top-Left (RED), Top-Right (GREEN), Bottom-Left (BLUE), Bottom-Right (YELLOW)
+     *  - Large asymmetric letter 'F' in the center
+     *  - Upward pointing arrow with "UP" indicator
+     *  - Explicit "TOP", "BOT", "LEFT", "RIGHT" boundary text
+     *  - Fine 32px alignment grid
+     */
+    private Texture createDebugOrientationTestCard() {
+        int w = 512, h = 512;
+        Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
+
+        // 1. Dark slate background
+        pix.setColor(0.10f, 0.12f, 0.16f, 1f);
+        pix.fill();
+
+        // 2. Alignment grid
+        pix.setColor(0.18f, 0.22f, 0.28f, 1f);
+        for (int x = 0; x < w; x += 32) {
+            pix.drawLine(x, 0, x, h);
+        }
+        for (int y = 0; y < h; y += 32) {
+            pix.drawLine(0, y, w, y);
+        }
+
+        // Center crosshairs
+        pix.setColor(0.35f, 0.40f, 0.50f, 1f);
+        pix.drawLine(w / 2, 0, w / 2, h);
+        pix.drawLine(0, h / 2, w, h / 2);
+
+        // 3. Four Distinct Colored Corner Markers (80x80 px)
+        // Top-Left: RED (0,0 in Pixmap)
+        pix.setColor(0.95f, 0.15f, 0.15f, 1f);
+        pix.fillRectangle(0, 0, 80, 80);
+
+        // Top-Right: GREEN (w-80, 0)
+        pix.setColor(0.15f, 0.90f, 0.25f, 1f);
+        pix.fillRectangle(w - 80, 0, 80, 80);
+
+        // Bottom-Left: BLUE (0, h-80)
+        pix.setColor(0.15f, 0.40f, 0.95f, 1f);
+        pix.fillRectangle(0, h - 80, 80, 80);
+
+        // Bottom-Right: YELLOW (w-80, h-80)
+        pix.setColor(0.95f, 0.85f, 0.15f, 1f);
+        pix.fillRectangle(w - 80, h - 80, 80, 80);
+
+        // White perimeter border (6px)
+        pix.setColor(Color.WHITE);
+        for (int b = 0; b < 6; b++) {
+            pix.drawRectangle(b, b, w - 2 * b, h - 2 * b);
+        }
+
+        // 4. Large Asymmetric Center Letter 'F' (White with dark drop shadow)
+        int cx = w / 2;
+        int cy = h / 2;
+
+        // Shadow
+        pix.setColor(0f, 0f, 0f, 0.6f);
+        pix.fillRectangle(cx - 96, cy - 116, 36, 240);
+        pix.fillRectangle(cx - 96, cy - 116, 150, 40);
+        pix.fillRectangle(cx - 96, cy - 16, 95, 36);
+
+        // White letter 'F'
+        pix.setColor(1f, 1f, 1f, 1f);
+        pix.fillRectangle(cx - 100, cy - 120, 36, 240); // vertical stem
+        pix.fillRectangle(cx - 100, cy - 120, 150, 40); // top bar
+        pix.fillRectangle(cx - 100, cy - 20, 95, 36);   // middle bar
+
+        // 5. Directional Arrow Pointing UP (towards y = 0, Pixmap Top)
+        pix.setColor(1.0f, 0.82f, 0.15f, 1f);
+        // Vertical shaft
+        pix.fillRectangle(cx + 80, cy - 10, 24, 130);
+        // Arrow head pointing towards top
+        for (int y = cy - 70; y <= cy - 10; y++) {
+            int halfSpan = (int) ((y - (cy - 70)) * 0.75f);
+            pix.drawLine(cx + 92 - halfSpan, y, cx + 92 + halfSpan, y);
+        }
+
+        // 6. Explicit text labels
+        drawPixelText(pix, "TOP", cx - 40, 24, 6, Color.WHITE);
+        drawPixelText(pix, "BOT", cx - 40, h - 50, 6, Color.WHITE);
+        drawPixelText(pix, "LEFT", 12, cy - 30, 5, Color.WHITE);
+        drawPixelText(pix, "RIGHT", w - 70, cy - 30, 5, Color.WHITE);
+        drawPixelText(pix, "UP", cx + 78, cy + 130, 4, new Color(1.0f, 0.82f, 0.15f, 1f));
+
+        Texture tex = new Texture(pix);
+        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        pix.dispose();
+        return tex;
+    }
+
+    private void drawPixelText(Pixmap pix, String text, int startX, int startY, int scale, Color color) {
+        pix.setColor(color);
+        int curX = startX;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            drawPixelChar(pix, c, curX, startY, scale);
+            curX += 6 * scale;
+        }
+    }
+
+    private void drawPixelChar(Pixmap pix, char c, int x, int y, int s) {
+        int[] rows;
+        switch (c) {
+            case 'T': rows = new int[]{0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100}; break;
+            case 'O': rows = new int[]{0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110}; break;
+            case 'P': rows = new int[]{0b11110, 0b10001, 0b10001, 0b11110, 0b10000, 0b10000, 0b10000}; break;
+            case 'B': rows = new int[]{0b11110, 0b10001, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110}; break;
+            case 'L': rows = new int[]{0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b11111}; break;
+            case 'E': rows = new int[]{0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b11111}; break;
+            case 'F': rows = new int[]{0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b10000}; break;
+            case 'R': rows = new int[]{0b11110, 0b10001, 0b10001, 0b11110, 0b10100, 0b10010, 0b10001}; break;
+            case 'I': rows = new int[]{0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b11111}; break;
+            case 'G': rows = new int[]{0b01110, 0b10001, 0b10000, 0b10111, 0b10001, 0b10001, 0b01110}; break;
+            case 'H': rows = new int[]{0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001}; break;
+            case 'U': rows = new int[]{0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110}; break;
+            default:  rows = new int[]{0, 0, 0, 0, 0, 0, 0}; break;
+        }
+        for (int r = 0; r < 7; r++) {
+            for (int col = 0; col < 5; col++) {
+                if (((rows[r] >> (4 - col)) & 1) == 1) {
+                    pix.fillRectangle(x + col * s, y + r * s, s, s);
+                }
+            }
+        }
     }
 
     @Override

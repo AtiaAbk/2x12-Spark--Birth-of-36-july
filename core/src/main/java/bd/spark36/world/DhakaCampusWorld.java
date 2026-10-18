@@ -1,7 +1,10 @@
 package bd.spark36.world;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Material;
@@ -102,8 +105,21 @@ public class DhakaCampusWorld implements Disposable {
     private final com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute shimmerDiffuse =
         ColorAttribute.createDiffuse(new com.badlogic.gdx.graphics.Color(0.55f, 0.82f, 0.95f, 0f));
 
+    // Facade opening materials & orientation debug test card
+    private final TextureFactory texturesRef;
+    public Material colonialWindowMat;
+    public Material teakDoorMat;
+    public Material grandPortalMat;
+    public Material porticoTripleWinMat;
+    public final Array<ModelInstance> wingDoors = new Array<>();
+    public final Array<ModelInstance> wingWindows = new Array<>();
+    public ModelInstance grandPortalInst;
+    public ModelInstance porticoTripleWinInst;
+    private boolean testCardActive = false;
+    public static boolean debugDrawNormals = "true".equalsIgnoreCase(System.getProperty("bd.spark36.showNormals"));
 
     public DhakaCampusWorld(TextureFactory textures) {
+        this.texturesRef = textures;
         environment = new Environment();
 
         // Warm daylight sun with rich, cinematic shadow contrast (prevents washed-out pastel)
@@ -315,7 +331,7 @@ public class DhakaCampusWorld implements Disposable {
             ColorAttribute.createEmissive(new Color(0.03f, 0.03f, 0.025f, 1f))
         );
 
-        Material colonialWindowMat = new Material(
+        colonialWindowMat = new Material(
             TextureAttribute.createDiffuse(textures.colonialWindow),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
@@ -323,7 +339,7 @@ public class DhakaCampusWorld implements Disposable {
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
-        Material teakDoorMat = new Material(
+        teakDoorMat = new Material(
             TextureAttribute.createDiffuse(textures.teakDoorTexture),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
@@ -331,7 +347,7 @@ public class DhakaCampusWorld implements Disposable {
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
-        Material grandPortalMat = new Material(
+        grandPortalMat = new Material(
             TextureAttribute.createDiffuse(textures.curzonGrandPortal),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
@@ -339,7 +355,7 @@ public class DhakaCampusWorld implements Disposable {
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
-        Material porticoTripleWinMat = new Material(
+        porticoTripleWinMat = new Material(
             TextureAttribute.createDiffuse(textures.curzonPorticoTripleWindow),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
@@ -736,12 +752,14 @@ public class DhakaCampusWorld implements Disposable {
             door.transform.setTranslation(ax, 3.25f, fz);
             instances.add(door);
             shadowExclusions.add(door);
+            wingDoors.add(door);
 
             // Upper floor: Stately colonial glazed window with pointed cusped arch and stone sill
             ModelInstance win = new ModelInstance(archUpperWindow);
             win.transform.setTranslation(ax, 8.50f, fz);
             instances.add(win);
             shadowExclusions.add(win);
+            wingWindows.add(win);
 
             ModelInstance sill = new ModelInstance(archSill);
             sill.transform.setTranslation(ax, 6.40f, fz + 0.06f);
@@ -846,10 +864,10 @@ public class DhakaCampusWorld implements Disposable {
         // Grand Central Portal with Monumental Pointed Iwan Archway & Ceremonial Teak Gates
         Model grandPortalModel = mb.createBox(3.80f, 5.20f, 0.01f, grandPortalMat, attr);
         models.add(grandPortalModel);
-        ModelInstance portalInst = new ModelInstance(grandPortalModel);
-        portalInst.transform.setTranslation(0f, 3.20f, -20.59f);
-        instances.add(portalInst);
-        shadowExclusions.add(portalInst);
+        grandPortalInst = new ModelInstance(grandPortalModel);
+        grandPortalInst.transform.setTranslation(0f, 3.20f, -20.59f);
+        instances.add(grandPortalInst);
+        shadowExclusions.add(grandPortalInst);
 
         // Ceremonial Red Carpet on Central Steps leading up to Portal
         Model redCarpet = mb.createBox(3.8f, 0.04f, 4.6f, redCarpetMat, attr);
@@ -882,10 +900,10 @@ public class DhakaCampusWorld implements Disposable {
         // Triple Pointed Mughal Windows on Portico Upper Storey
         Model porticoTripleWinModel = mb.createBox(7.20f, 3.80f, 0.01f, porticoTripleWinMat, attr);
         models.add(porticoTripleWinModel);
-        ModelInstance ptwInst = new ModelInstance(porticoTripleWinModel);
-        ptwInst.transform.setTranslation(0f, 11.40f, -20.59f);
-        instances.add(ptwInst);
-        shadowExclusions.add(ptwInst);
+        porticoTripleWinInst = new ModelInstance(porticoTripleWinModel);
+        porticoTripleWinInst.transform.setTranslation(0f, 11.40f, -20.59f);
+        instances.add(porticoTripleWinInst);
+        shadowExclusions.add(porticoTripleWinInst);
 
         // Projecting carved stone Chhajja (sunshade eaves overhang) above Portico windows
         Model porticoChhajja = mb.createBox(9.6f, 0.22f, 1.2f, curzonTrimMat, attr);
@@ -2088,6 +2106,77 @@ public class DhakaCampusWorld implements Disposable {
             bike.transform.rotate(Vector3.Y, 75f);
             instances.add(bike);
         }
+
+        if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.testCard"))) {
+            setTestCardActive(true);
+        }
+    }
+
+    public void setTestCardActive(boolean active) {
+        this.testCardActive = active;
+        Texture winTex = active ? texturesRef.debugOrientationTestCard : texturesRef.colonialWindow;
+        Texture doorTex = active ? texturesRef.debugOrientationTestCard : texturesRef.teakDoorTexture;
+        Texture portalTex = active ? texturesRef.debugOrientationTestCard : texturesRef.curzonGrandPortal;
+        Texture tripleTex = active ? texturesRef.debugOrientationTestCard : texturesRef.curzonPorticoTripleWindow;
+
+        for (ModelInstance d : wingDoors) {
+            d.materials.get(0).set(TextureAttribute.createDiffuse(doorTex));
+        }
+        for (ModelInstance w : wingWindows) {
+            w.materials.get(0).set(TextureAttribute.createDiffuse(winTex));
+        }
+        if (grandPortalInst != null) {
+            grandPortalInst.materials.get(0).set(TextureAttribute.createDiffuse(portalTex));
+        }
+        if (porticoTripleWinInst != null) {
+            porticoTripleWinInst.materials.get(0).set(TextureAttribute.createDiffuse(tripleTex));
+        }
+        Gdx.app.log("DhakaCampusWorld", "Debug orientation test card active=" + active + " (applied to " + wingDoors.size + " doors, " + wingWindows.size + " windows)");
+    }
+
+    public boolean isTestCardActive() {
+        return testCardActive;
+    }
+
+    public void renderDebugOpeningNormals(ShapeRenderer sr, com.badlogic.gdx.graphics.Camera cam) {
+        if (!debugDrawNormals) return;
+        sr.setProjectionMatrix(cam.combined);
+        sr.begin(ShapeRenderer.ShapeType.Line);
+
+        // Wing bays (door at y=3.25, win at y=8.50, z=-23.49)
+        float[] facadeBays = {
+            -41.6f, -36.4f, -31.2f, -26.0f, -20.8f, -15.6f, -10.4f,
+             10.4f,  15.6f,  20.8f,  26.0f,  31.2f,  36.4f,  41.6f
+        };
+        for (float bx : facadeBays) {
+            // Door outline (cyan)
+            sr.setColor(Color.CYAN);
+            sr.box(bx - 1.10f, 3.25f - 2.05f, -23.49f + 0.005f, 2.20f, 4.10f, 0.01f);
+            // Door normal (red line pointing +Z)
+            sr.setColor(Color.RED);
+            sr.line(bx, 3.25f, -23.49f, bx, 3.25f, -22.49f);
+
+            // Upper Window outline (yellow)
+            sr.setColor(Color.YELLOW);
+            sr.box(bx - 1.10f, 8.50f - 2.05f, -23.49f + 0.005f, 2.20f, 4.10f, 0.01f);
+            // Window normal (red line)
+            sr.setColor(Color.RED);
+            sr.line(bx, 8.50f, -23.49f, bx, 8.50f, -22.49f);
+        }
+
+        // Grand portal (x=0, y=3.20, z=-20.59)
+        sr.setColor(Color.CYAN);
+        sr.box(-1.90f, 3.20f - 2.60f, -20.59f + 0.005f, 3.80f, 5.20f, 0.01f);
+        sr.setColor(Color.RED);
+        sr.line(0f, 3.20f, -20.59f, 0f, 3.20f, -19.59f);
+
+        // Portico triple window (x=0, y=11.40, z=-20.59)
+        sr.setColor(Color.YELLOW);
+        sr.box(-3.60f, 11.40f - 1.90f, -20.59f + 0.005f, 7.20f, 3.80f, 0.01f);
+        sr.setColor(Color.RED);
+        sr.line(0f, 11.40f, -20.59f, 0f, 11.40f, -19.59f);
+
+        sr.end();
     }
 
     public void update(float delta) {

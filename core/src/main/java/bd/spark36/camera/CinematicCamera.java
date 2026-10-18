@@ -44,6 +44,31 @@ public class CinematicCamera {
     private final Vector3 targetFocus = new Vector3();
     private final Vector3 currentLookAt = new Vector3();
 
+    // Debug & Inspection Viewpoint Override
+    private boolean fixedView = false;
+    private final Vector3 fixedPos = new Vector3();
+    private final Vector3 fixedLookAt = new Vector3();
+
+    public void setFixedView(float posX, float posY, float posZ, float targetX, float targetY, float targetZ) {
+        this.fixedView = true;
+        this.fixedPos.set(posX, posY, posZ);
+        this.fixedLookAt.set(targetX, targetY, targetZ);
+        this.currentCameraPos.set(fixedPos);
+        this.currentLookAt.set(fixedLookAt);
+        this.camera.position.set(fixedPos);
+        this.camera.up.set(Vector3.Y);
+        this.camera.lookAt(fixedLookAt);
+        this.camera.update();
+    }
+
+    public void clearFixedView() {
+        this.fixedView = false;
+    }
+
+    public boolean isFixedView() {
+        return fixedView;
+    }
+
     // ─── Camera Bob ───────────────────────────────────────────────────
     private float bobTime = 0f;
     private float bobAmplitude = 0.045f;  // 4.5cm vertical bob
@@ -99,6 +124,14 @@ public class CinematicCamera {
 
     public void update(float delta, Vector3 playerPos, boolean inputEnabled,
                        boolean isMoving, boolean isSprinting, float headingDeg) {
+        if (fixedView) {
+            camera.position.set(fixedPos);
+            camera.up.set(Vector3.Y);
+            camera.lookAt(fixedLookAt);
+            camera.update();
+            return;
+        }
+
         // 1. Mouse/Trackpad rotation
         boolean testMode = System.getProperty("bd.spark36.testScreenshot") != null ||
                            System.getProperty("bd.spark36.testHeroScreenshot") != null ||

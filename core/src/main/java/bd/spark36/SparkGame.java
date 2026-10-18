@@ -104,7 +104,9 @@ public class SparkGame extends ApplicationAdapter {
              System.getProperty("bd.spark36.testPondScreenshot") != null ||
              System.getProperty("bd.spark36.testPauseScreenshot") != null ||
              System.getProperty("bd.spark36.testCongratulations") != null ||
-             System.getProperty("bd.spark36.testVictory") != null)) {
+             System.getProperty("bd.spark36.testVictory") != null ||
+             System.getProperty("bd.spark36.baseline") != null ||
+             System.getProperty("bd.spark36.testCard") != null)) {
             startGameplay();
         }
     }
@@ -618,6 +620,9 @@ public class SparkGame extends ApplicationAdapter {
         modelBatch.end();
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
 
+        // Debug visualization of opening bounding boxes & surface normals
+        world.renderDebugOpeningNormals(shapeRenderer, camera.getCamera());
+
         // 4. Atmospheric overlays (labels, god rays) — inside FBO for bloom
         atmosphere.renderAtmosphereOverlays(camera.getCamera(), delta, screenW, screenH);
 
@@ -665,6 +670,17 @@ public class SparkGame extends ApplicationAdapter {
         // F12 Screenshot key
         if (Gdx.input.isKeyJustPressed(Input.Keys.F12)) {
             takeScreenshot("spark36_" + System.currentTimeMillis());
+        }
+
+        // F4 or O: Toggle Orientation Test Card on facade elements
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F4) || Gdx.input.isKeyJustPressed(Input.Keys.O)) {
+            world.setTestCardActive(!world.isTestCardActive());
+        }
+
+        // F3: Toggle Opening Outlines and Normal Vectors
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
+            DhakaCampusWorld.debugDrawNormals = !DhakaCampusWorld.debugDrawNormals;
+            Gdx.app.log("SparkGame", "Debug Draw Normals toggled: " + DhakaCampusWorld.debugDrawNormals);
         }
 
         // Automated visual verification support
@@ -855,6 +871,20 @@ public class SparkGame extends ApplicationAdapter {
                 player.setHeadingDegrees(45f);
                 camera.setAngles(225f, -4f);
                 camera.setDistance(5.0f);
+            } else if ("curzon_centre_window".equalsIgnoreCase(viewpoint)) {
+                camera.setFixedView(0f, 11.40f, -14.0f, 0f, 11.40f, -20.59f);
+            } else if ("curzon_centre_window_back".equalsIgnoreCase(viewpoint)) {
+                camera.setFixedView(0f, 11.40f, -24.0f, 0f, 11.40f, -20.59f);
+            } else if ("curzon_wing_bay".equalsIgnoreCase(viewpoint)) {
+                camera.setFixedView(-15.6f, 5.87f, -17.5f, -15.6f, 5.87f, -23.49f);
+            } else if ("curzon_wing_bay_back".equalsIgnoreCase(viewpoint)) {
+                camera.setFixedView(-15.6f, 5.87f, -26.5f, -15.6f, 5.87f, -23.49f);
+            } else if ("curzon_side_angle".equalsIgnoreCase(viewpoint)) {
+                camera.setFixedView(-19.5f, 4.20f, -19.0f, -15.6f, 4.20f, -23.49f);
+            } else if ("curzon_grand_portal".equalsIgnoreCase(viewpoint)) {
+                camera.setFixedView(0f, 3.20f, -15.0f, 0f, 3.20f, -20.59f);
+            } else if ("curzon_grand_portal_back".equalsIgnoreCase(viewpoint)) {
+                camera.setFixedView(0f, 3.20f, -23.5f, 0f, 3.20f, -20.59f);
             }
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
@@ -882,9 +912,12 @@ public class SparkGame extends ApplicationAdapter {
                     flipped.drawPixel(x, y, pixmap.getPixel(x, h - y - 1));
                 }
             }
-            com.badlogic.gdx.files.FileHandle file = Gdx.files.local("screenshots/" + name + ".png");
-            if (!file.parent().exists()) {
-                file = Gdx.files.local("assets/screenshots/" + name + ".png");
+            String cleanName = name.endsWith(".png") ? name.substring(0, name.length() - 4) : name;
+            com.badlogic.gdx.files.FileHandle file;
+            if (cleanName.startsWith("assets/")) {
+                file = Gdx.files.local(cleanName + ".png");
+            } else {
+                file = Gdx.files.local("assets/screenshots/" + cleanName + ".png");
             }
             if (!file.parent().exists()) {
                 file.parent().mkdirs();
