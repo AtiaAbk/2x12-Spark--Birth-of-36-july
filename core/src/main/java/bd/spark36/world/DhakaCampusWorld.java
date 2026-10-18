@@ -28,6 +28,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
+import bd.spark36.world.landmarks.OpeningBuilder;
 
 /**
  * 3D environment representing Dhaka University Curzon Hall campus with high-fidelity
@@ -739,11 +740,9 @@ public class DhakaCampusWorld implements Disposable {
         Material curzonWhiteDome = new Material(ColorAttribute.createDiffuse(new Color(0.96f, 0.95f, 0.91f, 1f)));
         Material curzonRedDome = new Material(ColorAttribute.createDiffuse(new Color(0.68f, 0.20f, 0.16f, 1f)));
 
-        // Window & Door components for the two-storey Curzon facade (Authentic Mughal-Gothic)
-        Model archUpperWindow = createUprightQuad(mb, 2.20f, 4.10f, colonialWindowMat, attr);
-        Model archGroundDoor = createUprightQuad(mb, 2.20f, 4.10f, teakDoorMat, attr);
-        Model archSill = mb.createBox(2.36f, 0.16f, 0.20f, curzonTrimMat, attr);
-        Model archCorbel = mb.createBox(0.18f, 0.26f, 0.14f, curzonTrimMat, attr);
+        // Window & Door components for the two-storey Curzon facade (Authentic 3D Mughal-Gothic with deep reveals)
+        Model archUpperWindow = OpeningBuilder.build3DWindowOpening(mb, 2.20f, 4.10f, 0.22f, 0.12f, curzonBrickMat, curzonTrimMat, colonialWindowMat, attr);
+        Model archGroundDoor = OpeningBuilder.build3DDoorOpening(mb, 2.20f, 4.10f, 0.22f, 0.14f, curzonBrickMat, curzonTrimMat, teakDoorMat, attr);
         Model floorBand = mb.createBox(92f, 0.18f, 0.20f, curzonTrimMat, attr);
 
         // Projecting Mughal Chhajja Sunshade Eaves and Brackets for Upper Windows
@@ -752,8 +751,6 @@ public class DhakaCampusWorld implements Disposable {
 
         models.add(archUpperWindow);
         models.add(archGroundDoor);
-        models.add(archSill);
-        models.add(archCorbel);
         models.add(floorBand);
         models.add(winChhajjaSlab);
         models.add(winChhajjaBracket);
@@ -767,31 +764,19 @@ public class DhakaCampusWorld implements Disposable {
         for (float ax : facadeBays) {
             float fz = -23.46f;
 
-            // Ground floor: Authentic carved Burma teak wooden double door with brass knockers
+            // Ground floor: Authentic 3D carved Burma teak wooden double door with brass knockers & deep reveals
             ModelInstance door = new ModelInstance(archGroundDoor);
             door.transform.setTranslation(ax, 3.25f, fz);
             instances.add(door);
             shadowExclusions.add(door);
             wingDoors.add(door);
 
-            // Upper floor: Stately colonial glazed window with pointed cusped arch and stone sill
+            // Upper floor: Stately 3D colonial glazed window with pointed cusped arch, stone sill & corbels
             ModelInstance win = new ModelInstance(archUpperWindow);
             win.transform.setTranslation(ax, 8.50f, fz);
             instances.add(win);
             shadowExclusions.add(win);
             wingWindows.add(win);
-
-            ModelInstance sill = new ModelInstance(archSill);
-            sill.transform.setTranslation(ax, 6.40f, fz + 0.06f);
-            instances.add(sill);
-
-            // Decorative twin stone brackets supporting the window sill
-            ModelInstance corbL = new ModelInstance(archCorbel);
-            corbL.transform.setTranslation(ax - 0.70f, 6.24f, fz + 0.03f);
-            instances.add(corbL);
-            ModelInstance corbR = new ModelInstance(archCorbel);
-            corbR.transform.setTranslation(ax + 0.70f, 6.24f, fz + 0.03f);
-            instances.add(corbR);
 
             // Projecting Sandstone Chhajja Sunshade Eaves Overhang (Authentic Mughal Climate Architecture)
             ModelInstance chhajja = new ModelInstance(winChhajjaSlab);
@@ -882,7 +867,7 @@ public class DhakaCampusWorld implements Disposable {
         instances.add(bandInst);
 
         // Grand Central Portal with Monumental Pointed Iwan Archway & Ceremonial Teak Gates
-        Model grandPortalModel = createUprightQuad(mb, 3.80f, 5.20f, grandPortalMat, attr);
+        Model grandPortalModel = OpeningBuilder.build3DGrandPortal(mb, 3.80f, 5.20f, 0.50f, 0.18f, curzonTrimMat, grandPortalMat, attr);
         models.add(grandPortalModel);
         grandPortalInst = new ModelInstance(grandPortalModel);
         grandPortalInst.transform.setTranslation(0f, 3.20f, -20.56f);
@@ -917,8 +902,8 @@ public class DhakaCampusWorld implements Disposable {
         bRailR.transform.setTranslation(4.15f, 9.75f, -19.95f);
         instances.add(bRailR);
 
-        // Triple Pointed Mughal Windows on Portico Upper Storey
-        Model porticoTripleWinModel = createUprightQuad(mb, 7.20f, 3.80f, porticoTripleWinMat, attr);
+        // Triple Pointed Mughal Windows on Portico Upper Storey with colonnette piers & deep reveals
+        Model porticoTripleWinModel = OpeningBuilder.build3DPorticoTripleWindow(mb, 7.20f, 3.80f, 0.40f, 0.16f, curzonTrimMat, porticoTripleWinMat, attr);
         models.add(porticoTripleWinModel);
         porticoTripleWinInst = new ModelInstance(porticoTripleWinModel);
         porticoTripleWinInst.transform.setTranslation(0f, 11.40f, -20.56f);
@@ -2140,16 +2125,20 @@ public class DhakaCampusWorld implements Disposable {
         Texture tripleTex = active ? texturesRef.debugOrientationTestCard : texturesRef.curzonPorticoTripleWindow;
 
         for (ModelInstance d : wingDoors) {
-            d.materials.get(0).set(TextureAttribute.createDiffuse(doorTex));
+            int matIdx = d.materials.size - 1;
+            d.materials.get(matIdx).set(TextureAttribute.createDiffuse(doorTex));
         }
         for (ModelInstance w : wingWindows) {
-            w.materials.get(0).set(TextureAttribute.createDiffuse(winTex));
+            int matIdx = w.materials.size - 1;
+            w.materials.get(matIdx).set(TextureAttribute.createDiffuse(winTex));
         }
         if (grandPortalInst != null) {
-            grandPortalInst.materials.get(0).set(TextureAttribute.createDiffuse(portalTex));
+            int matIdx = grandPortalInst.materials.size - 1;
+            grandPortalInst.materials.get(matIdx).set(TextureAttribute.createDiffuse(portalTex));
         }
         if (porticoTripleWinInst != null) {
-            porticoTripleWinInst.materials.get(0).set(TextureAttribute.createDiffuse(tripleTex));
+            int matIdx = porticoTripleWinInst.materials.size - 1;
+            porticoTripleWinInst.materials.get(matIdx).set(TextureAttribute.createDiffuse(tripleTex));
         }
         Gdx.app.log("DhakaCampusWorld", "Debug orientation test card active=" + active + " (applied to " + wingDoors.size + " doors, " + wingWindows.size + " windows)");
     }

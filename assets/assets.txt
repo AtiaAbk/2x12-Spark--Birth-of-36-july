@@ -38,9 +38,11 @@ screenshots/fix02/01_testcard_grand_portal_front.png
 screenshots/fix02/01_testcard_wing_bay_back.png
 screenshots/fix02/01_testcard_wing_bay_front.png
 screenshots/fix02/02_fixed_centre_window.png
+screenshots/fix02/02_fixed_spawn.png
 screenshots/fix02/02_fixed_wing_bay.png
 screenshots/fix02/02_testcard_centre_window.png
 screenshots/fix02/02_testcard_wing_bay.png
+screenshots/fix02/03_3d_openings_side.png
 screenshots/helmet_goon_duel.png
 screenshots/spark36_congratulations_toast_verified.png
 screenshots/spark36_female_sitting_verified.png
