@@ -42,7 +42,7 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
     private final Array<Model> models = new Array<>();
     private final Array<ModelInstance> instances = new Array<>();
-    private final Array<BoundingBox> colliders = new Array<>();
+    private final java.util.List<float[]> colliders = new java.util.ArrayList<>();
 
     // Objectives:
     // 1. Collect water bottles from supply table
@@ -253,7 +253,6 @@ public class Level3PoliceEscalation implements CampaignLevel {
     @Override
     public void init(TextureFactory textures, PlayerController player, CinematicCamera camera) {
         this.world = new DhakaCampusWorld(textures);
-        this.crowd = new CampusCrowd(16, world.getColliders());
         this.overlayRenderer = new ShapeRenderer();
 
         // Thick hazy atmosphere (white CS gas haze)
@@ -290,15 +289,16 @@ public class Level3PoliceEscalation implements CampaignLevel {
             ModelInstance bi = new ModelInstance(barricade);
             bi.transform.setTranslation(p);
             instances.add(bi);
-            colliders.add(new BoundingBox(new Vector3(p.x - 2f, 0, p.z - 0.4f), new Vector3(p.x + 2f, 1.4f, p.z + 0.4f)));
+            colliders.add(new float[] { p.x - 2f, 0f, p.z - 0.4f, p.x + 2f, 1.4f, p.z + 0.4f });
         }
 
-        for (BoundingBox b : world.getColliders()) colliders.add(b);
+        for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
+        this.crowd = new CampusCrowd(16, player.getColliders());
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 
-        camera.setColliders(colliders);
+        camera.setColliders(player.getColliders());
         camera.setAngles(0f, -4f);
         camera.setDistance(4.5f);
     }
@@ -353,7 +353,7 @@ public class Level3PoliceEscalation implements CampaignLevel {
     }
 
     @Override
-    public Array<BoundingBox> getColliders() {
+    public java.util.List<float[]> getColliders() {
         return colliders;
     }
 
@@ -369,6 +369,16 @@ public class Level3PoliceEscalation implements CampaignLevel {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public DhakaCampusWorld getWorld() {
+        return world;
+    }
+
+    @Override
+    public CampusCrowd getCrowd() {
+        return crowd;
     }
 
     @Override

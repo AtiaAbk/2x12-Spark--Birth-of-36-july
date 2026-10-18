@@ -48,6 +48,11 @@ screenshots/fix02/03_3d_openings_spawn.png
 screenshots/fix02/04_secondary_dome.png
 screenshots/fix02/04_secondary_fixed_spawn.png
 screenshots/helmet_goon_duel.png
+screenshots/level_1_verified.png
+screenshots/level_2_verified.png
+screenshots/level_3_verified.png
+screenshots/level_4_verified.png
+screenshots/level_5_verified.png
 screenshots/spark36_congratulations_toast_verified.png
 screenshots/spark36_female_sitting_verified.png
 screenshots/spark36_female_verified.png

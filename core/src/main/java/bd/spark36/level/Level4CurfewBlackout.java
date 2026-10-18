@@ -39,7 +39,7 @@ public class Level4CurfewBlackout implements CampaignLevel {
 
     private final Array<Model> models = new Array<>();
     private final Array<ModelInstance> instances = new Array<>();
-    private final Array<BoundingBox> colliders = new Array<>();
+    private final java.util.List<float[]> colliders = new java.util.ArrayList<>();
 
     private ModelInstance apcInstance;
     private ModelInstance searchlightInstance;
@@ -266,7 +266,7 @@ public class Level4CurfewBlackout implements CampaignLevel {
         apcInstance = new ModelInstance(apcModel);
         apcInstance.transform.setTranslation(0f, 0f, 10f);
         instances.add(apcInstance);
-        colliders.add(new BoundingBox(new Vector3(-1.8f, 0, 6.5f), new Vector3(1.8f, 3.0f, 13.5f)));
+        colliders.add(new float[] { -1.8f, 0f, 6.5f, 1.8f, 3.0f, 13.5f });
 
         // Searchlight beam
         searchlightInstance = new ModelInstance(beamModel);
@@ -282,15 +282,15 @@ public class Level4CurfewBlackout implements CampaignLevel {
             ModelInstance sbi = new ModelInstance(sandbagModel);
             sbi.transform.setTranslation(p);
             instances.add(sbi);
-            colliders.add(new BoundingBox(new Vector3(p.x - 2.8f, 0, p.z - 0.4f), new Vector3(p.x + 2.8f, 1.3f, p.z + 0.4f)));
+            colliders.add(new float[] { p.x - 2.8f, 0f, p.z - 0.4f, p.x + 2.8f, 1.3f, p.z + 0.4f });
         }
 
-        for (BoundingBox b : world.getColliders()) colliders.add(b);
+        for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 
-        camera.setColliders(colliders);
+        camera.setColliders(player.getColliders());
         camera.setAngles(0f, -4f);
         camera.setDistance(4.5f);
     }
@@ -327,7 +327,7 @@ public class Level4CurfewBlackout implements CampaignLevel {
     }
 
     @Override
-    public Array<BoundingBox> getColliders() {
+    public java.util.List<float[]> getColliders() {
         return colliders;
     }
 
@@ -339,6 +339,11 @@ public class Level4CurfewBlackout implements CampaignLevel {
     @Override
     public boolean onPlayerAttack(PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
         return false;
+    }
+
+    @Override
+    public DhakaCampusWorld getWorld() {
+        return world;
     }
 
     @Override

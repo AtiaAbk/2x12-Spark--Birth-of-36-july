@@ -41,7 +41,7 @@ public class Level2StudentConfrontation implements CampaignLevel {
 
     private final Array<Model> barricadeModels = new Array<>();
     private final Array<ModelInstance> barricadeInstances = new Array<>();
-    private final Array<BoundingBox> colliders = new Array<>();
+    private final java.util.List<float[]> colliders = new java.util.ArrayList<>();
 
     // Objectives:
     // 1. Disarm Aggressor 1 (Raju Sculpture East)
@@ -231,7 +231,6 @@ public class Level2StudentConfrontation implements CampaignLevel {
     @Override
     public void init(TextureFactory textures, PlayerController player, CinematicCamera camera) {
         this.world = new DhakaCampusWorld(textures);
-        this.crowd = new CampusCrowd(12, world.getColliders());
 
         // Overcast, stormy monsoon environment
         environment = new Environment();
@@ -278,25 +277,26 @@ public class Level2StudentConfrontation implements CampaignLevel {
             ModelInstance bi = new ModelInstance(barricadeModel);
             bi.transform.setTranslation(bp);
             barricadeInstances.add(bi);
-            colliders.add(new BoundingBox(new Vector3(bp.x - 2.1f, 0, bp.z - 0.5f), new Vector3(bp.x + 2.1f, 1.4f, bp.z + 0.5f)));
+            colliders.add(new float[] { bp.x - 2.1f, 0f, bp.z - 0.5f, bp.x + 2.1f, 1.4f, bp.z + 0.5f });
         }
 
         // Place Medical Triage Tent near Arts Gate
         ModelInstance ti = new ModelInstance(tentModel);
         ti.transform.setTranslation(objectiveWaypoints[4]);
         barricadeInstances.add(ti);
-        colliders.add(new BoundingBox(new Vector3(objectiveWaypoints[4].x - 2.5f, 0, objectiveWaypoints[4].z - 2.5f),
-                                      new Vector3(objectiveWaypoints[4].x + 2.5f, 3.5f, objectiveWaypoints[4].z + 2.5f)));
+        colliders.add(new float[] { objectiveWaypoints[4].x - 2.5f, 0f, objectiveWaypoints[4].z - 2.5f,
+                                    objectiveWaypoints[4].x + 2.5f, 3.5f, objectiveWaypoints[4].z + 2.5f });
 
         // Combine colliders
-        for (BoundingBox b : world.getColliders()) {
+        for (float[] b : world.getColliders()) {
             colliders.add(b);
         }
         player.setExtraColliders(colliders);
+        this.crowd = new CampusCrowd(12, player.getColliders());
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 
-        camera.setColliders(colliders);
+        camera.setColliders(player.getColliders());
         camera.setAngles(0f, -4f);
         camera.setDistance(4.5f);
     }
@@ -365,7 +365,7 @@ public class Level2StudentConfrontation implements CampaignLevel {
     }
 
     @Override
-    public Array<BoundingBox> getColliders() {
+    public java.util.List<float[]> getColliders() {
         return colliders;
     }
 
@@ -416,6 +416,16 @@ public class Level2StudentConfrontation implements CampaignLevel {
             }
         }
         return false;
+    }
+
+    @Override
+    public DhakaCampusWorld getWorld() {
+        return world;
+    }
+
+    @Override
+    public CampusCrowd getCrowd() {
+        return crowd;
     }
 
     @Override

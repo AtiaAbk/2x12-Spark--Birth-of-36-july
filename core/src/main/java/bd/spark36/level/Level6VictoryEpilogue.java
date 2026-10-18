@@ -37,7 +37,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
 
     private final Array<Model> models = new Array<>();
     private final Array<ModelInstance> instances = new Array<>();
-    private final Array<BoundingBox> colliders = new Array<>();
+    private final java.util.List<float[]> colliders = new java.util.ArrayList<>();
 
     // Objectives:
     // 1. Lead the victory march through the liberated Curzon promenade gate
@@ -222,7 +222,6 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     @Override
     public void init(TextureFactory textures, PlayerController player, CinematicCamera camera) {
         this.world = new DhakaCampusWorld(textures);
-        this.crowd = new CampusCrowd(20, world.getColliders());
 
         // Radiant golden afternoon lighting ("36 July" triumphant warmth)
         goldenEnvironment = new Environment();
@@ -246,7 +245,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
         com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder pFlowers = mb.part("flowers", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, attr, marigoldMat);
         for (int i = 0; i < 16; i++) {
             float ang = i * 22.5f * com.badlogic.gdx.math.MathUtils.degreesToRadians;
-            pFlowers.cylinder(0.24f, 0.12f, 0.24f, 8, com.badlogic.gdx.math.MathUtils.cos(ang) * 0.85f, 0.65f, com.badlogic.gdx.math.MathUtils.sin(ang) * 0.85f);
+            pFlowers.box(com.badlogic.gdx.math.MathUtils.cos(ang) * 0.85f, 0.65f, com.badlogic.gdx.math.MathUtils.sin(ang) * 0.85f, 0.24f, 0.12f, 0.24f);
         }
         Model altarModel = mb.end();
         models.add(altarModel);
@@ -263,7 +262,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
         pBellFrame.box(0.9f, 4.2f, 0, 2.0f, 0.25f, 0.25f);
 
         com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder pBell = mb.part("bell", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, attr, bellBronze);
-        pBell.cone(0.85f, 1.1f, 0.85f, 16, 0.9f, 3.4f, 0);
+        pBell.box(0.9f, 3.4f, 0, 0.75f, 0.95f, 0.75f);
         Model bellModel = mb.end();
         models.add(bellModel);
 
@@ -271,12 +270,13 @@ public class Level6VictoryEpilogue implements CampaignLevel {
         bi.transform.setTranslation(waypoints[2]);
         instances.add(bi);
 
-        for (BoundingBox b : world.getColliders()) colliders.add(b);
+        for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
+        this.crowd = new CampusCrowd(20, player.getColliders());
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 
-        camera.setColliders(colliders);
+        camera.setColliders(player.getColliders());
         camera.setAngles(0f, -4f);
         camera.setDistance(4.5f);
     }
@@ -304,7 +304,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     }
 
     @Override
-    public Array<BoundingBox> getColliders() {
+    public java.util.List<float[]> getColliders() {
         return colliders;
     }
 
@@ -316,6 +316,16 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     @Override
     public boolean onPlayerAttack(PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
         return false;
+    }
+
+    @Override
+    public DhakaCampusWorld getWorld() {
+        return world;
+    }
+
+    @Override
+    public CampusCrowd getCrowd() {
+        return crowd;
     }
 
     @Override

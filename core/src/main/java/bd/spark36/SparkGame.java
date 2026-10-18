@@ -70,6 +70,7 @@ public class SparkGame extends ApplicationAdapter {
     private PostProcessor postProcessor;
     private ParticleSystem particleSystem;
     private bd.spark36.character.HelmetGoon helmetGoon;
+    private bd.spark36.level.LevelManager levelManager;
     private boolean attackHitProcessed = false;
     private float hitStopTimer = 0f;
     private boolean gameplayInitialized = false;
@@ -121,33 +122,30 @@ public class SparkGame extends ApplicationAdapter {
         modelBatch = new ModelBatch();
         shadowBatch = new ModelBatch(new DepthShaderProvider());
         textures = new TextureFactory();
-        world = new DhakaCampusWorld(textures);
-        memorials = new JulyMemorials();
         studentMesh = new StudentMesh(textures);
         player = new PlayerController();
-        player.setExtraColliders(world.getColliders());
-        crowd = new CampusCrowd(16, player.getColliders());
-        Gdx.app.log("SparkGame", "Crowd paths usable: " + crowd.usableEdgeCount() + " segments; blocked: " + crowd.blockedEdges());
+        camera = new CinematicCamera(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
+        atmosphere = new AtmosphereRenderer(fontRenderer);
+        hud = new WhereWindsMeetHUD(fontRenderer);
+        hud.setTextures(textures);
+
+        levelManager = new bd.spark36.level.LevelManager(textures, player, camera, hud);
+        int targetLevel = 1;
+        String levelProp = System.getProperty("bd.spark36.level");
+        if (levelProp != null) {
+            try {
+                targetLevel = Integer.parseInt(levelProp.trim());
+            } catch (Exception ignored) {}
+        }
+        levelManager.loadLevel(targetLevel);
+        syncLevelSubsystems();
+
         // Test hook: start somewhere other than the gate, e.g. -Dbd.spark36.startPos=4,41
         String startPos = System.getProperty("bd.spark36.startPos");
         if (startPos != null) {
             String[] xz = startPos.split(",");
             player.setPosition(Float.parseFloat(xz[0].trim()), 0f, Float.parseFloat(xz[1].trim()));
         }
-        camera = new CinematicCamera(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
-        camera.setColliders(player.getColliders());
-        Gdx.app.log("SparkGame", "Collision boxes: " + player.getColliders().length
-            + " (" + world.getColliders().size() + " generated from world geometry)");
-        atmosphere = new AtmosphereRenderer(fontRenderer);
-        hud = new WhereWindsMeetHUD(fontRenderer);
-        hud.setTextures(textures);
-
-        // Antagonist / Campus NPC (Campus Security in peaceful Level 1, Helmeted Aggressor in Arena Mode)
-        helmetGoon = new bd.spark36.character.HelmetGoon(textures);
-        helmetGoon.setRole(bd.spark36.level.LevelConfig.isCombatEnabled() ?
-            bd.spark36.character.HelmetGoon.Role.HELMETED_AGGRESSOR :
-            bd.spark36.character.HelmetGoon.Role.CAMPUS_SECURITY);
-        hud.setHelmetGoon(helmetGoon);
 
         // AAA post-processing pipeline (bloom + color grade + vignette + grain)
         postProcessor = new PostProcessor(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
@@ -158,9 +156,30 @@ public class SparkGame extends ApplicationAdapter {
         gameplayInitialized = true;
     }
 
+    private void syncLevelSubsystems() {
+        if (levelManager != null) {
+            bd.spark36.level.CampaignLevel active = levelManager.getActiveLevel();
+            if (active != null) {
+                if (active.getWorld() != null) world = active.getWorld();
+                if (active.getMemorials() != null) memorials = active.getMemorials();
+                if (active.getCrowd() != null) crowd = active.getCrowd();
+                if (active instanceof bd.spark36.level.Level1PeacefulCampus) {
+                    helmetGoon = ((bd.spark36.level.Level1PeacefulCampus) active).getCampusSecurity();
+                    hud.setHelmetGoon(helmetGoon);
+                } else {
+                    hud.setHelmetGoon(null);
+                }
+            }
+        }
+        if (world == null) world = new DhakaCampusWorld(textures);
+        if (memorials == null) memorials = new JulyMemorials();
+        if (crowd == null) crowd = new CampusCrowd(16, player.getColliders());
+    }
+
     /** Transitions from Main Menu to Peaceful Exploration Campaign */
     public void startGameplay() {
         initGameplay();
+        syncLevelSubsystems();
         if (helmetGoon != null) {
             helmetGoon.setRole(bd.spark36.level.LevelConfig.isCombatEnabled() ?
                 bd.spark36.character.HelmetGoon.Role.HELMETED_AGGRESSOR :
@@ -173,16 +192,12 @@ public class SparkGame extends ApplicationAdapter {
 
     /** Transitions from Main Menu to Arena Combat Mode */
     public void startArenaMode() {
-        bd.spark36.level.LevelConfig.reset(1, bd.spark36.level.LevelConfig.GameMode.ARENA);
+        bd.spark36.level.LevelConfig.reset(2, bd.spark36.level.LevelConfig.GameMode.ARENA);
         startGameplay();
-        if (helmetGoon != null) {
-            helmetGoon.reset(0f, 36.0f);
-            helmetGoon.startFightDirectly();
+        if (levelManager != null) {
+            levelManager.loadLevel(2);
+            syncLevelSubsystems();
         }
-        player.setPosition(0f, 0f, 39.5f);
-        player.setHeadingDegrees(180f);
-        camera.setAngles(0f, -6f);
-        camera.setDistance(4.2f);
     }
 
     /** Transitions from Gameplay back to Main Menu */
@@ -455,86 +470,69 @@ public class SparkGame extends ApplicationAdapter {
             Gdx.app.exit();
             return;
         } else if (exitAction == 3) {
-            // Replay Level 1
-            player.setPosition(0f, 0f, 49.4f);
-            player.resetCombat();
-            if (helmetGoon != null) helmetGoon.reset(0f, 36.0f);
-            memorials.reset();
-            hud.reset();
+            if (levelManager != null) {
+                if (levelManager.getActiveLevel() != null && levelManager.getActiveLevel().isLevelComplete()) {
+                    levelManager.nextLevel();
+                } else {
+                    levelManager.restartCurrentLevel();
+                }
+                syncLevelSubsystems();
+            } else {
+                player.setPosition(0f, 0f, 49.4f);
+                player.resetCombat();
+                if (helmetGoon != null) helmetGoon.reset(0f, 36.0f);
+                memorials.reset();
+                hud.reset();
+            }
             return;
         }
+
+        bd.spark36.level.CampaignLevel currentLevel = (levelManager != null) ? levelManager.getActiveLevel() : null;
+        DhakaCampusWorld activeWorld = (currentLevel != null && currentLevel.getWorld() != null) ? currentLevel.getWorld() : world;
+        JulyMemorials activeMemorials = (currentLevel != null && currentLevel.getMemorials() != null) ? currentLevel.getMemorials() : memorials;
+        CampusCrowd activeCrowd = (currentLevel != null && currentLevel.getCrowd() != null) ? currentLevel.getCrowd() : crowd;
 
         // Pass active boss position to player for smooth martial arts combat facing (Arena mode only)
         if (bd.spark36.level.LevelConfig.isCombatEnabled() && helmetGoon != null && !helmetGoon.isKnockedOut()) {
             player.setCombatTarget(helmetGoon.getPosition());
-        } else {
+        } else if (currentLevel == null || !currentLevel.isCombatEnabled()) {
             player.clearCombatTarget();
         }
 
         // 1. Update Game Logic
         boolean canMove = !hud.isModalOpen() && System.getProperty("bd.spark36.testHeroScreenshot") == null;
-        if (world.isNearPondGhat(player.getPosition()) && Gdx.input.isKeyJustPressed(Input.Keys.E) && !hud.isModalOpen()) {
-            boolean nextSit = !player.isSittingWater();
-            player.setSittingWater(nextSit);
-            if (nextSit) {
-                player.setPosition(0f, 0.18f, 17.2f);
+        if (Gdx.input.isKeyJustPressed(Input.Keys.E) && !hud.isModalOpen()) {
+            if (levelManager != null) {
+                levelManager.handleInteraction(player.getPosition());
+            } else if (activeWorld != null && activeWorld.isNearPondGhat(player.getPosition())) {
+                boolean nextSit = !player.isSittingWater();
+                player.setSittingWater(nextSit);
+                if (nextSit) {
+                    player.setPosition(0f, 0.18f, 17.2f);
+                }
             }
         }
         player.update(delta, camera.getYaw(), canMove);
-        crowd.update(delta, player.getPosition());
 
-        // Update Helmet Goon / Campus Security AI & combat simulation
-        if (helmetGoon != null) {
-            if (canMove) {
-                helmetGoon.update(delta, player);
-            }
+        if (levelManager != null) {
+            levelManager.update(delta, canMove);
+        } else {
+            if (activeCrowd != null) activeCrowd.update(delta, player.getPosition());
+            if (helmetGoon != null && canMove) helmetGoon.update(delta, player);
+            if (activeWorld != null) activeWorld.update(delta);
+            if (activeMemorials != null) activeMemorials.update(delta);
+        }
 
-            // Player combat attack resolution (active in Arena mode)
-            if (bd.spark36.level.LevelConfig.isCombatEnabled() && player.isAttacking()) {
-                float prog = player.getAttackProgress();
-                if (prog >= 0.40f && prog <= 0.68f && !attackHitProcessed) {
-                    attackHitProcessed = true;
-                    // Campus Peace Rule: Hitting an unarmed, innocent student results in immediate disqualification!
-                    boolean hitInnocent = crowd.checkHitByPlayer(player.getPosition(), player.getHeadingDegrees(), 2.2f);
-                    if (hitInnocent) {
-                        hud.setDisqualified(true, "VIOLATION: You struck an innocent campus student! Unprovoked violence against unarmed peers is strictly forbidden.");
-                    } else {
-                        // Martial Arts strike against Helmeted Aggressor
-                        float dstGoon = player.getPosition().dst(helmetGoon.getPosition());
-                        if (dstGoon <= 2.8f) {
-                            boolean isSweep = (player.getAttackCombo() == 5);
-                            boolean isKick = (player.getAttackCombo() == 3 || player.getAttackCombo() == 4);
-                            float dmg = isSweep ? 26f : (isKick ? 32f : 18f);
-                            hitStopTimer = isSweep ? 0.065f : (isKick ? 0.052f : 0.038f);
-                            if (helmetGoon.isWindingUp()) {
-                                camera.addShake(0.12f);
-                            } else {
-                                camera.addShake(isSweep ? 0.09f : (isKick ? 0.06f : 0.035f));
-                            }
-                            boolean knockout = helmetGoon.takeHitFromPlayer(dmg, isKick, isSweep, player.getHeadingDegrees());
-                            if (knockout) {
-                                camera.addShake(0.24f);
-                                hud.triggerVictory();
-                            }
-                        }
-                    }
-                }
-            } else {
-                attackHitProcessed = false;
-            }
-
-            // Check if player was knocked out (Arena mode only)
-            if (bd.spark36.level.LevelConfig.isCombatEnabled() && player.isKnockedOut() && !hud.isDefeated() && !hud.isModalOpen()) {
-                hud.setDefeated(true);
-            }
+        // Combat attack resolution
+        if (currentLevel != null && currentLevel.isCombatEnabled()) {
+            levelManager.handlePlayerAttack();
         }
 
         // Enhanced camera: pass movement state for bob + FOV push + shake
         camera.update(delta, player.getPosition(), canMove,
             player.isMoving(), player.isSprinting(), player.getHeadingDegrees());
-        world.update(delta);
-        memorials.update(delta);
-        hud.update(delta, player, memorials);
+
+        hud.update(delta, player, activeMemorials);
 
         // Update particles
         if (particleSystem != null) {
@@ -542,38 +540,43 @@ public class SparkGame extends ApplicationAdapter {
         }
 
         // 1b. SUN SHADOW PASS: depth-only render from the sun, centred a little ahead of the player
-        shadowForward.set(camera.getCamera().direction.x, 0f, camera.getCamera().direction.z).nor();
-        world.beginShadowPass(player.getPosition(), shadowForward);
-        shadowBatch.begin(world.getShadowCamera());
-        world.renderShadowCasters(shadowBatch);
-        studentMesh.render(
-            shadowBatch,
-            null,
-            player.getPosition(),
-            player.getHeadingDegrees(),
-            player.getWalkCycle(),
-            player.isMoving(),
-            player.isSprinting(),
-            player.isCrouching(),
-            player.isBlocking(),
-            player.isAttacking(),
-            player.getAttackCombo(),
-            player.getAttackProgress(),
-            player.isDodging(),
-            player.getDodgeProgress(),
-            player.getStaggerTimer(),
-            player.isSittingWater(),
-            player.getSitProgress(),
-            player.getGender()
-        );
-        crowd.render(shadowBatch, null, studentMesh);
-        if (helmetGoon != null) {
-            helmetGoon.render(shadowBatch, null);
+        if (activeWorld != null) {
+            shadowForward.set(camera.getCamera().direction.x, 0f, camera.getCamera().direction.z).nor();
+            activeWorld.beginShadowPass(player.getPosition(), shadowForward);
+            shadowBatch.begin(activeWorld.getShadowCamera());
+            if (currentLevel != null) {
+                currentLevel.renderShadow(shadowBatch);
+            } else {
+                activeWorld.renderShadowCasters(shadowBatch);
+                if (helmetGoon != null) helmetGoon.render(shadowBatch, null);
+            }
+            studentMesh.render(
+                shadowBatch,
+                null,
+                player.getPosition(),
+                player.getHeadingDegrees(),
+                player.getWalkCycle(),
+                player.isMoving(),
+                player.isSprinting(),
+                player.isCrouching(),
+                player.isBlocking(),
+                player.isAttacking(),
+                player.getAttackCombo(),
+                player.getAttackProgress(),
+                player.isDodging(),
+                player.getDodgeProgress(),
+                player.getStaggerTimer(),
+                player.isSittingWater(),
+                player.getSitProgress(),
+                player.getGender()
+            );
+            if (activeCrowd != null) {
+                activeCrowd.render(shadowBatch, null, studentMesh);
+            }
+            shadowBatch.end();
+            activeWorld.endShadowPass();
+            Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
         }
-        shadowBatch.end();
-        world.endShadowPass();
-        // ModelBatch leaves a higher texture unit active; SpriteBatch (HUD text) assumes unit 0
-        Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
 
         // 2. POST-PROCESSING: Begin FBO capture (replaces direct sky render)
         boolean ppActive = postProcessor != null && postProcessor.isValid();
@@ -591,11 +594,20 @@ public class SparkGame extends ApplicationAdapter {
         // 3. Render 3D World Pass (inside FBO if post-processing active)
         camera.resize(screenW, screenH);
         modelBatch.begin(camera.getCamera());
-        world.render(modelBatch);
-        memorials.render(modelBatch, world.getEnvironment());
+        com.badlogic.gdx.graphics.g3d.Environment activeEnv = (currentLevel != null && currentLevel.getEnvironment() != null) ?
+            currentLevel.getEnvironment() : ((activeWorld != null) ? activeWorld.getEnvironment() : null);
+
+        if (currentLevel != null) {
+            currentLevel.render3D(modelBatch, activeEnv);
+        } else if (activeWorld != null) {
+            activeWorld.render(modelBatch);
+            if (activeMemorials != null) activeMemorials.render(modelBatch, activeEnv);
+            if (helmetGoon != null) helmetGoon.render(modelBatch, activeEnv);
+        }
+
         studentMesh.render(
             modelBatch,
-            world.getEnvironment(),
+            activeEnv,
             player.getPosition(),
             player.getHeadingDegrees(),
             player.getWalkCycle(),
@@ -613,18 +625,21 @@ public class SparkGame extends ApplicationAdapter {
             player.getSitProgress(),
             player.getGender()
         );
-        crowd.render(modelBatch, world.getEnvironment(), studentMesh);
-        if (helmetGoon != null) {
-            helmetGoon.render(modelBatch, world.getEnvironment());
+        if (activeCrowd != null) {
+            activeCrowd.render(modelBatch, activeEnv, studentMesh);
         }
         modelBatch.end();
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
 
-        // Debug visualization of opening bounding boxes & surface normals
-        world.renderDebugOpeningNormals(shapeRenderer, camera.getCamera());
+        if (activeWorld != null) {
+            activeWorld.renderDebugOpeningNormals(shapeRenderer, camera.getCamera());
+        }
 
         // 4. Atmospheric overlays (labels, god rays) — inside FBO for bloom
         atmosphere.renderAtmosphereOverlays(camera.getCamera(), delta, screenW, screenH);
+        if (currentLevel != null) {
+            currentLevel.renderOverlays(camera, delta, screenW, screenH);
+        }
 
         // 5. End FBO capture and apply post-processing chain to screen
         if (ppActive) {
@@ -638,7 +653,7 @@ public class SparkGame extends ApplicationAdapter {
         }
 
         // 7. 2D HUD (always crisp, rendered AFTER post-processing)
-        hud.render(player, memorials, camera.getYaw(), camera.getCamera());
+        hud.render(player, activeMemorials, camera.getYaw(), camera.getCamera());
 
         // Process inputs and automated test screenshot triggers AFTER the frame is fully drawn!
         handleGameplayInputs(delta);
@@ -683,7 +698,34 @@ public class SparkGame extends ApplicationAdapter {
             Gdx.app.log("SparkGame", "Debug Draw Normals toggled: " + DhakaCampusWorld.debugDrawNormals);
         }
 
+        // F5: Restart Current Level / F6: Next Level
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F5)) {
+            if (levelManager != null) {
+                levelManager.restartCurrentLevel();
+                syncLevelSubsystems();
+            }
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F6)) {
+            if (levelManager != null) {
+                levelManager.nextLevel();
+                syncLevelSubsystems();
+            }
+        }
+
         // Automated visual verification support
+        if (System.getProperty("bd.spark36.testLevelScreenshot") != null) {
+            testTimer += delta;
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                int lvlNum = (levelManager != null && levelManager.getActiveLevel() != null) ?
+                    levelManager.getActiveLevel().getLevelNumber() : 1;
+                takeScreenshot("level_" + lvlNum + "_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        }
+
         if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.testHideParameters"))) {
             hud.setParametersVisible(false);
         }
@@ -961,6 +1003,7 @@ public class SparkGame extends ApplicationAdapter {
         if (atmosphere != null) atmosphere.dispose();
         if (textures != null) textures.dispose();
         if (helmetGoon != null) helmetGoon.dispose();
+        if (levelManager != null) levelManager.dispose();
         if (postProcessor != null) postProcessor.dispose();
         if (particleSystem != null) particleSystem.dispose();
     }

@@ -152,7 +152,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
                 entry.inspected = true;
                 hud.openMemorialModal(entry);
                 hud.triggerMissionToast(entry.title, memorials.getInspectedCount());
-                if (memorials.areAllInspected()) {
+                if (memorials.isAllInspected()) {
                     hud.triggerVictory();
                 }
                 return true;
@@ -180,7 +180,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
     @Override
     public boolean isLevelComplete() {
-        return (memorials != null) && memorials.areAllInspected();
+        return (memorials != null) && memorials.isAllInspected();
     }
 
     @Override
@@ -203,13 +203,14 @@ public class Level1PeacefulCampus implements CampaignLevel {
         this.textures = textures;
         this.world = new DhakaCampusWorld(textures);
         this.memorials = new JulyMemorials();
-        this.crowd = new CampusCrowd(16, world.getColliders());
+
+        player.setExtraColliders(world.getColliders());
+        this.crowd = new CampusCrowd(16, player.getColliders());
 
         this.campusSecurity = new HelmetGoon(textures);
         this.campusSecurity.setRole(HelmetGoon.Role.CAMPUS_SECURITY);
         this.campusSecurity.reset(0f, 36.0f);
 
-        player.setExtraColliders(world.getColliders());
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 
@@ -247,8 +248,8 @@ public class Level1PeacefulCampus implements CampaignLevel {
     }
 
     @Override
-    public Array<BoundingBox> getColliders() {
-        return (world != null) ? world.getColliders() : new Array<BoundingBox>();
+    public java.util.List<float[]> getColliders() {
+        return (world != null) ? world.getColliders() : new java.util.ArrayList<float[]>();
     }
 
     @Override

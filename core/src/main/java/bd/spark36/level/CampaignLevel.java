@@ -93,8 +93,8 @@ public interface CampaignLevel extends Disposable {
     /** Renders level-specific volumetric or screen overlays (gas, smoke, night searchlights) */
     void renderOverlays(CinematicCamera camera, float delta, int screenW, int screenH);
 
-    /** Returns collision bounding boxes for this level's environment */
-    Array<BoundingBox> getColliders();
+    /** Returns collision boxes as list of [minX, minY, minZ, maxX, maxY, maxZ] for this level's environment */
+    java.util.List<float[]> getColliders();
 
     /** Returns directional and ambient lighting environment */
     Environment getEnvironment();
@@ -104,4 +104,8 @@ public interface CampaignLevel extends Disposable {
      * Returns true if a combat hit was connected.
      */
     boolean onPlayerAttack(PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud);
+
+    default bd.spark36.world.DhakaCampusWorld getWorld() { return null; }
+    default bd.spark36.world.JulyMemorials getMemorials() { return null; }
+    default bd.spark36.character.CampusCrowd getCrowd() { return null; }
 }

@@ -38,7 +38,7 @@ public class Level5MassMobilization implements CampaignLevel {
 
     private final Array<Model> models = new Array<>();
     private final Array<ModelInstance> instances = new Array<>();
-    private final Array<BoundingBox> colliders = new Array<>();
+    private final java.util.List<float[]> colliders = new java.util.ArrayList<>();
 
     // Shaheed Minar monument position
     private final Vector3 minarPos = new Vector3(0f, 0f, -8f);
@@ -226,7 +226,6 @@ public class Level5MassMobilization implements CampaignLevel {
     @Override
     public void init(TextureFactory textures, PlayerController player, CinematicCamera camera) {
         this.world = new DhakaCampusWorld(textures);
-        this.crowd = new CampusCrowd(24, world.getColliders());
 
         // Majestic dusk/sunset lighting: warm golden-orange and crimson tones
         sunsetEnvironment = new Environment();
@@ -264,15 +263,16 @@ public class Level5MassMobilization implements CampaignLevel {
         instances.add(ti);
 
         // Colliders for Shaheed Minar base plinth
-        colliders.add(new BoundingBox(new Vector3(minarPos.x - 11f, 0, minarPos.z - 8f),
-                                      new Vector3(minarPos.x + 11f, 1.5f, minarPos.z + 8f)));
+        colliders.add(new float[] { minarPos.x - 11f, 0f, minarPos.z - 8f,
+                                    minarPos.x + 11f, 1.5f, minarPos.z + 8f });
 
-        for (BoundingBox b : world.getColliders()) colliders.add(b);
+        for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
+        this.crowd = new CampusCrowd(24, player.getColliders());
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 
-        camera.setColliders(colliders);
+        camera.setColliders(player.getColliders());
         camera.setAngles(0f, -4f);
         camera.setDistance(5.0f);
     }
@@ -300,7 +300,7 @@ public class Level5MassMobilization implements CampaignLevel {
     }
 
     @Override
-    public Array<BoundingBox> getColliders() {
+    public java.util.List<float[]> getColliders() {
         return colliders;
     }
 
@@ -312,6 +312,16 @@ public class Level5MassMobilization implements CampaignLevel {
     @Override
     public boolean onPlayerAttack(PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
         return false;
+    }
+
+    @Override
+    public DhakaCampusWorld getWorld() {
+        return world;
+    }
+
+    @Override
+    public CampusCrowd getCrowd() {
+        return crowd;
     }
 
     @Override

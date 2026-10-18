@@ -68,7 +68,7 @@ public class MilitaryVehicleBuilder {
     public static Model buildSearchlightBeam(ModelBuilder mb, Material beamMat, float length, float endRadius, long attr) {
         mb.begin();
         MeshPartBuilder p = mb.part("beam", GL20.GL_TRIANGLES, attr, beamMat);
-        p.cone(endRadius * 2f, length, endRadius * 2f, 16, 0, -length * 0.5f, 0);
+        p.cone(endRadius * 2f, length, endRadius * 2f, 16);
         return mb.end();
     }
 }
