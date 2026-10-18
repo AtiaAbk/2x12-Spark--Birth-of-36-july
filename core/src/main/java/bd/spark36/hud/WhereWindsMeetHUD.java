@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
@@ -1289,7 +1290,8 @@ public class WhereWindsMeetHUD implements Disposable {
     private void draw3DObjectivePin(MemorialEntry target, PlayerController player, com.badlogic.gdx.graphics.Camera camera, float w, float h) {
         if (target == null || camera == null) return;
 
-        Vector3 pinPos = new Vector3(target.position.x, 4.0f, target.position.z);
+        // Elevated pin height (7.5m) so the waypoint floats clearly above portals and player character from third-person perspective
+        Vector3 pinPos = new Vector3(target.position.x, 7.5f, target.position.z);
         Vector3 scr = camera.project(pinPos);
 
         if (scr.z > 0f && scr.z < 1.0f) {
@@ -1315,10 +1317,12 @@ public class WhereWindsMeetHUD implements Disposable {
 
             spriteBatch.begin();
             String pinText = String.format("> %s (%.0fm)", target.title, dst);
+            GlyphLayout layout = new GlyphLayout(fonts.keyFont, pinText);
+            float textX = px - layout.width * 0.5f;
             fonts.keyFont.setColor(0f, 0f, 0f, 0.90f);
-            fonts.keyFont.draw(spriteBatch, pinText, px - 78f, py + 24f);
+            fonts.keyFont.draw(spriteBatch, pinText, textX + 1f, py + 24f);
             fonts.keyFont.setColor(goldAccent);
-            fonts.keyFont.draw(spriteBatch, pinText, px - 80f, py + 25f);
+            fonts.keyFont.draw(spriteBatch, pinText, textX, py + 25f);
             spriteBatch.end();
         }
     }

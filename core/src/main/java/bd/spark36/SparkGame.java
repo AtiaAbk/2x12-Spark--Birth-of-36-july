@@ -885,6 +885,8 @@ public class SparkGame extends ApplicationAdapter {
                 camera.setFixedView(0f, 3.20f, -15.0f, 0f, 3.20f, -20.59f);
             } else if ("curzon_grand_portal_back".equalsIgnoreCase(viewpoint)) {
                 camera.setFixedView(0f, 3.20f, -23.5f, 0f, 3.20f, -20.59f);
+            } else if ("curzon_dome".equalsIgnoreCase(viewpoint)) {
+                camera.setFixedView(0f, 16.0f, -8.0f, 0f, 19.0f, -22.5f);
             }
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {

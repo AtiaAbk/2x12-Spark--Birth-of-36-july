@@ -110,7 +110,7 @@ public class StudentMesh implements Disposable {
             Appearance a = new Appearance();
             if (gender == 1) {
                 a.skin.set(0.83f, 0.66f, 0.54f, 1f);
-                a.hair.set(0.055f, 0.045f, 0.040f, 1f);
+                a.hair.set(0.12f, 0.10f, 0.09f, 1f);
                 a.shirt.set(0.16f, 0.45f, 0.48f, 1f);     // teal kurti
                 a.trousers.set(0.90f, 0.87f, 0.80f, 1f);  // cream salwar
                 a.shoes.set(0.55f, 0.35f, 0.22f, 1f);     // tan sandal straps
@@ -118,7 +118,7 @@ public class StudentMesh implements Disposable {
                 a.accent.set(0.95f, 0.91f, 0.82f, 1f);    // off-white orna
             } else {
                 a.skin.set(0.80f, 0.62f, 0.49f, 1f);
-                a.hair.set(0.050f, 0.045f, 0.040f, 1f);
+                a.hair.set(0.12f, 0.10f, 0.09f, 1f);
                 a.shirt.set(0.72f, 0.81f, 0.91f, 1f);     // light sky-blue shirt
                 a.trousers.set(0.18f, 0.25f, 0.40f, 1f);  // blue jeans
                 a.shoes.set(0.16f, 0.16f, 0.18f, 1f);     // dark sneakers
@@ -132,7 +132,7 @@ public class StudentMesh implements Disposable {
             {0.80f, 0.62f, 0.49f}, {0.72f, 0.54f, 0.41f}, {0.86f, 0.69f, 0.56f},
             {0.64f, 0.47f, 0.35f}, {0.76f, 0.58f, 0.45f}, {0.68f, 0.50f, 0.38f}};
         private static final float[][] HAIRS = {
-            {0.050f, 0.045f, 0.040f}, {0.08f, 0.06f, 0.05f}, {0.13f, 0.09f, 0.07f}};
+            {0.12f, 0.10f, 0.09f}, {0.15f, 0.12f, 0.10f}, {0.18f, 0.14f, 0.11f}};
         private static final float[][] MALE_SHIRTS = {
             {0.93f, 0.93f, 0.91f}, {0.72f, 0.81f, 0.91f}, {0.55f, 0.18f, 0.20f},
             {0.40f, 0.46f, 0.32f}, {0.55f, 0.57f, 0.60f}, {0.20f, 0.26f, 0.42f},
@@ -540,8 +540,11 @@ public class StudentMesh implements Disposable {
         put(r.head, ell(0.158f, 0.190f, 0.172f, skin), 0f, 0.022f, -0.008f);   // cranium
         put(r.head, ell(0.132f, 0.100f, 0.125f, skin), 0f, -0.030f, 0.012f);   // jaw & cheeks
         put(r.head, ell(0.050f, 0.034f, 0.040f, skin), 0f, -0.068f, 0.048f);   // chin
-        put(r.head, ell(0.020f, 0.042f, 0.030f, skinShade), -0.080f, 0.005f, -0.008f, 0f, -12f, 5f);
-        put(r.head, ell(0.020f, 0.042f, 0.030f, skinShade), 0.080f, 0.005f, -0.008f, 0f, 12f, -5f);
+        // Ears with distinct outer helix and lobe visible in silhouette from rear
+        put(r.head, ell(0.018f, 0.042f, 0.028f, skinShade), -0.082f, 0.005f, -0.008f, 0f, -12f, 5f);
+        put(r.head, ell(0.018f, 0.042f, 0.028f, skinShade),  0.082f, 0.005f, -0.008f, 0f,  12f, -5f);
+        put(r.head, ell(0.012f, 0.028f, 0.018f, skin), -0.084f, 0.002f, -0.006f, 0f, -12f, 5f);
+        put(r.head, ell(0.012f, 0.028f, 0.018f, skin),  0.084f, 0.002f, -0.006f, 0f,  12f, -5f);
         // eyes
         Model white = ell(0.024f, 0.013f, 0.010f, eyeWhite);
         Model irisM = ell(0.012f, 0.012f, 0.006f, iris);
@@ -559,18 +562,20 @@ public class StudentMesh implements Disposable {
         put(r.head, ell(0.028f, 0.008f, 0.010f, lips), 0f, -0.036f, 0.072f);
         put(r.head, ell(0.025f, 0.010f, 0.010f, lips), 0f, -0.043f, 0.070f);
 
-        // neat short black hair with a side part
-        put(r.head, ell(0.172f, 0.140f, 0.185f, hair), 0f, 0.068f, -0.014f);    // cap
-        put(r.head, ell(0.164f, 0.150f, 0.152f, hair), 0f, 0.008f, -0.042f);    // back & nape
-        Model side = ell(0.030f, 0.064f, 0.090f, hair);
-        put(r.head, side, -0.074f, 0.045f, -0.006f);
-        put(r.head, side, 0.074f, 0.045f, -0.006f);
+        // Neat short haircut with tapered scissor-cut neckline exposing neck skin
+        put(r.head, ell(0.162f, 0.118f, 0.168f, hair), 0f, 0.065f, -0.010f);    // crown & top
+        put(r.head, ell(0.146f, 0.092f, 0.108f, hair), 0f, 0.024f, -0.038f);    // mid-back
+        put(r.head, ell(0.115f, 0.055f, 0.055f, hair), 0f, -0.016f, -0.044f);   // tapered lower neckline
+        put(r.head, ell(0.080f, 0.025f, 0.065f, hairSheen), 0f, 0.105f, -0.025f, 8f, 0f, 0f); // rear crown sheen
+        Model side = ell(0.028f, 0.058f, 0.082f, hair);
+        put(r.head, side, -0.073f, 0.042f, -0.006f);
+        put(r.head, side,  0.073f, 0.042f, -0.006f);
         put(r.head, ell(0.140f, 0.048f, 0.074f, hair), 0.006f, 0.104f, 0.046f, -14f, 0f, -5f);   // fringe
         put(r.head, ell(0.070f, 0.030f, 0.060f, hairSheen), -0.020f, 0.128f, 0.030f, -10f, 0f, 8f);
         put(r.head, box(0.004f, 0.006f, 0.070f, skinShade), -0.030f, 0.137f, 0.010f, -8f, 0f, 10f); // part line
-        Model burn = ell(0.012f, 0.032f, 0.018f, hair);
-        put(r.head, burn, -0.077f, 0.004f, 0.030f);
-        put(r.head, burn, 0.077f, 0.004f, 0.030f);
+        Model burn = ell(0.010f, 0.028f, 0.016f, hair);
+        put(r.head, burn, -0.076f, 0.004f, 0.024f);
+        put(r.head, burn,  0.076f, 0.004f, 0.024f);
 
         // ---- Arms (shoulder frame; forearm frame at elbow) ----
         putPair(r.upperArm, ell(0.100f, 0.100f, 0.105f, shirt), 0f, -0.010f, 0f);

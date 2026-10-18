@@ -95,7 +95,7 @@ public class DhakaCampusWorld implements Disposable {
     // Translucent effects (light shafts): drawn after the scene, never cast shadows or collide
     private final Array<ModelInstance> effects = new Array<>();
     private BlendingAttribute beamBlend;
-    private static final float BEAM_BASE_OPACITY = 0.27f;
+    private static final float BEAM_BASE_OPACITY = 0.10f;
 
     // Animated water shimmer (pukur)
     private ModelInstance waterSurface;      // main water plane (animated tint)
@@ -337,7 +337,7 @@ public class DhakaCampusWorld implements Disposable {
         Material whiteBlossomCardMat = new Material(
             TextureAttribute.createDiffuse(textures.whiteBlossomAtlas),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
-            FloatAttribute.createAlphaTest(0.5f),
+            FloatAttribute.createAlphaTest(0.30f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
             ColorAttribute.createEmissive(new Color(0.03f, 0.03f, 0.025f, 1f))
@@ -389,7 +389,7 @@ public class DhakaCampusWorld implements Disposable {
         Material leafCardMat = new Material(
             TextureAttribute.createDiffuse(textures.leafAtlas),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
-            FloatAttribute.createAlphaTest(0.5f),
+            FloatAttribute.createAlphaTest(0.30f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
             // Subtle daylight transmission glow
@@ -406,7 +406,7 @@ public class DhakaCampusWorld implements Disposable {
         Material bambooLeafCardMat = new Material(
             TextureAttribute.createDiffuse(textures.bambooAtlas),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
-            FloatAttribute.createAlphaTest(0.5f),
+            FloatAttribute.createAlphaTest(0.30f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
             ColorAttribute.createEmissive(new Color(0.02f, 0.04f, 0.015f, 1f))
@@ -944,28 +944,38 @@ public class DhakaCampusWorld implements Disposable {
         }
 
         // Curzon Hall Grand White Mughal Bulbous Dome
-        Model finialBase = mb.createCone(0.85f, 3.2f, 0.85f, 14, goldFinial, attr);
-        Model smallFinial = mb.createCone(0.32f, 1.1f, 0.32f, 10, goldFinial, attr);
-        Model portDrum = mb.createCylinder(5.4f, 2.4f, 5.4f, 12, curzonBrickMat, attr);
+        Model finialBase = mb.createCone(0.85f, 3.2f, 0.85f, 16, goldFinial, attr);
+        Model smallFinial = mb.createCone(0.32f, 1.1f, 0.32f, 12, goldFinial, attr);
+        Model portDrum = mb.createCylinder(5.4f, 2.4f, 5.4f, 24, curzonBrickMat, attr);
+        Model drumBand = mb.createCylinder(5.8f, 0.36f, 5.8f, 24, curzonTrimMat, attr);
+        Model domeCollar = mb.createCylinder(6.0f, 0.28f, 6.0f, 24, curzonTrimMat, attr);
+        Model domeBaseRing = mb.createCylinder(5.72f, 0.22f, 5.72f, 24, curzonTrimMat, attr);
         Model portDome = mb.createSphere(5.6f, 4.8f, 5.6f, 24, 20, curzonWhiteDome, attr);
-        Model drumBand = mb.createCylinder(5.8f, 0.4f, 5.8f, 12, curzonTrimMat, attr);
         models.add(finialBase);
         models.add(smallFinial);
         models.add(portDrum);
-        models.add(portDome);
         models.add(drumBand);
+        models.add(domeCollar);
+        models.add(domeBaseRing);
+        models.add(portDome);
 
         ModelInstance drumInst = new ModelInstance(portDrum);
         drumInst.transform.setTranslation(0f, 16.7f, -22.5f);
         instances.add(drumInst);
         ModelInstance drumBandInst = new ModelInstance(drumBand);
-        drumBandInst.transform.setTranslation(0f, 17.9f, -22.5f);
+        drumBandInst.transform.setTranslation(0f, 17.85f, -22.5f);
         instances.add(drumBandInst);
+        ModelInstance collarInst = new ModelInstance(domeCollar);
+        collarInst.transform.setTranslation(0f, 18.12f, -22.5f);
+        instances.add(collarInst);
+        ModelInstance baseRingInst = new ModelInstance(domeBaseRing);
+        baseRingInst.transform.setTranslation(0f, 18.34f, -22.5f);
+        instances.add(baseRingInst);
         ModelInstance portDomeInst = new ModelInstance(portDome);
-        portDomeInst.transform.setTranslation(0f, 18.6f, -22.5f);
+        portDomeInst.transform.setTranslation(0f, 18.55f, -22.5f);
         instances.add(portDomeInst);
         ModelInstance portFinial = new ModelInstance(finialBase);
-        portFinial.transform.setTranslation(0f, 22.2f, -22.5f);
+        portFinial.transform.setTranslation(0f, 22.15f, -22.5f);
         instances.add(portFinial);
 
         // Flanking octagonal turrets with cream bands and little red domes

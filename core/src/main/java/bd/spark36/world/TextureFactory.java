@@ -473,8 +473,8 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        Texture tex = new Texture(pix);
-        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
         tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
         pix.dispose();
         return tex;
@@ -1617,23 +1617,24 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /** Soft white gradient for volumetric light shafts: feathered across, fading at both ends. */
+    /** Soft filmic gradient for volumetric light shafts: feathered across with smooth Gaussian curve, gently fading at both ends. */
     private Texture createLightBeam() {
         int w = 64, h = 256;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
         for (int y = 0; y < h; y++) {
             float v = y / (float) (h - 1);
-            float along = MathUtils.clamp(v / 0.15f, 0f, 1f) * (1f - MathUtils.clamp((v - 0.70f) / 0.30f, 0f, 1f));
+            float along = MathUtils.sin(v * MathUtils.PI);
+            along = along * along; // smooth bell curve along length
             for (int x = 0; x < w; x++) {
                 float u = x / (float) (w - 1);
                 float across = MathUtils.sin(u * MathUtils.PI);
-                float a = across * across * along;
-                pix.setColor(1f, 0.95f, 0.80f, a);
+                float a = across * across * across * across * along * 0.70f;
+                pix.setColor(1.0f, 0.96f, 0.85f, a);
                 pix.drawPixel(x, y);
             }
         }
-        Texture tex = new Texture(pix);
-        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
         tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
         pix.dispose();
         return tex;
