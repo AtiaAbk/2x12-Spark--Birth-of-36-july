@@ -118,6 +118,21 @@ public class WhereWindsMeetHUD implements Disposable {
     private String disqualifyReason = "VIOLATION: You assaulted an innocent campus student!";
     private boolean isDefeated = false;
 
+    // Active campaign level integration
+    private bd.spark36.level.CampaignLevel activeLevel = null;
+
+    public void setActiveLevel(bd.spark36.level.CampaignLevel level) {
+        this.activeLevel = level;
+    }
+
+    public bd.spark36.level.CampaignLevel getActiveLevel() {
+        return activeLevel;
+    }
+
+    public MemorialEntry getBoundaryStoneEntry() {
+        return boundaryStoneEntry;
+    }
+
     // ── HUD Scaled Viewport & Anchor Layout (Fix Pack 01 Item 2) ──
     public static class HUDLayout {
         public float virtW;
@@ -263,6 +278,13 @@ public class WhereWindsMeetHUD implements Disposable {
 
     public boolean isDefeated() {
         return isDefeated;
+    }
+
+    public void triggerMissionToast(String title, int count) {
+        this.missionBannerTitle = title;
+        this.missionBannerCount = count;
+        this.missionBannerTime = 6.0f;
+        this.checkpointFlashAlpha = 1.0f;
     }
 
     public void triggerVictory() {
@@ -485,7 +507,18 @@ public class WhereWindsMeetHUD implements Disposable {
             return;
         }
 
-        MemorialEntry nearby = memorials.getNearbyMemorial(player.getPosition());
+        if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.E) || Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+                if (activeModalEntry != null) {
+                    activeModalEntry = null;
+                } else {
+                    activeLevel.onInteract(player.getPosition(), player, this);
+                }
+            }
+            return;
+        }
+
+        MemorialEntry nearby = (memorials != null) ? memorials.getNearbyMemorial(player.getPosition()) : null;
         if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
             nearby = boundaryStoneEntry;
         }
@@ -639,8 +672,15 @@ public class WhereWindsMeetHUD implements Disposable {
         float dstToNearest = nearest != null ? player.getPosition().dst(nearest.position) : 65.4f;
 
         // 0. Draw 3D In-World Waypoint Pin directly above next objective
-        if (camera != null && nearest != null && !memorials.isAllInspected() && !isModalOpen()) {
-            draw3DObjectivePin(nearest, player, camera, w, h);
+        if (camera != null && !isModalOpen()) {
+            if (activeLevel != null && activeLevel.getLevelNumber() > 1 && !activeLevel.isLevelComplete()) {
+                Vector3 wp = activeLevel.getActiveWaypoint();
+                String title = activeLevel.getMissionTitle();
+                float dst = activeLevel.getWaypointDistance(player.getPosition());
+                draw3DObjectivePinDirect(wp, title, dst, camera, w, h);
+            } else if (nearest != null && memorials != null && !memorials.isAllInspected()) {
+                draw3DObjectivePin(nearest, player, camera, w, h);
+            }
         }
 
         // ── AAA VFX: Sprint Motion Trail + Checkpoint Flash ──────────────────
@@ -685,11 +725,15 @@ public class WhereWindsMeetHUD implements Disposable {
                 drawTacticalMapButtonBg(w, h);
             }
 
-            MemorialEntry nearby = memorials.getNearbyMemorial(player.getPosition());
+            MemorialEntry nearby = (memorials != null) ? memorials.getNearbyMemorial(player.getPosition()) : null;
             if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
                 nearby = boundaryStoneEntry;
             }
-            if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
+            boolean hasPrompt = (nearby != null);
+            if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+                hasPrompt = (activeLevel.getContextPrompt(player.getPosition()) != null);
+            }
+            if (hasPrompt && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
                 drawSpeechBubblePromptBg(w, h);
             }
             shapeRenderer.end();
@@ -706,7 +750,7 @@ public class WhereWindsMeetHUD implements Disposable {
                 drawTacticalMapButtonBorder(w, h);
             }
 
-            if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
+            if (hasPrompt && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
                 drawSpeechBubblePromptBorders(w, h);
             }
             shapeRenderer.end();
@@ -725,8 +769,8 @@ public class WhereWindsMeetHUD implements Disposable {
                 drawTacticalMapButtonText(w, h);
             }
 
-            if (nearby != null && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
-                drawSpeechBubblePromptText(nearby, w, h);
+            if (hasPrompt && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
+                drawSpeechBubblePromptText(player, nearby, w, h);
             }
             spriteBatch.end();
         }
@@ -952,8 +996,24 @@ public class WhereWindsMeetHUD implements Disposable {
         float cardW = currentLayout.cardW;
         float cardH = currentLayout.cardH;
 
-        int ins = memorials.getInspectedCount();
-        int total = memorials.getTotalCount();
+        if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+            String missionTag = activeLevel.getMissionTag();
+            drawOutlined(fonts.smallFont, missionTag, cardX + 18f, cardY + cardH - 18f, new Color(1.0f, 0.75f, 0.30f, 1f));
+
+            String missionTitle = activeLevel.getMissionTitle();
+            drawOutlined(fonts.headerFont, missionTitle, cardX + 18f, cardY + cardH - 42f, goldAccent);
+
+            String missionDesc = activeLevel.getMissionTarget();
+            drawOutlined(fonts.bodyFont, missionDesc, cardX + 18f, cardY + cardH - 74f, Color.WHITE);
+
+            float activeDst = activeLevel.getWaypointDistance(player.getPosition());
+            String distStr = String.format("DISTANCE: %.1f M", activeDst);
+            drawOutlined(fonts.headerFont, distStr, cardX + 18f, cardY + 24f, goldAccent);
+            return;
+        }
+
+        int ins = (memorials != null) ? memorials.getInspectedCount() : 0;
+        int total = (memorials != null) ? memorials.getTotalCount() : 5;
         boolean allDone = ins >= total;
         boolean goonKnockedOut = (helmetGoon != null && helmetGoon.getState() == bd.spark36.character.HelmetGoon.State.KNOCKED_OUT);
 
@@ -1150,9 +1210,33 @@ public class WhereWindsMeetHUD implements Disposable {
         // See-through smoked glass backing with soft gold halo
         fillGlassPanel(bx, by, bw, bh);
 
+        if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+            float barX = bx + 16f;
+            float barY = by + 12f;
+            float barW = bw - 32f;
+            float barH = 5f;
+
+            shapeRenderer.setColor(0.12f, 0.14f, 0.16f, 0.40f);
+            shapeRenderer.rect(barX, barY, barW, barH);
+
+            int ins = activeLevel.getCompletedObjectiveCount();
+            int tot = activeLevel.getTotalObjectiveCount();
+            float fillRatio = tot > 0 ? (float) ins / (float) tot : 0f;
+            float fillW = barW * fillRatio;
+
+            if (fillW > 0f) {
+                Color fillC = ins >= tot ? Color.GREEN : staminaGreen;
+                shapeRenderer.setColor(fillC.r, fillC.g, fillC.b, 0.16f);
+                shapeRenderer.rect(barX, barY - 2f, fillW, barH + 4f);
+                shapeRenderer.setColor(fillC);
+                shapeRenderer.rect(barX, barY, fillW, barH);
+            }
+            return;
+        }
+
         // Active objective row highlight: gold glow bar fading to the right + solid left accent bar
-        Array<MemorialEntry> entries = memorials.getEntries();
-        MemorialEntry nextObj = memorials.getNextObjective(player.getPosition());
+        Array<MemorialEntry> entries = (memorials != null) ? memorials.getEntries() : new Array<MemorialEntry>();
+        MemorialEntry nextObj = (memorials != null) ? memorials.getNextObjective(player.getPosition()) : null;
         float startY = by + bh - 38f;
         float itemSpacing = 18f;
         float pulse = easedPulse(2.4f);
@@ -1186,8 +1270,8 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(0.12f, 0.14f, 0.16f, 0.40f);
         shapeRenderer.rect(barX, barY, barW, barH);
 
-        int ins = memorials.getInspectedCount();
-        int tot = memorials.getTotalCount();
+        int ins = (memorials != null) ? memorials.getInspectedCount() : 0;
+        int tot = (memorials != null) ? memorials.getTotalCount() : 5;
         float fillRatio = tot > 0 ? (float) ins / (float) tot : 0f;
         float fillW = barW * fillRatio;
 
@@ -1225,8 +1309,23 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(goldMuted);
         shapeRenderer.line(bx + 14f, by + bh - 28f, bx + bw - 14f, by + bh - 28f);
 
+        if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+            String[] items = activeLevel.getChecklistItems();
+            float startY = by + bh - 38f;
+            float itemSpacing = 18f;
+            float strikeOffset = fonts.smallFont.getCapHeight() * 0.5f;
+            shapeRenderer.setColor(doneRowColor.r, doneRowColor.g, doneRowColor.b, 0.75f);
+            for (int i = 0; i < items.length; i++) {
+                if (!activeLevel.isChecklistItemDone(i)) continue;
+                glyphLayout.setText(fonts.smallFont, "[OK] " + items[i]);
+                float sy = startY - i * itemSpacing - strikeOffset;
+                shapeRenderer.line(bx + 16f, sy, bx + 16f + glyphLayout.width, sy);
+            }
+            return;
+        }
+
         // Strike-through lines on completed objectives
-        Array<MemorialEntry> entries = memorials.getEntries();
+        Array<MemorialEntry> entries = (memorials != null) ? memorials.getEntries() : new Array<MemorialEntry>();
         float startY = by + bh - 38f;
         float itemSpacing = 18f;
         float strikeOffset = fonts.smallFont.getCapHeight() * 0.5f;
@@ -1245,8 +1344,36 @@ public class WhereWindsMeetHUD implements Disposable {
         float bw = currentLayout.checkW;
         float bh = currentLayout.checkH;
 
-        int ins = memorials.getInspectedCount();
-        int tot = memorials.getTotalCount();
+        if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+            int ins = activeLevel.getCompletedObjectiveCount();
+            int tot = activeLevel.getTotalObjectiveCount();
+
+            String headerTitle = String.format("* MISSION PARAMETERS: %02d / %02d", ins, tot);
+            drawOutlined(fonts.keyFont, headerTitle, bx + 16f, by + bh - 10f, ins >= tot ? Color.GREEN : goldAccent);
+            drawOutlined(fonts.smallFont, "[P] HIDE", bx + bw - 75f, by + bh - 10f, 0.95f, 0.84f, 0.52f, 1f);
+
+            String[] items = activeLevel.getChecklistItems();
+            float startY = by + bh - 38f;
+            float itemSpacing = 18f;
+
+            for (int i = 0; i < items.length; i++) {
+                float y = startY - i * itemSpacing;
+                boolean isDone = activeLevel.isChecklistItemDone(i);
+                if (isDone) {
+                    drawOutlined(fonts.smallFont, "[OK] " + items[i], bx + 16f, y, doneRowColor);
+                } else {
+                    drawOutlined(fonts.smallFont, "[  ] " + items[i], bx + 16f, y, upcomingRowColor);
+                }
+            }
+
+            int pct = tot > 0 ? (int) ((ins / (float) tot) * 100f) : 0;
+            String pctStr = String.format("PROGRESS: %d%% (%d/%d COMPLETE)", pct, ins, tot);
+            drawOutlined(fonts.smallFont, pctStr, bx + bw - 195f, by + 30f, ins >= tot ? Color.GREEN : goldAccent);
+            return;
+        }
+
+        int ins = (memorials != null) ? memorials.getInspectedCount() : 0;
+        int tot = (memorials != null) ? memorials.getTotalCount() : 5;
 
         // 1. Header: "* MISSION PARAMETERS: 01 / 05" + [P] HIDE hint
         String headerTitle = String.format("* MISSION PARAMETERS: %02d / %02d", ins, tot);
@@ -1256,8 +1383,8 @@ public class WhereWindsMeetHUD implements Disposable {
         // 2. Checklist of the 5 Memorial checkpoints
         String[] shortNames = CHECKLIST_NAMES;
 
-        Array<MemorialEntry> entries = memorials.getEntries();
-        MemorialEntry nextObj = memorials.getNextObjective(player.getPosition());
+        Array<MemorialEntry> entries = (memorials != null) ? memorials.getEntries() : new Array<MemorialEntry>();
+        MemorialEntry nextObj = (memorials != null) ? memorials.getNextObjective(player.getPosition()) : null;
         float startY = by + bh - 38f;
         float itemSpacing = 18f;
 
@@ -1287,11 +1414,11 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     // In-world 3D Waypoint Pin floating above active objective
-    private void draw3DObjectivePin(MemorialEntry target, PlayerController player, com.badlogic.gdx.graphics.Camera camera, float w, float h) {
-        if (target == null || camera == null) return;
+    public void draw3DObjectivePinDirect(Vector3 targetPos, String title, float dst, com.badlogic.gdx.graphics.Camera camera, float w, float h) {
+        if (targetPos == null || camera == null) return;
 
         // Elevated pin height (7.5m) so the waypoint floats clearly above portals and player character from third-person perspective
-        Vector3 pinPos = new Vector3(target.position.x, 7.5f, target.position.z);
+        Vector3 pinPos = new Vector3(targetPos.x, 7.5f, targetPos.z);
         Vector3 scr = camera.project(pinPos);
 
         if (scr.z > 0f && scr.z < 1.0f) {
@@ -1300,8 +1427,6 @@ public class WhereWindsMeetHUD implements Disposable {
 
             float bob = MathUtils.sin(animTime * 4f) * 4f;
             py += bob;
-
-            float dst = player.getPosition().dst(target.position);
 
             beginShapes(ShapeType.Filled);
             shapeRenderer.setColor(goldAccent);
@@ -1316,7 +1441,7 @@ public class WhereWindsMeetHUD implements Disposable {
             shapeRenderer.end();
 
             spriteBatch.begin();
-            String pinText = String.format("> %s (%.0fm)", target.title, dst);
+            String pinText = String.format("> %s (%.0fm)", (title != null ? title : "OBJECTIVE"), dst);
             GlyphLayout layout = new GlyphLayout(fonts.keyFont, pinText);
             float textX = px - layout.width * 0.5f;
             fonts.keyFont.setColor(0f, 0f, 0f, 0.90f);
@@ -1325,6 +1450,11 @@ public class WhereWindsMeetHUD implements Disposable {
             fonts.keyFont.draw(spriteBatch, pinText, textX, py + 25f);
             spriteBatch.end();
         }
+    }
+
+    private void draw3DObjectivePin(MemorialEntry target, PlayerController player, com.badlogic.gdx.graphics.Camera camera, float w, float h) {
+        if (target == null || camera == null) return;
+        draw3DObjectivePinDirect(target.position, target.title, player.getPosition().dst(target.position), camera, w, h);
     }
 
     // ========================================================
@@ -1351,10 +1481,26 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.line(px - 16f, py + 26f, px, py + 18f);
     }
 
-    private void drawSpeechBubblePromptText(MemorialEntry nearby, float w, float h) {
+    private void drawSpeechBubblePromptText(PlayerController player, MemorialEntry nearby, float w, float h) {
         float promptW = 460f;
         float px = (w - promptW) / 2f + 140f;
         float py = h * 0.44f;
+
+        if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+            String prompt = activeLevel.getContextPrompt(player.getPosition());
+            if (prompt == null) return;
+            fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.headerFont.draw(spriteBatch, prompt, px + 18f, py + 41f);
+            fonts.headerFont.setColor(goldAccent);
+            fonts.headerFont.draw(spriteBatch, prompt, px + 17f, py + 42f);
+
+            String sub = "-- " + activeLevel.getTitle();
+            fonts.smallFont.setColor(0f, 0f, 0f, 0.90f);
+            fonts.smallFont.draw(spriteBatch, sub, px + 48f, py + 19f);
+            fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.80f, 1f));
+            fonts.smallFont.draw(spriteBatch, sub, px + 47f, py + 20f);
+            return;
+        }
 
         if (nearby != null && nearby.id == 99) {
             // Boundary Stone Prompt (Matching reference image [RT] Boundary Stone)
