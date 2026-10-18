@@ -244,6 +244,26 @@ public class DhakaCampusWorld implements Disposable {
         }
     }
 
+    /**
+     * Creates an upright rectangular quad mesh facing +Z (normal: 0, 0, 1) with standard upright UV mapping:
+     * (0,0) Top-Left, (1,0) Top-Right, (1,1) Bottom-Right, (0,1) Bottom-Left.
+     * Replaces mb.createBox(...) which transposed UV coordinates (rotating 90 deg clockwise) on +Z face.
+     */
+    public static Model createUprightQuad(ModelBuilder mb, float width, float height, Material material, long attributes) {
+        mb.begin();
+        MeshPartBuilder mpb = mb.part("quad", GL20.GL_TRIANGLES, attributes, material);
+        float hw = width * 0.5f;
+        float hh = height * 0.5f;
+
+        VertexInfo v00 = new VertexInfo().setPos(-hw, -hh, 0f).setNor(0f, 0f, 1f).setUV(0f, 1f); // Bottom-Left
+        VertexInfo v10 = new VertexInfo().setPos( hw, -hh, 0f).setNor(0f, 0f, 1f).setUV(1f, 1f); // Bottom-Right
+        VertexInfo v11 = new VertexInfo().setPos( hw,  hh, 0f).setNor(0f, 0f, 1f).setUV(1f, 0f); // Top-Right
+        VertexInfo v01 = new VertexInfo().setPos(-hw,  hh, 0f).setNor(0f, 0f, 1f).setUV(0f, 0f); // Top-Left
+
+        mpb.rect(v00, v10, v11, v01);
+        return mb.end();
+    }
+
     private void buildCampus(TextureFactory textures) {
         ModelBuilder mb = new ModelBuilder();
         long attr = Usage.Position | Usage.Normal | Usage.TextureCoordinates;
@@ -335,7 +355,7 @@ public class DhakaCampusWorld implements Disposable {
             TextureAttribute.createDiffuse(textures.colonialWindow),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
-            IntAttribute.createCullFace(0),
+            IntAttribute.createCullFace(GL20.GL_BACK),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
@@ -343,7 +363,7 @@ public class DhakaCampusWorld implements Disposable {
             TextureAttribute.createDiffuse(textures.teakDoorTexture),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
-            IntAttribute.createCullFace(0),
+            IntAttribute.createCullFace(GL20.GL_BACK),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
@@ -351,7 +371,7 @@ public class DhakaCampusWorld implements Disposable {
             TextureAttribute.createDiffuse(textures.curzonGrandPortal),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
-            IntAttribute.createCullFace(0),
+            IntAttribute.createCullFace(GL20.GL_BACK),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
@@ -359,7 +379,7 @@ public class DhakaCampusWorld implements Disposable {
             TextureAttribute.createDiffuse(textures.curzonPorticoTripleWindow),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
-            IntAttribute.createCullFace(0),
+            IntAttribute.createCullFace(GL20.GL_BACK),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
@@ -720,8 +740,8 @@ public class DhakaCampusWorld implements Disposable {
         Material curzonRedDome = new Material(ColorAttribute.createDiffuse(new Color(0.68f, 0.20f, 0.16f, 1f)));
 
         // Window & Door components for the two-storey Curzon facade (Authentic Mughal-Gothic)
-        Model archUpperWindow = mb.createBox(2.20f, 4.10f, 0.01f, colonialWindowMat, attr);
-        Model archGroundDoor = mb.createBox(2.20f, 4.10f, 0.01f, teakDoorMat, attr);
+        Model archUpperWindow = createUprightQuad(mb, 2.20f, 4.10f, colonialWindowMat, attr);
+        Model archGroundDoor = createUprightQuad(mb, 2.20f, 4.10f, teakDoorMat, attr);
         Model archSill = mb.createBox(2.36f, 0.16f, 0.20f, curzonTrimMat, attr);
         Model archCorbel = mb.createBox(0.18f, 0.26f, 0.14f, curzonTrimMat, attr);
         Model floorBand = mb.createBox(92f, 0.18f, 0.20f, curzonTrimMat, attr);
@@ -745,7 +765,7 @@ public class DhakaCampusWorld implements Disposable {
         };
 
         for (float ax : facadeBays) {
-            float fz = -23.49f;
+            float fz = -23.46f;
 
             // Ground floor: Authentic carved Burma teak wooden double door with brass knockers
             ModelInstance door = new ModelInstance(archGroundDoor);
@@ -862,10 +882,10 @@ public class DhakaCampusWorld implements Disposable {
         instances.add(bandInst);
 
         // Grand Central Portal with Monumental Pointed Iwan Archway & Ceremonial Teak Gates
-        Model grandPortalModel = mb.createBox(3.80f, 5.20f, 0.01f, grandPortalMat, attr);
+        Model grandPortalModel = createUprightQuad(mb, 3.80f, 5.20f, grandPortalMat, attr);
         models.add(grandPortalModel);
         grandPortalInst = new ModelInstance(grandPortalModel);
-        grandPortalInst.transform.setTranslation(0f, 3.20f, -20.59f);
+        grandPortalInst.transform.setTranslation(0f, 3.20f, -20.56f);
         instances.add(grandPortalInst);
         shadowExclusions.add(grandPortalInst);
 
@@ -898,10 +918,10 @@ public class DhakaCampusWorld implements Disposable {
         instances.add(bRailR);
 
         // Triple Pointed Mughal Windows on Portico Upper Storey
-        Model porticoTripleWinModel = mb.createBox(7.20f, 3.80f, 0.01f, porticoTripleWinMat, attr);
+        Model porticoTripleWinModel = createUprightQuad(mb, 7.20f, 3.80f, porticoTripleWinMat, attr);
         models.add(porticoTripleWinModel);
         porticoTripleWinInst = new ModelInstance(porticoTripleWinModel);
-        porticoTripleWinInst.transform.setTranslation(0f, 11.40f, -20.59f);
+        porticoTripleWinInst.transform.setTranslation(0f, 11.40f, -20.56f);
         instances.add(porticoTripleWinInst);
         shadowExclusions.add(porticoTripleWinInst);
 
@@ -2143,7 +2163,7 @@ public class DhakaCampusWorld implements Disposable {
         sr.setProjectionMatrix(cam.combined);
         sr.begin(ShapeRenderer.ShapeType.Line);
 
-        // Wing bays (door at y=3.25, win at y=8.50, z=-23.49)
+        // Wing bays (door at y=3.25, win at y=8.50, z=-23.46)
         float[] facadeBays = {
             -41.6f, -36.4f, -31.2f, -26.0f, -20.8f, -15.6f, -10.4f,
              10.4f,  15.6f,  20.8f,  26.0f,  31.2f,  36.4f,  41.6f
@@ -2151,30 +2171,30 @@ public class DhakaCampusWorld implements Disposable {
         for (float bx : facadeBays) {
             // Door outline (cyan)
             sr.setColor(Color.CYAN);
-            sr.box(bx - 1.10f, 3.25f - 2.05f, -23.49f + 0.005f, 2.20f, 4.10f, 0.01f);
+            sr.box(bx - 1.10f, 3.25f - 2.05f, -23.46f + 0.005f, 2.20f, 4.10f, 0.01f);
             // Door normal (red line pointing +Z)
             sr.setColor(Color.RED);
-            sr.line(bx, 3.25f, -23.49f, bx, 3.25f, -22.49f);
+            sr.line(bx, 3.25f, -23.46f, bx, 3.25f, -22.46f);
 
             // Upper Window outline (yellow)
             sr.setColor(Color.YELLOW);
-            sr.box(bx - 1.10f, 8.50f - 2.05f, -23.49f + 0.005f, 2.20f, 4.10f, 0.01f);
+            sr.box(bx - 1.10f, 8.50f - 2.05f, -23.46f + 0.005f, 2.20f, 4.10f, 0.01f);
             // Window normal (red line)
             sr.setColor(Color.RED);
-            sr.line(bx, 8.50f, -23.49f, bx, 8.50f, -22.49f);
+            sr.line(bx, 8.50f, -23.46f, bx, 8.50f, -22.46f);
         }
 
-        // Grand portal (x=0, y=3.20, z=-20.59)
+        // Grand portal (x=0, y=3.20, z=-20.56)
         sr.setColor(Color.CYAN);
-        sr.box(-1.90f, 3.20f - 2.60f, -20.59f + 0.005f, 3.80f, 5.20f, 0.01f);
+        sr.box(-1.90f, 3.20f - 2.60f, -20.56f + 0.005f, 3.80f, 5.20f, 0.01f);
         sr.setColor(Color.RED);
-        sr.line(0f, 3.20f, -20.59f, 0f, 3.20f, -19.59f);
+        sr.line(0f, 3.20f, -20.56f, 0f, 3.20f, -19.56f);
 
-        // Portico triple window (x=0, y=11.40, z=-20.59)
+        // Portico triple window (x=0, y=11.40, z=-20.56)
         sr.setColor(Color.YELLOW);
-        sr.box(-3.60f, 11.40f - 1.90f, -20.59f + 0.005f, 7.20f, 3.80f, 0.01f);
+        sr.box(-3.60f, 11.40f - 1.90f, -20.56f + 0.005f, 7.20f, 3.80f, 0.01f);
         sr.setColor(Color.RED);
-        sr.line(0f, 11.40f, -20.59f, 0f, 11.40f, -19.59f);
+        sr.line(0f, 11.40f, -20.56f, 0f, 11.40f, -19.56f);
 
         sr.end();
     }
