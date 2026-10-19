@@ -73,7 +73,14 @@ public class LilyPad {
                 .translate(baseX, currentY, baseZ)
                 .rotate(Vector3.Y, yaw)
                 .rotate(Vector3.X, currentPitch)
-                .rotate(Vector3.Z, currentRoll);
+                .rotate(Vector3.Z, currentRoll)
+                .scl(radius, 1f, radius);
+        }
+    }
+
+    public void render(com.badlogic.gdx.graphics.g3d.ModelBatch batch, com.badlogic.gdx.graphics.g3d.Environment env) {
+        if (instance != null) {
+            batch.render(instance, env);
         }
     }
 

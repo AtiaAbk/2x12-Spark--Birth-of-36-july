@@ -61,6 +61,7 @@ public class TextureFactory implements Disposable {
     public final Texture curzonBrickNormal;
     public final Texture modernistConcreteNormal;
     public final Texture treeBarkNormal;
+    public final Texture waterRippleNormal;
 
     public TextureFactory() {
         Texture[] brickPair = createBrickPavementWithNormal();
@@ -100,6 +101,7 @@ public class TextureFactory implements Disposable {
         weatheredStone = createWeatheredStone();
         curzonWater = createCurzonWater();
         waterRipple = createWaterRipple();
+        waterRippleNormal = createWaterRippleNormal();
         backpackFabric = createBackpackFabric();
         studentJacket = createStudentJacket();
         movementBanner = createMovementBanner();
@@ -123,7 +125,8 @@ public class TextureFactory implements Disposable {
                         bushFoliage, weatheredStone, curzonWater, waterRipple,
                         backpackFabric, studentJacket, movementBanner, bdFlag, aparajeyoStone,
                         asphaltRoad, modernistConcrete, canteenTinRoof, mapVisualTarget, debugOrientationTestCard,
-                        brickPavementNormal, curzonBrickNormal, modernistConcreteNormal, treeBarkNormal);
+                        brickPavementNormal, curzonBrickNormal, modernistConcreteNormal, treeBarkNormal,
+                        waterRippleNormal);
     }
 
     public static Texture createNormalMap(Pixmap src, float bumpScale) {
@@ -2179,6 +2182,29 @@ public class TextureFactory implements Disposable {
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
         pix.dispose();
         return tex;
+    }
+
+    /**
+     * Seamless procedural water ripple normal map for dual-scrolling micro caustics on the pukur surface.
+     */
+    private Texture createWaterRippleNormal() {
+        int size = 256;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+        float k = MathUtils.PI2 / size;
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                // Periodic multi-frequency height variation
+                float a = MathUtils.sin(x * k * 3f + MathUtils.sin(y * k * 2f) * 1.2f);
+                float b = MathUtils.sin(y * k * 4f + MathUtils.sin(x * k * 3f) * 1.1f);
+                float c = MathUtils.sin((x + y) * k * 5f + MathUtils.cos((x - y) * k * 2f) * 0.8f);
+                float h = MathUtils.clamp(((a + b + c) / 3f) * 0.5f + 0.5f, 0f, 1f);
+                pix.setColor(h, h, h, 1f);
+                pix.drawPixel(x, y);
+            }
+        }
+        Texture normalMap = createNormalMap(pix, 2.5f);
+        pix.dispose();
+        return normalMap;
     }
 
     private void drawBranchLine(Pixmap pix, int x0, int y0, int x1, int y1, int thickness) {

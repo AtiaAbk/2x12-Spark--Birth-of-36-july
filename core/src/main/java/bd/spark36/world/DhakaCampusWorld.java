@@ -29,6 +29,8 @@ import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import bd.spark36.render.PbrEnvironment;
+import bd.spark36.render.WaterRenderer;
+import bd.spark36.render.GraphicsTier;
 import bd.spark36.world.landmarks.OpeningBuilder;
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
@@ -112,6 +114,12 @@ public class DhakaCampusWorld implements Disposable {
     private final com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute shimmerDiffuse =
         ColorAttribute.createDiffuse(new com.badlogic.gdx.graphics.Color(0.55f, 0.82f, 0.95f, 0f));
 
+    // Realistic Water & Lily-Pad Buoyancy System (Phase 2)
+    private final WaterWaveModel waveModel = new WaterWaveModel();
+    private final WaterRenderer waterRenderer;
+    private final Array<LilyPad> lilyPads = new Array<>();
+    private final Array<Model> padModels = new Array<>();
+
     // Facade opening materials & orientation debug test card
     private final TextureFactory texturesRef;
     public Material colonialWindowMat;
@@ -127,6 +135,7 @@ public class DhakaCampusWorld implements Disposable {
 
     public DhakaCampusWorld(TextureFactory textures) {
         this.texturesRef = textures;
+        this.waterRenderer = new WaterRenderer();
         environment = new Environment();
 
         // Warm daylight sun with rich, cinematic shadow contrast (prevents washed-out pastel)
@@ -1431,35 +1440,9 @@ public class DhakaCampusWorld implements Disposable {
         pondBedInst.transform.setTranslation(pukurX, 0.01f, pukurZ);
         instances.add(pondBedInst);
 
-        // Water surface plane — animated tint stored for runtime shimmer
-        Material waterAnimMat = new Material(
-            PBRTextureAttribute.createBaseColorTexture(textures.curzonWater),
-            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.68f),
-            ColorAttribute.createDiffuse(new Color(0.20f, 0.55f, 0.72f, 1f))
-        );
-        setupPbr(waterAnimMat, 0.05f, 0.12f);
-        Model pukurWater = mb.createBox(pukurW - 0.2f, 0.04f, pukurL - 0.2f, waterAnimMat, attr);
-        models.add(pukurWater);
-        waterSurface = new ModelInstance(pukurWater);
-        waterSurface.transform.setTranslation(pukurX, 0.12f, pukurZ);
-        instances.add(waterSurface);
-
-        // Caustic ripple layer over the whole surface: its texture scrolls every frame
-        waterRippleTex = PBRTextureAttribute.createBaseColorTexture(textures.waterRipple);
-        waterRippleTex.scaleU = 3f;
-        waterRippleTex.scaleV = 4f;
-        Material shimmerMat = new Material(
-            waterRippleTex,
-            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE, 0.45f),
-            new DepthTestAttribute(GL20.GL_LEQUAL, false),
-            ColorAttribute.createDiffuse(new Color(0.80f, 0.94f, 1.0f, 1f))
-        );
-        setupPbr(shimmerMat, 0.05f, 0.10f);
-        Model pukurShimmer = mb.createBox(pukurW - 0.2f, 0.005f, pukurL - 0.2f, shimmerMat, attr);
-        models.add(pukurShimmer);
-        waterShimmer = new ModelInstance(pukurShimmer);
-        waterShimmer.transform.setTranslation(pukurX, 0.145f, pukurZ);
-        instances.add(waterShimmer);
+        // Realistic Water Surface & Lily-Pad Buoyancy (Phase 2)
+        // Note: The water surface plane is rendered via dedicated WaterRenderer with Gerstner wave displacement
+        // and dual-scrolling ripple normals.
 
         // Floating Lotus Pads (Water Lilies) & Sacred Lotus Blossoms matching media_1791358203326.png
         Material lotusMat = new Material(
@@ -1471,8 +1454,44 @@ public class DhakaCampusWorld implements Disposable {
         );
         setupPbr(lotusMat, 0.0f, 0.65f);
 
-        mb.begin();
-        MeshPartBuilder lpb = mb.part("lotusPads", GL20.GL_TRIANGLES, attr, lotusMat);
+        // Build 4 unit-sized (radius 1.0) reusable lotus models for atlas cells
+        Model[] padVariants = new Model[4];
+        for (int v = 0; v < 4; v++) {
+            int col = (v == 1 || v == 2) ? 1 : 0;
+            int row = (v >= 2) ? 1 : 0;
+            float u0 = col * 0.5f, v0 = row * 0.5f;
+            float u1 = u0 + 0.5f, v1 = v0 + 0.5f;
+
+            mb.begin();
+            MeshPartBuilder pb = mb.part("pad_" + v, GL20.GL_TRIANGLES, attr, lotusMat);
+            // Unit quad at origin [-1, 1] in X and Z
+            VertexInfo v0 = new VertexInfo().setPos(-1f, 0f, -1f).setNor(0f, 1f, 0f).setUV(u0, v1);
+            VertexInfo v1 = new VertexInfo().setPos( 1f, 0f, -1f).setNor(0f, 1f, 0f).setUV(u1, v1);
+            VertexInfo v2 = new VertexInfo().setPos( 1f, 0f,  1f).setNor(0f, 1f, 0f).setUV(u1, v0);
+            VertexInfo v3 = new VertexInfo().setPos(-1f, 0f,  1f).setNor(0f, 1f, 0f).setUV(u0, v0);
+            pb.rect(v0, v1, v2, v3);
+
+            // Variant 3 is blooming sacred lotus (col=0, row=1): add upright petal cross-quads
+            if (col == 0 && row == 1) {
+                float fRad = 0.85f;
+                float fH = 0.38f;
+                VertexInfo fv0 = new VertexInfo().setPos(-fRad, 0f, 0f).setNor(0f, 1f, 0f).setUV(u0, v1);
+                VertexInfo fv1 = new VertexInfo().setPos( fRad, 0f, 0f).setNor(0f, 1f, 0f).setUV(u1, v1);
+                VertexInfo fv2 = new VertexInfo().setPos( fRad, fH, 0f).setNor(0f, 1f, 0f).setUV(u1, v0);
+                VertexInfo fv3 = new VertexInfo().setPos(-fRad, fH, 0f).setNor(0f, 1f, 0f).setUV(u0, v0);
+                pb.rect(fv0, fv1, fv2, fv3);
+
+                VertexInfo fz0 = new VertexInfo().setPos(0f, 0f, -fRad).setNor(0f, 1f, 0f).setUV(u0, v1);
+                VertexInfo fz1 = new VertexInfo().setPos(0f, 0f,  fRad).setNor(0f, 1f, 0f).setUV(u1, v1);
+                VertexInfo fz2 = new VertexInfo().setPos(0f, fH,  fRad).setNor(0f, 1f, 0f).setUV(u1, v0);
+                VertexInfo fz3 = new VertexInfo().setPos(0f, fH, -fRad).setNor(0f, 1f, 0f).setUV(u0, v0);
+                pb.rect(fz0, fz1, fz2, fz3);
+            }
+
+            padVariants[v] = mb.end();
+            padModels.add(padVariants[v]);
+            models.add(padVariants[v]);
+        }
 
         float[][] lotusPlacements = {
             // North-West calm bay
@@ -1511,50 +1530,13 @@ public class DhakaCampusWorld implements Disposable {
             float rad = lp[2] * 0.65f;
             int col = (int) lp[3];
             int row = (int) lp[4];
-            float ly = 0.138f + (i % 5) * 0.002f;
+            int varIdx = (row == 1 && col == 0) ? 3 : (col == 1 && row == 1 ? 2 : (col == 1 ? 1 : 0));
 
-            float u0 = col * 0.5f, v0 = row * 0.5f;
-            float u1 = u0 + 0.5f, v1 = v0 + 0.5f;
+            ModelInstance inst = new ModelInstance(padVariants[varIdx]);
             float yaw = (i * 1.37f + 0.5f) * MathUtils.PI;
-            float cos = MathUtils.cos(yaw), sin = MathUtils.sin(yaw);
-
-            float x0 = lx + (-rad * cos - -rad * sin);
-            float z0 = lz + (-rad * sin + -rad * cos);
-            float x1 = lx + ( rad * cos - -rad * sin);
-            float z1 = lz + ( rad * sin + -rad * cos);
-            float x2 = lx + ( rad * cos -  rad * sin);
-            float z2 = lz + ( rad * sin +  rad * cos);
-            float x3 = lx + (-rad * cos -  rad * sin);
-            float z3 = lz + (-rad * sin +  rad * cos);
-
-            VertexInfo lv0 = new VertexInfo().setPos(x0, ly, z0).setNor(0f, 1f, 0f).setUV(u0, v1);
-            VertexInfo lv1 = new VertexInfo().setPos(x1, ly, z1).setNor(0f, 1f, 0f).setUV(u1, v1);
-            VertexInfo lv2 = new VertexInfo().setPos(x2, ly, z2).setNor(0f, 1f, 0f).setUV(u1, v0);
-            VertexInfo lv3 = new VertexInfo().setPos(x3, ly, z3).setNor(0f, 1f, 0f).setUV(u0, v0);
-            lpb.rect(lv0, lv1, lv2, lv3);
-
-            // For blooming sacred lotus flowers (Cell 1), add upright 3D petal cross-quads
-            if (col == 0 && row == 1) {
-                float fRad = rad * 0.85f;
-                float fH = 0.28f;
-                VertexInfo fv0 = new VertexInfo().setPos(lx - fRad, ly, lz).setNor(0f, 1f, 0f).setUV(u0, v1);
-                VertexInfo fv1 = new VertexInfo().setPos(lx + fRad, ly, lz).setNor(0f, 1f, 0f).setUV(u1, v1);
-                VertexInfo fv2 = new VertexInfo().setPos(lx + fRad, ly + fH, lz).setNor(0f, 1f, 0f).setUV(u1, v0);
-                VertexInfo fv3 = new VertexInfo().setPos(lx - fRad, ly + fH, lz).setNor(0f, 1f, 0f).setUV(u0, v0);
-                lpb.rect(fv0, fv1, fv2, fv3);
-
-                VertexInfo fz0 = new VertexInfo().setPos(lx, ly, lz - fRad).setNor(0f, 1f, 0f).setUV(u0, v1);
-                VertexInfo fz1 = new VertexInfo().setPos(lx, ly, lz + fRad).setNor(0f, 1f, 0f).setUV(u1, v1);
-                VertexInfo fz2 = new VertexInfo().setPos(lx, ly + fH, lz + fRad).setNor(0f, 1f, 0f).setUV(u1, v0);
-                VertexInfo fz3 = new VertexInfo().setPos(lx, ly + fH, lz - fRad).setNor(0f, 1f, 0f).setUV(u0, v0);
-                lpb.rect(fz0, fz1, fz2, fz3);
-            }
+            LilyPad pad = new LilyPad(lx, lz, rad, yaw, col, row, inst);
+            lilyPads.add(pad);
         }
-
-        Model lotusModel = mb.end();
-        models.add(lotusModel);
-        ModelInstance lotusInst = new ModelInstance(lotusModel);
-        instances.add(lotusInst);
 
         // Curzon Hall Pukur Grand Ghat Steps (South Bank Entrance)
         float ghatZ = pukurZ + pukurL * 0.5f; // 18.0f
@@ -2407,31 +2389,10 @@ public class DhakaCampusWorld implements Disposable {
             fol.transform.idt().rotate(Vector3.X, swayX).rotate(Vector3.Z, swayZ);
         }
 
-        // ── Animated Pukur Water Shimmer ──────────────────────────────────────
-        if (waterSurface != null) {
-            // Oscillate water colour between deep teal and lighter aqua
-            float wave = 0.5f + 0.5f * MathUtils.sin(animTime * 0.8f);
-            float r = 0.16f + wave * 0.10f;
-            float g = 0.50f + wave * 0.12f;
-            float b = 0.68f + wave * 0.10f;
-            com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute ca =
-                (com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute)
-                waterSurface.materials.get(0).get(com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute.Diffuse);
-            if (ca != null) ca.color.set(r, g, b, 1f);
+        // ── Buoyant Lily Pads Bobbing & Tilting on Gerstner Waves ─────────────
+        for (int i = 0; i < lilyPads.size; i++) {
+            lilyPads.get(i).update(delta, animTime, waveModel);
         }
-        if (waterShimmer != null) {
-            // Drift the caustics diagonally with a slow wobble, and let their brightness breathe
-            if (waterRippleTex != null) {
-                waterRippleTex.offsetU = (animTime * 0.018f + MathUtils.sin(animTime * 0.35f) * 0.03f) % 1f;
-                waterRippleTex.offsetV = (animTime * 0.026f + MathUtils.cos(animTime * 0.27f) * 0.03f) % 1f;
-            }
-            com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute ba =
-                (com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute)
-                waterShimmer.materials.get(0).get(com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute.Type);
-            if (ba != null) ba.opacity = 0.22f + 0.08f * MathUtils.sin(animTime * 0.9f)
-                + 0.04f * MathUtils.sin(animTime * 2.3f + 1.2f);
-        }
-
 
         for (int f = 0; f < pondFishes.size; f++) {
             PondFish fish = pondFishes.get(f);
@@ -2444,8 +2405,11 @@ public class DhakaCampusWorld implements Disposable {
             float heading = MathUtils.atan2(dx, dz) * MathUtils.radiansToDegrees;
             float tailWag = MathUtils.sin(fish.swimPhase * 6.5f) * 25.0f;
 
-            fish.body.transform.idt().translate(fx, fish.depthY, fz).rotate(Vector3.Y, heading);
-            fish.tail.transform.idt().translate(fx, fish.depthY, fz).rotate(Vector3.Y, heading)
+            float waterSurfaceY = waveModel.getWaterHeight(fx, fz, animTime);
+            float currentFishY = waterSurfaceY - fish.depthY;
+
+            fish.body.transform.idt().translate(fx, currentFishY, fz).rotate(Vector3.Y, heading);
+            fish.tail.transform.idt().translate(fx, currentFishY, fz).rotate(Vector3.Y, heading)
                 .translate(0f, 0f, -0.22f).rotate(Vector3.Y, tailWag);
         }
 
@@ -2525,6 +2489,21 @@ public class DhakaCampusWorld implements Disposable {
             batch.render(fish.body, environment);
             batch.render(fish.tail, environment);
         }
+
+        // Flush opaque scene & underwater geometry so pond bed and fish are depth-tested
+        batch.flush();
+
+        if (waterRenderer != null) {
+            com.badlogic.gdx.graphics.Camera cam = batch.getCamera();
+            if (cam != null) {
+                waterRenderer.render(cam, pbrEnvironment, sunLight, texturesRef.waterRippleNormal, animTime, GraphicsTier.fromSystemProperty());
+            }
+        }
+
+        // Render buoyant lily pads on top of water surface
+        for (int i = 0; i < lilyPads.size; i++) {
+            lilyPads.get(i).render(batch, environment);
+        }
     }
 
     /** Starts the sun's depth pass, centred on the player. Pair with {@link #endShadowPass()}. */
@@ -2559,6 +2538,18 @@ public class DhakaCampusWorld implements Disposable {
         return pbrEnvironment;
     }
 
+    public WaterWaveModel getWaveModel() {
+        return waveModel;
+    }
+
+    public WaterRenderer getWaterRenderer() {
+        return waterRenderer;
+    }
+
+    public Array<LilyPad> getLilyPads() {
+        return lilyPads;
+    }
+
     private static void setupPbr(Material mat, float metallic, float roughness) {
         mat.set(PBRFloatAttribute.createMetallic(metallic));
         mat.set(PBRFloatAttribute.createRoughness(roughness));
@@ -2580,6 +2571,10 @@ public class DhakaCampusWorld implements Disposable {
         if (pbrEnvironment != null) {
             pbrEnvironment.dispose();
         }
+        if (waterRenderer != null) {
+            waterRenderer.dispose();
+        }
+        lilyPads.clear();
     }
 
     private void buildPondFishes(ModelBuilder mb, float cx, float cz, float pw, float pl, long attr) {
