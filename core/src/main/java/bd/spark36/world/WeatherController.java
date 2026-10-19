@@ -35,6 +35,8 @@ public class WeatherController {
     private float srcRainIntensity;
     private float srcCloudAlphaFactor;
     private float srcWindMultiplier;
+    private float srcTemperature;
+    private float srcTint;
 
     // Target values
     private final Vector3 tgtSunDir = new Vector3();
@@ -54,6 +56,8 @@ public class WeatherController {
     private float tgtRainIntensity;
     private float tgtCloudAlphaFactor;
     private float tgtWindMultiplier;
+    private float tgtTemperature;
+    private float tgtTint;
 
     // Active interpolated values
     private final Vector3 currentSunDir = new Vector3();
@@ -73,6 +77,8 @@ public class WeatherController {
     private float currentRainIntensity;
     private float currentCloudAlphaFactor;
     private float currentWindMultiplier;
+    private float currentTemperature;
+    private float currentTint;
 
     public WeatherController() {
         WeatherState initial = parseInitialWeatherProperty();
