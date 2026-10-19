@@ -99,6 +99,8 @@ public class SparkGame extends ApplicationAdapter {
             try {
                 selectedChapter = Integer.parseInt(levelProp.trim());
             } catch (Exception ignored) {}
+        } else if (System.getProperty("bd.spark36.baseline") != null) {
+            selectedChapter = 1;
         } else {
             selectedChapter = bd.spark36.level.LevelConfig.getUnlockedLevel();
         }
