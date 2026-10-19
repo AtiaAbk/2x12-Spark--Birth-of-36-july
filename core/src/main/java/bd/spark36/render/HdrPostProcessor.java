@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.GLFrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.utils.Disposable;
+import bd.spark36.world.WeatherController;
 
 /**
  * AAA-grade HDR post-processing and tone-mapping pipeline for Spark: Birth of 36 July.
@@ -190,12 +191,26 @@ public class HdrPostProcessor implements Disposable {
     }
 
     /**
-     * Executes the post-processing chain: Bloom extraction, Gaussian blur passes,
-     * and composite pass with ACES filmic tone mapping and linear-to-sRGB transfer.
+     * Executes the post-processing chain with default weather coupling.
      */
     public void render(float delta) {
+        render(delta, null);
+    }
+
+    /**
+     * Executes the full post-processing chain:
+     * - Bloom bright extraction & multi-pass Gaussian blur (scaled per GraphicsTier, 0-cost when disabled)
+     * - Full-screen composite pass: FXAA 3.11 with early-exit optimization, linear bloom composite,
+     *   photographic exposure, dynamic white balance (weather-coupled temperature & tint), shadow lift,
+     *   contrast & saturation, ACES / Reinhard / Linear tone mapping, subtle vignette, film grain dither,
+     *   and single linear-to-sRGB gamma transfer.
+     */
+    public void render(float delta, WeatherController weather) {
         if (!valid) return;
         time += delta;
+
+        GraphicsTier tier = GraphicsTier.fromSystemProperty();
+        boolean bloomActive = tier.enableBloom && tier.bloomPasses > 0 && RenderPipelineConfig.bloomStrength > 0.001f;
 
         Texture sceneTexture = sceneFBO.getColorBufferTexture();
         sceneTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
@@ -203,66 +218,120 @@ public class HdrPostProcessor implements Disposable {
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
-        // ── Pass 1: Bloom bright-extract ─────────────────
-        bloomFBO.begin();
-        Gdx.gl.glViewport(0, 0, bloomW, bloomH);
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        bloomExtractShader.bind();
-        sceneTexture.bind(0);
-        bloomExtractShader.setUniformi("u_texture", 0);
-        bloomExtractShader.setUniformf("u_threshold", RenderPipelineConfig.bloomThreshold);
-        quad.render(bloomExtractShader, GL20.GL_TRIANGLES);
-        bloomFBO.end();
+        Texture bloomFinal = null;
 
-        Texture bloomExtracted = bloomFBO.getColorBufferTexture();
-        bloomExtracted.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        if (bloomActive) {
+            // ── Pass 1: Bloom bright-extract ─────────────────
+            bloomFBO.begin();
+            Gdx.gl.glViewport(0, 0, bloomW, bloomH);
+            Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            bloomExtractShader.bind();
+            sceneTexture.bind(0);
+            bloomExtractShader.setUniformi("u_texture", 0);
+            bloomExtractShader.setUniformf("u_threshold", RenderPipelineConfig.bloomThreshold);
+            quad.render(bloomExtractShader, GL20.GL_TRIANGLES);
+            bloomFBO.end();
 
-        // ── Pass 2: Horizontal blur ───────────────────────
-        blurHFBO.begin();
-        Gdx.gl.glViewport(0, 0, bloomW, bloomH);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        bloomBlurShader.bind();
-        bloomExtracted.bind(0);
-        bloomBlurShader.setUniformi("u_texture", 0);
-        bloomBlurShader.setUniformf("u_blurDir", 1.5f / bloomW, 0f);
-        bloomBlurShader.setUniformf("u_radius", 2.0f);
-        quad.render(bloomBlurShader, GL20.GL_TRIANGLES);
-        blurHFBO.end();
+            Texture bloomExtracted = bloomFBO.getColorBufferTexture();
+            bloomExtracted.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 
-        // ── Pass 3: Vertical blur ─────────────────────────
-        blurVFBO.begin();
-        Gdx.gl.glViewport(0, 0, bloomW, bloomH);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        Texture blurHResult = blurHFBO.getColorBufferTexture();
-        blurHResult.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-        bloomBlurShader.bind();
-        blurHResult.bind(0);
-        bloomBlurShader.setUniformi("u_texture", 0);
-        bloomBlurShader.setUniformf("u_blurDir", 0f, 1.5f / bloomH);
-        bloomBlurShader.setUniformf("u_radius", 2.0f);
-        quad.render(bloomBlurShader, GL20.GL_TRIANGLES);
-        blurVFBO.end();
+            // ── Pass 2: Horizontal blur ───────────────────────
+            blurHFBO.begin();
+            Gdx.gl.glViewport(0, 0, bloomW, bloomH);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            bloomBlurShader.bind();
+            bloomExtracted.bind(0);
+            bloomBlurShader.setUniformi("u_texture", 0);
+            bloomBlurShader.setUniformf("u_blurDir", 1.5f / bloomW, 0f);
+            bloomBlurShader.setUniformf("u_radius", 2.0f);
+            quad.render(bloomBlurShader, GL20.GL_TRIANGLES);
+            blurHFBO.end();
 
-        // ── Pass 4: Composite to screen with ACES Tone Mapping ─────────
+            // ── Pass 3: Vertical blur ─────────────────────────
+            blurVFBO.begin();
+            Gdx.gl.glViewport(0, 0, bloomW, bloomH);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            Texture blurHResult = blurHFBO.getColorBufferTexture();
+            blurHResult.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+            bloomBlurShader.bind();
+            blurHResult.bind(0);
+            bloomBlurShader.setUniformi("u_texture", 0);
+            bloomBlurShader.setUniformf("u_blurDir", 0f, 1.5f / bloomH);
+            bloomBlurShader.setUniformf("u_radius", 2.0f);
+            quad.render(bloomBlurShader, GL20.GL_TRIANGLES);
+            blurVFBO.end();
+
+            // High tier: Second ping-pong blur pass for buttery wide halo
+            if (tier.bloomPasses >= 2) {
+                blurHFBO.begin();
+                Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+                Texture vResult = blurVFBO.getColorBufferTexture();
+                vResult.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+                bloomBlurShader.bind();
+                vResult.bind(0);
+                bloomBlurShader.setUniformi("u_texture", 0);
+                bloomBlurShader.setUniformf("u_blurDir", 2.5f / bloomW, 0f);
+                bloomBlurShader.setUniformf("u_radius", 2.5f);
+                quad.render(bloomBlurShader, GL20.GL_TRIANGLES);
+                blurHFBO.end();
+
+                blurVFBO.begin();
+                Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+                Texture hResult2 = blurHFBO.getColorBufferTexture();
+                hResult2.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+                bloomBlurShader.bind();
+                hResult2.bind(0);
+                bloomBlurShader.setUniformi("u_texture", 0);
+                bloomBlurShader.setUniformf("u_blurDir", 0f, 2.5f / bloomH);
+                bloomBlurShader.setUniformf("u_radius", 2.5f);
+                quad.render(bloomBlurShader, GL20.GL_TRIANGLES);
+                blurVFBO.end();
+            }
+
+            bloomFinal = blurVFBO.getColorBufferTexture();
+            bloomFinal.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        }
+
+        // ── Pass 4: Composite to screen with Tone Mapping & Grading ─────────
         Gdx.gl.glViewport(0, 0, sceneW, sceneH);
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        Texture bloomFinal = blurVFBO.getColorBufferTexture();
-        bloomFinal.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        float temp = RenderPipelineConfig.colorTemperature;
+        float tint = RenderPipelineConfig.colorTint;
+        if (weather != null) {
+            temp += weather.getCurrentTemperature();
+            tint += weather.getCurrentTint();
+        }
 
         compositeShader.bind();
         sceneTexture.bind(0);
         compositeShader.setUniformi("u_texture", 0);
-        bloomFinal.bind(1);
-        compositeShader.setUniformi("u_bloomTexture", 1);
+
+        if (bloomActive && bloomFinal != null) {
+            bloomFinal.bind(1);
+            compositeShader.setUniformi("u_bloomTexture", 1);
+            compositeShader.setUniformf("u_bloomStrength", RenderPipelineConfig.bloomStrength);
+        } else {
+            // When bloom is disabled, bind fallback and set strength to 0.0 (zero math overhead)
+            bloomFBO.getColorBufferTexture().bind(1);
+            compositeShader.setUniformi("u_bloomTexture", 1);
+            compositeShader.setUniformf("u_bloomStrength", 0.0f);
+        }
+
         compositeShader.setUniformf("u_resolution", sceneW, sceneH);
-        compositeShader.setUniformf("u_bloomStrength", RenderPipelineConfig.bloomStrength);
         compositeShader.setUniformf("u_vignetteStrength", RenderPipelineConfig.vignetteStrength);
         compositeShader.setUniformf("u_vignetteRadius", RenderPipelineConfig.vignetteRadius);
+        compositeShader.setUniformf("u_filmGrainStrength", tier.filmGrain > 0f ? tier.filmGrain : RenderPipelineConfig.filmGrainStrength);
         compositeShader.setUniformf("u_exposure", RenderPipelineConfig.exposure);
+        compositeShader.setUniformf("u_contrast", RenderPipelineConfig.contrast);
         compositeShader.setUniformf("u_saturation", RenderPipelineConfig.saturation);
+        compositeShader.setUniformf("u_colorTemperature", temp);
+        compositeShader.setUniformf("u_colorTint", tint);
+        compositeShader.setUniformf("u_shadowLift", RenderPipelineConfig.shadowLift);
+        compositeShader.setUniformf("u_enableFxaa", (RenderPipelineConfig.fxaaEnabled && tier.enableFxaa) ? 1.0f : 0.0f);
+        compositeShader.setUniformi("u_toneMappingMode", RenderPipelineConfig.toneMappingMode);
         compositeShader.setUniformf("u_time", time);
         quad.render(compositeShader, GL20.GL_TRIANGLES);
 

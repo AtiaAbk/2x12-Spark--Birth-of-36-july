@@ -83,7 +83,13 @@ public final class RenderPipelineConfig {
     /** Default smooth metal roughness. */
     public static final float DEFAULT_METAL_ROUGHNESS = 0.35f;
 
-    public static int cycleToneMapping() {
+    public static String getToneMappingName() {
+        if (toneMappingMode == 1) return "ACES Filmic (Cinematic)";
+        if (toneMappingMode == 2) return "Extended Reinhard";
+        return "Linear / Bypass";
+    }
+
+    public static String cycleToneMapping() {
         if (toneMappingMode == 1) {
             toneMappingMode = 2; // Reinhard
         } else if (toneMappingMode == 2) {
@@ -91,7 +97,7 @@ public final class RenderPipelineConfig {
         } else {
             toneMappingMode = 1; // ACES Filmic
         }
-        return toneMappingMode;
+        return getToneMappingName();
     }
 
     // ── Helper Accessors ──────────────────────────────────────────────────

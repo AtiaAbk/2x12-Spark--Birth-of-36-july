@@ -737,7 +737,7 @@ public class SparkGame extends ApplicationAdapter {
         // 5. End FBO capture and apply post-processing chain to screen
         if (ppActive) {
             postProcessor.endCapture();
-            postProcessor.render(delta);
+            postProcessor.render(delta, wc);
         }
 
         // 6. Particle System (leaves, dust, water ripples) — AFTER post-processing, BEFORE HUD
@@ -813,6 +813,12 @@ public class SparkGame extends ApplicationAdapter {
                 bd.spark36.world.WeatherState nextW = activeW.getWeatherController().cycleNextWeather();
                 hud.triggerMissionToast("WEATHER: " + nextW.displayName, nextW.ordinal() + 1);
             }
+        }
+
+        // F8: Cycle Tone Mapping Curve (ACES Filmic -> Reinhard Extended -> Linear Clamp)
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F8)) {
+            String modeName = RenderPipelineConfig.cycleToneMapping();
+            hud.triggerMissionToast("TONE MAPPING: " + modeName, RenderPipelineConfig.toneMappingMode + 1);
         }
 
         // Automated visual verification support
