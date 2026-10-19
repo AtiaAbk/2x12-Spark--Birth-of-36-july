@@ -690,8 +690,8 @@ public class DhakaCampusWorld implements Disposable {
         }
 
         // Cross-Campus Promenade Network (Connecting West Hub & East Hub)
-        Model crossWalkEastWest = mb.createBox(5.4f, 0.06f, 4.8f, brickPavementMat, attr);
-        Model crossWalkNorthSouth = mb.createBox(4.8f, 0.06f, 5.4f, brickPavementMat, attr);
+        Model crossWalkEastWest = createPavedSlab(mb, 5.4f, 0.06f, 4.8f, GroundConfig.BRICK_UV_SCALE, GroundConfig.BRICK_UV_SCALE, brickPavementMat, attr);
+        Model crossWalkNorthSouth = createPavedSlab(mb, 4.8f, 0.06f, 5.4f, GroundConfig.BRICK_UV_SCALE, GroundConfig.BRICK_UV_SCALE, brickPavementMat, attr);
         models.add(crossWalkEastWest);
         models.add(crossWalkNorthSouth);
 
