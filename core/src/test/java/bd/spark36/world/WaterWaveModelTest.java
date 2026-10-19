@@ -128,22 +128,33 @@ public class WaterWaveModelTest {
     @DisplayName("Point 8: All 36 historical lotus pad placements lie strictly within pond water boundaries")
     public void testAllLilyPadsInsideWater() {
         float[][] lotusPlacements = {
-            {-6.8f, -3.8f}, {-5.5f, -4.2f}, {-4.2f, -3.5f},
-            {-6.2f, -2.5f}, {-5.0f, -2.0f}, {-3.6f, -2.8f},
-            {-7.2f, -1.2f}, {-5.8f, -0.8f}, {-4.5f, -0.4f},
-            {4.0f, -3.8f}, {5.6f, -4.2f}, {6.8f, -3.6f},
-            {3.5f, -2.5f}, {5.0f, -2.2f}, {6.4f, -2.4f},
-            {4.2f, -0.8f}, {5.8f, -1.0f}, {7.0f, -1.4f},
-            {-7.5f, 1.5f}, {-6.4f, 2.2f}, {-7.2f, 3.4f},
-            {-6.0f, 4.2f}, {-7.4f, 5.6f}, {-6.2f, 6.8f},
-            {-7.0f, 8.2f}, {-5.8f, 9.4f},
-            {7.2f, 1.2f}, {6.2f, 2.0f}, {7.4f, 3.2f},
-            {6.0f, 4.4f}, {7.2f, 5.8f}, {6.4f, 7.0f},
-            {7.5f, 8.4f}, {6.1f, 9.6f},
-            {-6.8f, 11.2f}, {-5.4f, 12.0f}, {-6.5f, 13.2f},
-            {-5.0f, 14.0f}, {-6.2f, 15.0f},
-            {6.8f, 11.0f}, {5.5f, 12.2f}, {6.6f, 13.4f},
-            {5.2f, 14.2f}, {6.4f, 15.2f}
+            // North-West calm bay (world X in [-7.2, -3.6], world Z in [-3.8, -0.5])
+            {-6.8f, -9.5f}, {-5.5f, -9.8f}, {-4.2f, -9.0f},
+            {-6.2f, -8.2f}, {-5.0f, -7.8f}, {-3.6f, -8.5f},
+            {-7.2f, -7.0f}, {-5.8f, -6.5f}, {-4.5f, -6.0f},
+
+            // North-East calm bay (world X in [3.5, 7.0], world Z in [-3.8, -0.5])
+            {4.0f, -9.5f}, {5.6f, -9.8f}, {6.8f, -9.2f},
+            {3.5f, -8.2f}, {5.0f, -7.8f}, {6.4f, -8.0f},
+            {4.2f, -6.5f}, {5.8f, -6.8f}, {7.0f, -7.0f},
+
+            // West bank fringes (world X in [-7.5, -5.8], world Z in [1.5, 10.8])
+            {-7.5f, -4.5f}, {-6.4f, -3.5f}, {-7.2f, -2.0f},
+            {-6.0f, -0.8f}, {-7.4f,  0.8f}, {-6.2f,  2.2f},
+            {-7.0f,  3.5f}, {-5.8f,  4.8f},
+
+            // East bank fringes (world X in [6.0, 7.5], world Z in [1.5, 10.8])
+            {7.2f, -4.5f}, {6.2f, -3.5f}, {7.4f, -2.0f},
+            {6.0f, -0.8f}, {7.2f,  0.8f}, {6.4f,  2.2f},
+            {7.5f,  3.5f}, {6.1f,  4.8f},
+
+            // South-West corner (away from ghat, world Z in [11.8, 15.5])
+            {-6.8f, 5.8f}, {-5.4f, 6.8f}, {-6.5f, 7.8f},
+            {-5.0f, 8.8f}, {-6.2f, 9.5f},
+
+            // South-East corner (away from ghat, world Z in [11.8, 15.5])
+            {6.8f, 5.8f}, {5.5f, 6.8f}, {6.6f, 7.8f},
+            {5.2f, 8.8f}, {6.4f, 9.5f}
         };
 
         assertEquals(44, lotusPlacements.length, "Must verify all 44 lotus pad placements");
