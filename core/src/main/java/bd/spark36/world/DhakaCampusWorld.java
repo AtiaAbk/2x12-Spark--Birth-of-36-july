@@ -281,27 +281,27 @@ public class DhakaCampusWorld implements Disposable {
 
         // --- Materials with High-Res Procedural Textures ---
         Material grassMat = new Material(
-            TextureAttribute.createDiffuse(textures.lawnGrass),
+            PBRTextureAttribute.createBaseColorTexture(textures.lawnGrass),
             ColorAttribute.createDiffuse(new Color(0.92f, 0.95f, 0.90f, 1f))
         );
 
         Material brickPavementMat = new Material(
-            TextureAttribute.createDiffuse(textures.brickPavement),
+            PBRTextureAttribute.createBaseColorTexture(textures.brickPavement),
             ColorAttribute.createDiffuse(new Color(0.96f, 0.94f, 0.90f, 1f))
         );
 
         Material curzonBrickMat = new Material(
-            TextureAttribute.createDiffuse(textures.curzonBrick),
+            PBRTextureAttribute.createBaseColorTexture(textures.curzonBrick),
             ColorAttribute.createDiffuse(new Color(0.98f, 0.95f, 0.92f, 1f))
         );
 
         Material treeTrunkMat = new Material(
-            TextureAttribute.createDiffuse(textures.treeBark),
+            PBRTextureAttribute.createBaseColorTexture(textures.treeBark),
             ColorAttribute.createDiffuse(new Color(0.90f, 0.88f, 0.85f, 1f))
         );
 
         Material foliageMat = new Material(
-            TextureAttribute.createDiffuse(textures.foliage),
+            PBRTextureAttribute.createBaseColorTexture(textures.foliage),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.20f),
             IntAttribute.createCullFace(0),
@@ -309,7 +309,7 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         Material krishnachuraMat = new Material(
-            TextureAttribute.createDiffuse(textures.krishnachuraBlossom),
+            PBRTextureAttribute.createBaseColorTexture(textures.krishnachuraBlossom),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.20f),
             IntAttribute.createCullFace(0),
@@ -318,34 +318,34 @@ public class DhakaCampusWorld implements Disposable {
 
         // Limbs are built as open tubes, so draw both sides rather than depend on winding
         Material barkTwoSidedMat = new Material(
-            TextureAttribute.createDiffuse(textures.treeBark),
+            PBRTextureAttribute.createBaseColorTexture(textures.treeBark),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(0.90f, 0.88f, 0.85f, 1f))
         );
 
         Material leafClumpMat = new Material(
-            TextureAttribute.createDiffuse(textures.leafClump),
+            PBRTextureAttribute.createBaseColorTexture(textures.leafClump),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.92f, 1f)),
             ColorAttribute.createEmissive(new Color(0.015f, 0.035f, 0.01f, 1f))
         );
 
         Material blossomClumpMat = new Material(
-            TextureAttribute.createDiffuse(textures.blossomClump),
+            PBRTextureAttribute.createBaseColorTexture(textures.blossomClump),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 0.97f, 0.94f, 1f)),
             ColorAttribute.createEmissive(new Color(0.03f, 0.02f, 0.01f, 1f))
         );
 
         Material whiteBlossomClumpMat = new Material(
-            TextureAttribute.createDiffuse(textures.whiteBlossomClump),
+            PBRTextureAttribute.createBaseColorTexture(textures.whiteBlossomClump),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
             ColorAttribute.createEmissive(new Color(0.03f, 0.03f, 0.025f, 1f))
         );
 
         Material whiteBlossomCardMat = new Material(
-            TextureAttribute.createDiffuse(textures.whiteBlossomAtlas),
+            PBRTextureAttribute.createBaseColorTexture(textures.whiteBlossomAtlas),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.30f),
             IntAttribute.createCullFace(0),
@@ -354,7 +354,7 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         Material kashfulCardMat = new Material(
-            TextureAttribute.createDiffuse(textures.kashfulAtlas),
+            PBRTextureAttribute.createBaseColorTexture(textures.kashfulAtlas),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
             IntAttribute.createCullFace(0),
@@ -363,7 +363,7 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         colonialWindowMat = new Material(
-            TextureAttribute.createDiffuse(textures.colonialWindow),
+            PBRTextureAttribute.createBaseColorTexture(textures.colonialWindow),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
             IntAttribute.createCullFace(GL20.GL_BACK),
@@ -371,7 +371,7 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         teakDoorMat = new Material(
-            TextureAttribute.createDiffuse(textures.teakDoorTexture),
+            PBRTextureAttribute.createBaseColorTexture(textures.teakDoorTexture),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
             IntAttribute.createCullFace(GL20.GL_BACK),
@@ -379,7 +379,7 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         grandPortalMat = new Material(
-            TextureAttribute.createDiffuse(textures.curzonGrandPortal),
+            PBRTextureAttribute.createBaseColorTexture(textures.curzonGrandPortal),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
             IntAttribute.createCullFace(GL20.GL_BACK),
@@ -387,7 +387,7 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         porticoTripleWinMat = new Material(
-            TextureAttribute.createDiffuse(textures.curzonPorticoTripleWindow),
+            PBRTextureAttribute.createBaseColorTexture(textures.curzonPorticoTripleWindow),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.35f),
             IntAttribute.createCullFace(GL20.GL_BACK),
@@ -397,7 +397,7 @@ public class DhakaCampusWorld implements Disposable {
         // Individual leaf cards: cut out by alpha (no blending, so no sorting artefacts) and seen
         // from both sides. The cutout also shapes the shadows into dappled leaf patterns.
         Material leafCardMat = new Material(
-            TextureAttribute.createDiffuse(textures.leafAtlas),
+            PBRTextureAttribute.createBaseColorTexture(textures.leafAtlas),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.30f),
             IntAttribute.createCullFace(0),
@@ -408,13 +408,13 @@ public class DhakaCampusWorld implements Disposable {
 
         // Bamboo canes are built as open tubes, so draw both sides
         Material bambooBarkMat = new Material(
-            TextureAttribute.createDiffuse(textures.bambooCulm),
+            PBRTextureAttribute.createBaseColorTexture(textures.bambooCulm),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.90f, 1f))
         );
 
         Material bambooLeafCardMat = new Material(
-            TextureAttribute.createDiffuse(textures.bambooAtlas),
+            PBRTextureAttribute.createBaseColorTexture(textures.bambooAtlas),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.30f),
             IntAttribute.createCullFace(0),
@@ -423,26 +423,26 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         Material rockMat = new Material(
-            TextureAttribute.createDiffuse(textures.rockSurface),
+            PBRTextureAttribute.createBaseColorTexture(textures.rockSurface),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(0.95f, 0.95f, 0.92f, 1f))
         );
 
         // Worn dirt path: feathered edges, so it blends into the grass
         Material dirtMat = new Material(
-            TextureAttribute.createDiffuse(textures.dirtPath),
+            PBRTextureAttribute.createBaseColorTexture(textures.dirtPath),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(0.95f, 0.93f, 0.90f, 1f))
         );
 
         Material bambooCulmMat = new Material(
-            TextureAttribute.createDiffuse(textures.bambooCulm),
+            PBRTextureAttribute.createBaseColorTexture(textures.bambooCulm),
             ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.92f, 1f))
         );
 
         Material bambooLeafMat = new Material(
-            TextureAttribute.createDiffuse(textures.bambooFoliage),
+            PBRTextureAttribute.createBaseColorTexture(textures.bambooFoliage),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.20f),
             IntAttribute.createCullFace(0),
@@ -450,7 +450,7 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         Material bushMat = new Material(
-            TextureAttribute.createDiffuse(textures.bushFoliage),
+            PBRTextureAttribute.createBaseColorTexture(textures.bushFoliage),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.20f),
             IntAttribute.createCullFace(0),
@@ -458,12 +458,12 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         Material weatheredStoneMat = new Material(
-            TextureAttribute.createDiffuse(textures.weatheredStone),
+            PBRTextureAttribute.createBaseColorTexture(textures.weatheredStone),
             ColorAttribute.createDiffuse(new Color(0.95f, 0.95f, 0.92f, 1f))
         );
 
         Material curzonPukurWaterMat = new Material(
-            TextureAttribute.createDiffuse(textures.curzonWater),
+            PBRTextureAttribute.createBaseColorTexture(textures.curzonWater),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.90f),
             ColorAttribute.createDiffuse(new Color(0.92f, 0.96f, 1.0f, 1f))
         );
@@ -471,30 +471,30 @@ public class DhakaCampusWorld implements Disposable {
         Material sparkleMat = new Material(ColorAttribute.createDiffuse(new Color(1f, 1f, 0.85f, 1f)));
 
         Material flagMat = new Material(
-            TextureAttribute.createDiffuse(textures.bdFlag)
+            PBRTextureAttribute.createBaseColorTexture(textures.bdFlag)
         );
 
         Material aparajeyoMat = new Material(
-            TextureAttribute.createDiffuse(textures.aparajeyoStone),
+            PBRTextureAttribute.createBaseColorTexture(textures.aparajeyoStone),
             ColorAttribute.createDiffuse(new Color(0.95f, 0.94f, 0.92f, 1f))
         );
 
         Material bannerMat = new Material(
-            TextureAttribute.createDiffuse(textures.movementBanner)
+            PBRTextureAttribute.createBaseColorTexture(textures.movementBanner)
         );
 
         Material asphaltMat = new Material(
-            TextureAttribute.createDiffuse(textures.asphaltRoad),
+            PBRTextureAttribute.createBaseColorTexture(textures.asphaltRoad),
             ColorAttribute.createDiffuse(new Color(0.95f, 0.95f, 0.95f, 1f))
         );
 
         Material concreteMat = new Material(
-            TextureAttribute.createDiffuse(textures.modernistConcrete),
+            PBRTextureAttribute.createBaseColorTexture(textures.modernistConcrete),
             ColorAttribute.createDiffuse(new Color(0.96f, 0.95f, 0.92f, 1f))
         );
 
         Material canteenRoofMat = new Material(
-            TextureAttribute.createDiffuse(textures.canteenTinRoof),
+            PBRTextureAttribute.createBaseColorTexture(textures.canteenTinRoof),
             ColorAttribute.createDiffuse(new Color(0.95f, 0.92f, 0.90f, 1f))
         );
 
@@ -1320,7 +1320,7 @@ public class DhakaCampusWorld implements Disposable {
         // Shafts of sunlight slanting through the canopy along the paths
         beamBlend = new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE, BEAM_BASE_OPACITY);
         Material beamMat = new Material(
-            TextureAttribute.createDiffuse(textures.lightBeam),
+            PBRTextureAttribute.createBaseColorTexture(textures.lightBeam),
             beamBlend,
             IntAttribute.createCullFace(0),
             new DepthTestAttribute(GL20.GL_LEQUAL, false),   // read depth, don't write it
@@ -1432,7 +1432,7 @@ public class DhakaCampusWorld implements Disposable {
 
         // Water surface plane — animated tint stored for runtime shimmer
         Material waterAnimMat = new Material(
-            TextureAttribute.createDiffuse(textures.curzonWater),
+            PBRTextureAttribute.createBaseColorTexture(textures.curzonWater),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.68f),
             ColorAttribute.createDiffuse(new Color(0.20f, 0.55f, 0.72f, 1f))
         );
@@ -1444,7 +1444,7 @@ public class DhakaCampusWorld implements Disposable {
         instances.add(waterSurface);
 
         // Caustic ripple layer over the whole surface: its texture scrolls every frame
-        waterRippleTex = TextureAttribute.createDiffuse(textures.waterRipple);
+        waterRippleTex = PBRTextureAttribute.createBaseColorTexture(textures.waterRipple);
         waterRippleTex.scaleU = 3f;
         waterRippleTex.scaleV = 4f;
         Material shimmerMat = new Material(
@@ -1462,7 +1462,7 @@ public class DhakaCampusWorld implements Disposable {
 
         // Floating Lotus Pads (Water Lilies) & Sacred Lotus Blossoms matching media_1791358203326.png
         Material lotusMat = new Material(
-            TextureAttribute.createDiffuse(textures.lotusAtlas),
+            PBRTextureAttribute.createBaseColorTexture(textures.lotusAtlas),
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1.0f),
             FloatAttribute.createAlphaTest(0.35f),
             new DepthTestAttribute(GL20.GL_LEQUAL, false),
@@ -2324,19 +2324,19 @@ public class DhakaCampusWorld implements Disposable {
 
         for (ModelInstance d : wingDoors) {
             int matIdx = d.materials.size - 1;
-            d.materials.get(matIdx).set(TextureAttribute.createDiffuse(doorTex));
+            d.materials.get(matIdx).set(PBRTextureAttribute.createBaseColorTexture(doorTex));
         }
         for (ModelInstance w : wingWindows) {
             int matIdx = w.materials.size - 1;
-            w.materials.get(matIdx).set(TextureAttribute.createDiffuse(winTex));
+            w.materials.get(matIdx).set(PBRTextureAttribute.createBaseColorTexture(winTex));
         }
         if (grandPortalInst != null) {
             int matIdx = grandPortalInst.materials.size - 1;
-            grandPortalInst.materials.get(matIdx).set(TextureAttribute.createDiffuse(portalTex));
+            grandPortalInst.materials.get(matIdx).set(PBRTextureAttribute.createBaseColorTexture(portalTex));
         }
         if (porticoTripleWinInst != null) {
             int matIdx = porticoTripleWinInst.materials.size - 1;
-            porticoTripleWinInst.materials.get(matIdx).set(TextureAttribute.createDiffuse(tripleTex));
+            porticoTripleWinInst.materials.get(matIdx).set(PBRTextureAttribute.createBaseColorTexture(tripleTex));
         }
         Gdx.app.log("DhakaCampusWorld", "Debug orientation test card active=" + active + " (applied to " + wingDoors.size + " doors, " + wingWindows.size + " windows)");
     }
