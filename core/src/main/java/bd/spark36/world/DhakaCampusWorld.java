@@ -2393,6 +2393,11 @@ public class DhakaCampusWorld implements Disposable {
     }
 
     public void render(ModelBatch batch) {
+        com.badlogic.gdx.graphics.Camera cam = batch.getCamera();
+        if (cam != null) {
+            activeCam = cam;
+        }
+
         for (ModelInstance inst : instances) {
             batch.render(inst, environment);
         }
@@ -2405,11 +2410,13 @@ public class DhakaCampusWorld implements Disposable {
             batch.render(fish.tail, environment);
         }
 
+        // Render campus trees with frustum culling & distance LOD
+        vegetationManager.render(batch, environment, cam);
+
         // Flush opaque scene & underwater geometry so pond bed and fish are depth-tested
         batch.flush();
 
         if (waterRenderer != null) {
-            com.badlogic.gdx.graphics.Camera cam = batch.getCamera();
             if (cam != null) {
                 waterRenderer.render(cam, pbrEnvironment, sunLight, texturesRef.waterRippleNormal, animTime, GraphicsTier.fromSystemProperty());
             }
@@ -2443,6 +2450,7 @@ public class DhakaCampusWorld implements Disposable {
             if (shadowExclusions.contains(inst)) continue;
             depthBatch.render(inst);
         }
+        vegetationManager.renderShadowCasters(depthBatch);
     }
 
     public Environment getEnvironment() {
@@ -2463,6 +2471,10 @@ public class DhakaCampusWorld implements Disposable {
 
     public Array<LilyPad> getLilyPads() {
         return lilyPads;
+    }
+
+    public VegetationManager getVegetationManager() {
+        return vegetationManager;
     }
 
     private static void setupPbr(Material mat, float metallic, float roughness) {
@@ -2489,6 +2501,7 @@ public class DhakaCampusWorld implements Disposable {
         if (waterRenderer != null) {
             waterRenderer.dispose();
         }
+        vegetationManager.dispose();
         lilyPads.clear();
     }
 
