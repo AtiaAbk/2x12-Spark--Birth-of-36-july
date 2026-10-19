@@ -621,9 +621,11 @@ public class SparkGame extends ApplicationAdapter {
 
         hud.update(delta, player, activeMemorials);
 
-        // Update particles
+        // Update particles (incorporating weather rain intensity & GraphicsTier)
         if (particleSystem != null) {
-            particleSystem.update(delta, camera.getCamera());
+            WeatherController wc = (activeWorld != null) ? activeWorld.getWeatherController() : null;
+            float rainInt = (wc != null) ? wc.getCurrentRainIntensity() : 0f;
+            particleSystem.update(delta, camera.getCamera(), rainInt, GraphicsTier.fromSystemProperty());
         }
 
         // 1b. SUN SHADOW PASS: depth-only render from the sun, centred a little ahead of the player
@@ -667,14 +669,15 @@ public class SparkGame extends ApplicationAdapter {
 
         // 2. POST-PROCESSING: Begin FBO capture (replaces direct sky render)
         boolean ppActive = postProcessor != null && postProcessor.isValid();
+        WeatherController wc = (activeWorld != null) ? activeWorld.getWeatherController() : null;
         if (ppActive) {
             postProcessor.beginCapture();
-            // Sky renders INSIDE the FBO so bloom can affect it
-            atmosphere.renderSkyBackground(screenW, screenH);
+            // Sky renders INSIDE the FBO with camera pitch/yaw coupling and dynamic weather
+            atmosphere.renderSkyBackground(screenW, screenH, camera.getCamera(), wc);
             Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
         } else {
             // Fallback: render sky directly to screen
-            atmosphere.renderSkyBackground(screenW, screenH);
+            atmosphere.renderSkyBackground(screenW, screenH, camera.getCamera(), wc);
             Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
         }
 
@@ -796,6 +799,16 @@ public class SparkGame extends ApplicationAdapter {
             if (levelManager != null) {
                 levelManager.nextLevel();
                 syncLevelSubsystems();
+            }
+        }
+
+        // F7: Cycle Dynamic Dhaka Summer Weather
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F7)) {
+            DhakaCampusWorld activeW = (levelManager != null && levelManager.getActiveLevel() != null && levelManager.getActiveLevel().getWorld() != null) ?
+                levelManager.getActiveLevel().getWorld() : world;
+            if (activeW != null && activeW.getWeatherController() != null) {
+                bd.spark36.world.WeatherState nextW = activeW.getWeatherController().cycleNextWeather();
+                hud.triggerMissionToast("WEATHER: " + nextW.displayName, nextW.ordinal() + 1);
             }
         }
 

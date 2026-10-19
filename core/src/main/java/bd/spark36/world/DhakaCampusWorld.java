@@ -2377,9 +2377,33 @@ public class DhakaCampusWorld implements Disposable {
     public void update(float delta) {
         animTime += delta;
 
-        // Light shafts breathe slowly, as if clouds and leaves drift across the sun
+        // Dynamic Weather state machine update & atmospheric lighting sync
+        weatherController.update(delta);
+        sunLight.direction.set(weatherController.getCurrentSunDirection());
+        sunLight.color.set(weatherController.getCurrentSunColor());
+        if (ambientAttr != null) {
+            ambientAttr.color.set(weatherController.getCurrentAmbientColor());
+        }
+        if (fogColorAttr != null) {
+            fogColorAttr.color.set(weatherController.getCurrentFogColor());
+        }
+        if (fogEquationAttr != null) {
+            fogEquationAttr.set(
+                weatherController.getCurrentFogNear(),
+                weatherController.getCurrentFogFar(),
+                weatherController.getCurrentFogExponent()
+            );
+        }
+
+        // Light shafts breathe slowly and modulate with weather cloud cover / GraphicsTier
         if (beamBlend != null) {
-            beamBlend.opacity = BEAM_BASE_OPACITY * (0.80f + 0.20f * MathUtils.sin(animTime * 0.45f));
+            GraphicsTier tier = GraphicsTier.fromSystemProperty();
+            if (!tier.enableVolumetricShafts) {
+                beamBlend.opacity = 0f;
+            } else {
+                float shaftMult = weatherController.getCurrentLightShaftOpacity();
+                beamBlend.opacity = BEAM_BASE_OPACITY * shaftMult * (0.80f + 0.20f * MathUtils.sin(animTime * 0.45f));
+            }
         }
 
         // ── Dynamic Multi-Frequency Wind Simulation across Campus Trees ──
@@ -2560,6 +2584,14 @@ public class DhakaCampusWorld implements Disposable {
 
     public TerrainSurface getTerrainSurface() {
         return terrainSurface;
+    }
+
+    public WeatherController getWeatherController() {
+        return weatherController;
+    }
+
+    public DirectionalShadowLight getSunLight() {
+        return sunLight;
     }
 
     private static void setupPbr(Material mat, float metallic, float roughness) {
