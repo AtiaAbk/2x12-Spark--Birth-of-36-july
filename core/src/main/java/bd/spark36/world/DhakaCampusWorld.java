@@ -581,8 +581,9 @@ public class DhakaCampusWorld implements Disposable {
         Material flowerRed = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.16f, 0.18f, 1f)));
 
         // PBR Metallic-Roughness & Normal Map calibration for Dhaka University campus
-        setupPbr(grassMat, 0.0f, 0.85f);
-        setupPbr(brickPavementMat, 0.0f, 0.72f);
+        setupPbr(grassMat, GroundConfig.GRASS_METALLIC, GroundConfig.GRASS_ROUGHNESS);
+        if (textures.lawnGrassNormal != null) grassMat.set(PBRTextureAttribute.createNormalTexture(textures.lawnGrassNormal));
+        setupPbr(brickPavementMat, GroundConfig.BRICK_METALLIC, GroundConfig.BRICK_ROUGHNESS);
         if (textures.brickPavementNormal != null) brickPavementMat.set(PBRTextureAttribute.createNormalTexture(textures.brickPavementNormal));
         setupPbr(curzonBrickMat, 0.0f, 0.75f);
         if (textures.curzonBrickNormal != null) curzonBrickMat.set(PBRTextureAttribute.createNormalTexture(textures.curzonBrickNormal));
@@ -605,7 +606,8 @@ public class DhakaCampusWorld implements Disposable {
         setupPbr(bambooBarkMat, 0.0f, 0.55f);
         setupPbr(bambooLeafCardMat, 0.0f, 0.70f);
         setupPbr(rockMat, 0.0f, 0.85f);
-        setupPbr(dirtMat, 0.0f, 0.92f);
+        setupPbr(dirtMat, GroundConfig.DIRT_METALLIC, GroundConfig.DIRT_ROUGHNESS);
+        if (textures.dirtPathNormal != null) dirtMat.set(PBRTextureAttribute.createNormalTexture(textures.dirtPathNormal));
         setupPbr(bambooCulmMat, 0.0f, 0.55f);
         setupPbr(bambooLeafMat, 0.0f, 0.70f);
         setupPbr(bushMat, 0.0f, 0.80f);
@@ -615,7 +617,8 @@ public class DhakaCampusWorld implements Disposable {
         setupPbr(flagMat, 0.0f, 0.75f);
         setupPbr(aparajeyoMat, 0.0f, 0.78f);
         setupPbr(bannerMat, 0.0f, 0.75f);
-        setupPbr(asphaltMat, 0.0f, 0.85f);
+        setupPbr(asphaltMat, GroundConfig.ASPHALT_METALLIC, GroundConfig.ASPHALT_ROUGHNESS);
+        if (textures.asphaltRoadNormal != null) asphaltMat.set(PBRTextureAttribute.createNormalTexture(textures.asphaltRoadNormal));
         setupPbr(concreteMat, 0.0f, 0.80f);
         if (textures.modernistConcreteNormal != null) concreteMat.set(PBRTextureAttribute.createNormalTexture(textures.modernistConcreteNormal));
         setupPbr(canteenRoofMat, 0.75f, 0.42f);
@@ -632,15 +635,12 @@ public class DhakaCampusWorld implements Disposable {
         setupPbr(hedgeMat, 0.0f, 0.82f);
         setupPbr(flowerRed, 0.0f, 0.60f);
 
-        // 1. Central Campus Lawn (Spanning entire precinct)
-        Model groundModel = mb.createBox(280f, 0.2f, 260f, grassMat, attr);
-        models.add(groundModel);
-        ModelInstance groundInst = new ModelInstance(groundModel);
-        groundInst.transform.setTranslation(0f, -0.1f, 20f);
+        // 1. Central Campus Lawn (Continuous structured terrain grid with real-world UV scale and pond cutout)
+        ModelInstance groundInst = terrainSurface.buildTerrain(mb, textures, GraphicsTier.fromSystemProperty(), attr);
         instances.add(groundInst);
 
         // 2. Grand Herringbone Brick Avenue with Stone Curbs & Landscaped Flowerbeds
-        Model avenueTile = mb.createBox(7.2f, 0.06f, 7.2f, brickPavementMat, attr);
+        Model avenueTile = createPavedSlab(mb, 7.2f, 0.06f, 7.2f, GroundConfig.BRICK_UV_SCALE, GroundConfig.BRICK_UV_SCALE, brickPavementMat, attr);
         Model curbTile = mb.createBox(0.35f, 0.14f, 7.2f, stoneCurb, attr);
         Model hedgeTile = mb.createBox(0.9f, 0.65f, 7.2f, hedgeMat, attr);
         Model flowerTile = mb.createBox(0.75f, 0.35f, 7.2f, flowerRed, attr);
