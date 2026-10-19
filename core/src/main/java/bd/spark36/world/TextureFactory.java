@@ -1749,7 +1749,7 @@ public class TextureFactory implements Disposable {
         }
     }
 
-    private Texture createTreeBark() {
+    private Texture[] createTreeBarkWithNormal() {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
@@ -1770,11 +1770,12 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        Texture tex = new Texture(pix);
-        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        Texture norm = createNormalMap(pix, 3.5f);
         pix.dispose();
-        return tex;
+        return new Texture[]{tex, norm};
     }
 
     private Texture createFoliage() {
