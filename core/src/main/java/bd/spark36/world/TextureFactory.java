@@ -1685,7 +1685,7 @@ public class TextureFactory implements Disposable {
      * Worn dirt path, tileable along its length (V) and feathered to transparent at both sides
      * (U) so a strip of it blends into the grass instead of showing a hard edge.
      */
-    private Texture createDirtPath() {
+    private Texture[] createDirtPathWithNormal() {
         int size = 128;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
         for (int y = 0; y < size; y++) {
@@ -1707,8 +1707,9 @@ public class TextureFactory implements Disposable {
         Texture tex = new Texture(pix, Format.RGBA8888, true);
         tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
         tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.Repeat);
+        Texture norm = createNormalMap(pix, 2.2f);
         pix.dispose();
-        return tex;
+        return new Texture[]{tex, norm};
     }
 
     /**
