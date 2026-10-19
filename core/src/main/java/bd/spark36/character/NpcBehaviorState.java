@@ -44,8 +44,8 @@ public enum NpcBehaviorState {
         return this == WALKING || this == GROUPING || this == FLEEING;
     }
 
-    /** Whether the student is stationary and available to be engaged in conversation. */
+    /** Whether the student is available to be engaged in conversation by the player. */
     public boolean isInteractable() {
-        return this == IDLE || this == LOOKING_AROUND || this == SOCIALIZING || this == LISTENING;
+        return this == IDLE || this == WALKING || this == LOOKING_AROUND || this == SOCIALIZING || this == LISTENING;
     }
 }

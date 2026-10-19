@@ -64,10 +64,9 @@ public class InteractionSystem {
     public Interactable findBestInteractable(Vector3 playerPos, float playerHeadingDegrees, Iterable<? extends Interactable> candidates) {
         if (playerPos == null || candidates == null) return null;
 
-        // Player forward vector in XZ plane (LibGDX convention: 180 deg = facing -Z)
-        float headingRad = playerHeadingDegrees * MathUtils.degreesToRadians;
-        float fx = -MathUtils.sin(headingRad);
-        float fz = -MathUtils.cos(headingRad);
+        // Player forward vector in XZ plane (LibGDX convention: heading 180 deg = facing -Z, 0 deg = facing +Z)
+        float fx = MathUtils.sinDeg(playerHeadingDegrees);
+        float fz = MathUtils.cosDeg(playerHeadingDegrees);
 
         Interactable bestTarget = null;
         float bestScore = -Float.MAX_VALUE;

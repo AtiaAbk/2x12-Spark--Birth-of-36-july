@@ -46,6 +46,19 @@ public class Level1PeacefulCampus implements CampaignLevel {
         "5. Teacher-Student Centre (TSC)"
     };
 
+    public Level1PeacefulCampus() {
+        initDefaultObjectives();
+    }
+
+    private void initDefaultObjectives() {
+        missionTracker.reset();
+        missionTracker.addObjective(new MissionObjective("m0", "THE SPARK OF SOLIDARITY", "Target: Curzon Hall Central Arcade", CHECKLIST[0], ObjectiveType.INTERACT, new Vector3(0f, 0f, -14f), 3.8f, true));
+        missionTracker.addObjective(new MissionObjective("m1", "THE CALL FOR JUSTICE", "Target: Aparajeyo Bangla (Arts Plaza)", CHECKLIST[1], ObjectiveType.INTERACT, new Vector3(-45f, 0f, 18f), 3.8f, true));
+        missionTracker.addObjective(new MissionObjective("m2", "THE RESISTANCE BEGINS", "Target: TSC Raju Anti-Terrorism Sculpture", CHECKLIST[2], ObjectiveType.INTERACT, new Vector3(-6.5f, 0f, 48f), 3.8f, true));
+        missionTracker.addObjective(new MissionObjective("m3", "COMMUNAL AWAKENING", "Target: Central Library & Hakim Chattar", CHECKLIST[3], ObjectiveType.INTERACT, new Vector3(48f, 0f, 18f), 3.8f, true));
+        missionTracker.addObjective(new MissionObjective("m4", "THE UNBROKEN CHAIN", "Target: Teacher-Student Centre (TSC)", CHECKLIST[4], ObjectiveType.INTERACT, new Vector3(28f, 0f, -10f), 3.8f, true));
+    }
+
     @Override
     public int getLevelNumber() {
         return 1;
@@ -231,13 +244,10 @@ public class Level1PeacefulCampus implements CampaignLevel {
         this.memorials = new JulyMemorials();
 
         // Initialize decoupled mission tracker objectives matching historical archives
-        this.missionTracker.reset();
         if (this.missionTracker.getTotalCount() == 0) {
-            this.missionTracker.addObjective(new MissionObjective("m0", "THE SPARK OF SOLIDARITY", "Target: Curzon Hall Central Arcade", "1. Curzon Hall Central Arcade", ObjectiveType.INTERACT, new Vector3(0f, 0f, -14f), 3.8f, true));
-            this.missionTracker.addObjective(new MissionObjective("m1", "THE CALL FOR JUSTICE", "Target: Aparajeyo Bangla (Arts Plaza)", "2. Aparajeyo Bangla (Arts Plaza)", ObjectiveType.INTERACT, new Vector3(-45f, 0f, 18f), 3.8f, true));
-            this.missionTracker.addObjective(new MissionObjective("m2", "THE RESISTANCE BEGINS", "Target: TSC Raju Anti-Terrorism Sculpture", "3. TSC Raju Anti-Terrorism Sculpture", ObjectiveType.INTERACT, new Vector3(-6.5f, 0f, 48f), 3.8f, true));
-            this.missionTracker.addObjective(new MissionObjective("m3", "COMMUNAL AWAKENING", "Target: Central Library & Hakim Chattar", "4. Central Library & Hakim Chattar", ObjectiveType.INTERACT, new Vector3(48f, 0f, 18f), 3.8f, true));
-            this.missionTracker.addObjective(new MissionObjective("m4", "THE UNBROKEN CHAIN", "Target: Teacher-Student Centre (TSC)", "5. Teacher-Student Centre (TSC)", ObjectiveType.INTERACT, new Vector3(28f, 0f, -10f), 3.8f, true));
+            initDefaultObjectives();
+        } else {
+            this.missionTracker.reset();
         }
 
         player.setExtraColliders(world.getColliders());

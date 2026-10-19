@@ -70,6 +70,19 @@ public class Level2StudentConfrontation implements CampaignLevel {
         "5. Secure Emergency Medical Triage Station"
     };
 
+    public Level2StudentConfrontation() {
+        initDefaultObjectives();
+    }
+
+    private void initDefaultObjectives() {
+        missionTracker.reset();
+        missionTracker.addObjective(new MissionObjective("l2_1", "DEFEND RAJU ROUNDABOUT", "Target: Helmeted Aggressor near Raju Sculpture", CHECKLIST[0], ObjectiveType.TRIGGER_EVENT, objectiveWaypoints[0], 4.5f, true));
+        missionTracker.addObjective(new MissionObjective("l2_2", "INTERCEPT FLANKING AGGRESSOR", "Target: Secondary Aggressor on west roadway", CHECKLIST[1], ObjectiveType.TRIGGER_EVENT, objectiveWaypoints[1], 4.5f, false));
+        missionTracker.addObjective(new MissionObjective("l2_3", "SECURE ARTS FACULTY APPROACH", "Target: Roadway barricade enforcer", CHECKLIST[2], ObjectiveType.TRIGGER_EVENT, objectiveWaypoints[2], 4.5f, false));
+        missionTracker.addObjective(new MissionObjective("l2_4", "TRIAGE INJURED STUDENT", "Target: Fallen student requiring first aid", CHECKLIST[3], ObjectiveType.INTERACT, objectiveWaypoints[3], 3.5f, false));
+        missionTracker.addObjective(new MissionObjective("l2_5", "EVACUATE TO MEDICAL TENT", "Target: Emergency Medical Triage Tent", CHECKLIST[4], ObjectiveType.INTERACT, objectiveWaypoints[4], 4.0f, false));
+    }
+
     private float hitStopTimer = 0f;
     private boolean attackHitProcessed = false;
 
@@ -245,13 +258,10 @@ public class Level2StudentConfrontation implements CampaignLevel {
     public void init(TextureFactory textures, PlayerController player, CinematicCamera camera) {
         this.world = new DhakaCampusWorld(textures);
 
-        missionTracker.reset();
         if (missionTracker.getTotalCount() == 0) {
-            missionTracker.addObjective(new MissionObjective("l2_1", "DEFEND RAJU ROUNDABOUT", "Target: Helmeted Aggressor near Raju Sculpture", CHECKLIST[0], ObjectiveType.TRIGGER_EVENT, objectiveWaypoints[0], 4.5f, true));
-            missionTracker.addObjective(new MissionObjective("l2_2", "INTERCEPT FLANKING AGGRESSOR", "Target: Secondary Aggressor on west roadway", CHECKLIST[1], ObjectiveType.TRIGGER_EVENT, objectiveWaypoints[1], 4.5f, false));
-            missionTracker.addObjective(new MissionObjective("l2_3", "SECURE ARTS FACULTY APPROACH", "Target: Roadway barricade enforcer", CHECKLIST[2], ObjectiveType.TRIGGER_EVENT, objectiveWaypoints[2], 4.5f, false));
-            missionTracker.addObjective(new MissionObjective("l2_4", "TRIAGE INJURED STUDENT", "Target: Fallen student requiring first aid", CHECKLIST[3], ObjectiveType.INTERACT, objectiveWaypoints[3], 3.5f, false));
-            missionTracker.addObjective(new MissionObjective("l2_5", "EVACUATE TO MEDICAL TENT", "Target: Emergency Medical Triage Tent", CHECKLIST[4], ObjectiveType.INTERACT, objectiveWaypoints[4], 4.0f, false));
+            initDefaultObjectives();
+        } else {
+            missionTracker.reset();
         }
 
         // Overcast, stormy monsoon environment
