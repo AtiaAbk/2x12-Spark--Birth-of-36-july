@@ -4,54 +4,39 @@ precision mediump float;
 
 varying vec2 v_texCoord;
 
-uniform sampler2D u_texture;      // Scene render
-uniform sampler2D u_bloomTexture;  // Bloom bright pass (blurred)
+uniform sampler2D u_texture;      // Linear HDR scene render
+uniform sampler2D u_bloomTexture;  // Linear bloom bright pass (Gaussian blurred)
 uniform vec2 u_resolution;
 
-uniform float u_bloomStrength;     // 0.55 default
-uniform float u_vignetteStrength;  // 0.60 default
-uniform float u_vignetteRadius;    // 0.72 default
-uniform float u_exposure;          // 1.15 default
-uniform float u_saturation;        // 1.18 default
-uniform float u_time;              // for grain animation
+uniform float u_bloomStrength;     // Bloom contribution
+uniform float u_vignetteStrength;  // Edge darkening intensity
+uniform float u_vignetteRadius;    // Radial vignette falloff
+uniform float u_exposure;          // Linear photographic exposure multiplier
+uniform float u_saturation;        // Saturation adjustment in linear space
+uniform float u_time;              // Subtle temporal film grain animation
 
 // ─────────────────────────────────────────────
-// Pseudo-random (for film grain)
+// Pseudo-random generator (for organic film grain)
 // ─────────────────────────────────────────────
 float rand(vec2 co) {
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
 // ─────────────────────────────────────────────
-// ACES filmic tone mapping
+// ACES Filmic Tone Mapping (Stephen Hill / Krzysztof Narkowicz fit)
+// Produces natural highlight roll-off and rich shadow contrast without crushing blacks.
 // ─────────────────────────────────────────────
-vec3 aces(vec3 x) {
-    float a = 2.51;
-    float b = 0.03;
-    float c = 2.43;
-    float d = 0.59;
-    float e = 0.14;
+vec3 acesToneMapping(vec3 x) {
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
     return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
 // ─────────────────────────────────────────────
-// Color Grading — Clean realistic daylight
-// Pure neutral shadow definition and clean natural highlights
-// ─────────────────────────────────────────────
-vec3 colorGrade(vec3 col) {
-    // Zero greenish/teal tint: completely clean neutral tones
-    vec3 shadowLift = vec3(0.005, 0.005, 0.008);
-    vec3 highlightTint = vec3(1.02, 1.01, 1.00);
-
-    float lum = dot(col, vec3(0.299, 0.587, 0.114));
-    vec3 shadows = mix(col + shadowLift, col, smoothstep(0.0, 0.4, lum));
-    vec3 highlights = mix(shadows, shadows * highlightTint, smoothstep(0.5, 1.0, lum));
-
-    return highlights;
-}
-
-// ─────────────────────────────────────────────
-// FXAA: smooths polygon and foliage edges (the scene renders into a non-multisampled FBO)
+// Fast Approximate Anti-Aliasing (FXAA 3.11 quality pass)
 // ─────────────────────────────────────────────
 vec3 fxaa(vec2 uv, vec2 inv) {
     const vec3 lumaW = vec3(0.299, 0.587, 0.114);
@@ -82,60 +67,49 @@ vec3 fxaa(vec2 uv, vec2 inv) {
     return (lB < lMin || lB > lMax) ? rgbA : rgbB;
 }
 
+// ─────────────────────────────────────────────
+// Output Transfer Function: Linear to Display sRGB / Gamma
+// Applied exactly once at the final output stage.
+// ─────────────────────────────────────────────
+vec3 linearToDisplayGamma(vec3 linColor) {
+    // Standard IEC 61966-2-1 display gamma transfer
+    vec3 bLess = step(vec3(0.0031308), linColor);
+    return mix(linColor * 12.92, 1.055 * pow(linColor, vec3(1.0 / 2.4)) - 0.055, bLess);
+}
+
 void main() {
     vec2 uv = v_texCoord;
 
-    // ── 1. Scene colour ──────────────────────
-    vec3 col = fxaa(uv, 1.0 / u_resolution);
+    // ── 1. Sample linear HDR scene colour (FXAA edge-smoothed) ──
+    vec3 linearScene = fxaa(uv, 1.0 / u_resolution);
 
-    // ── 2. Bloom additive composite ──────────
-    vec3 bloom = texture2D(u_bloomTexture, uv).rgb;
-    col += bloom * u_bloomStrength;
+    // ── 2. Linear Bloom composite ──────────────────────────────
+    vec3 linearBloom = texture2D(u_bloomTexture, uv).rgb;
+    linearScene += linearBloom * u_bloomStrength;
 
-    // ── 3. Exposure ──────────────────────────
-    col *= u_exposure;
+    // ── 3. Photographic Exposure ───────────────────────────────
+    linearScene *= max(u_exposure, 0.01);
 
-    // ── 4. Saturation ────────────────────────
-    float gray = dot(col, vec3(0.299, 0.587, 0.114));
-    col = mix(vec3(gray), col, u_saturation);
+    // ── 4. Saturation adjustment in linear space ───────────────
+    float linearLum = dot(linearScene, vec3(0.2126, 0.7152, 0.0722));
+    linearScene = mix(vec3(linearLum), linearScene, u_saturation);
 
-    // ── 5. Color Grade ───────────────────────
-    col = colorGrade(col);
+    // ── 5. ACES Filmic Tone Mapping ────────────────────────────
+    // Compresses [0, inf) dynamic range into smooth [0, 1] filmic rolloff
+    vec3 toneMapped = acesToneMapping(linearScene);
 
-    // ── 6. ACES Tone Mapping ─────────────────
-    col = aces(col);
-
-    // ── 6b. Cinematic S-Curve Contrast & Detail Sharpening ──
-    // Subtle filmic contrast curve (deep rich shadows and natural highlight rolloff)
-    vec3 contrastS = col * col * (3.0 - 2.0 * col);
-    col = mix(col, contrastS, 0.22);
-
-    // Clean unsharp masking for razor-sharp foliage and brick texture details
-    vec2 invR = 1.0 / u_resolution;
-    vec3 n1 = aces(texture2D(u_texture, uv + vec2( invR.x, 0.0)).rgb * u_exposure);
-    vec3 n2 = aces(texture2D(u_texture, uv + vec2(-invR.x, 0.0)).rgb * u_exposure);
-    vec3 n3 = aces(texture2D(u_texture, uv + vec2(0.0,  invR.y)).rgb * u_exposure);
-    vec3 n4 = aces(texture2D(u_texture, uv + vec2(0.0, -invR.y)).rgb * u_exposure);
-    vec3 neighborAvg = (n1 + n2 + n3 + n4) * 0.25;
-    vec3 sharpDetail = col - neighborAvg;
-    col += clamp(sharpDetail * 0.45, -0.06, 0.06);
-
-    // ── 7. Vignette ──────────────────────────
+    // ── 6. Vignette (optical lens edge attenuation) ────────────
     vec2 center = uv - 0.5;
-    float dist = length(center) / u_vignetteRadius;
+    float dist = length(center) / max(u_vignetteRadius, 0.1);
     float vignette = 1.0 - smoothstep(0.65, 1.0, dist) * u_vignetteStrength;
-    col *= vignette;
+    toneMapped *= vignette;
 
-    // ── 8. Subtle Chromatic Aberration ───────
-    float aberration = 0.0008;
-    float r = texture2D(u_texture, uv + vec2( aberration,  0.0)).r;
-    float b = texture2D(u_texture, uv + vec2(-aberration,  0.0)).b;
-    col.r = mix(col.r, r, 0.15);   // light touch: raw samples would reintroduce aliasing
-    col.b = mix(col.b, b, 0.15);
+    // ── 7. Subtle film grain ───────────────────────────────────
+    float grain = (rand(uv + vec2(u_time * 0.08, u_time * 0.05)) - 0.5) * 0.008;
+    toneMapped = clamp(toneMapped + grain, 0.0, 1.0);
 
-    // ── 9. Film Grain ─────────────────────────
-    float grain = (rand(uv + vec2(u_time * 0.1, u_time * 0.07)) - 0.5) * 0.010;
-    col += grain;
+    // ── 8. Single Display Color Space Transfer (Linear -> sRGB) ─
+    vec3 finalOutput = linearToDisplayGamma(toneMapped);
 
-    gl_FragColor = vec4(col, 1.0);
+    gl_FragColor = vec4(finalOutput, 1.0);
 }
