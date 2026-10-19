@@ -804,6 +804,12 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // 1. Draw HUD Background Shapes & Ornate Geometry (only during normal gameplay)
         if (!isVictoryOpen && !isDisqualified && !isDefeated) {
+            MemorialEntry nearby = (memorials != null) ? memorials.getNearbyMemorial(player.getPosition()) : null;
+            if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
+                nearby = boundaryStoneEntry;
+            }
+            boolean hasPrompt = (activeLevel != null) ? (activeLevel.getContextPrompt(player.getPosition()) != null) : (nearby != null);
+
             beginShapes(ShapeType.Filled);
 
             drawMissionCardBg(memorials, w, h);
@@ -816,14 +822,6 @@ public class WhereWindsMeetHUD implements Disposable {
                 drawTacticalMapButtonBg(w, h);
             }
 
-            MemorialEntry nearby = (memorials != null) ? memorials.getNearbyMemorial(player.getPosition()) : null;
-            if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
-                nearby = boundaryStoneEntry;
-            }
-            boolean hasPrompt = (nearby != null);
-            if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
-                hasPrompt = (activeLevel.getContextPrompt(player.getPosition()) != null);
-            }
             if (hasPrompt && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
                 drawSpeechBubblePromptBg(w, h);
             }
@@ -1584,7 +1582,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float px = (w - promptW) / 2f + 140f;
         float py = h * 0.44f;
 
-        if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+        if (activeLevel != null) {
             String prompt = activeLevel.getContextPrompt(player.getPosition());
             if (prompt == null) return;
             fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
