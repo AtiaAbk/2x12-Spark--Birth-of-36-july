@@ -107,12 +107,14 @@ vec3 adjustTemperatureAndTint(vec3 col, float temp, float tint) {
 }
 
 // ─────────────────────────────────────────────
-// Shadow recovery (lifts deep darks without blowing out highlights)
+// Shadow recovery (lifts deep darks without blowing out highlights or blanching colors)
 // ─────────────────────────────────────────────
 vec3 liftShadows(vec3 col, float lift) {
+    if (lift <= 0.0001) return col;
     float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
-    float factor = 1.0 - smoothstep(0.0, 0.40, lum);
-    return max(vec3(0.0), col + vec3(lift * factor));
+    float factor = 1.0 - smoothstep(0.0, 0.35, lum);
+    vec3 tint = mix(col / max(lum, 0.02), vec3(1.0), 0.35);
+    return max(vec3(0.0), col + tint * (lift * factor));
 }
 
 // ─────────────────────────────────────────────

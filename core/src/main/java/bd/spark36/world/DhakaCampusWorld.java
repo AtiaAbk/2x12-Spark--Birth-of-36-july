@@ -164,7 +164,7 @@ public class DhakaCampusWorld implements Disposable {
 
         // Soft front fill light for natural character and facade illumination
         DirectionalLight fillLight = new DirectionalLight();
-        fillLight.set(new Color(0.20f, 0.22f, 0.25f, 1f), new Vector3(0.20f, -0.30f, 0.92f).nor());
+        fillLight.set(new Color(0.24f, 0.23f, 0.20f, 1f), new Vector3(0.20f, -0.30f, 0.92f).nor());
         environment.add(fillLight);
 
         // Atmospheric depth haze & distance fog equation (gdx-gltf native fogFlag + fogEquationFlag)

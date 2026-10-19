@@ -297,22 +297,22 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Deep organic forest moss-green base (Ghost of Tsushima & Where Winds Meet style, zero catceta/neon)
-        pix.setColor(0.05f, 0.14f, 0.05f, 1f);
+        // Lush tropical monsoon lawn grass base (healthy Bangladeshi July summer turf)
+        pix.setColor(0.18f, 0.44f, 0.14f, 1f);
         pix.fill();
 
-        // Multi-frequency organic turf blades and deep loam variations
+        // Multi-frequency organic turf blades and warm alluvial soil undertones
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 float n1 = (MathUtils.sin(x * 0.18f) * MathUtils.cos(y * 0.20f)
                           + MathUtils.sin((x + y) * 0.38f) * 0.5f);
                 float n2 = (MathUtils.sin(x * 0.65f + y * 0.35f) * 0.25f);
-                float speckle = MathUtils.random(-0.02f, 0.02f);
+                float speckle = MathUtils.random(-0.03f, 0.03f);
 
-                // Deep, natural chlorophyll shades (zero artificial neon/catceta tint)
-                float r = MathUtils.clamp(0.05f + (n1 + n2) * 0.02f + speckle, 0.04f, 0.10f);
-                float g = MathUtils.clamp(0.14f + (n1 + n2) * 0.04f + speckle, 0.10f, 0.22f);
-                float b = MathUtils.clamp(0.05f + (n1 + n2) * 0.015f + speckle * 0.5f, 0.03f, 0.08f);
+                // Natural lush tropical greens with rich chlorophyll and subtle warm undertones
+                float r = MathUtils.clamp(0.18f + (n1 + n2) * 0.04f + speckle, 0.12f, 0.26f);
+                float g = MathUtils.clamp(0.44f + (n1 + n2) * 0.08f + speckle * 1.2f, 0.32f, 0.58f);
+                float b = MathUtils.clamp(0.14f + (n1 + n2) * 0.03f + speckle * 0.5f, 0.08f, 0.22f);
 
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
@@ -320,14 +320,14 @@ public class TextureFactory implements Disposable {
         }
 
         // Fine blade striations
-        for (int b = 0; b < 1400; b++) {
+        for (int b = 0; b < 1600; b++) {
             int bx = MathUtils.random(size - 1);
             int by = MathUtils.random(size - 12);
-            int len = MathUtils.random(4, 10);
-            float shade = MathUtils.random(-0.02f, 0.03f);
-            pix.setColor(MathUtils.clamp(0.05f + shade, 0.03f, 0.09f),
-                         MathUtils.clamp(0.16f + shade * 1.1f, 0.11f, 0.24f),
-                         MathUtils.clamp(0.05f + shade, 0.03f, 0.08f), 1f);
+            int len = MathUtils.random(4, 11);
+            float shade = MathUtils.random(-0.04f, 0.05f);
+            pix.setColor(MathUtils.clamp(0.18f + shade, 0.11f, 0.27f),
+                         MathUtils.clamp(0.48f + shade * 1.3f, 0.34f, 0.62f),
+                         MathUtils.clamp(0.14f + shade * 0.8f, 0.08f, 0.23f), 1f);
             pix.drawLine(bx, by, bx + MathUtils.random(-1, 1), by + len);
         }
 

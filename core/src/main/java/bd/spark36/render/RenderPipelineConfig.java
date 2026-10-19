@@ -31,29 +31,29 @@ public final class RenderPipelineConfig {
 
     // ── Exposure & Color Grading ──────────────────────────────────────────
     /** Base photographic exposure multiplier (linear scale, 1.0 = baseline daylight). */
-    public static float exposure = getFloatProperty("bd.spark36.exposure", 1.0f);
+    public static float exposure = getFloatProperty("bd.spark36.exposure", 1.02f);
 
     /** Midpoint-anchored image contrast. */
-    public static float contrast = getFloatProperty("bd.spark36.contrast", 1.04f);
+    public static float contrast = getFloatProperty("bd.spark36.contrast", 1.05f);
 
-    /** Color saturation multiplier (1.0 = neutral, 1.04 = subtle natural summer vibrance). */
-    public static float saturation = getFloatProperty("bd.spark36.saturation", 1.04f);
+    /** Color saturation multiplier (1.0 = neutral, 1.18 = lush natural summer vibrance). */
+    public static float saturation = getFloatProperty("bd.spark36.saturation", 1.18f);
 
-    /** White balance temperature shift (-1.0 to 1.0). */
-    public static float colorTemperature = getFloatProperty("bd.spark36.colorTemperature", 0.0f);
+    /** White balance temperature shift (-1.0 to 1.0, 0.14 = warm summer daylight). */
+    public static float colorTemperature = getFloatProperty("bd.spark36.colorTemperature", 0.14f);
 
-    /** White balance tint shift (-1.0 to 1.0). */
-    public static float colorTint = getFloatProperty("bd.spark36.colorTint", 0.0f);
+    /** White balance tint shift (-1.0 to 1.0, 0.02 = subtle lush warm tint). */
+    public static float colorTint = getFloatProperty("bd.spark36.colorTint", 0.02f);
 
-    /** Shadow detail recovery / lift (prevents crushed blacks in verandas & foliage). */
-    public static float shadowLift = getFloatProperty("bd.spark36.shadowLift", 0.02f);
+    /** Shadow detail recovery / lift (prevents crushed blacks in verandas & foliage without blanching). */
+    public static float shadowLift = getFloatProperty("bd.spark36.shadowLift", 0.005f);
 
     // ── Bloom Configuration ───────────────────────────────────────────────
     /** Minimum luminance threshold to trigger HDR bloom extraction (values in linear space). */
-    public static float bloomThreshold = getFloatProperty("bd.spark36.bloomThreshold", 0.80f);
+    public static float bloomThreshold = getFloatProperty("bd.spark36.bloomThreshold", 0.85f);
 
-    /** Additive bloom composite strength. */
-    public static float bloomStrength = getFloatProperty("bd.spark36.bloomStrength", 0.20f);
+    /** Additive bloom composite strength (natural soft bloom, avoids milky veil). */
+    public static float bloomStrength = getFloatProperty("bd.spark36.bloomStrength", 0.16f);
 
     // ── Vignette & Film Optics ───────────────────────────────────────────
     public static float vignetteStrength = getFloatProperty("bd.spark36.vignetteStrength", 0.20f);

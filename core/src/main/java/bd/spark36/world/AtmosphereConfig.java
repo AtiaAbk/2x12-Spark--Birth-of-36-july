@@ -71,29 +71,29 @@ public final class AtmosphereConfig {
 
     public static final Preset CLEAR_SUNNY = new Preset(
         new Vector3(-0.45f, -0.75f, -0.45f),        // Summer midday sun
-        new Color(1.04f, 1.02f, 0.96f, 1.0f),       // Crisp summer sunlight
-        new Color(0.32f, 0.35f, 0.40f, 1.0f),       // Daylight ambient with blue sky bounce
-        35.0f, 140.0f, 1.0f,                         // Moderate summer haze
-        new Color(0.84f, 0.88f, 0.92f, 1.0f),       // Summer pearlescent sky-blue haze
+        new Color(1.08f, 1.05f, 0.98f, 1.0f),       // Crisp warm summer sunlight
+        new Color(0.38f, 0.40f, 0.35f, 1.0f),       // Warm daylight ambient with lush green/terracotta bounce
+        75.0f, 240.0f, 1.0f,                         // Natural summer atmospheric depth (no milky near blanching)
+        new Color(0.74f, 0.78f, 0.80f, 1.0f),       // Warm summer atmospheric haze (soft humidity depth)
         new Color(0.24f, 0.42f, 0.66f, 1.0f),       // Filmic slate-azure zenith
         new Color(0.44f, 0.60f, 0.76f, 1.0f),       // Soft atmospheric summer mid sky
         new Color(0.68f, 0.78f, 0.86f, 1.0f),       // Pearlescent horizon
-        new Color(0.84f, 0.88f, 0.92f, 1.0f),       // Lower haze
+        new Color(0.78f, 0.82f, 0.86f, 1.0f),       // Lower haze
         new Color(1.0f, 0.98f, 0.90f, 0.95f),        // Intense white-gold solar disk
         new Color(1.0f, 0.94f, 0.78f, 0.28f),        // Warm solar corona
         1.0f,                                       // Full canopy god rays
         0.0f,                                       // No rain
         1.0f,                                       // Standard fair weather clouds
         1.0f,                                       // Standard breeze
-        0.0f,                                       // Neutral white balance temperature
-        0.0f                                        // Neutral tint
+        0.0f,                                       // Base temperature handled in RenderPipelineConfig
+        0.0f                                        // Base tint handled in RenderPipelineConfig
     );
 
     public static final Preset GOLDEN_HOUR = new Preset(
         new Vector3(-0.75f, -0.32f, -0.58f),        // Low late afternoon / sunset angle
         new Color(1.24f, 0.92f, 0.65f, 1.0f),       // Rich golden amber sunlight
-        new Color(0.44f, 0.36f, 0.46f, 1.0f),       // Violet-warm fill bounce
-        25.0f, 125.0f, 1.1f,                         // Warm atmospheric distance scattering
+        new Color(0.44f, 0.38f, 0.42f, 1.0f),       // Violet-warm fill bounce
+        65.0f, 200.0f, 1.1f,                         // Warm atmospheric distance scattering
         new Color(0.92f, 0.78f, 0.65f, 1.0f),       // Warm amber horizon mist
         new Color(0.20f, 0.28f, 0.52f, 1.0f),       // Deep twilight azure zenith
         new Color(0.65f, 0.45f, 0.50f, 1.0f),       // Dusky rose-purple mid sky
