@@ -119,7 +119,7 @@ In accordance with strict Git discipline requirements, every completed logical s
 | **Step 5** | `ece69ff` | `feat: connect NPC interactions to mission events and level progression` | `StudentNPC` implements `Interactable`, `CampusCrowd` coordinates interactions, `Level1PeacefulCampus` & `Level2StudentConfrontation` use `MissionTracker`. |
 | **Step 6** | `45bd48c` | `feat: integrate interaction prompts and multi-line dialogue into HUD` | `WhereWindsMeetHUD` renders multi-line dialogue, `[SPACE] NEXT` key prompts, unified `activeLevel.getContextPrompt`. |
 | **Step 7** | `8e4a9e1` | `test: add comprehensive gameplay interaction and mission objective test suite` | 11 unit tests in `InteractionMissionTest.java`, forward vector alignment, `WALKING` interactability, default constructor objectives. |
-| **Step 8** | `784b2c1` | `docs: complete phase 9 gameplay interaction report and documentation` | Final visual captures, subtitle badge layout polish, documentation artifacts (`docs/PHASE_9_IMPLEMENTATION_REPORT.md`). |
+| **Step 8** | `aeabcf8` | `docs: complete phase 9 gameplay interaction report and documentation` | Final visual captures, subtitle badge layout polish, documentation artifacts (`docs/PHASE_9_IMPLEMENTATION_REPORT.md`). |
 
 ---
 
