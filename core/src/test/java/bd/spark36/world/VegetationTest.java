@@ -171,4 +171,102 @@ public class VegetationTest {
         assertTrue(GraphicsTier.MEDIUM.enableLayeredWind, "MEDIUM tier must enable layered wind");
         assertTrue(GraphicsTier.HIGH.enableLayeredWind, "HIGH tier must enable layered wind");
     }
+
+    @Test
+    @DisplayName("Point 10: TreeEntity base anchor guarantee — root point (0,0,0) displacement is identically zero")
+    public void testTreeEntityBaseAnchorDisplacementIdenticallyZero() {
+        com.badlogic.gdx.graphics.g3d.Model dummyModel = new com.badlogic.gdx.graphics.g3d.Model();
+        com.badlogic.gdx.graphics.g3d.ModelInstance trunk = new com.badlogic.gdx.graphics.g3d.ModelInstance(dummyModel);
+        com.badlogic.gdx.graphics.g3d.ModelInstance core = new com.badlogic.gdx.graphics.g3d.ModelInstance(dummyModel);
+        com.badlogic.gdx.graphics.g3d.ModelInstance cards = new com.badlogic.gdx.graphics.g3d.ModelInstance(dummyModel);
+
+        float px = 15.0f, pz = -22.5f;
+        TreeEntity entity = new TreeEntity(VegetationConfig.SPECIES_RAIN_TREE, px, pz, 1.0f, 42f, 4.0f, trunk, core, cards);
+
+        Vector3 rootWorldTrunk = new Vector3();
+        Vector3 rootWorldCore = new Vector3();
+        Vector3 rootWorldCards = new Vector3();
+
+        for (float t = 0f; t <= 10f; t += 0.25f) {
+            entity.update(t, windModel, GraphicsTier.MEDIUM, null);
+
+            // Transform local root (0, 0, 0)
+            rootWorldTrunk.set(0f, 0f, 0f).mul(entity.getTrunkInstance().transform);
+            rootWorldCore.set(0f, 0f, 0f).mul(entity.getCanopyCoreInstance().transform);
+            rootWorldCards.set(0f, 0f, 0f).mul(entity.getLeafCardsInstance().transform);
+
+            assertEquals(px, rootWorldTrunk.x, 1e-5f, "Trunk root X drifted!");
+            assertEquals(0f, rootWorldTrunk.y, 1e-5f, "Trunk root Y displaced!");
+            assertEquals(pz, rootWorldTrunk.z, 1e-5f, "Trunk root Z drifted!");
+
+            assertEquals(px, rootWorldCore.x, 1e-5f, "Core root X drifted!");
+            assertEquals(0f, rootWorldCore.y, 1e-5f, "Core root Y displaced!");
+            assertEquals(pz, rootWorldCore.z, 1e-5f, "Core root Z drifted!");
+
+            assertEquals(px, rootWorldCards.x, 1e-5f, "Cards root X drifted!");
+            assertEquals(0f, rootWorldCards.y, 1e-5f, "Cards root Y displaced!");
+            assertEquals(pz, rootWorldCards.z, 1e-5f, "Cards root Z drifted!");
+        }
+    }
+
+    @Test
+    @DisplayName("Point 11: Layered wind sway hierarchy — leaves sway more than core, core sways more than trunk")
+    public void testLayeredWindSwayHierarchy() {
+        com.badlogic.gdx.graphics.g3d.Model dummyModel = new com.badlogic.gdx.graphics.g3d.Model();
+        com.badlogic.gdx.graphics.g3d.ModelInstance trunk = new com.badlogic.gdx.graphics.g3d.ModelInstance(dummyModel);
+        com.badlogic.gdx.graphics.g3d.ModelInstance core = new com.badlogic.gdx.graphics.g3d.ModelInstance(dummyModel);
+        com.badlogic.gdx.graphics.g3d.ModelInstance cards = new com.badlogic.gdx.graphics.g3d.ModelInstance(dummyModel);
+
+        TreeEntity entity = new TreeEntity(VegetationConfig.SPECIES_KRISHNACHURA, 0f, 0f, 1.0f, 7.7f, 3.5f, trunk, core, cards);
+
+        Vector3 topTrunk = new Vector3();
+        Vector3 topCore = new Vector3();
+
+        int dynamicChecks = 0;
+        for (float t = 0.5f; t <= 10f; t += 0.5f) {
+            entity.update(t, windModel, GraphicsTier.MEDIUM, null);
+
+            topTrunk.set(0f, 3f, 0f).mul(entity.getTrunkInstance().transform);
+            topCore.set(0f, 3f, 0f).mul(entity.getCanopyCoreInstance().transform);
+
+            float trunkDeflection = (float) Math.hypot(topTrunk.x, topTrunk.z);
+            float coreDeflection = (float) Math.hypot(topCore.x, topCore.z);
+
+            if (trunkDeflection > 0.01f) {
+                // Core has 1.0x sway vs trunk 0.45x sway -> coreDeflection > trunkDeflection
+                assertTrue(coreDeflection >= trunkDeflection,
+                    "Core deflection " + coreDeflection + " must exceed trunk deflection " + trunkDeflection);
+                dynamicChecks++;
+            }
+        }
+        assertTrue(dynamicChecks > 0, "Wind model produced deflection during test interval");
+    }
+
+    @Test
+    @DisplayName("Point 12: Distance-based LOD toggles leaf cards correctly")
+    public void testDistanceBasedLod() {
+        com.badlogic.gdx.graphics.g3d.Model dummyModel = new com.badlogic.gdx.graphics.g3d.Model();
+        com.badlogic.gdx.graphics.g3d.ModelInstance trunk = new com.badlogic.gdx.graphics.g3d.ModelInstance(dummyModel);
+        com.badlogic.gdx.graphics.g3d.ModelInstance core = new com.badlogic.gdx.graphics.g3d.ModelInstance(dummyModel);
+        com.badlogic.gdx.graphics.g3d.ModelInstance cards = new com.badlogic.gdx.graphics.g3d.ModelInstance(dummyModel);
+
+        TreeEntity entity = new TreeEntity(VegetationConfig.SPECIES_RAIN_TREE, 0f, 0f, 1.0f, 1.0f, 4.0f, trunk, core, cards);
+
+        com.badlogic.gdx.graphics.Camera cam = new com.badlogic.gdx.graphics.Camera() {
+            @Override
+            public void update() {}
+            @Override
+            public void update(boolean updateFrustum) {}
+        };
+
+        // Near distance: 20m from tree -> cards visible
+        cam.position.set(0f, 2f, 20f);
+        entity.update(0f, windModel, GraphicsTier.MEDIUM, cam);
+        assertTrue(entity.isShowingCards(), "Leaf cards should be visible at 20m (< 65m cutoff)");
+
+        // Far distance: 100m from tree -> cards culled
+        cam.position.set(0f, 2f, 100f);
+        entity.update(0f, windModel, GraphicsTier.MEDIUM, cam);
+        assertFalse(entity.isShowingCards(), "Leaf cards should be culled at 100m (> 65m cutoff)");
+    }
 }

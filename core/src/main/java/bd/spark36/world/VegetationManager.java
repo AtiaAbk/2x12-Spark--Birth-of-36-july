@@ -35,7 +35,7 @@ public class VegetationManager implements Disposable {
     }
 
     /**
-     * Builds all campus trees in local space and anchors them to the campus grounds.
+     * Builds all campus trees in local space using system graphics tier.
      */
     public void buildCampusTrees(float[][] treeLocations,
                                  Material barkTwoSidedMat,
@@ -46,6 +46,25 @@ public class VegetationManager implements Disposable {
                                  Material whiteBlossomCardMat,
                                  Material foliageMat,
                                  java.util.List<float[]> colliders) {
+        buildCampusTrees(treeLocations, barkTwoSidedMat, leafClumpMat, leafCardMat,
+                         blossomClumpMat, whiteBlossomClumpMat, whiteBlossomCardMat,
+                         foliageMat, colliders, GraphicsTier.fromSystemProperty());
+    }
+
+    /**
+     * Builds all campus trees in local space and anchors them to the campus grounds,
+     * scaled according to the specified GraphicsTier.
+     */
+    public void buildCampusTrees(float[][] treeLocations,
+                                 Material barkTwoSidedMat,
+                                 Material leafClumpMat,
+                                 Material leafCardMat,
+                                 Material blossomClumpMat,
+                                 Material whiteBlossomClumpMat,
+                                 Material whiteBlossomCardMat,
+                                 Material foliageMat,
+                                 java.util.List<float[]> colliders,
+                                 GraphicsTier tier) {
         long attr = Usage.Position | Usage.Normal | Usage.TextureCoordinates;
 
         int treeIndex = 0;
@@ -59,8 +78,9 @@ public class VegetationManager implements Disposable {
             float scale = 0.9f + 0.28f * (0.5f + 0.5f * MathUtils.sin(treeIndex * 1.7f));
             treeIndex++;
 
-            // Every third broadleaf tree has a thinner, airier canopy
-            TreeGeometry.leafDensity = (treeIndex % 3 == 1) ? 0.55f : 1f;
+            // Every third broadleaf tree has a thinner, airier canopy, scaled by graphics tier density
+            float baseDensity = (treeIndex % 3 == 1) ? 0.55f : 1f;
+            TreeGeometry.leafDensity = baseDensity * (tier != null ? tier.vegetationDensity : 1.0f);
 
             // Trunk footprint collider
             float trunkHalf = (type == 2) ? 0.45f : 0.75f * scale;
@@ -163,7 +183,7 @@ public class VegetationManager implements Disposable {
 
             } else {
                 // Royal Palm (Roystonea regia)
-                TreeGeometry.leafDensity = 1f;
+                TreeGeometry.leafDensity = 1f * (tier != null ? tier.vegetationDensity : 1.0f);
                 ModelBuilder trunkB = new ModelBuilder();
                 ModelBuilder frondsB = new ModelBuilder();
                 trunkB.begin(); frondsB.begin();

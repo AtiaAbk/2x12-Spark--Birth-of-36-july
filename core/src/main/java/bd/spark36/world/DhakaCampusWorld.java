@@ -360,11 +360,10 @@ public class DhakaCampusWorld implements Disposable {
 
         Material whiteBlossomCardMat = new Material(
             PBRTextureAttribute.createBaseColorTexture(textures.whiteBlossomAtlas),
-            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
-            FloatAttribute.createAlphaTest(0.30f),
+            FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.03f, 0.03f, 0.025f, 1f))
+            ColorAttribute.createEmissive(new Color(0.02f, 0.04f, 0.015f, 1f))
         );
 
         Material kashfulCardMat = new Material(
@@ -408,12 +407,11 @@ public class DhakaCampusWorld implements Disposable {
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
-        // Individual leaf cards: cut out by alpha (no blending, so no sorting artefacts) and seen
-        // from both sides. The cutout also shapes the shadows into dappled leaf patterns.
+        // Individual leaf cards: cut out by alpha (opaque queue, writes depth, no sorting artefacts)
+        // Seen from both sides. The cutout also shapes the shadows into dappled leaf patterns.
         Material leafCardMat = new Material(
             PBRTextureAttribute.createBaseColorTexture(textures.leafAtlas),
-            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
-            FloatAttribute.createAlphaTest(0.30f),
+            FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
             // Subtle daylight transmission glow
@@ -429,8 +427,7 @@ public class DhakaCampusWorld implements Disposable {
 
         Material bambooLeafCardMat = new Material(
             PBRTextureAttribute.createBaseColorTexture(textures.bambooAtlas),
-            new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
-            FloatAttribute.createAlphaTest(0.30f),
+            FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
             ColorAttribute.createEmissive(new Color(0.02f, 0.04f, 0.015f, 1f))

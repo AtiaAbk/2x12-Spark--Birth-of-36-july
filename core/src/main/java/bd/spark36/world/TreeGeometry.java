@@ -100,12 +100,13 @@ final class TreeGeometry {
     /** Radius multiplier of the lumpy canopy surface at longitude th / colatitude phi. */
     private static float lump(float th, float phi, float seed) {
         return 1f
-            + 0.17f * MathUtils.sin(th * 3f + seed) * MathUtils.sin(phi * 2f + seed * 0.7f)
-            + 0.09f * MathUtils.sin(th * 5f - seed * 1.3f + phi * 3f);
+            + 0.18f * MathUtils.sin(th * 3f + seed) * MathUtils.sin(phi * 2f + seed * 0.7f)
+            + 0.10f * MathUtils.sin(th * 5f - seed * 1.3f + phi * 3f)
+            + 0.08f * MathUtils.cos(th * 2f + phi * 4f + seed * 0.5f);
     }
 
     private static final java.util.Random RNG = new java.util.Random();
-    private static final int MAX_LEAVES_PER_CANOPY = 900;
+    private static final int MAX_LEAVES_PER_CANOPY = 320;
 
     /**
      * Fraction of leaf cards to grow (1 = full canopy). Below 1 the shaded core also shrinks so
@@ -125,12 +126,6 @@ final class TreeGeometry {
     }
 
     /**
-     * A leafy canopy: a slightly smaller dark clump as the shaded core, wrapped in individual
-     * leaf cards scattered over the same lumpy surface. {@code cardCells} is the atlas cells the
-     * cards may use (0 leaf, 1 leaf fan, 2 feathery leaf, 3 blossoms) with {@code blossomChance}
-     * the odds a card is the blossom cell.
-     */
-    /**
      * Organic flared buttress roots that radiate from the base of the trunk (y = 0.48 * s)
      * and plunge deeply into the turf (y = -0.22 * s), firmly anchoring the tree in the ground.
      */
@@ -143,16 +138,16 @@ final class TreeGeometry {
             float endY = -0.22f * s;
             float midY = 0.12f * s;
 
-            float rStart = baseRadius * 0.85f;
-            float rMid = baseRadius + 0.35f * s;
-            float rEnd = baseRadius + (0.75f + 0.22f * MathUtils.sin(k * 1.9f + seed)) * s;
+            float rStart = baseRadius * 0.90f;
+            float rMid = baseRadius + 0.25f * s;
+            float rEnd = baseRadius + (0.55f + 0.18f * MathUtils.sin(k * 1.9f + seed)) * s;
 
             float p0x = cx + ca * rStart, p0z = cz + sa * rStart;
             float p1x = cx + ca * rMid,   p1z = cz + sa * rMid;
             float p2x = cx + ca * rEnd,   p2z = cz + sa * rEnd;
 
-            limb(trunk, p0x, startY, p0z, 0.18f * s, p1x, midY, p1z, 0.11f * s, 6);
-            limb(trunk, p1x, midY, p1z, 0.11f * s, p2x, endY, p2z, 0.05f * s, 6);
+            limb(trunk, p0x, startY, p0z, 0.14f * s, p1x, midY, p1z, 0.09f * s, 6);
+            limb(trunk, p1x, midY, p1z, 0.09f * s, p2x, endY, p2z, 0.04f * s, 6);
         }
     }
 
@@ -277,14 +272,14 @@ final class TreeGeometry {
         float topX = x + lean, topZ = z + leanZ, topY = 3.6f * s;
 
         // Organic flared buttress roots anchored into turf (y = -0.22 * s)
-        buttressRoots(trunk, x, z, 0.75f * s, s, seed, 5);
+        buttressRoots(trunk, x, z, 0.52f * s, s, seed, 5);
 
-        // Multi-segment curved tapered trunk
+        // Multi-segment curved tapered trunk (botanical proportions: r0 ~ 0.52s, r1 ~ 0.40s, r2 ~ 0.30s)
         float m1x = x + lean * 0.25f, m1z = z + leanZ * 0.25f;
         float m2x = x + lean * 0.60f, m2z = z + leanZ * 0.60f;
-        limb(trunk, x, -0.20f * s, z, 0.95f * s, m1x, 0.75f * s, m1z, 0.65f * s, 10);
-        limb(trunk, m1x, 0.75f * s, m1z, 0.65f * s, m2x, 1.95f * s, m2z, 0.48f * s, 10);
-        limb(trunk, m2x, 1.95f * s, m2z, 0.48f * s, topX, topY, topZ, 0.36f * s, 10);
+        limb(trunk, x, -0.20f * s, z, 0.62f * s, m1x, 0.75f * s, m1z, 0.46f * s, 10);
+        limb(trunk, m1x, 0.75f * s, m1z, 0.46f * s, m2x, 1.95f * s, m2z, 0.36f * s, 10);
+        limb(trunk, m2x, 1.95f * s, m2z, 0.36f * s, topX, topY, topZ, 0.26f * s, 10);
 
         for (int k = 0; k < 5; k++) {
             float ang = seed + k * MathUtils.PI2 / 5f + 0.35f * MathUtils.sin(seed * 2.1f + k);
@@ -296,13 +291,13 @@ final class TreeGeometry {
             float reach = (3.3f + 0.4f * MathUtils.sin(seed + k * 1.7f)) * s;
             float rise = (1.5f + 0.35f * MathUtils.sin(k * 2.1f + seed)) * s;
             float ex = sx + ca * reach, ey = h0 + rise, ez = sz + sa * reach;
-            limb(trunk, sx, h0, sz, 0.32f * s, ex, ey, ez, 0.09f * s, 7);
+            limb(trunk, sx, h0, sz, 0.24f * s, ex, ey, ez, 0.08f * s, 7);
 
             // Fork off the outer half of each limb
             float fa = ang + (k % 2 == 0 ? 0.7f : -0.7f);
             float mx = sx + ca * reach * 0.6f, my = h0 + rise * 0.6f, mz = sz + sa * reach * 0.6f;
             float fx = mx + MathUtils.cos(fa) * 1.8f * s, fy = my + 1.1f * s, fz = mz + MathUtils.sin(fa) * 1.8f * s;
-            limb(trunk, mx, my, mz, 0.15f * s, fx, fy, fz, 0.06f * s, 6);
+            limb(trunk, mx, my, mz, 0.12f * s, fx, fy, fz, 0.05f * s, 6);
 
             foliage(leaves, cards, ex, ey + 0.9f * s, ez, 2.7f * s, 1.9f * s, 2.7f * s, seed + k,
                 RAIN_LEAF * s, RAIN_CELLS, 0f);
@@ -331,20 +326,20 @@ final class TreeGeometry {
                             float x, float z, float s, float seed) {
         float topY = 3.0f * s;
         // Buttress roots anchored into turf
-        buttressRoots(trunk, x, z, 0.65f * s, s, seed, 4);
+        buttressRoots(trunk, x, z, 0.48f * s, s, seed, 4);
 
-        // Multi-segment curved trunk
+        // Multi-segment curved trunk (Delonix regia slender profile)
         float m1x = x + 0.08f * s * MathUtils.sin(seed);
         float m1z = z + 0.08f * s * MathUtils.cos(seed);
-        limb(trunk, x, -0.20f * s, z, 0.82f * s, m1x, 0.65f * s, m1z, 0.56f * s, 9);
-        limb(trunk, m1x, 0.65f * s, m1z, 0.56f * s, x, 1.70f * s, z, 0.44f * s, 9);
-        limb(trunk, x, 1.70f * s, z, 0.44f * s, x, topY, z, 0.34f * s, 9);
+        limb(trunk, x, -0.20f * s, z, 0.54f * s, m1x, 0.65f * s, m1z, 0.42f * s, 9);
+        limb(trunk, m1x, 0.65f * s, m1z, 0.42f * s, x, 1.70f * s, z, 0.34f * s, 9);
+        limb(trunk, x, 1.70f * s, z, 0.34f * s, x, topY, z, 0.24f * s, 9);
 
         for (int k = 0; k < 3; k++) {
             float ang = seed + k * MathUtils.PI2 / 3f;
             float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
             float ex = x + ca * 3.6f * s, ey = topY + 1.1f * s, ez = z + sa * 3.6f * s;
-            limb(trunk, x, topY - 0.3f * s, z, 0.28f * s, ex, ey, ez, 0.10f * s, 7);
+            limb(trunk, x, topY - 0.3f * s, z, 0.22f * s, ex, ey, ez, 0.08f * s, 7);
             foliage(blossom, cards, ex, ey + 0.5f * s, ez, 3.2f * s, 1.4f * s, 3.2f * s, seed + k * 1.9f,
                 KRISHNA_LEAF * s, KRISHNA_CELLS, 0.65f);
             foliage(blossom, cards, x + ca * 1.9f * s, topY + 1.3f * s, z + sa * 1.9f * s,
@@ -370,13 +365,13 @@ final class TreeGeometry {
         float topX = x + lean, topZ = z + leanZ;
 
         // Flared buttress roots anchored into turf
-        buttressRoots(trunk, x, z, 0.70f * s, s, seed, 5);
+        buttressRoots(trunk, x, z, 0.50f * s, s, seed, 5);
 
         // Dark gnarled weathered multi-segment trunk
         float m1x = x + lean * 0.3f, m1z = z + leanZ * 0.3f;
-        limb(trunk, x, -0.20f * s, z, 0.90f * s, m1x, 0.70f * s, m1z, 0.62f * s, 10);
-        limb(trunk, m1x, 0.70f * s, m1z, 0.62f * s, topX, 1.90f * s, topZ, 0.46f * s, 10);
-        limb(trunk, topX, 1.90f * s, topZ, 0.46f * s, topX, topY, topZ, 0.35f * s, 10);
+        limb(trunk, x, -0.20f * s, z, 0.58f * s, m1x, 0.70f * s, m1z, 0.44f * s, 10);
+        limb(trunk, m1x, 0.70f * s, m1z, 0.44f * s, topX, 1.90f * s, topZ, 0.35f * s, 10);
+        limb(trunk, topX, 1.90f * s, topZ, 0.35f * s, topX, topY, topZ, 0.25f * s, 10);
 
         for (int k = 0; k < 5; k++) {
             float ang = seed + k * MathUtils.PI2 / 5f + 0.32f * MathUtils.sin(seed * 2.2f + k);
@@ -388,13 +383,13 @@ final class TreeGeometry {
             float reach = (3.4f + 0.40f * MathUtils.sin(seed + k * 1.8f)) * s;
             float rise = (1.5f + 0.30f * MathUtils.sin(k * 2.0f + seed)) * s;
             float ex = sx + ca * reach, ey = h0 + rise, ez = sz + sa * reach;
-            limb(trunk, sx, h0, sz, 0.30f * s, ex, ey, ez, 0.08f * s, 7);
+            limb(trunk, sx, h0, sz, 0.24f * s, ex, ey, ez, 0.07f * s, 7);
 
             // Forked sub-branch
             float fa = ang + (k % 2 == 0 ? 0.65f : -0.65f);
             float mx = sx + ca * reach * 0.58f, my = h0 + rise * 0.58f, mz = sz + sa * reach * 0.58f;
             float fx = mx + MathUtils.cos(fa) * 1.85f * s, fy = my + 1.1f * s, fz = mz + MathUtils.sin(fa) * 1.85f * s;
-            limb(trunk, mx, my, mz, 0.14f * s, fx, fy, fz, 0.05f * s, 6);
+            limb(trunk, mx, my, mz, 0.11f * s, fx, fy, fz, 0.045f * s, 6);
 
             // Lush, dense white blossom clusters
             foliage(blossomCore, blossomCards, ex, ey + 0.8f * s, ez, 2.9f * s, 2.0f * s, 2.9f * s, seed + k,
@@ -419,17 +414,17 @@ final class TreeGeometry {
                          float x, float z, float s, float seed) {
         float h = 9.2f * s;
         // Flared root base into turf
-        limb(trunk, x, -0.20f * s, z, 0.52f * s, x, 0.6f * s, z, 0.38f * s, 10);
+        limb(trunk, x, -0.20f * s, z, 0.36f * s, x, 0.6f * s, z, 0.26f * s, 10);
         // Swollen lower-mid column
-        limb(trunk, x, 0.6f * s, z, 0.38f * s, x, 3.4f * s, z, 0.44f * s, 10);
+        limb(trunk, x, 0.6f * s, z, 0.26f * s, x, 3.4f * s, z, 0.30f * s, 10);
         // Tapered upper trunk
-        limb(trunk, x, 3.4f * s, z, 0.44f * s, x, h - 1.6f * s, z, 0.32f * s, 10);
+        limb(trunk, x, 3.4f * s, z, 0.30f * s, x, h - 1.6f * s, z, 0.22f * s, 10);
         // Smooth green crownshaft
         MeshPartBuilder csMpb = (crownshaft != null) ? crownshaft : trunk;
-        limb(csMpb, x, h - 1.6f * s, z, 0.32f * s, x, h, z, 0.28f * s, 10);
+        limb(csMpb, x, h - 1.6f * s, z, 0.22f * s, x, h, z, 0.18f * s, 10);
 
         // Radiating drooping pinnate fronds
-        int numFronds = 12;
+        int numFronds = 14;
         for (int i = 0; i < numFronds; i++) {
             float ang = seed + i * MathUtils.PI2 / numFronds + 0.15f * MathUtils.sin(i * 1.5f + seed);
             float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
@@ -446,12 +441,12 @@ final class TreeGeometry {
             float p2x = x + ca * tipReach, p2y = tipY, p2z = z + sa * tipReach;
 
             // Frond spine
-            limb(fronds, p0x, p0y, p0z, 0.07f * s, p1x, p1y, p1z, 0.045f * s, 4);
-            limb(fronds, p1x, p1y, p1z, 0.045f * s, p2x, p2y, p2z, 0.02f * s, 4);
+            limb(fronds, p0x, p0y, p0z, 0.06f * s, p1x, p1y, p1z, 0.038f * s, 4);
+            limb(fronds, p1x, p1y, p1z, 0.038f * s, p2x, p2y, p2z, 0.018f * s, 4);
 
             // Frond pinnate blade quads
-            float sideX = -sa * 0.60f * s;
-            float sideZ = ca * 0.60f * s;
+            float sideX = -sa * 0.55f * s;
+            float sideZ = ca * 0.55f * s;
 
             V0.setPos(p0x, p0y, p0z).setNor(0f, 1f, 0f).setUV(0f, 0f);
             V1.setPos(p1x - sideX, p1y, p1z - sideZ).setNor(0f, 1f, 0f).setUV(0f, 1f);

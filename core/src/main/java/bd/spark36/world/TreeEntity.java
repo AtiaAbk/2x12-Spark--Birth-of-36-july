@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 
@@ -115,19 +116,28 @@ public class TreeEntity {
         float pitchDeg = tempPitchRoll.x;
         float rollDeg = tempPitchRoll.z;
 
-        // Base-anchored transform:
-        // Translate to ground position (tx, 0, tz), then rotate around root (0, 0, 0)
+        // Base-anchored transforms with layered hierarchical sway:
+        // Local origin (0, 0, 0) strictly guaranteed zero displacement in world space.
+        // 1. Stiff trunk (0.45x sway)
         if (trunkInstance != null) {
             trunkInstance.transform.setToTranslation(position)
-                .rotate(windCross, pitchDeg)
-                .rotate(windDir, rollDeg);
+                .rotate(windCross, pitchDeg * 0.45f)
+                .rotate(windDir, rollDeg * 0.45f);
+        }
 
-            if (canopyCoreInstance != null) {
-                canopyCoreInstance.transform.set(trunkInstance.transform);
-            }
-            if (leafCardsInstance != null) {
-                leafCardsInstance.transform.set(trunkInstance.transform);
-            }
+        // 2. Moderate canopy core (1.0x sway)
+        if (canopyCoreInstance != null) {
+            canopyCoreInstance.transform.setToTranslation(position)
+                .rotate(windCross, pitchDeg * 1.0f)
+                .rotate(windDir, rollDeg * 1.0f);
+        }
+
+        // 3. Dynamic leaf cards (1.35x sway + 3.4 Hz micro-flutter)
+        if (leafCardsInstance != null) {
+            float flutter = 0.35f * MathUtils.sin(time * 3.4f * 2.0f * MathUtils.PI + seed);
+            leafCardsInstance.transform.setToTranslation(position)
+                .rotate(windCross, pitchDeg * 1.35f + flutter)
+                .rotate(windDir, rollDeg * 1.35f + flutter * 0.5f);
         }
     }
 
