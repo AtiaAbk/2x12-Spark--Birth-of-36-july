@@ -146,7 +146,7 @@ public class WaterWaveModelTest {
             {5.2f, 14.2f}, {6.4f, 15.2f}
         };
 
-        assertEquals(36, lotusPlacements.length, "Must verify all 36 lotus pad placements");
+        assertEquals(44, lotusPlacements.length, "Must verify all 44 lotus pad placements");
 
         for (int i = 0; i < lotusPlacements.length; i++) {
             float worldX = WaterConfig.CENTER_X + lotusPlacements[i][0];
