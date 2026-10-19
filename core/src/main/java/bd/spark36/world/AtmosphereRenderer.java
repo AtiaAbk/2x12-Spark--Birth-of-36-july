@@ -38,14 +38,17 @@ public class AtmosphereRenderer implements Disposable {
     private final float[][] cloudLayer2 = new float[CLOUDS_PER_LAYER][6]; // Mid cumulus
     private final float[][] cloudLayer3 = new float[CLOUDS_PER_LAYER][6]; // Low haze strips
 
-    // ── Birds ─────────────────────────────────────────────────────────
-    private static final int BIRD_COUNT = 5;
+    // ── Birds (Dhaka sky kites & soaring birds) ─────────────────────────
+    private static final int BIRD_COUNT = 7;
     private final float[] birdX = new float[BIRD_COUNT];
     private final float[] birdY = new float[BIRD_COUNT];
     private final float[] birdVX = new float[BIRD_COUNT];
     private final float[] birdVY = new float[BIRD_COUNT];
-    private final float[] birdPhase = new float[BIRD_COUNT]; // wing flap phase
+    private final float[] birdPhase = new float[BIRD_COUNT];       // wing flap phase
     private final float[] birdSize = new float[BIRD_COUNT];
+    private final float[] birdFlapTimer = new float[BIRD_COUNT];   // >0 = flapping, <=0 = gliding
+    private final float[] birdGlideTimer = new float[BIRD_COUNT];  // seconds to stay gliding
+    private final float[] birdThermalAngle = new float[BIRD_COUNT];// thermal circling phase
 
     private float time = 0f;
     private int screenW, screenH;
@@ -91,11 +94,15 @@ public class AtmosphereRenderer implements Disposable {
     private void initBirds() {
         for (int i = 0; i < BIRD_COUNT; i++) {
             birdX[i] = MathUtils.random();
-            birdY[i] = 0.50f + MathUtils.random() * 0.35f;
-            birdVX[i] = (0.018f + MathUtils.random() * 0.022f) * (MathUtils.randomBoolean() ? 1f : -1f);
-            birdVY[i] = (MathUtils.random() - 0.5f) * 0.004f;
+            birdY[i] = 0.52f + MathUtils.random() * 0.32f;
+            float baseSpeed = 0.012f + MathUtils.random() * 0.018f;
+            birdVX[i] = baseSpeed * (MathUtils.randomBoolean() ? 1f : -1f);
+            birdVY[i] = (MathUtils.random() - 0.5f) * 0.003f;
             birdPhase[i] = MathUtils.random() * MathUtils.PI2;
-            birdSize[i] = 3.5f + MathUtils.random() * 3f;
+            birdSize[i] = 2.8f + MathUtils.random() * 3.2f;
+            birdFlapTimer[i] = MathUtils.random(0.5f, 1.8f);
+            birdGlideTimer[i] = MathUtils.random(3.0f, 6.5f);
+            birdThermalAngle[i] = MathUtils.random(MathUtils.PI2);
         }
     }
 
@@ -111,12 +118,33 @@ public class AtmosphereRenderer implements Disposable {
 
     private void updateBirds(float delta) {
         for (int i = 0; i < BIRD_COUNT; i++) {
+            birdThermalAngle[i] += delta * 0.45f;
+            float thermalLift = MathUtils.sin(birdThermalAngle[i]) * 0.0018f * delta;
+
+            if (birdFlapTimer[i] > 0f) {
+                birdFlapTimer[i] -= delta;
+                if (birdFlapTimer[i] <= 0f) {
+                    birdGlideTimer[i] = 3.5f + MathUtils.random() * 4.0f; // switch to smooth glide
+                }
+            } else if (birdGlideTimer[i] > 0f) {
+                birdGlideTimer[i] -= delta;
+                if (birdGlideTimer[i] <= 0f) {
+                    birdFlapTimer[i] = 1.0f + MathUtils.random() * 1.5f; // burst of flaps
+                }
+            }
+
             birdX[i] += birdVX[i] * delta;
-            birdY[i] += birdVY[i] * delta + MathUtils.sin(time * 0.8f + birdPhase[i]) * 0.0003f;
+            birdY[i] += (birdVY[i] * delta) + thermalLift;
+
             // Wrap
-            if (birdX[i] > 1.15f) birdX[i] = -0.1f;
-            if (birdX[i] < -0.15f) birdX[i] = 1.1f;
-            birdY[i] = MathUtils.clamp(birdY[i], 0.42f, 0.88f);
+            if (birdVX[i] > 0 && birdX[i] > 1.15f) {
+                birdX[i] = -0.1f;
+                birdY[i] = 0.52f + MathUtils.random() * 0.32f;
+            } else if (birdVX[i] < 0 && birdX[i] < -0.15f) {
+                birdX[i] = 1.1f;
+                birdY[i] = 0.52f + MathUtils.random() * 0.32f;
+            }
+            birdY[i] = MathUtils.clamp(birdY[i], 0.45f, 0.88f);
         }
     }
 
@@ -172,25 +200,53 @@ public class AtmosphereRenderer implements Disposable {
             shapeRenderer.ellipse(cx - cw * 0.5f, cy - ch * 0.5f, cw, ch, 28);
         }
 
-        // ── Bird silhouettes ─────────────────────────────────────────
-        shapeRenderer.setColor(0.12f, 0.10f, 0.08f, 0.55f);
+        // ── Bird silhouettes (Kites & raptors soaring over campus) ────
+        shapeRenderer.setColor(0.14f, 0.12f, 0.10f, 0.65f);
         for (int i = 0; i < BIRD_COUNT; i++) {
             float bx = birdX[i] * w;
             float by = birdY[i] * h;
             float bs = birdSize[i];
-            // Wing flap: sine-based wing angle
-            float flapAngle = MathUtils.sin(time * 5f + birdPhase[i]) * 0.5f;
-            // Left wing
-            float lwX = bx - bs * 2.2f;
-            float lwY = by + MathUtils.sin(flapAngle) * bs * 0.8f;
-            // Right wing
-            float rwX = bx + bs * 2.2f;
-            float rwY = by + MathUtils.sin(flapAngle) * bs * 0.8f;
-            // Body center
-            shapeRenderer.triangle(bx - bs * 0.4f, by, bx + bs * 0.4f, by, bx, by - bs * 0.3f);
-            // Wings (two triangles)
-            shapeRenderer.triangle(bx - bs * 0.4f, by, lwX, lwY, bx, by);
-            shapeRenderer.triangle(bx + bs * 0.4f, by, rwX, rwY, bx, by);
+            float dir = birdVX[i] >= 0 ? 1f : -1f;
+
+            // Wing animation: flap oscillation or gentle soaring bank
+            boolean isFlapping = birdFlapTimer[i] > 0f;
+            float flapAngle;
+            if (isFlapping) {
+                flapAngle = MathUtils.sin(time * 8.5f + birdPhase[i]) * 0.55f;
+            } else {
+                // Smooth thermal banking
+                flapAngle = MathUtils.sin(birdThermalAngle[i]) * 0.12f;
+            }
+
+            // Head and tail relative to flight direction
+            float headX = bx + dir * bs * 0.85f;
+            float tailX = bx - dir * bs * 0.95f;
+            float bodyY = by;
+
+            // Arched raptor wing joints (elbow) and tips
+            float elbowOffset = bs * 1.35f;
+            float wingSpan = bs * 2.8f;
+            float flapY = MathUtils.sin(flapAngle) * bs * 1.1f;
+
+            // Left wing (upper)
+            float lElbowX = bx + dir * bs * 0.25f;
+            float lElbowY = bodyY + elbowOffset * 0.5f + flapY * 0.45f;
+            float lTipX = bx - dir * bs * 0.45f;
+            float lTipY = bodyY + wingSpan * 0.5f + flapY;
+
+            // Right wing (lower)
+            float rElbowX = bx + dir * bs * 0.25f;
+            float rElbowY = bodyY - elbowOffset * 0.5f - flapY * 0.45f;
+            float rTipX = bx - dir * bs * 0.45f;
+            float rTipY = bodyY - wingSpan * 0.5f - flapY;
+
+            // Fuselage / body
+            shapeRenderer.triangle(headX, bodyY, tailX, bodyY + bs * 0.25f, tailX, bodyY - bs * 0.25f);
+
+            // Left gull wing (inner + outer)
+            shapeRenderer.triangle(bx, bodyY, lElbowX, lElbowY, lTipX, lTipY);
+            // Right gull wing (inner + outer)
+            shapeRenderer.triangle(bx, bodyY, rElbowX, rElbowY, rTipX, rTipY);
         }
 
         shapeRenderer.end();
