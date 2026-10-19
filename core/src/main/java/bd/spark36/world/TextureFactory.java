@@ -1819,17 +1819,20 @@ public class TextureFactory implements Disposable {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        pix.setColor(0.28f, 0.18f, 0.12f, 1f);
+        // Natural rough bark palette from reference specification:
+        // #34372A (deep shadow), #4A4A32 (dark olive brown), #62563A (natural brown), #81734B (sunlit bark)
+        pix.setColor(0.29f, 0.29f, 0.20f, 1f); // #4A4A32 base
         pix.fill();
 
-        // Vertical bark grooves
+        // Fine longitudinal grooves, small ridges, uneven color and subtle weathering
         for (int x = 0; x < size; x++) {
-            float groove = MathUtils.sin(x * 0.35f);
+            float groove = MathUtils.sin(x * 0.42f) * 0.6f + MathUtils.sin(x * 1.15f) * 0.3f;
             for (int y = 0; y < size; y++) {
-                float n = groove * (0.8f + 0.2f * MathUtils.sin(y * 0.1f));
-                float r = MathUtils.clamp(0.28f + n * 0.08f, 0.16f, 0.38f);
-                float g = MathUtils.clamp(0.18f + n * 0.06f, 0.10f, 0.26f);
-                float b = MathUtils.clamp(0.12f + n * 0.04f, 0.06f, 0.18f);
+                float n = groove * (0.75f + 0.25f * MathUtils.sin(y * 0.08f));
+                float speckle = MathUtils.random(-0.02f, 0.02f);
+                float r = MathUtils.clamp(0.34f + n * 0.12f + speckle, 0.19f, 0.52f);
+                float g = MathUtils.clamp(0.31f + n * 0.10f + speckle, 0.18f, 0.46f);
+                float b = MathUtils.clamp(0.21f + n * 0.07f + speckle, 0.13f, 0.31f);
 
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
