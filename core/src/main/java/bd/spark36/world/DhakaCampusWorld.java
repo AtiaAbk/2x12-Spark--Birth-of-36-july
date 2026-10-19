@@ -30,6 +30,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import bd.spark36.render.PbrEnvironment;
 import bd.spark36.world.landmarks.OpeningBuilder;
+import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 
@@ -2561,6 +2562,10 @@ public class DhakaCampusWorld implements Disposable {
     private static void setupPbr(Material mat, float metallic, float roughness) {
         mat.set(PBRFloatAttribute.createMetallic(metallic));
         mat.set(PBRFloatAttribute.createRoughness(roughness));
+        ColorAttribute diff = (ColorAttribute) mat.get(ColorAttribute.Diffuse);
+        if (diff != null && !mat.has(PBRColorAttribute.BaseColorFactor)) {
+            mat.set(PBRColorAttribute.createBaseColorFactor(diff.color));
+        }
     }
 
     @Override
