@@ -1772,7 +1772,7 @@ public class DhakaCampusWorld implements Disposable {
         instances.add(grInst);
 
         // Doel Chattar Road Corridor (Asphalt East-West Avenue outside the gate)
-        Model asphaltRoadSouth = mb.createBox(240f, 0.04f, 12f, asphaltMat, attr);
+        Model asphaltRoadSouth = createPavedSlab(mb, 240f, 0.04f, 12f, 1.0f, GroundConfig.ASPHALT_UV_SCALE, asphaltMat, attr);
         Model roadCurbTile = mb.createBox(240f, 0.25f, 0.45f, stoneCurb, attr);
         models.add(asphaltRoadSouth);
         models.add(roadCurbTile);
@@ -1789,7 +1789,7 @@ public class DhakaCampusWorld implements Disposable {
         // 7. NORTH BOUNDARY WALL & FULLER ROAD CORRIDOR
         // ==========================================
         Model northWall = mb.createBox(220f, 2.8f, 0.6f, curzonBrickMat, attr);
-        Model northRoad = mb.createBox(220f, 0.04f, 10f, asphaltMat, attr);
+        Model northRoad = createPavedSlab(mb, 220f, 0.04f, 10f, 1.0f, GroundConfig.ASPHALT_UV_SCALE, asphaltMat, attr);
         models.add(northWall);
         models.add(northRoad);
 
