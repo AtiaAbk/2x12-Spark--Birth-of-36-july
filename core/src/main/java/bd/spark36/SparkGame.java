@@ -954,6 +954,49 @@ public class SparkGame extends ApplicationAdapter {
                     Gdx.app.exit();
                 }
             }
+        } else if (System.getProperty("bd.spark36.testPhase9Dialogue") != null) {
+            if (testTimer == 0f) {
+                hud.reset();
+                if (levelManager.getActiveLevel() == null || levelManager.getActiveLevel().getLevelNumber() != 1) {
+                    levelManager.loadLevel(1);
+                    syncLevelSubsystems();
+                }
+                player.setPosition(0f, 0f, 70f);
+                player.setHeadingDegrees(180f);
+                camera.setAngles(0f, -2f);
+                camera.setDistance(2.2f);
+            }
+            testTimer += delta;
+            if (testTimer >= 0.8f && !hud.getDialogueManager().isDialogueActive()) {
+                hud.startDialogueSequence(bd.spark36.level.DialogueRepository.getStudentDialogueSequence(1, 0));
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("phase9_multiline_dialogue");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testPhase9Prompt") != null) {
+            if (testTimer == 0f) {
+                hud.reset();
+                if (levelManager.getActiveLevel() == null || levelManager.getActiveLevel().getLevelNumber() != 1) {
+                    levelManager.loadLevel(1);
+                    syncLevelSubsystems();
+                }
+                player.setPosition(3.6f, 0f, -14.2f);
+                player.setHeadingDegrees(180f);
+                camera.setAngles(0f, -2f);
+                camera.setDistance(2.8f);
+            }
+            testTimer += delta;
+            if (!autoScreenshotTaken && testTimer >= 1.5f) {
+                takeScreenshot("phase9_interaction_prompt");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
         } else if (System.getProperty("bd.spark36.testNpcDialogue") != null) {
             hud.reset();
             player.setPosition(0f, 0f, 70f);

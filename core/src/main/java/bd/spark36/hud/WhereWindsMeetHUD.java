@@ -2836,13 +2836,14 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.promptFont.setColor(goldAccent);
         fonts.promptFont.draw(spriteBatch, "\"" + diag.getTextEnglish() + "\"", dx + 18f, dy + 22f);
 
-        // Advance prompt if sequence is active
+        // Advance prompt if sequence is active (placed in top-right header area to avoid subtitle overlap)
         if (dialogueManager.isDialogueActive()) {
             int cur = dialogueManager.getCurrentLineIndex() + 1;
             int tot = dialogueManager.getTotalLines();
-            String promptText = dialogueManager.isLastLine() ? "[SPACE] CLOSE / FINISH" : "[SPACE] NEXT (" + cur + "/" + tot + ")";
+            String promptText = dialogueManager.isLastLine() ? "[SPACE] FINISH" : "[SPACE] NEXT (" + cur + "/" + tot + ")";
+            glyphLayout.setText(fonts.keyFont, promptText);
             fonts.keyFont.setColor(goldAccent);
-            fonts.keyFont.draw(spriteBatch, promptText, dx + dw - 230f, dy + 22f);
+            fonts.keyFont.draw(spriteBatch, promptText, dx + dw - glyphLayout.width - 18f, dy + dh - 16f);
         }
         spriteBatch.end();
     }

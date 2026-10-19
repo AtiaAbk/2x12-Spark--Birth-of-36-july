@@ -52,11 +52,11 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
     private void initDefaultObjectives() {
         missionTracker.reset();
-        missionTracker.addObjective(new MissionObjective("m0", "THE SPARK OF SOLIDARITY", "Target: Curzon Hall Central Arcade", CHECKLIST[0], ObjectiveType.INTERACT, new Vector3(0f, 0f, -14f), 3.8f, true));
-        missionTracker.addObjective(new MissionObjective("m1", "THE CALL FOR JUSTICE", "Target: Aparajeyo Bangla (Arts Plaza)", CHECKLIST[1], ObjectiveType.INTERACT, new Vector3(-45f, 0f, 18f), 3.8f, true));
-        missionTracker.addObjective(new MissionObjective("m2", "THE RESISTANCE BEGINS", "Target: TSC Raju Anti-Terrorism Sculpture", CHECKLIST[2], ObjectiveType.INTERACT, new Vector3(-6.5f, 0f, 48f), 3.8f, true));
-        missionTracker.addObjective(new MissionObjective("m3", "COMMUNAL AWAKENING", "Target: Central Library & Hakim Chattar", CHECKLIST[3], ObjectiveType.INTERACT, new Vector3(48f, 0f, 18f), 3.8f, true));
-        missionTracker.addObjective(new MissionObjective("m4", "THE UNBROKEN CHAIN", "Target: Teacher-Student Centre (TSC)", CHECKLIST[4], ObjectiveType.INTERACT, new Vector3(28f, 0f, -10f), 3.8f, true));
+        missionTracker.addObjective(new MissionObjective("m0", "THE SPARK OF SOLIDARITY", "Target: Curzon Hall Central Arcade", CHECKLIST[0], ObjectiveType.INTERACT, new Vector3(3.6f, 0f, -16.8f), 3.8f, true));
+        missionTracker.addObjective(new MissionObjective("m1", "THE CALL FOR JUSTICE", "Target: Aparajeyo Bangla (Arts Plaza)", CHECKLIST[1], ObjectiveType.INTERACT, new Vector3(-32f, 0f, 26f), 3.8f, true));
+        missionTracker.addObjective(new MissionObjective("m2", "THE RESISTANCE BEGINS", "Target: TSC Raju Anti-Terrorism Sculpture", CHECKLIST[2], ObjectiveType.INTERACT, new Vector3(44f, 0f, 42f), 3.8f, true));
+        missionTracker.addObjective(new MissionObjective("m3", "COMMUNAL AWAKENING", "Target: Central Library & Hakim Chattar", CHECKLIST[3], ObjectiveType.INTERACT, new Vector3(-58f, 0f, 36f), 3.8f, true));
+        missionTracker.addObjective(new MissionObjective("m4", "THE UNBROKEN CHAIN", "Target: Teacher-Student Centre (TSC)", CHECKLIST[4], ObjectiveType.INTERACT, new Vector3(66f, 0f, 20f), 3.8f, true));
     }
 
     @Override
