@@ -341,6 +341,10 @@ public class ParticleSystem implements Disposable {
     }
 
     public void update(float delta, Camera camera) {
+        update(delta, camera, 0f, bd.spark36.render.GraphicsTier.fromSystemProperty());
+    }
+
+    public void update(float delta, Camera camera, float rainIntensity, bd.spark36.render.GraphicsTier tier) {
         time += delta;
         screenW = Gdx.graphics.getBackBufferWidth();
         screenH = Gdx.graphics.getBackBufferHeight();
@@ -360,6 +364,9 @@ public class ParticleSystem implements Disposable {
         leafCamera = camera;
         updateLeaves(delta, camera);
 
+        // ── Monsoon Rain (3D world space) ───────────────────────────
+        updateRain(delta, camera, rainIntensity, tier);
+
         // ── Dust Motes ──────────────────────────────────────────────
         for (int i = 0; i < MAX_DUST; i++) {
             if (dustLife[i] <= 0f) {
@@ -375,7 +382,7 @@ public class ParticleSystem implements Disposable {
         if (pukurVisible) {
             rippleTimer -= delta;
             if (rippleTimer <= 0f) {
-                rippleTimer = 0.8f + MathUtils.random() * 1.2f;
+                rippleTimer = (rainIntensity > 0.1f) ? (0.25f + MathUtils.random() * 0.45f) : (0.8f + MathUtils.random() * 1.2f);
                 // Spawn ripple near pukur center with random offset
                 rippleX[rippleIdx] = pukurScreenX + (MathUtils.random() - 0.5f) * 60f;
                 rippleY[rippleIdx] = pukurScreenY + (MathUtils.random() - 0.5f) * 30f;
@@ -390,6 +397,84 @@ public class ParticleSystem implements Disposable {
                 float progress = 1f - (rippleLife[i] / rippleMaxLife[i]);
                 rippleRadius[i] = progress * 35f;
             }
+        }
+    }
+
+    private void updateRain(float delta, Camera camera, float rainIntensity, bd.spark36.render.GraphicsTier tier) {
+        this.currentRainIntensity = rainIntensity;
+        if (rainIntensity <= 0.01f || tier == null) {
+            rainActive = 0;
+            for (int i = 0; i < MAX_RAIN; i++) rainAlive[i] = false;
+            return;
+        }
+
+        int maxTierParticles = Math.min(MAX_RAIN, tier.maxRainParticles);
+        int targetCount = (int) (maxTierParticles * MathUtils.clamp(rainIntensity, 0f, 1f));
+
+        float cx = camera.position.x;
+        float cy = camera.position.y;
+        float cz = camera.position.z;
+        float rainRadius = 22.0f;
+
+        for (int i = 0; i < maxTierParticles; i++) {
+            if (!rainAlive[i]) {
+                if (rainActive < targetCount) {
+                    float a = MathUtils.random(MathUtils.PI2);
+                    float r = (float) Math.sqrt(MathUtils.random()) * rainRadius;
+                    rainX[i] = cx + MathUtils.cos(a) * r - windX * 1.8f;
+                    rainZ[i] = cz + MathUtils.sin(a) * r - windZ * 1.8f;
+                    rainY[i] = cy + MathUtils.random(-2.0f, 16.0f);
+                    rainSpeed[i] = 16.0f + MathUtils.random() * 8.0f;
+                    rainLen[i] = 0.55f + MathUtils.random() * 0.40f;
+                    rainAlive[i] = true;
+                    rainActive++;
+                }
+                continue;
+            }
+
+            if (rainActive > targetCount) {
+                rainAlive[i] = false;
+                rainActive--;
+                continue;
+            }
+
+            rainY[i] -= rainSpeed[i] * delta;
+            rainX[i] += windX * 0.40f * delta;
+            rainZ[i] += windZ * 0.40f * delta;
+
+            if (rainY[i] <= 0.02f) {
+                if (Math.abs(rainX[i]) <= 13f && rainZ[i] >= -1f && rainZ[i] <= 19f) {
+                    spawnPondSplashRipple(rainX[i], rainZ[i], camera);
+                }
+                float a = MathUtils.random(MathUtils.PI2);
+                float r = (float) Math.sqrt(MathUtils.random()) * rainRadius;
+                rainX[i] = cx + MathUtils.cos(a) * r - windX * 2.2f;
+                rainZ[i] = cz + MathUtils.sin(a) * r - windZ * 2.2f;
+                rainY[i] = cy + 12.0f + MathUtils.random() * 5.0f;
+            }
+
+            float dx = rainX[i] - cx;
+            float dz = rainZ[i] - cz;
+            if (dx * dx + dz * dz > (rainRadius + 6f) * (rainRadius + 6f)) {
+                rainAlive[i] = false;
+                rainActive--;
+            }
+        }
+    }
+
+    private void spawnPondSplashRipple(float wx, float wz, Camera camera) {
+        if (!pukurVisible || camera == null) return;
+        screenProj.set(wx, 0.05f, wz);
+        camera.project(screenProj);
+        if (screenProj.z > 0f && screenProj.z < 1.0f
+            && screenProj.x > 0 && screenProj.x < screenW
+            && screenProj.y > 0 && screenProj.y < screenH) {
+            rippleX[rippleIdx] = screenProj.x;
+            rippleY[rippleIdx] = screenProj.y;
+            rippleRadius[rippleIdx] = 0f;
+            rippleMaxLife[rippleIdx] = 1.0f + MathUtils.random() * 0.6f;
+            rippleLife[rippleIdx] = rippleMaxLife[rippleIdx];
+            rippleIdx = (rippleIdx + 1) % MAX_RIPPLES;
         }
     }
 
@@ -463,8 +548,35 @@ public class ParticleSystem implements Disposable {
 
         sr.end();
 
-        // ── Water Ripples (rings) ─────────────────────────────────────
+        // ── Lines pass: Rain Streaks & Water Ripples ───────────────────
         sr.begin(ShapeType.Line);
+
+        // 1. Rain Streaks (3D world space line projected to screen)
+        if (currentRainIntensity > 0.01f && leafCamera != null) {
+            Camera cam = leafCamera;
+            float rainAlpha = MathUtils.clamp(currentRainIntensity * 0.55f, 0.1f, 0.70f);
+            sr.setColor(0.76f, 0.85f, 0.96f, rainAlpha);
+            for (int i = 0; i < MAX_RAIN; i++) {
+                if (!rainAlive[i]) continue;
+                float depth = (rainX[i] - cam.position.x) * cam.direction.x
+                    + (rainY[i] - cam.position.y) * cam.direction.y
+                    + (rainZ[i] - cam.position.z) * cam.direction.z;
+                if (depth < 0.2f || depth > 24.0f) continue;
+
+                rainP1.set(rainX[i], rainY[i], rainZ[i]);
+                rainP2.set(rainX[i] + windX * 0.08f, rainY[i] + rainLen[i], rainZ[i] + windZ * 0.08f);
+
+                cam.project(rainP1, 0f, 0f, screenW, screenH);
+                cam.project(rainP2, 0f, 0f, screenW, screenH);
+
+                if (rainP1.z <= 0f || rainP1.z >= 1.0f) continue;
+                if (rainP1.x < -10 || rainP1.x > screenW + 10 || rainP1.y < -10 || rainP1.y > screenH + 10) continue;
+
+                sr.line(rainP1.x, rainP1.y, rainP2.x, rainP2.y);
+            }
+        }
+
+        // 2. Water Ripples (rings)
         for (int i = 0; i < MAX_RIPPLES; i++) {
             if (rippleLife[i] <= 0f || !pukurVisible) continue;
             float t = rippleLife[i] / rippleMaxLife[i];

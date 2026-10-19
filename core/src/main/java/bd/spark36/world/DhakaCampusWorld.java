@@ -32,6 +32,7 @@ import bd.spark36.render.PbrEnvironment;
 import bd.spark36.render.WaterRenderer;
 import bd.spark36.render.GraphicsTier;
 import bd.spark36.world.landmarks.OpeningBuilder;
+import net.mgsx.gltf.scene3d.attributes.FogAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
@@ -127,6 +128,12 @@ public class DhakaCampusWorld implements Disposable {
     // Realistic Terrain, Ground Materials & Surface Blending System (Phase 4)
     private final TerrainSurface terrainSurface = new TerrainSurface();
 
+    // Dynamic Weather & Atmospheric Lighting System (Phase 5)
+    private final WeatherController weatherController = new WeatherController();
+    private ColorAttribute ambientAttr;
+    private ColorAttribute fogColorAttr;
+    private FogAttribute fogEquationAttr;
+
     // Facade opening materials & orientation debug test card
     private final TextureFactory texturesRef;
     public Material colonialWindowMat;
@@ -145,22 +152,30 @@ public class DhakaCampusWorld implements Disposable {
         this.waterRenderer = new WaterRenderer();
         environment = new Environment();
 
-        // Warm daylight sun with rich, cinematic shadow contrast (prevents washed-out pastel)
+        // Dynamic sun with rich, cinematic shadow contrast calibrated to active weather state
         sunLight = new DirectionalShadowLight(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 120f, 120f, 1f, 140f);
-        sunLight.set(new Color(1.04f, 1.02f, 0.96f, 1f), new Vector3(-0.45f, -0.75f, -0.45f).nor());
+        sunLight.set(weatherController.getCurrentSunColor(), weatherController.getCurrentSunDirection());
         environment.add(sunLight);
         environment.shadowMap = sunLight;
 
         // Rich daylight ambient with natural blue sky bounce
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.32f, 0.35f, 0.40f, 1f));
+        ambientAttr = new ColorAttribute(ColorAttribute.AmbientLight, weatherController.getCurrentAmbientColor());
+        environment.set(ambientAttr);
 
         // Soft front fill light for natural character and facade illumination
         DirectionalLight fillLight = new DirectionalLight();
         fillLight.set(new Color(0.20f, 0.22f, 0.25f, 1f), new Vector3(0.20f, -0.30f, 0.92f).nor());
         environment.add(fillLight);
 
-        // Clean atmospheric sky-blue depth haze (matches AtmosphereRenderer skyLowHaze)
-        environment.set(new ColorAttribute(ColorAttribute.Fog, 0.84f, 0.88f, 0.92f, 1f));
+        // Atmospheric depth haze & distance fog equation (gdx-gltf native fogFlag + fogEquationFlag)
+        fogColorAttr = new ColorAttribute(ColorAttribute.Fog, weatherController.getCurrentFogColor());
+        environment.set(fogColorAttr);
+        fogEquationAttr = FogAttribute.createFog(
+            weatherController.getCurrentFogNear(),
+            weatherController.getCurrentFogFar(),
+            weatherController.getCurrentFogExponent()
+        );
+        environment.set(fogEquationAttr);
 
         pbrEnvironment = new PbrEnvironment();
         pbrEnvironment.setupOutdoorIBL(sunLight);
