@@ -511,6 +511,58 @@ public class DhakaCampusWorld implements Disposable {
         Material hedgeMat = new Material(ColorAttribute.createDiffuse(new Color(0.11f, 0.20f, 0.10f, 1f)));
         Material flowerRed = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.16f, 0.18f, 1f)));
 
+        // PBR Metallic-Roughness & Normal Map calibration for Dhaka University campus
+        setupPbr(grassMat, 0.0f, 0.85f);
+        setupPbr(brickPavementMat, 0.0f, 0.72f);
+        if (textures.brickPavementNormal != null) brickPavementMat.set(PBRTextureAttribute.createNormalTexture(textures.brickPavementNormal));
+        setupPbr(curzonBrickMat, 0.0f, 0.75f);
+        if (textures.curzonBrickNormal != null) curzonBrickMat.set(PBRTextureAttribute.createNormalTexture(textures.curzonBrickNormal));
+        setupPbr(treeTrunkMat, 0.0f, 0.88f);
+        if (textures.treeBarkNormal != null) treeTrunkMat.set(PBRTextureAttribute.createNormalTexture(textures.treeBarkNormal));
+        setupPbr(foliageMat, 0.0f, 0.70f);
+        setupPbr(krishnachuraMat, 0.0f, 0.65f);
+        setupPbr(barkTwoSidedMat, 0.0f, 0.88f);
+        if (textures.treeBarkNormal != null) barkTwoSidedMat.set(PBRTextureAttribute.createNormalTexture(textures.treeBarkNormal));
+        setupPbr(leafClumpMat, 0.0f, 0.68f);
+        setupPbr(blossomClumpMat, 0.0f, 0.65f);
+        setupPbr(whiteBlossomClumpMat, 0.0f, 0.65f);
+        setupPbr(whiteBlossomCardMat, 0.0f, 0.65f);
+        setupPbr(kashfulCardMat, 0.0f, 0.65f);
+        setupPbr(colonialWindowMat, 0.10f, 0.35f);
+        setupPbr(teakDoorMat, 0.0f, 0.60f);
+        setupPbr(grandPortalMat, 0.0f, 0.65f);
+        setupPbr(porticoTripleWinMat, 0.10f, 0.35f);
+        setupPbr(leafCardMat, 0.0f, 0.68f);
+        setupPbr(bambooBarkMat, 0.0f, 0.55f);
+        setupPbr(bambooLeafCardMat, 0.0f, 0.70f);
+        setupPbr(rockMat, 0.0f, 0.85f);
+        setupPbr(dirtMat, 0.0f, 0.92f);
+        setupPbr(bambooCulmMat, 0.0f, 0.55f);
+        setupPbr(bambooLeafMat, 0.0f, 0.70f);
+        setupPbr(bushMat, 0.0f, 0.80f);
+        setupPbr(weatheredStoneMat, 0.0f, 0.82f);
+        setupPbr(curzonPukurWaterMat, 0.05f, 0.15f);
+        setupPbr(sparkleMat, 0.0f, 0.50f);
+        setupPbr(flagMat, 0.0f, 0.75f);
+        setupPbr(aparajeyoMat, 0.0f, 0.78f);
+        setupPbr(bannerMat, 0.0f, 0.75f);
+        setupPbr(asphaltMat, 0.0f, 0.85f);
+        setupPbr(concreteMat, 0.0f, 0.80f);
+        if (textures.modernistConcreteNormal != null) concreteMat.set(PBRTextureAttribute.createNormalTexture(textures.modernistConcreteNormal));
+        setupPbr(canteenRoofMat, 0.75f, 0.42f);
+        setupPbr(stoneCurb, 0.0f, 0.85f);
+        setupPbr(curzonTrimMat, 0.0f, 0.75f);
+        setupPbr(goldFinial, 0.90f, 0.25f);
+        setupPbr(archCavity, 0.0f, 0.95f);
+        setupPbr(teakDoor, 0.0f, 0.60f);
+        setupPbr(castIron, 0.85f, 0.35f);
+        setupPbr(lanternGlow, 0.0f, 0.50f);
+        setupPbr(waterMat, 0.05f, 0.15f);
+        setupPbr(woodBench, 0.0f, 0.65f);
+        setupPbr(bicycleMetal, 0.85f, 0.30f);
+        setupPbr(hedgeMat, 0.0f, 0.82f);
+        setupPbr(flowerRed, 0.0f, 0.60f);
+
         // 1. Central Campus Lawn (Spanning entire precinct)
         Model groundModel = mb.createBox(280f, 0.2f, 260f, grassMat, attr);
         models.add(groundModel);
