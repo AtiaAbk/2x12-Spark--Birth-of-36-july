@@ -527,7 +527,7 @@ public class DhakaCampusWorld implements Disposable {
 
         Material bambooCulmMat = new Material(
             PBRTextureAttribute.createBaseColorTexture(textures.bambooCulm),
-            ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.92f, 1f))
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
         Material bambooLeafMat = new Material(
@@ -535,7 +535,7 @@ public class DhakaCampusWorld implements Disposable {
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.20f),
             IntAttribute.createCullFace(0),
-            ColorAttribute.createDiffuse(new Color(0.96f, 0.98f, 0.92f, 1f))
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
         Material bushMat = new Material(
