@@ -83,6 +83,89 @@ public final class RenderPipelineConfig {
     /** Default smooth metal roughness. */
     public static final float DEFAULT_METAL_ROUGHNESS = 0.35f;
 
+    public static GraphicsTier activeGraphicsTier = GraphicsTier.fromSystemProperty();
+
+    static {
+        loadVisualsProperties();
+    }
+
+    private static void loadVisualsProperties() {
+        try {
+            java.io.File file = new java.io.File("assets/visuals.properties");
+            if (!file.exists()) {
+                file = new java.io.File("visuals.properties");
+            }
+            if (file.exists()) {
+                java.util.Properties props = new java.util.Properties();
+                try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
+                    props.load(fis);
+                }
+                exposure = getFloat(props, "exposure", exposure);
+                contrast = getFloat(props, "contrast", contrast);
+                saturation = getFloat(props, "saturation", saturation);
+                colorTemperature = getFloat(props, "colorTemperature", colorTemperature);
+                colorTint = getFloat(props, "colorTint", colorTint);
+                shadowLift = getFloat(props, "shadowLift", shadowLift);
+                bloomStrength = getFloat(props, "bloomStrength", bloomStrength);
+                bloomThreshold = getFloat(props, "bloomThreshold", bloomThreshold);
+                vignetteStrength = getFloat(props, "vignetteStrength", vignetteStrength);
+                vignetteRadius = getFloat(props, "vignetteRadius", vignetteRadius);
+                filmGrainStrength = getFloat(props, "filmGrainStrength", filmGrainStrength);
+                toneMappingMode = getInt(props, "toneMappingMode", toneMappingMode);
+                pbrEnabled = getBool(props, "pbrEnabled", pbrEnabled);
+                iblEnabled = getBool(props, "iblEnabled", iblEnabled);
+                hdrEnabled = getBool(props, "hdrEnabled", hdrEnabled);
+                fxaaEnabled = getBool(props, "fxaaEnabled", fxaaEnabled);
+
+                String tierStr = props.getProperty("graphicsTier");
+                if (tierStr != null) {
+                    try {
+                        activeGraphicsTier = GraphicsTier.valueOf(tierStr.trim().toUpperCase());
+                    } catch (Exception ignored) {}
+                }
+            }
+        } catch (Throwable t) {
+            if (Gdx.app != null) {
+                Gdx.app.error("RenderPipelineConfig", "Failed to load visuals.properties: " + t.getMessage());
+            }
+        }
+    }
+
+    private static float getFloat(java.util.Properties props, String key, float def) {
+        String v = props.getProperty(key);
+        if (v != null) {
+            try { return Float.parseFloat(v.trim()); } catch (Exception ignored) {}
+        }
+        return def;
+    }
+
+    private static int getInt(java.util.Properties props, String key, int def) {
+        String v = props.getProperty(key);
+        if (v != null) {
+            try { return Integer.parseInt(v.trim()); } catch (Exception ignored) {}
+        }
+        return def;
+    }
+
+    private static boolean getBool(java.util.Properties props, String key, boolean def) {
+        String v = props.getProperty(key);
+        if (v != null) {
+            return Boolean.parseBoolean(v.trim());
+        }
+        return def;
+    }
+
+    public static String cycleGraphicsTier() {
+        if (activeGraphicsTier == GraphicsTier.HIGH) {
+            activeGraphicsTier = GraphicsTier.LOW;
+        } else if (activeGraphicsTier == GraphicsTier.LOW) {
+            activeGraphicsTier = GraphicsTier.MEDIUM;
+        } else {
+            activeGraphicsTier = GraphicsTier.HIGH;
+        }
+        return activeGraphicsTier.displayName;
+    }
+
     public static String getToneMappingName() {
         if (toneMappingMode == 1) return "ACES Filmic (Cinematic)";
         if (toneMappingMode == 2) return "Extended Reinhard";
@@ -122,7 +205,9 @@ public final class RenderPipelineConfig {
             try {
                 return Float.parseFloat(val.trim());
             } catch (NumberFormatException e) {
-                Gdx.app.error("RenderPipelineConfig", "Invalid float for property " + key + ": " + val);
+                if (Gdx.app != null) {
+                    Gdx.app.error("RenderPipelineConfig", "Invalid float for property " + key + ": " + val);
+                }
             }
         }
         return defaultValue;

@@ -5,6 +5,8 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import bd.spark36.input.GameInput;
+import bd.spark36.input.GameInput.GameAction;
 import bd.spark36.world.TerrainSurface;
 
 /**
@@ -326,19 +328,18 @@ public class PlayerController {
         boolean dodgeKey = false;
 
         if (inputEnabled) {
-            boolean up = Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP);
-            boolean down = Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN);
-            boolean left = Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT);
-            boolean right = Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT);
+            boolean up = GameInput.isPressed(GameAction.MOVE_FORWARD);
+            boolean down = GameInput.isPressed(GameAction.MOVE_BACK);
+            boolean left = GameInput.isPressed(GameAction.MOVE_LEFT);
+            boolean right = GameInput.isPressed(GameAction.MOVE_RIGHT);
 
             // SPRINT / RUN: SHIFT, CONTROL, or R key
-            boolean shiftHeld = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT);
-            sprintKey = shiftHeld ||
+            sprintKey = GameInput.isPressed(GameAction.SPRINT) ||
                         Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) ||
                         Gdx.input.isKeyPressed(Input.Keys.R);
 
             // CROUCH / DUCK (Bosepora): 'C' key toggles or holding crouch
-            if (Gdx.input.isKeyJustPressed(Input.Keys.C)) {
+            if (GameInput.isJustPressed(GameAction.CROUCH)) {
                 isCrouching = !isCrouching;
             }
             if (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
@@ -347,12 +348,10 @@ public class PlayerController {
 
             // TACTICAL COMBAT DODGE / SLIP EVASION: Only when combat enabled
             if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
-                dodgeKey = Gdx.input.isKeyJustPressed(Input.Keys.Z) ||
-                           Gdx.input.isKeyJustPressed(Input.Keys.ALT_LEFT) ||
-                           Gdx.input.isKeyJustPressed(Input.Keys.ALT_RIGHT);
+                dodgeKey = GameInput.isJustPressed(GameAction.DODGE);
 
                 // MARTIAL ARTS BLOCK / GUARD & FLASH PARRY: 'B' key holds guard
-                boolean blockHeld = Gdx.input.isKeyPressed(Input.Keys.B);
+                boolean blockHeld = GameInput.isPressed(GameAction.DEFEND_BLOCK);
                 if (blockHeld) {
                     if (!isBlocking) {
                         blockTimer = 0f; // Fresh activation: 0.25s parry window
@@ -372,7 +371,7 @@ public class PlayerController {
             }
 
             // GENDER SWITCH: 'G' key toggles Male / Female student
-            if (Gdx.input.isKeyJustPressed(Input.Keys.G)) {
+            if (GameInput.isJustPressed(GameAction.TOGGLE_GENDER)) {
                 gender = (gender == 0) ? 1 : 0;
             }
 
@@ -380,9 +379,8 @@ public class PlayerController {
             boolean punchPressed = false;
             boolean kickPressed = false;
             if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
-                punchPressed = Gdx.input.isKeyJustPressed(Input.Keys.F) ||
-                               (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && !isSittingWater);
-                kickPressed = Gdx.input.isKeyJustPressed(Input.Keys.Q) || Gdx.input.isKeyJustPressed(Input.Keys.K);
+                punchPressed = GameInput.isJustPressed(GameAction.ATTACK_PUNCH) && !isSittingWater;
+                kickPressed = GameInput.isJustPressed(GameAction.ATTACK_KICK);
             }
 
             // Movement vector relative to camera
@@ -458,8 +456,7 @@ public class PlayerController {
             }
 
             // JUMP / DOUBLE JUMP: 'J' or 'SPACE' or 'V'
-            jumpKey = Gdx.input.isKeyJustPressed(Input.Keys.J) ||
-                      Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
+            jumpKey = GameInput.isJustPressed(GameAction.JUMP) ||
                       Gdx.input.isKeyJustPressed(Input.Keys.V);
         } else {
             isBlocking = false;

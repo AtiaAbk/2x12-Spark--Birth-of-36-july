@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import bd.spark36.camera.CinematicCamera;
+import bd.spark36.input.GameInput;
 import bd.spark36.render.GraphicsTier;
 import bd.spark36.render.RenderPipelineConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
@@ -235,9 +236,7 @@ public class SparkGame extends ApplicationAdapter {
     public void returnToMainMenu() {
         gameState = GameState.MAIN_MENU;
         menuSelection = 0;
-        if (levelManager != null && levelManager.getActiveLevel() != null) {
-            selectedChapter = Math.min(bd.spark36.level.LevelConfig.getUnlockedLevel(), levelManager.getActiveLevel().getLevelNumber());
-        }
+        selectedChapter = bd.spark36.level.LevelConfig.getUnlockedLevel();
         Gdx.input.setCursorCatched(false);
     }
 
@@ -600,14 +599,7 @@ public class SparkGame extends ApplicationAdapter {
             return;
         } else if (exitAction == 3) {
             if (levelManager != null) {
-                if (levelManager.getActiveLevel() != null && levelManager.getActiveLevel().isLevelComplete()) {
-                    int currentLvl = levelManager.getActiveLevel().getLevelNumber();
-                    bd.spark36.level.LevelConfig.unlockNextLevel(currentLvl);
-                    selectedChapter = Math.min(6, currentLvl + 1);
-                    levelManager.nextLevel();
-                } else {
-                    levelManager.restartCurrentLevel();
-                }
+                levelManager.restartCurrentLevel();
                 syncLevelSubsystems();
             } else {
                 player.setPosition(0f, 0f, 49.4f);
@@ -615,6 +607,15 @@ public class SparkGame extends ApplicationAdapter {
                 if (helmetGoon != null) helmetGoon.reset(0f, 36.0f);
                 memorials.reset();
                 hud.reset();
+            }
+            return;
+        } else if (exitAction == 4) {
+            if (levelManager != null) {
+                int currentLvl = (levelManager.getActiveLevel() != null) ? levelManager.getActiveLevel().getLevelNumber() : 1;
+                bd.spark36.level.LevelConfig.unlockNextLevel(currentLvl);
+                selectedChapter = Math.min(6, currentLvl + 1);
+                levelManager.nextLevel();
+                syncLevelSubsystems();
             }
             return;
         }
@@ -636,18 +637,24 @@ public class SparkGame extends ApplicationAdapter {
 
         // 1. Update Game Logic
         boolean canMove = !hud.isModalOpen() && !hud.isNpcDialogueActive() && System.getProperty("bd.spark36.testHeroScreenshot") == null;
-        if (!isSimulationFrozen && Gdx.input.isKeyJustPressed(Input.Keys.E) && !hud.isModalOpen()) {
-            if (levelManager != null) {
-                boolean consumed = levelManager.handleInteraction(player.getPosition());
-                if (consumed) {
-                    bd.spark36.audio.SoundManager.get().playObjective();
+        if (!isSimulationFrozen && !hud.isModalOpen()) {
+            if (GameInput.isJustPressed(GameInput.GameAction.INTERACT)) {
+                if (levelManager != null) {
+                    boolean consumed = levelManager.handleInteraction(player.getPosition());
+                    if (consumed) {
+                        bd.spark36.audio.SoundManager.get().playObjective();
+                    }
+                } else if (activeWorld != null && activeWorld.isNearPondGhat(player.getPosition())) {
+                    boolean nextSit = !player.isSittingWater();
+                    player.setSittingWater(nextSit);
+                    if (nextSit) {
+                        player.setPosition(0f, 0.18f, 17.2f);
+                        bd.spark36.audio.SoundManager.get().playSplash();
+                    }
                 }
-            } else if (activeWorld != null && activeWorld.isNearPondGhat(player.getPosition())) {
-                boolean nextSit = !player.isSittingWater();
-                player.setSittingWater(nextSit);
-                if (nextSit) {
-                    player.setPosition(0f, 0.18f, 17.2f);
-                    bd.spark36.audio.SoundManager.get().playSplash();
+            } else if (!bd.spark36.level.LevelConfig.isCombatEnabled()) {
+                if (GameInput.isJustPressed(GameInput.GameAction.ATTACK_PUNCH) || GameInput.isJustPressed(GameInput.GameAction.ATTACK_KICK)) {
+                    hud.triggerMissionToast("PEACEFUL MARCH: Combat unlocks in Chapter 2 & Arena [Press H for Codex]", 0);
                 }
             }
         }
@@ -1007,6 +1014,22 @@ public class SparkGame extends ApplicationAdapter {
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
                 takeScreenshot("pause_menu_interactive_verified");
                 takeScreenshot("spark36_pause_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testHelpControls") != null) {
+            if (levelManager.getActiveLevel() == null || levelManager.getActiveLevel().getLevelNumber() != 1) {
+                levelManager.loadLevel(1);
+                syncLevelSubsystems();
+            }
+            testTimer += delta;
+            if (testTimer >= 1.0f && !hud.isHelpControlsOpen()) {
+                hud.setHelpControlsOpen(true);
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("controls_codex_verified");
                 autoScreenshotTaken = true;
                 if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
                     Gdx.app.exit();
