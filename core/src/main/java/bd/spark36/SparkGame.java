@@ -996,6 +996,10 @@ public class SparkGame extends ApplicationAdapter {
                 }
             }
         } else if (System.getProperty("bd.spark36.testPauseScreenshot") != null || System.getProperty("bd.spark36.testPauseMenu") != null) {
+            if (levelManager.getActiveLevel() == null || levelManager.getActiveLevel().getLevelNumber() != 1) {
+                levelManager.loadLevel(1);
+                syncLevelSubsystems();
+            }
             testTimer += delta;
             if (testTimer >= 1.0f && !hud.isPauseMenuOpen()) {
                 hud.openPauseMenuForTest();
@@ -1009,6 +1013,10 @@ public class SparkGame extends ApplicationAdapter {
                 }
             }
         } else if (System.getProperty("bd.spark36.testExitConfirm") != null) {
+            if (levelManager.getActiveLevel() == null || levelManager.getActiveLevel().getLevelNumber() != 1) {
+                levelManager.loadLevel(1);
+                syncLevelSubsystems();
+            }
             testTimer += delta;
             if (testTimer >= 1.0f && !hud.isExitConfirmOpen()) {
                 hud.openExitConfirmForTest();
@@ -1022,6 +1030,10 @@ public class SparkGame extends ApplicationAdapter {
             }
         } else if (System.getProperty("bd.spark36.testSummerCurzon") != null) {
             hud.reset();
+            if (levelManager.getActiveLevel() == null || levelManager.getActiveLevel().getLevelNumber() != 1) {
+                levelManager.loadLevel(1);
+                syncLevelSubsystems();
+            }
             player.setPosition(0f, 0f, 72f);
             player.setHeadingDegrees(180f);
             camera.setAngles(0f, -2.5f);
@@ -1036,6 +1048,10 @@ public class SparkGame extends ApplicationAdapter {
             }
         } else if (System.getProperty("bd.spark36.testBambooGrove") != null) {
             hud.reset();
+            if (levelManager.getActiveLevel() == null || levelManager.getActiveLevel().getLevelNumber() != 1) {
+                levelManager.loadLevel(1);
+                syncLevelSubsystems();
+            }
             player.setPosition(13.0f, 0f, 21.0f);
             player.setHeadingDegrees(355f);
             camera.setAngles(15f, 6.0f);
