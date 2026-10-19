@@ -117,6 +117,19 @@ public class ParticleSystem implements Disposable {
     private final Vector3 pukurWorldPos = new Vector3(0f, 0.02f, 6f);
     private final Vector3 screenProj = new Vector3();
 
+    // ─── Monsoon Rain Streaks (3D world space, pooled) ───────────────
+    private static final int MAX_RAIN = 300;
+    private final float[] rainX = new float[MAX_RAIN];
+    private final float[] rainY = new float[MAX_RAIN];
+    private final float[] rainZ = new float[MAX_RAIN];
+    private final float[] rainSpeed = new float[MAX_RAIN];
+    private final float[] rainLen = new float[MAX_RAIN];
+    private final boolean[] rainAlive = new boolean[MAX_RAIN];
+    private int rainActive = 0;
+    private float currentRainIntensity = 0.0f;
+    private final Vector3 rainP1 = new Vector3();
+    private final Vector3 rainP2 = new Vector3();
+
     private final ShapeRenderer sr;
     private float time = 0f;
     private int screenW, screenH;
@@ -139,6 +152,7 @@ public class ParticleSystem implements Disposable {
         }
         for (int i = 0; i < MAX_DUST; i++) dustLife[i] = 0f;
         for (int i = 0; i < MAX_RIPPLES; i++) rippleLife[i] = 0f;
+        for (int i = 0; i < MAX_RAIN; i++) rainAlive[i] = false;
         screenW = Gdx.graphics.getBackBufferWidth();
         screenH = Gdx.graphics.getBackBufferHeight();
     }
