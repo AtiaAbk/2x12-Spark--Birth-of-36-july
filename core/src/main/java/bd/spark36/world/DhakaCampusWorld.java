@@ -307,41 +307,41 @@ public class DhakaCampusWorld implements Disposable {
         float uMax = width * uScale;
         float vMax = length * vScale;
 
-        // Top surface (+Y)
+        // Top surface (+Y) - LibGDX CCW winding convention
         VertexInfo v00 = new VertexInfo().setPos(-hw, hh, -hl).setNor(0f, 1f, 0f).setUV(0f, 0f);
-        VertexInfo v10 = new VertexInfo().setPos( hw, hh, -hl).setNor(0f, 1f, 0f).setUV(uMax, 0f);
-        VertexInfo v11 = new VertexInfo().setPos( hw, hh,  hl).setNor(0f, 1f, 0f).setUV(uMax, vMax);
         VertexInfo v01 = new VertexInfo().setPos(-hw, hh,  hl).setNor(0f, 1f, 0f).setUV(0f, vMax);
-        mpb.rect(v00, v10, v11, v01);
+        VertexInfo v11 = new VertexInfo().setPos( hw, hh,  hl).setNor(0f, 1f, 0f).setUV(uMax, vMax);
+        VertexInfo v10 = new VertexInfo().setPos( hw, hh, -hl).setNor(0f, 1f, 0f).setUV(uMax, 0f);
+        mpb.rect(v00, v01, v11, v10);
 
         // Sides
         // North (-Z)
         mpb.rect(
-            new VertexInfo().setPos(-hw, -hh, -hl).setNor(0f, 0f, -1f).setUV(0f, 1f),
             new VertexInfo().setPos( hw, -hh, -hl).setNor(0f, 0f, -1f).setUV(uMax, 1f),
-            new VertexInfo().setPos( hw,  hh, -hl).setNor(0f, 0f, -1f).setUV(uMax, 0f),
-            new VertexInfo().setPos(-hw,  hh, -hl).setNor(0f, 0f, -1f).setUV(0f, 0f)
+            new VertexInfo().setPos(-hw, -hh, -hl).setNor(0f, 0f, -1f).setUV(0f, 1f),
+            new VertexInfo().setPos(-hw,  hh, -hl).setNor(0f, 0f, -1f).setUV(0f, 0f),
+            new VertexInfo().setPos( hw,  hh, -hl).setNor(0f, 0f, -1f).setUV(uMax, 0f)
         );
         // South (+Z)
         mpb.rect(
-            new VertexInfo().setPos( hw, -hh,  hl).setNor(0f, 0f, 1f).setUV(0f, 1f),
-            new VertexInfo().setPos(-hw, -hh,  hl).setNor(0f, 0f, 1f).setUV(uMax, 1f),
-            new VertexInfo().setPos(-hw,  hh,  hl).setNor(0f, 0f, 1f).setUV(uMax, 0f),
-            new VertexInfo().setPos( hw,  hh,  hl).setNor(0f, 0f, 1f).setUV(0f, 0f)
+            new VertexInfo().setPos(-hw, -hh,  hl).setNor(0f, 0f, 1f).setUV(0f, 1f),
+            new VertexInfo().setPos( hw, -hh,  hl).setNor(0f, 0f, 1f).setUV(uMax, 1f),
+            new VertexInfo().setPos( hw,  hh,  hl).setNor(0f, 0f, 1f).setUV(uMax, 0f),
+            new VertexInfo().setPos(-hw,  hh,  hl).setNor(0f, 0f, 1f).setUV(0f, 0f)
         );
         // West (-X)
         mpb.rect(
-            new VertexInfo().setPos(-hw, -hh,  hl).setNor(-1f, 0f, 0f).setUV(0f, 1f),
-            new VertexInfo().setPos(-hw, -hh, -hl).setNor(-1f, 0f, 0f).setUV(vMax, 1f),
-            new VertexInfo().setPos(-hw,  hh, -hl).setNor(-1f, 0f, 0f).setUV(vMax, 0f),
-            new VertexInfo().setPos(-hw,  hh,  hl).setNor(-1f, 0f, 0f).setUV(0f, 0f)
+            new VertexInfo().setPos(-hw, -hh, -hl).setNor(-1f, 0f, 0f).setUV(0f, 1f),
+            new VertexInfo().setPos(-hw, -hh,  hl).setNor(-1f, 0f, 0f).setUV(vMax, 1f),
+            new VertexInfo().setPos(-hw,  hh,  hl).setNor(-1f, 0f, 0f).setUV(vMax, 0f),
+            new VertexInfo().setPos(-hw,  hh, -hl).setNor(-1f, 0f, 0f).setUV(0f, 0f)
         );
         // East (+X)
         mpb.rect(
-            new VertexInfo().setPos( hw, -hh, -hl).setNor(1f, 0f, 0f).setUV(0f, 1f),
-            new VertexInfo().setPos( hw, -hh,  hl).setNor(1f, 0f, 0f).setUV(vMax, 1f),
-            new VertexInfo().setPos( hw,  hh,  hl).setNor(1f, 0f, 0f).setUV(vMax, 0f),
-            new VertexInfo().setPos( hw,  hh, -hl).setNor(1f, 0f, 0f).setUV(0f, 0f)
+            new VertexInfo().setPos( hw, -hh,  hl).setNor(1f, 0f, 0f).setUV(0f, 1f),
+            new VertexInfo().setPos( hw, -hh, -hl).setNor(1f, 0f, 0f).setUV(vMax, 1f),
+            new VertexInfo().setPos( hw,  hh, -hl).setNor(1f, 0f, 0f).setUV(vMax, 0f),
+            new VertexInfo().setPos( hw,  hh,  hl).setNor(1f, 0f, 0f).setUV(0f, 0f)
         );
 
         return mb.end();
