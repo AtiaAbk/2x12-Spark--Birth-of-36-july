@@ -5,9 +5,9 @@ package bd.spark36.render;
  * Medium is the target default for fanless Apple Silicon MacBook Air M4 (60 FPS lock).
  */
 public enum GraphicsTier {
-    LOW(1024, 0.15f, false, false, false, true, "Low (Maximum Performance)"),
-    MEDIUM(2048, 0.24f, true, true, true, true, "Medium (Recommended for M4 Air)"),
-    HIGH(4096, 0.32f, true, true, true, true, "High (Cinematic Quality)");
+    LOW(1024, 0.15f, false, false, false, true, 0.5f, 40.0f, false, "Low (Maximum Performance)"),
+    MEDIUM(2048, 0.24f, true, true, true, true, 1.0f, 65.0f, true, "Medium (Recommended for M4 Air)"),
+    HIGH(4096, 0.32f, true, true, true, true, 1.25f, 85.0f, true, "High (Cinematic Quality)");
 
     public final int shadowMapSize;
     public final float bloomStrength;
@@ -15,21 +15,33 @@ public enum GraphicsTier {
     public final boolean enableChromaticAberration;
     public final boolean enableHdr;
     public final boolean enablePbr;
+    public final float vegetationDensity;
+    public final float vegetationLodDistance;
+    public final boolean enableLayeredWind;
     public final String displayName;
 
     GraphicsTier(int shadowMapSize, float bloomStrength, boolean enableBloom, boolean enableChromaticAberration,
-                 boolean enableHdr, boolean enablePbr, String displayName) {
+                 boolean enableHdr, boolean enablePbr, float vegetationDensity, float vegetationLodDistance,
+                 boolean enableLayeredWind, String displayName) {
         this.shadowMapSize = shadowMapSize;
         this.bloomStrength = bloomStrength;
         this.enableBloom = enableBloom;
         this.enableChromaticAberration = enableChromaticAberration;
         this.enableHdr = enableHdr;
         this.enablePbr = enablePbr;
+        this.vegetationDensity = vegetationDensity;
+        this.vegetationLodDistance = vegetationLodDistance;
+        this.enableLayeredWind = enableLayeredWind;
         this.displayName = displayName;
     }
 
+    GraphicsTier(int shadowMapSize, float bloomStrength, boolean enableBloom, boolean enableChromaticAberration,
+                 boolean enableHdr, boolean enablePbr, String displayName) {
+        this(shadowMapSize, bloomStrength, enableBloom, enableChromaticAberration, enableHdr, enablePbr, 1.0f, 65.0f, true, displayName);
+    }
+
     GraphicsTier(int shadowMapSize, float bloomStrength, boolean enableBloom, boolean enableChromaticAberration, String displayName) {
-        this(shadowMapSize, bloomStrength, enableBloom, enableChromaticAberration, true, true, displayName);
+        this(shadowMapSize, bloomStrength, enableBloom, enableChromaticAberration, true, true, 1.0f, 65.0f, true, displayName);
     }
 
     public static GraphicsTier fromSystemProperty() {
