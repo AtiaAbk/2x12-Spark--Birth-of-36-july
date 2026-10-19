@@ -1012,6 +1012,90 @@ public class StudentMesh implements Disposable {
              isSittingWater, sitProgress, phase);
     }
 
+    private void drawPose(ModelBatch batch, Environment env, Rig rig, int g, Vector3 pos, float headingDegrees,
+                          CharacterPose pose, boolean isCrouching, boolean isSittingWater) {
+
+        rootTransform.idt();
+        rootTransform.translate(pos.x, pos.y + pose.bobOffset, pos.z);
+        rootTransform.rotate(Vector3.Y, headingDegrees);
+
+        // Pelvis
+        segment.set(rootTransform)
+            .translate(0f, pose.pelvisHeight, 0f)
+            .rotate(Vector3.Y, pose.pelvisTwist)
+            .rotate(Vector3.Z, pose.pelvisRoll)
+            .rotate(Vector3.X, pose.pelvisPitch);
+        drawParts(batch, env, rig.pelvis, segment);
+
+        // Chest & Torso (incl. backpack, lanyard, orna)
+        float chestY = isCrouching ? 0.72f : (isSittingWater ? 0.65f : 1.13f);
+        float chestZ = isCrouching ? 0.12f : 0f;
+        segment.set(rootTransform)
+            .translate(0f, chestY + pose.breathe, chestZ)
+            .rotate(Vector3.Y, pose.torsoTwist)
+            .rotate(Vector3.Z, pose.torsoRoll)
+            .rotate(Vector3.X, pose.torsoPitch);
+        drawParts(batch, env, rig.chest, segment);
+
+        // Neck
+        float neckY = isCrouching ? 0.90f : (isSittingWater ? 0.84f : 1.34f);
+        float neckZ = isCrouching ? 0.20f : 0f;
+        segment.set(rootTransform)
+            .translate(0f, neckY + pose.breathe, neckZ)
+            .rotate(Vector3.Y, pose.neckYaw)
+            .rotate(Vector3.X, pose.neckPitch);
+        drawParts(batch, env, rig.neck, segment);
+
+        // Head
+        float headY = isCrouching ? 0.99f : (isSittingWater ? 0.93f : 1.45f);
+        float headZ = isCrouching ? 0.25f : 0f;
+        segment.set(rootTransform)
+            .translate(0f, headY + pose.breathe - pose.bobOffset * 0.3f, headZ)
+            .rotate(Vector3.Y, pose.headYaw)
+            .rotate(Vector3.Z, pose.headRoll)
+            .rotate(Vector3.X, pose.headPitch);
+        drawParts(batch, env, rig.head, segment);
+
+        // Limbs (both sides)
+        for (int side = 0; side < 2; side++) {
+            float sx = side == 0 ? -1f : 1f;
+
+            // Thigh
+            segment.set(rootTransform)
+                .translate(sx * 0.105f, pose.pelvisHeight - 0.04f + pose.footGroundOffset[side] * 0.3f, 0f)
+                .rotate(Vector3.X, pose.thighPitch[side])
+                .rotate(Vector3.Z, pose.thighRoll[side] + sx * -1.5f)
+                .rotate(Vector3.Y, pose.thighYaw[side]);
+            drawParts(batch, env, rig.thigh[side], segment);
+
+            // Shin
+            segment.translate(0f, -0.38f, 0f)
+                .rotate(Vector3.X, pose.kneePitch[side]);
+            drawParts(batch, env, rig.shin[side], segment);
+
+            // Foot
+            tmp.set(segment)
+                .translate(0f, -0.37f, 0f)
+                .rotate(Vector3.X, pose.footPitch[side])
+                .rotate(Vector3.Z, pose.footRoll[side]);
+            drawParts(batch, env, rig.foot[side], tmp);
+
+            // Upper Arm
+            segment.set(rootTransform)
+                .translate(sx * (g == 1 ? 0.178f : 0.205f), chestY + 0.18f + pose.breathe, chestZ)
+                .rotate(Vector3.X, pose.upperArmPitch[side])
+                .rotate(Vector3.Z, pose.upperArmRoll[side])
+                .rotate(Vector3.Y, pose.upperArmYaw[side]);
+            drawParts(batch, env, rig.upperArm[side], segment);
+
+            // Forearm
+            segment.translate(0f, -0.27f, 0f)
+                .rotate(Vector3.X, pose.foreArmPitch[side])
+                .rotate(Vector3.Y, pose.foreArmYaw[side]);
+            drawParts(batch, env, rig.foreArm[side], segment);
+        }
+    }
+
     private void draw(ModelBatch batch, Environment env, Rig rig, int g, Vector3 pos, float headingDegrees,
                       float walkCycle, boolean isMoving, boolean isSprinting,
                       boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,

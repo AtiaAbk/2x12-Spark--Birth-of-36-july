@@ -81,7 +81,8 @@ public class PlayerController {
     // Gender: 0 = Male, 1 = Female
     private int gender = 0;
 
-    // Animation & State
+    // Animation & State Machine
+    private final AnimationStateMachine animStateMachine = new AnimationStateMachine();
     private boolean isMoving = false;
     private boolean isSprinting = false;
     private float walkCycle = 0f;
@@ -311,6 +312,9 @@ public class PlayerController {
      */
     public void update(float delta, float cameraYawDegrees, boolean inputEnabled) {
         if (delta > 0.1f) delta = 0.1f; // Cap delta spikes
+
+        boolean wasGrounded = isGrounded;
+        float prevVerticalVelocity = verticalVelocity;
 
         if (dodgeCooldown > 0f) dodgeCooldown -= delta;
         if (staggerTimer > 0f) staggerTimer -= delta;
