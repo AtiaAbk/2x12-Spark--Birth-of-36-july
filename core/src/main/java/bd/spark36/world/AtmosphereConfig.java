@@ -28,12 +28,15 @@ public final class AtmosphereConfig {
         public final float rainIntensity;
         public final float cloudAlphaFactor;
         public final float windMultiplier;
+        public final float colorTemperature;
+        public final float colorTint;
 
         public Preset(Vector3 sunDirection, Color sunColor, Color ambientColor,
                       float fogNear, float fogFar, float fogExponent, Color fogColor,
                       Color skyZenith, Color skyMidBlue, Color skyHorizon, Color skyLowHaze,
                       Color sunDiskColor, Color sunCoronaColor,
-                      float lightShaftOpacity, float rainIntensity, float cloudAlphaFactor, float windMultiplier) {
+                      float lightShaftOpacity, float rainIntensity, float cloudAlphaFactor, float windMultiplier,
+                      float colorTemperature, float colorTint) {
             this.sunDirection = new Vector3(sunDirection).nor();
             this.sunColor = new Color(sunColor);
             this.ambientColor = new Color(ambientColor);
@@ -51,6 +54,18 @@ public final class AtmosphereConfig {
             this.rainIntensity = rainIntensity;
             this.cloudAlphaFactor = cloudAlphaFactor;
             this.windMultiplier = windMultiplier;
+            this.colorTemperature = colorTemperature;
+            this.colorTint = colorTint;
+        }
+
+        public Preset(Vector3 sunDirection, Color sunColor, Color ambientColor,
+                      float fogNear, float fogFar, float fogExponent, Color fogColor,
+                      Color skyZenith, Color skyMidBlue, Color skyHorizon, Color skyLowHaze,
+                      Color sunDiskColor, Color sunCoronaColor,
+                      float lightShaftOpacity, float rainIntensity, float cloudAlphaFactor, float windMultiplier) {
+            this(sunDirection, sunColor, ambientColor, fogNear, fogFar, fogExponent, fogColor,
+                 skyZenith, skyMidBlue, skyHorizon, skyLowHaze, sunDiskColor, sunCoronaColor,
+                 lightShaftOpacity, rainIntensity, cloudAlphaFactor, windMultiplier, 0.0f, 0.0f);
         }
     }
 
@@ -58,6 +73,21 @@ public final class AtmosphereConfig {
         new Vector3(-0.45f, -0.75f, -0.45f),        // Summer midday sun
         new Color(1.04f, 1.02f, 0.96f, 1.0f),       // Crisp summer sunlight
         new Color(0.32f, 0.35f, 0.40f, 1.0f),       // Daylight ambient with blue sky bounce
+        35.0f, 140.0f, 1.0f,                         // Moderate summer haze
+        new Color(0.84f, 0.88f, 0.92f, 1.0f),       // Summer pearlescent sky-blue haze
+        new Color(0.24f, 0.42f, 0.66f, 1.0f),       // Filmic slate-azure zenith
+        new Color(0.44f, 0.60f, 0.76f, 1.0f),       // Soft atmospheric summer mid sky
+        new Color(0.68f, 0.78f, 0.86f, 1.0f),       // Pearlescent horizon
+        new Color(0.84f, 0.88f, 0.92f, 1.0f),       // Lower haze
+        new Color(1.0f, 0.98f, 0.90f, 0.95f),        // Intense white-gold solar disk
+        new Color(1.0f, 0.94f, 0.78f, 0.28f),        // Warm solar corona
+        1.0f,                                       // Full canopy god rays
+        0.0f,                                       // No rain
+        1.0f,                                       // Standard fair weather clouds
+        1.0f,                                       // Standard breeze
+        0.0f,                                       // Neutral white balance temperature
+        0.0f                                        // Neutral tint
+    );
         35.0f, 140.0f, 1.0f,                         // Moderate summer haze
         new Color(0.84f, 0.88f, 0.92f, 1.0f),       // Summer pearlescent sky-blue haze
         new Color(0.24f, 0.42f, 0.66f, 1.0f),       // Filmic slate-azure zenith
