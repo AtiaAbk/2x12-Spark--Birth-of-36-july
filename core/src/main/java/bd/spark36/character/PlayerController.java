@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import bd.spark36.world.TerrainSurface;
 
 /**
  * Professional-grade Player Controller for 2x12: Spark — Birth of 36 July.
@@ -856,12 +857,8 @@ public class PlayerController {
     }
 
     /** Height of the bare ground at (x, z): the ground plane, or the floor inside the pukur. */
-    private static float groundLevelAt(float x, float z) {
-        boolean inPond = x > POND_MIN_X && x < POND_MAX_X && z > POND_MIN_Z && z < POND_MAX_Z;
-        if (!inPond) return 0f;
-        // The ghat's submerged bottom step (where the student sits) stays dry underfoot
-        if (Math.abs(x) < 3.1f && z >= 16.3f) return 0.14f;
-        return POND_FLOOR_Y;
+    public static float groundLevelAt(float x, float z) {
+        return TerrainSurface.getGroundHeight(x, z);
     }
 
     /** Remembers the wall we just ran into so holding jump next frame can climb it. */
