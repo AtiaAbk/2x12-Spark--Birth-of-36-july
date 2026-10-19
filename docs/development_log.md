@@ -7,6 +7,27 @@
 
 ## RECENT SESSIONS & ENTRY LOGS
 
+### 2026-10-19 — Level 1 Realism Upgrade: Dhaka Campus Exploration & Visual Immersion
+- **Action:**
+  - **Promenade & Sky Polish:** Cleaned brick pavement texture in `TextureFactory.java` by removing repeating white petal polka dots. Softened sky clouds in `AtmosphereRenderer.java` using layered alpha-blended ellipses.
+  - **Colonial Promenade Lighting:** Replaced primitive wooden posts along the Curzon promenade with authentic British-Indian colonial fluted cast-iron double-lantern lamp posts featuring stepped octagonal pedestals, scrollwork brackets, cross-arms, and carriage lanterns in `DhakaCampusWorld.java`.
+  - **TSC Tropical Modernism (Constantinos Doxiadis):** Completely redesigned the TSC complex (`tscX=68, tscZ=20`) to reflect authentic tropical modernism with exposed post-and-beam concrete grid, red brick infill panels, dark ribbon window bands, signature folded-plate butterfly roof (±11°), cantilevered entrance canopy with support columns, vertical brise-soleil fins, and horizontal sun louvers.
+  - **Central Library Tropical Modernism (Muzharul Islam):** Rebuilt the Central Library (`clX=-68, clZ=22`) based on Muzharul Islam's 1953 landmark design: elevated ground-floor pilotis colonnade, floating brick reading hall masses, concrete structural core, perforated terracotta jali sunscreens, cantilevered roof cornice, and wide approach steps.
+  - **Living World Foliage & Wind:** Added dynamic time-based ambient wind sway to all campus tree canopies and foliage instances in `DhakaCampusWorld.java` `update()`, with sway amplitude and phase varying naturally per instance.
+  - **Natural Particle Drift:** Validated 3D world-space leaf simulation in `ParticleSystem.java` with Krishnachura autumn tones, drag, flutter, tumble, and ground landing.
+  - **Atmospheric Birds:** Upgraded sky bird simulation in `AtmosphereRenderer.java` with thermal gliding arcs, flap-glide cycles (alternating between flapping bursts and graceful thermal gliding), and realistic arched raptor/kite gull-wing silhouettes with directional flight heading.
+  - **Character Anatomy & Synchronized Kinematics:** Upgraded `StudentMesh.java` with athletic adult proportions (broad 44cm shoulders, natural trapezius slope, neck revealed from behind, muscular thigh quads, sculpted calves, and wide athletic sneakers). Synchronized locomotion in `PlayerController.java` (`walkCycle` matching physical horizontal speed / stride length) and added dynamic ankle dorsiflexion (`footFlex`) in `StudentMesh.java` to eliminate foot sliding.
+- **Verification:**
+  - Full project compiled cleanly: `:core:compileJava` and `:lwjgl3:compileJava` passed with 0 errors.
+  - Runtime visual verification screenshots captured and audited:
+    - `assets/screenshots/level1_curzon_promenade_upgraded.png`: Curzon facade, brick promenade, clean sky, character silhouette.
+    - `assets/screenshots/level1_tsc_upgraded.png`: Constantinos Doxiadis folded butterfly roof and facade.
+    - `assets/screenshots/level1_central_library_upgraded.png`: Muzharul Islam pilotis colonnade and jali screens.
+    - `assets/screenshots/level1_student_character_upgraded.png`: Athletic anatomy and neck detail.
+    - `assets/screenshots/level1_gameplay_walk_upgraded.png`: Spawn view with wind-animated canopies and colonial lanterns.
+    - `assets/screenshots/level1_spawn_sky_birds.png`: High-angle sky view with authentic soaring raptor silhouettes.
+  - Verified 60.0 FPS stable performance on Apple Silicon M4.
+
 ### 2026-10-19 — Persistent Campaign Progression, Auto-Advancement & Locked Chapter Gating
 - **Action:**
   - Implemented persistent campaign unlock tracking in `LevelConfig.java` backed by LibGDX cross-platform `Preferences` (`Spark36Preferences`, key: `unlockedChapter`).

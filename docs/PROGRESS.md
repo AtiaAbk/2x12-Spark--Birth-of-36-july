@@ -29,7 +29,7 @@
 
 | Level | Title | In-Game Dates | Status | Primary Gameplay Mode | Target Milestone |
 |---|---|---|---|---|---|
-| **Level 1** | *Where It All Began* (যেখান থেকে শুরু) | June – July 14, 2024 | **PARTIAL (Core Prototype Active)** | Peaceful exploration, dialogue, leaflets, gathering | M3 (Slice), M5 (Complete) |
+| **Level 1** | *Where It All Began* (যেখান থেকে শুরু) | June – July 14, 2024 | **UPGRADED & TESTED** | Peaceful exploration, dialogue, leaflets, gathering | M1–M3 Realism Upgrade Complete |
 | **Level 2** | *The Day the Streets Changed* | July 15, 2024 | **PLANNED** | Tension, evasion, guiding peers, medical shelter | M8 |
 | **Level 3** | *A City on Edge* | July 16–17, 2024 | **PLANNED** | Route finding, safe dormitory evacuation | M8 |
 | **Level 4** | *Voices Across the City* | July 18–19, 2024 | **PLANNED** | Internet blackout, physical communication courier | M8 |
