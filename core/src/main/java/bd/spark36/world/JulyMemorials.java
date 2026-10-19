@@ -105,10 +105,31 @@ public class JulyMemorials implements Disposable {
         long attr = Usage.Position | Usage.Normal;
 
         // Monument Materials
-        Material baseMat = new Material(ColorAttribute.createDiffuse(new Color(0.20f, 0.22f, 0.24f, 1f))); // Dark granite
-        Material pillarMat = new Material(ColorAttribute.createDiffuse(new Color(0.72f, 0.28f, 0.22f, 1f))); // Red terracotta
-        Material goldMat = new Material(ColorAttribute.createDiffuse(new Color(0.95f, 0.78f, 0.30f, 1f))); // Inscription gold
-        Material beaconMat = new Material(ColorAttribute.createDiffuse(new Color(1f, 0.85f, 0.35f, 1f))); // Glowing beacon
+        Color baseCol = new Color(0.20f, 0.22f, 0.24f, 1f);
+        Color pillarCol = new Color(0.72f, 0.28f, 0.22f, 1f);
+        Color goldCol = new Color(0.95f, 0.78f, 0.30f, 1f);
+        Color beaconCol = new Color(1f, 0.85f, 0.35f, 1f);
+
+        Material baseMat = new Material(
+            ColorAttribute.createDiffuse(baseCol),
+            PBRColorAttribute.createBaseColorFactor(baseCol),
+            PBRFloatAttribute.createMetallic(0.0f),
+            PBRFloatAttribute.createRoughness(0.82f));
+        Material pillarMat = new Material(
+            ColorAttribute.createDiffuse(pillarCol),
+            PBRColorAttribute.createBaseColorFactor(pillarCol),
+            PBRFloatAttribute.createMetallic(0.0f),
+            PBRFloatAttribute.createRoughness(0.75f));
+        Material goldMat = new Material(
+            ColorAttribute.createDiffuse(goldCol),
+            PBRColorAttribute.createBaseColorFactor(goldCol),
+            PBRFloatAttribute.createMetallic(0.88f),
+            PBRFloatAttribute.createRoughness(0.28f));
+        Material beaconMat = new Material(
+            ColorAttribute.createDiffuse(beaconCol),
+            PBRColorAttribute.createBaseColorFactor(beaconCol),
+            PBRFloatAttribute.createMetallic(0.0f),
+            PBRFloatAttribute.createRoughness(0.30f));
 
         Model baseModel = mb.createBox(2.2f, 0.4f, 2.2f, baseMat, attr);
         Model pillarModel = mb.createBox(1.0f, 2.6f, 1.0f, pillarMat, attr);
