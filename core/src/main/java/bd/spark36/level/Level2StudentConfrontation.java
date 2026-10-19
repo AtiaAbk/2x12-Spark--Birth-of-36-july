@@ -404,6 +404,12 @@ public class Level2StudentConfrontation implements CampaignLevel {
                     hitStopTimer = isSweep ? 0.065f : (isKick ? 0.052f : 0.038f);
                     camera.addShake(isSweep ? 0.10f : (isKick ? 0.07f : 0.04f));
 
+                    if (isKick || isSweep) {
+                        bd.spark36.audio.SoundManager.get().playKick();
+                    } else {
+                        bd.spark36.audio.SoundManager.get().playPunch();
+                    }
+
                     boolean ko = g.takeHitFromPlayer(dmg, isKick, isSweep, player.getHeadingDegrees());
                     if (ko) {
                         camera.addShake(0.24f);
@@ -426,6 +432,11 @@ public class Level2StudentConfrontation implements CampaignLevel {
     @Override
     public CampusCrowd getCrowd() {
         return crowd;
+    }
+
+    @Override
+    public void completeAllObjectivesForTest() {
+        java.util.Arrays.fill(objectivesDone, true);
     }
 
     @Override

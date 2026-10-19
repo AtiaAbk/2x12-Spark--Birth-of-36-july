@@ -325,6 +325,11 @@ public class Level5MassMobilization implements CampaignLevel {
     }
 
     @Override
+    public void completeAllObjectivesForTest() {
+        java.util.Arrays.fill(objectivesDone, true);
+    }
+
+    @Override
     public void dispose() {
         if (world != null) { world.dispose(); world = null; }
         for (Model m : models) m.dispose();

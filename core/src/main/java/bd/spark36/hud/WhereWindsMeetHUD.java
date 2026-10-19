@@ -285,6 +285,7 @@ public class WhereWindsMeetHUD implements Disposable {
         this.missionBannerCount = count;
         this.missionBannerTime = 6.0f;
         this.checkpointFlashAlpha = 1.0f;
+        bd.spark36.audio.SoundManager.get().playObjective();
     }
 
     public void triggerVictory() {
@@ -293,6 +294,7 @@ public class WhereWindsMeetHUD implements Disposable {
         this.victoryTransitionTimer = 2.4f;
         this.victoryShown = true;
         this.isVictoryOpen = false;
+        bd.spark36.audio.SoundManager.get().playBell();
     }
 
     public boolean isCongratulationsPopupActive() {
@@ -407,16 +409,22 @@ public class WhereWindsMeetHUD implements Disposable {
                 float vy = (virtH - vh) / 2f;
                 float btnY = vy + 38f;
                 float btnH = 46f;
-                if (mouseX >= vx + 45f && mouseX <= vx + 275f && mouseY >= btnY && mouseY <= btnY + btnH) {
+                float b1X = vx + 45f, b1W = 230f;
+                float b2X = vx + 315f, b2W = 230f;
+                float b3X = vx + 585f, b3W = 230f;
+                if (mouseX >= b1X && mouseX <= b1X + b1W && mouseY >= btnY && mouseY <= btnY + btnH) {
                     exitAction = 1; // Return to Main Menu
                     isVictoryOpen = false;
-                } else if (mouseX >= vx + 295f && mouseX <= vx + 525f && mouseY >= btnY && mouseY <= btnY + btnH) {
-                    exitAction = 3; // Replay Level 1
+                    bd.spark36.audio.SoundManager.get().playClick();
+                } else if (mouseX >= b2X && mouseX <= b2X + b2W && mouseY >= btnY && mouseY <= btnY + btnH) {
+                    exitAction = 3; // Advance to next level or replay
                     isVictoryOpen = false;
                     victoryShown = false;
-                } else if (mouseX >= vx + 555f && mouseX <= vx + 785f && mouseY >= btnY && mouseY <= btnY + btnH) {
+                    bd.spark36.audio.SoundManager.get().playClick();
+                } else if (mouseX >= b3X && mouseX <= b3X + b3W && mouseY >= btnY && mouseY <= btnY + btnH) {
                     exitAction = 2; // Quit Game
                     isVictoryOpen = false;
+                    bd.spark36.audio.SoundManager.get().playClick();
                 }
             } else if (isDisqualified || isDefeated) {
                 float dw = 780f;
@@ -429,10 +437,12 @@ public class WhereWindsMeetHUD implements Disposable {
                     exitAction = 3; // Retry
                     isDisqualified = false;
                     isDefeated = false;
+                    bd.spark36.audio.SoundManager.get().playClick();
                 } else if (mouseX >= dx + 450f && mouseX <= dx + 690f && mouseY >= btnY && mouseY <= btnY + btnH) {
                     exitAction = 1; // Menu
                     isDisqualified = false;
                     isDefeated = false;
+                    bd.spark36.audio.SoundManager.get().playClick();
                 }
             } else if (isMapOpen) {
                 // Click close button on map
@@ -440,12 +450,14 @@ public class WhereWindsMeetHUD implements Disposable {
                 float cbY = virtH - 65f;
                 if (mouseX >= cbX && mouseX <= cbX + 170f && mouseY >= cbY && mouseY <= cbY + 45f) {
                     isMapOpen = false;
+                    bd.spark36.audio.SoundManager.get().playClick();
                 }
             } else if (activeModalEntry == null && !isPauseMenuOpen && !isVictoryOpen && !isDisqualified && !isDefeated) {
                 // Click tactical map HUD button
                 if (mouseX >= currentLayout.mapBtnX && mouseX <= currentLayout.mapBtnX + currentLayout.mapBtnW &&
                     mouseY >= currentLayout.mapBtnY && mouseY <= currentLayout.mapBtnY + currentLayout.mapBtnH) {
                     isMapOpen = true;
+                    bd.spark36.audio.SoundManager.get().playClick();
                 }
             }
         }
@@ -453,7 +465,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // Handle Disqualification Screen input
         if (isDisqualified) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
-                exitAction = 3; // Replay Level 1
+                exitAction = 3; // Replay Level
                 isDisqualified = false;
             }
             if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
@@ -478,18 +490,31 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Handle Victory Screen input
         if (isVictoryOpen) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.J)) {
-                exitAction = 1; // Return to Main Menu
-                isVictoryOpen = false;
-            }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
-                exitAction = 3; // Replay Level 1
+            if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.N)) {
+                exitAction = 3; // Next Level or Replay
                 isVictoryOpen = false;
                 victoryShown = false;
+                bd.spark36.audio.SoundManager.get().playClick();
+                return;
             }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.X)) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+                exitAction = 1; // Return to Main Menu
+                isVictoryOpen = false;
+                bd.spark36.audio.SoundManager.get().playClick();
+                return;
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+                exitAction = 3; // Replay
+                isVictoryOpen = false;
+                victoryShown = false;
+                bd.spark36.audio.SoundManager.get().playClick();
+                return;
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.X) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
                 exitAction = 2; // Quit Game
                 isVictoryOpen = false;
+                bd.spark36.audio.SoundManager.get().playClick();
+                return;
             }
             return;
         }
@@ -3028,50 +3053,90 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Typography
         spriteBatch.begin();
+        int lvlNum = (activeLevel != null) ? activeLevel.getLevelNumber() : 1;
+        String levelTitle = (activeLevel != null) ? activeLevel.getTitle() : "THE SPARK OF SOLIDARITY";
+
         fonts.titleFont.setColor(goldAccent);
-        glyphLayout.setText(fonts.titleFont, "CONGRATULATIONS! LEVEL 1 VICTORY ACHIEVED");
+        String victoryTitle = (lvlNum == 6) ?
+            "CAMPAIGN VICTORY! 36 JULY ACHIEVED" :
+            "CONGRATULATIONS! CHAPTER " + lvlNum + " VICTORY ACHIEVED";
+        glyphLayout.setText(fonts.titleFont, victoryTitle);
         float titleX = vx + (vw - glyphLayout.width) / 2f;
-        fonts.titleFont.draw(spriteBatch, "CONGRATULATIONS! LEVEL 1 VICTORY ACHIEVED", titleX, vy + vh - 20f);
+        fonts.titleFont.draw(spriteBatch, victoryTitle, titleX, vy + vh - 20f);
 
         fonts.headerFont.setColor(new Color(0.95f, 0.90f, 0.80f, 1f));
-        String subHeader = "36 JULY: THE SPARK OF SOLIDARITY & FREEDOM -- BANGLADESH 2.0";
+        String subHeader = (lvlNum == 6) ?
+            "BIRTH OF 36 JULY -- THE FALL & REBIRTH OF BANGLADESH" :
+            "CHAPTER " + lvlNum + ": " + levelTitle.toUpperCase() + " -- BANGLADESH 2.0";
         glyphLayout.setText(fonts.headerFont, subHeader);
         float subHeaderX = vx + (vw - glyphLayout.width) / 2f;
         fonts.headerFont.draw(spriteBatch, subHeader, subHeaderX, vy + vh - 48f);
 
         // Historical Tribute Narrative
         fonts.bodyFont.setColor(Color.WHITE);
-        String victoryNarrative = bd.spark36.level.LevelConfig.isCombatEnabled() ?
-            "You have documented all 5 historical archives of the July 2024 Student Mass Uprising and successfully repelled the campus intimidation enforcer with bare-handed martial arts courage!" :
-            "You have documented all 5 historical archives of the July 2024 Student Movement across Dhaka University campus through peaceful student solidarity and moral courage!";
-        fonts.bodyFont.draw(spriteBatch, victoryNarrative, nx + 18f, ny + nh - 18f, nw - 36f, 10, true);
+        String victoryNarrative;
+        String narrativeSecondPara;
+        switch (lvlNum) {
+            case 2:
+                victoryNarrative = "You stood firm with fellow students on July 15, documenting police intimidation, securing medical aid for the wounded, and maintaining peaceful resolve despite violent provocation.";
+                narrativeSecondPara = "When armed enforcers attacked unarmed students, moral courage and united solidarity transformed a campus protest into an unstoppable national awakening.";
+                break;
+            case 3:
+                victoryNarrative = "Across the streets of Rangpur and Dhaka, Abu Sayed stood with open arms for justice. You delivered critical eye wash and first aid under heavy tear gas, documenting historic unyielding courage.";
+                narrativeSecondPara = "'Stand firm, do not leave the fallen.' The sacrifice of brave youths ignited sparks in millions of hearts across Bangladesh.";
+                break;
+            case 4:
+                victoryNarrative = "In total internet blackout and strict curfew, you navigated searchlight patrols, secured clandestine medical supplies, and safely delivered historical eyewitness documentation to community couriers.";
+                narrativeSecondPara = "When digital wires were severed, human couriers, medical volunteers, and unshakeable courage kept the truth alive across every neighborhood.";
+                break;
+            case 5:
+                victoryNarrative = "Central Shaheed Minar roared with hundreds of thousands of voices. From students to rickshaw-pullers, the nation united behind the 1-Point Demand for systemic freedom and accountable governance.";
+                narrativeSecondPara = "Fear had completely dissolved. The entire populace stood shoulder to shoulder as the historic countdown to 36 July began.";
+                break;
+            case 6:
+                victoryNarrative = "Millions marched into Shahbagh and the National Parliament. The authoritarian regime collapsed. Bangladesh 2.0 was born through the sacrifice, grit, and unity of its youth and people.";
+                narrativeSecondPara = "'This freedom belongs to the martyrs and every ordinary citizen who refused to bow.' The spark became an eternal beacon of democratic renewal.";
+                break;
+            case 1:
+            default:
+                victoryNarrative = bd.spark36.level.LevelConfig.isCombatEnabled() ?
+                    "You have documented all 5 historical archives of the July 2024 Student Mass Uprising and successfully repelled the campus intimidation enforcer with bare-handed martial arts courage!" :
+                    "You have documented all 5 historical archives of the July 2024 Student Movement across Dhaka University campus through peaceful student solidarity and moral courage!";
+                narrativeSecondPara = "From the initial solidarity at Curzon Hall to the climax of 36 July (August 5), students and citizens stood united for meritocracy, equal dignity, and truth. The campus remains free and proud.";
+                break;
+        }
 
+        fonts.bodyFont.draw(spriteBatch, victoryNarrative, nx + 18f, ny + nh - 18f, nw - 36f, 10, true);
         fonts.bodyFont.setColor(new Color(0.88f, 0.88f, 0.92f, 1f));
-        fonts.bodyFont.draw(spriteBatch,
-            "From the initial solidarity at Curzon Hall to the climax of 36 July (August 5), students and citizens stood united for meritocracy, equal dignity, and truth. The campus remains free and proud.",
-            nx + 18f, ny + nh - 65f, nw - 36f, 10, true);
+        fonts.bodyFont.draw(spriteBatch, narrativeSecondPara, nx + 18f, ny + nh - 65f, nw - 36f, 10, true);
 
         // Statistics Card
         fonts.headerFont.setColor(goldAccent);
         fonts.headerFont.draw(spriteBatch, "MISSION PERFORMANCE & STATISTICS", sx + 20f, sy + sh - 15f);
 
         fonts.smallFont.setColor(Color.WHITE);
-        fonts.smallFont.draw(spriteBatch, "Historical Archives Documented: 5 / 5 (100% Complete)", sx + 20f, sy + 76f);
-        String defenseStat = bd.spark36.level.LevelConfig.isCombatEnabled() ?
-            "Campus Defense: Helmeted Aggressor Neutralized (Martial Arts)" :
-            "Campus Discipline: Peaceful Solidarity Maintained (Zero Violations)";
+        int ins = (activeLevel != null) ? activeLevel.getCompletedObjectiveCount() : 5;
+        int tot = (activeLevel != null) ? activeLevel.getTotalObjectiveCount() : 5;
+        int pct = (tot > 0) ? (int) Math.min(100f, ((float) ins / tot) * 100f) : 100;
+        fonts.smallFont.draw(spriteBatch, "Historical Objectives Accomplished: " + ins + " / " + tot + " (" + pct + "% Complete)", sx + 20f, sy + 76f);
+
+        String defenseStat = (activeLevel != null && activeLevel.isCombatEnabled()) ?
+            "Campus Defense: Aggressors Neutralized with Disciplined Martial Arts" :
+            "Campus Peace Rule: Upheld (Zero Violations, Non-Violent Solidarity)";
         fonts.smallFont.draw(spriteBatch, defenseStat, sx + 20f, sy + 52f);
-        fonts.smallFont.draw(spriteBatch, "Campus Peace Rule: Upheld (0 Innocent Students Harmed)", sx + 20f, sy + 28f);
+        fonts.smallFont.draw(spriteBatch, "Civic Ethics: Upheld (0 Innocent Students Harmed)", sx + 20f, sy + 28f);
 
         fonts.headerFont.setColor(Color.GREEN);
-        fonts.headerFont.draw(spriteBatch, "RANK S -- HERO OF 36 JULY", sx + sw - 290f, sy + 58f);
+        String rankStr = (lvlNum == 6) ? "RANK S+ -- LIBERATOR OF 36 JULY" : "RANK S -- HERO OF 36 JULY";
+        fonts.headerFont.draw(spriteBatch, rankStr, sx + sw - 290f, sy + 58f);
 
         // Interactive action prompts
         fonts.promptFont.setColor(b1Hover ? Color.WHITE : goldAccent);
         fonts.promptFont.draw(spriteBatch, "[ENTER] Main Menu", b1X + 35f, btnY + 30f);
 
         fonts.promptFont.setColor(b2Hover ? Color.WHITE : new Color(1f, 0.85f, 0.45f, 1f));
-        fonts.promptFont.draw(spriteBatch, "[R] Replay Level 1", b2X + 35f, btnY + 30f);
+        String b2Label = (lvlNum < 6) ? "[SPACE] Next Level (N)" : "[R] Replay Campaign";
+        fonts.promptFont.draw(spriteBatch, b2Label, b2X + 25f, btnY + 30f);
 
         fonts.promptFont.setColor(b3Hover ? Color.WHITE : new Color(0.95f, 0.45f, 0.40f, 1f));
         fonts.promptFont.draw(spriteBatch, "[X] Exit Game", b3X + 50f, btnY + 30f);

@@ -1,3 +1,13 @@
+audio/bell.wav
+audio/block.wav
+audio/footstep.wav
+audio/gas_hiss.wav
+audio/kick.wav
+audio/objective.wav
+audio/punch.wav
+audio/splash.wav
+audio/ui_click.wav
+audio/whoosh.wav
 cinematic_finish_bg.png
 fonts/LICENSE-LiberationSans.txt
 fonts/LICENSE-NotoSansBengali.txt
@@ -53,11 +63,13 @@ screenshots/level_2_verified.png
 screenshots/level_3_verified.png
 screenshots/level_4_verified.png
 screenshots/level_5_verified.png
+screenshots/level_6_verified.png
 screenshots/spark36_congratulations_toast_verified.png
 screenshots/spark36_female_sitting_verified.png
 screenshots/spark36_female_verified.png
 screenshots/spark36_hero_character_verified.png
 screenshots/spark36_map_verified.png
+screenshots/spark36_menu_verified.png
 screenshots/spark36_modal_verified.png
 screenshots/spark36_pause_verified.png
 screenshots/spark36_pond_sitting_verified.png

@@ -15,16 +15,22 @@
 - [x] Aspect ratio resizing handles 1280x720, 1440x900, 1920x1080, and 2560x1600.
 
 ## 2. CAMPAIGN & LEVEL PROGRESSION
-- [x] Level 1: "Where It All Began" (Peaceful Curzon Hall exploration, 5 memorials, 100% completion).
-- [ ] Level 2: "The Day the Streets Changed" (July 15 campus confrontation, martial arts self-defense, medical rescue).
-- [ ] Level 3: "A City on Edge" (July 18 tear gas navigation, sound grenades, crowd evacuation).
-- [ ] Level 4: "Voices in the Dark" (July 20 curfew, military APC checkpoints, covert document courier).
-- [ ] Level 5: "The Wall of People" (August 3–4 Shaheed Minar One-Point Demand mass assembly).
-- [ ] Level 6: "36 July" (August 5 victory march, monument flower tribute, epilogue credits).
-- [ ] Level transitions cleanly unload previous level geometry and load next level without memory leaks.
-- [ ] Level selection UI allows direct selection of unlocked campaign levels.
+- [x] Level 1: "Where It All Began" (Peaceful Curzon Hall exploration, 5 memorials, 100% completion verified).
+- [x] Level 2: "The Day the Streets Changed" (July 15 campus confrontation, martial arts self-defense, medical rescue verified).
+- [x] Level 3: "A City on Edge" (July 18 tear gas navigation, sound grenades, water aid verified).
+- [x] Level 4: "Curfew & Covert Routes" (July 20 curfew, military BTR-80 APC searchlight, covert courier verified).
+- [x] Level 5: "The Wall of People" (August 3–4 Shaheed Minar One-Point Demand mass assembly verified).
+- [x] Level 6: "36 July: Epilogue" (August 5 victory march, monument flower tribute, epilogue credits verified).
+- [x] Level transitions cleanly unload previous level geometry and advance via `[SPACE] Next Level (N)`.
+- [x] Main Menu interactive Chapter Selector allows direct launch into any Chapter (1..6) via `A`/`D` or `Left`/`Right`.
 
-## 3. GAMEPLAY & CONTROLS
+## 3. AUDIO SYSTEM & SOUND SYNTHESIS
+- [x] Procedural 16-bit PCM sound synthesizer (`SoundManager.java`) with zero unlicensed audio dependencies.
+- [x] Real-time sound effects: footsteps, punches, kicks, blocks, whooshes, objective chimes, Freedom Bell toll, water splashes, and CS tear gas hisses.
+- [x] Safe headless execution support preventing OpenAL crashes on non-audio environments.
+- [x] Clean resource disposal freeing OpenAL sound instances on game exit.
+
+## 4. GAMEPLAY & CONTROLS
 - [x] Player movement: WASD movement, Shift sprint, C crouch/sit.
 - [x] Third-person camera: 360-degree orbit, collision avoidance against buildings/walls.
 - [x] Interaction: E key inspects monuments and triggers contextual actions.
@@ -33,7 +39,7 @@
 - [x] Pause menu: ESC key opens pause menu with resume, options, and exit buttons.
 - [x] Mini-map: M key toggles Dhaka University campus map.
 
-## 4. PERFORMANCE & THERMALS
+## 5. PERFORMANCE & THERMALS
 - [x] Stable 60 FPS target maintained during active campus rendering on fanless M4.
 - [x] Max triangle count in frustum stays within 120,000 budget.
 - [x] Asset disposal properly frees OpenGL textures and mesh buffers on exit.

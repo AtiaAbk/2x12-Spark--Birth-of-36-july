@@ -351,6 +351,7 @@ public class PlayerController {
                 if (blockHeld) {
                     if (!isBlocking) {
                         blockTimer = 0f; // Fresh activation: 0.25s parry window
+                        bd.spark36.audio.SoundManager.get().playBlock();
                     } else {
                         blockTimer += delta;
                     }
@@ -398,6 +399,7 @@ public class PlayerController {
                 isAttacking = false; // Evasive slip cancels attack recovery
                 bufferedAttack = 0;
                 attackProgress = 0f;
+                bd.spark36.audio.SoundManager.get().playWhoosh();
 
                 float yawRad = cameraYawDegrees * MathUtils.degreesToRadians;
                 float forwardX = -MathUtils.sin(yawRad);
@@ -427,6 +429,7 @@ public class PlayerController {
                         attackCombo = 1; // Left Jab
                     }
                     applyCombatFacing();
+                    bd.spark36.audio.SoundManager.get().playWhoosh();
                 } else if (attackProgress >= 0.45f) {
                     bufferedAttack = 1; // Buffer next punch
                 }
@@ -443,6 +446,7 @@ public class PlayerController {
                         attackCombo = 3; // High Martial Arts Kick
                     }
                     applyCombatFacing();
+                    bd.spark36.audio.SoundManager.get().playWhoosh();
                 } else if (attackProgress >= 0.45f) {
                     bufferedAttack = 2; // Buffer next kick
                 }
@@ -495,6 +499,7 @@ public class PlayerController {
                         }
                     }
                     applyCombatFacing();
+                    bd.spark36.audio.SoundManager.get().playWhoosh();
                 } else {
                     isAttacking = false;
                     attackProgress = 1.0f;
@@ -1031,6 +1036,11 @@ public class PlayerController {
         this.health = Math.max(0f, this.health - amount);
         this.staggerTimer = isBlocking ? 0.08f : 0.28f;
         float factor = isBlocking ? 0.30f : 1.0f;
+        if (isBlocking) {
+            bd.spark36.audio.SoundManager.get().playBlock();
+        } else {
+            bd.spark36.audio.SoundManager.get().playPunch();
+        }
         if (knockbackStrength > 0f) {
             this.knockbackVel.set(knockbackDirX * knockbackStrength * factor, 0f, knockbackDirZ * knockbackStrength * factor);
         }

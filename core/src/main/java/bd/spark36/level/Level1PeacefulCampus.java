@@ -284,6 +284,13 @@ public class Level1PeacefulCampus implements CampaignLevel {
     }
 
     @Override
+    public void completeAllObjectivesForTest() {
+        if (memorials != null && memorials.getEntries() != null) {
+            for (JulyMemorials.MemorialEntry e : memorials.getEntries()) e.inspected = true;
+        }
+    }
+
+    @Override
     public void dispose() {
         if (world != null) { world.dispose(); world = null; }
         if (memorials != null) { memorials.dispose(); memorials = null; }

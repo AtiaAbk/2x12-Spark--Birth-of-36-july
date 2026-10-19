@@ -74,7 +74,7 @@ public class SparkGame extends ApplicationAdapter {
     private boolean attackHitProcessed = false;
     private float hitStopTimer = 0f;
     private boolean gameplayInitialized = false;
-
+    private int selectedChapter = 1;
 
     // Auto-screenshot support
     private float testTimer = 0f;
@@ -88,6 +88,14 @@ public class SparkGame extends ApplicationAdapter {
         fontRenderer = new FontRenderer();
         glyphLayout = new GlyphLayout();
         gameState = GameState.MAIN_MENU;
+
+        String levelProp = System.getProperty("bd.spark36.level");
+        if (levelProp != null) {
+            try {
+                selectedChapter = Integer.parseInt(levelProp.trim());
+            } catch (Exception ignored) {}
+        }
+
         if (System.getProperty("bd.spark36.testHeroScreenshot") != null ||
             System.getProperty("bd.spark36.testSitScreenshot") != null ||
             System.getProperty("bd.spark36.testScreenshot") != null) {
@@ -130,14 +138,7 @@ public class SparkGame extends ApplicationAdapter {
         hud.setTextures(textures);
 
         levelManager = new bd.spark36.level.LevelManager(textures, player, camera, hud);
-        int targetLevel = 1;
-        String levelProp = System.getProperty("bd.spark36.level");
-        if (levelProp != null) {
-            try {
-                targetLevel = Integer.parseInt(levelProp.trim());
-            } catch (Exception ignored) {}
-        }
-        levelManager.loadLevel(targetLevel);
+        levelManager.loadLevel(selectedChapter);
         syncLevelSubsystems();
 
         // Test hook: start somewhere other than the gate, e.g. -Dbd.spark36.startPos=4,41
@@ -179,6 +180,9 @@ public class SparkGame extends ApplicationAdapter {
     /** Transitions from Main Menu to Peaceful Exploration Campaign */
     public void startGameplay() {
         initGameplay();
+        if (levelManager != null && levelManager.getActiveLevel() != null && levelManager.getActiveLevel().getLevelNumber() != selectedChapter) {
+            levelManager.loadLevel(selectedChapter);
+        }
         syncLevelSubsystems();
         if (helmetGoon != null) {
             helmetGoon.setRole(bd.spark36.level.LevelConfig.isCombatEnabled() ?
@@ -239,13 +243,25 @@ public class SparkGame extends ApplicationAdapter {
         // Handle menu navigation (WASD + Arrow Keys + ENTER/SPACE)
         if (Gdx.input.isKeyJustPressed(Input.Keys.UP) || Gdx.input.isKeyJustPressed(Input.Keys.W)) {
             menuSelection = (menuSelection - 1 + 3) % 3;
+            bd.spark36.audio.SoundManager.get().playClick();
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) || Gdx.input.isKeyJustPressed(Input.Keys.S)) {
             menuSelection = (menuSelection + 1) % 3;
+            bd.spark36.audio.SoundManager.get().playClick();
+        }
+        if (menuSelection == 0) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.A)) {
+                selectedChapter = (selectedChapter - 2 + 6) % 6 + 1; // 1 to 6
+                bd.spark36.audio.SoundManager.get().playClick();
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.RIGHT) || Gdx.input.isKeyJustPressed(Input.Keys.D)) {
+                selectedChapter = (selectedChapter % 6) + 1; // 1 to 6
+                bd.spark36.audio.SoundManager.get().playClick();
+            }
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.J)) {
+            bd.spark36.audio.SoundManager.get().playClick();
             if (menuSelection == 0) {
-                bd.spark36.level.LevelConfig.reset(1, bd.spark36.level.LevelConfig.GameMode.STORY);
+                bd.spark36.level.LevelConfig.reset(selectedChapter, bd.spark36.level.LevelConfig.GameMode.STORY);
                 startGameplay();
                 return;
             } else if (menuSelection == 1) {
@@ -403,8 +419,19 @@ public class SparkGame extends ApplicationAdapter {
 
         // Button 1: Campaign
         fontRenderer.headerFont.setColor(menuSelection == 0 ? menuGoldAccent : new Color(0.85f, 0.82f, 0.75f, 1f));
-        glyphLayout.setText(fontRenderer.headerFont, "START CAMPAIGN (PEACEFUL)");
-        fontRenderer.headerFont.draw(menuBatch, "START CAMPAIGN (PEACEFUL)",
+        String chapterName;
+        switch (selectedChapter) {
+            case 1: chapterName = "CH 1: CURZON SOLIDARITY (JUL 1-14)"; break;
+            case 2: chapterName = "CH 2: CONFRONTATION (JUL 15-16)"; break;
+            case 3: chapterName = "CH 3: POLICE ESCALATION (JUL 17-18)"; break;
+            case 4: chapterName = "CH 4: CURFEW BLACKOUT (JUL 19-22)"; break;
+            case 5: chapterName = "CH 5: MASS MOBILIZATION (AUG 3-4)"; break;
+            case 6: chapterName = "CH 6: VICTORY & 36 JULY (AUG 5)"; break;
+            default: chapterName = "START CAMPAIGN"; break;
+        }
+        String playLabel = (menuSelection == 0) ? "<  " + chapterName + "  >" : chapterName;
+        glyphLayout.setText(fontRenderer.headerFont, playLabel);
+        fontRenderer.headerFont.draw(menuBatch, playLabel,
             centerX - glyphLayout.width / 2f, playBtnY + btnH / 2f + 8f);
 
         // Button 2: Arena
@@ -421,7 +448,9 @@ public class SparkGame extends ApplicationAdapter {
 
         // Navigation hint
         fontRenderer.smallFont.setColor(new Color(0.55f, 0.52f, 0.48f, 0.8f));
-        String navHint = "W/S or Arrow Keys Navigate    ENTER or J Select";
+        String navHint = (menuSelection == 0) ?
+            "W/S: Navigate  •  A/D or Arrows: Chapter  •  ENTER: Start" :
+            "W/S or Arrow Keys: Navigate    •    ENTER or SPACE: Select";
         glyphLayout.setText(fontRenderer.smallFont, navHint);
         fontRenderer.smallFont.draw(menuBatch, navHint,
             centerX - glyphLayout.width / 2f, exitBtnY - 30f);
@@ -503,16 +532,25 @@ public class SparkGame extends ApplicationAdapter {
         boolean canMove = !hud.isModalOpen() && System.getProperty("bd.spark36.testHeroScreenshot") == null;
         if (Gdx.input.isKeyJustPressed(Input.Keys.E) && !hud.isModalOpen()) {
             if (levelManager != null) {
-                levelManager.handleInteraction(player.getPosition());
+                boolean consumed = levelManager.handleInteraction(player.getPosition());
+                if (consumed) {
+                    bd.spark36.audio.SoundManager.get().playObjective();
+                }
             } else if (activeWorld != null && activeWorld.isNearPondGhat(player.getPosition())) {
                 boolean nextSit = !player.isSittingWater();
                 player.setSittingWater(nextSit);
                 if (nextSit) {
                     player.setPosition(0f, 0.18f, 17.2f);
+                    bd.spark36.audio.SoundManager.get().playSplash();
                 }
             }
         }
         player.update(delta, camera.getYaw(), canMove);
+
+        // Procedural footstep audio
+        if (canMove && !player.isSittingWater() && !player.isDodging()) {
+            bd.spark36.audio.SoundManager.get().updateFootsteps(delta, player.isMoving(), player.isSprinting());
+        }
 
         if (levelManager != null) {
             levelManager.update(delta, canMove);
@@ -812,8 +850,12 @@ public class SparkGame extends ApplicationAdapter {
         } else if (System.getProperty("bd.spark36.testVictory") != null) {
             testTimer += delta;
             if (testTimer >= 1.0f && !hud.isModalOpen()) {
-                for (bd.spark36.world.JulyMemorials.MemorialEntry e : memorials.getEntries()) {
-                    e.inspected = true;
+                if (levelManager != null && levelManager.getActiveLevel() != null) {
+                    levelManager.getActiveLevel().completeAllObjectivesForTest();
+                } else if (memorials != null && memorials.getEntries() != null) {
+                    for (bd.spark36.world.JulyMemorials.MemorialEntry e : memorials.getEntries()) {
+                        e.inspected = true;
+                    }
                 }
                 hud.triggerVictoryForTest();
             }
@@ -1006,6 +1048,7 @@ public class SparkGame extends ApplicationAdapter {
         if (levelManager != null) levelManager.dispose();
         if (postProcessor != null) postProcessor.dispose();
         if (particleSystem != null) particleSystem.dispose();
+        bd.spark36.audio.SoundManager.get().dispose();
     }
 }
 

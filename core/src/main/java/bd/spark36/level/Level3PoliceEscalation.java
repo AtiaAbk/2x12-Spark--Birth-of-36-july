@@ -312,6 +312,7 @@ public class Level3PoliceEscalation implements CampaignLevel {
         if (gasShakeTimer >= 6.5f) {
             gasShakeTimer = 0f;
             camera.addShake(0.12f);
+            bd.spark36.audio.SoundManager.get().playGasHiss();
         }
 
         if (world != null) world.update(delta);
@@ -379,6 +380,11 @@ public class Level3PoliceEscalation implements CampaignLevel {
     @Override
     public CampusCrowd getCrowd() {
         return crowd;
+    }
+
+    @Override
+    public void completeAllObjectivesForTest() {
+        java.util.Arrays.fill(objectivesDone, true);
     }
 
     @Override
