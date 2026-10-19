@@ -144,4 +144,62 @@ public class DialogueRepository {
         int index = Math.abs(seed) % pool.length;
         return pool[index];
     }
+
+    /**
+     * Constructs a rich multi-line DialogueSequence for active campus dialogue interactions.
+     */
+    public static bd.spark36.dialogue.DialogueSequence getStudentDialogueSequence(int levelNumber, int seed) {
+        String seqId = "student_dialogue_lvl" + levelNumber + "_s" + seed;
+        switch (levelNumber) {
+            case 2:
+                return new bd.spark36.dialogue.DialogueSequence(seqId, "CAMPUS RESISTANCE DIALOGUE",
+                    LEVEL_2_STUDENT_LINES[0],
+                    LEVEL_2_STUDENT_LINES[1],
+                    new DialogueLine("ARTS FACULTY STUDENT", "কলা অনুষদের শিক্ষার্থী",
+                        "হাতে হাত রাখো, কোনো উসকানির মুখে পিছিয়ে যাওয়া যাবে না!",
+                        "Hold hands firmly; we must not retreat in the face of provocation!")
+                );
+            case 3:
+                return new bd.spark36.dialogue.DialogueSequence(seqId, "MEDICAL MUTUAL AID",
+                    LEVEL_3_STUDENT_LINES[0],
+                    LEVEL_3_STUDENT_LINES[1],
+                    new DialogueLine("MEDICAL VOLUNTEER", "চিকিৎসা দলের সমন্বয়ক",
+                        "মেডিক্যাল ক্যাম্প আর্টস গেটে প্রস্তুত আছে, দ্রুত সবাইকে পথ দেখাও।",
+                        "The emergency medical station is set up near Arts Gate, lead the way.")
+                );
+            case 4:
+                return new bd.spark36.dialogue.DialogueSequence(seqId, "CURFEW BRIEFING",
+                    LEVEL_4_STUDENT_LINES[0],
+                    LEVEL_4_STUDENT_LINES[1],
+                    new DialogueLine("RESISTANCE COURIER", "যোগাযোগ সমন্বয়ক শিক্ষার্থী",
+                        "দেয়ালগুলোতে প্রতিবাদী গ্রাফিতি আঁকা হচ্ছে — সত্যকে থামানো যাবে না।",
+                        "Protest graffiti is rising on every wall — the truth cannot be suppressed.")
+                );
+            case 5:
+                return new bd.spark36.dialogue.DialogueSequence(seqId, "MASS MOBILIZATION RALLY",
+                    LEVEL_5_STUDENT_LINES[0],
+                    LEVEL_5_STUDENT_LINES[1],
+                    new DialogueLine("MARCHING STUDENT", "মিছিলের সম্মুখ সারির শিক্ষার্থী",
+                        "লাখো ছাত্র-জনতার স্লোগানে আজ প্রকম্পিত সারা বাংলাদেশ!",
+                        "Bangladesh resounds with the united chants of millions of students and citizens!")
+                );
+            case 6:
+                return new bd.spark36.dialogue.DialogueSequence(seqId, "HISTORIC VICTORY EPILOGUE",
+                    LEVEL_6_STUDENT_LINES[0],
+                    LEVEL_6_STUDENT_LINES[1],
+                    new DialogueLine("MEMORIAL GUARDIAN", "শহীদ স্মৃতি সংরক্ষক",
+                        "এই ক্যাম্পাস থেকেই শুরু হয়েছিল নবজাগরণ। বিজয় আমাদের সবার।",
+                        "From this very campus the awakening began. This victory belongs to all of us.")
+                );
+            case 1:
+            default:
+                return new bd.spark36.dialogue.DialogueSequence(seqId, "STUDENT ASSEMBLY DISCUSSION",
+                    LEVEL_1_STUDENT_LINES[0],
+                    new DialogueLine("DU PHYSICS STUDENT", "পদার্থবিজ্ঞান বিভাগের শিক্ষার্থী",
+                        "আমরা কোনো বিশৃঙ্খলা চাই না, কেবল আমাদের সাংবিধানিক অধিকার চাই।",
+                        "We desire no chaos, only our constitutional right to equal opportunity."),
+                    LEVEL_1_STUDENT_LINES[2]
+                );
+        }
+    }
 }
