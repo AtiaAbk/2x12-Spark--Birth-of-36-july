@@ -130,6 +130,38 @@ final class TreeGeometry {
      * cards may use (0 leaf, 1 leaf fan, 2 feathery leaf, 3 blossoms) with {@code blossomChance}
      * the odds a card is the blossom cell.
      */
+    /**
+     * Organic flared buttress roots that radiate from the base of the trunk (y = 0.48 * s)
+     * and plunge deeply into the turf (y = -0.22 * s), firmly anchoring the tree in the ground.
+     */
+    static void buttressRoots(MeshPartBuilder trunk, float cx, float cz, float baseRadius, float s, float seed, int numRoots) {
+        for (int k = 0; k < numRoots; k++) {
+            float ang = seed * 1.3f + k * MathUtils.PI2 / numRoots + 0.22f * MathUtils.sin(seed * 2.1f + k);
+            float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
+
+            float startY = 0.48f * s;
+            float endY = -0.22f * s;
+            float midY = 0.12f * s;
+
+            float rStart = baseRadius * 0.85f;
+            float rMid = baseRadius + 0.35f * s;
+            float rEnd = baseRadius + (0.75f + 0.22f * MathUtils.sin(k * 1.9f + seed)) * s;
+
+            float p0x = cx + ca * rStart, p0z = cz + sa * rStart;
+            float p1x = cx + ca * rMid,   p1z = cz + sa * rMid;
+            float p2x = cx + ca * rEnd,   p2z = cz + sa * rEnd;
+
+            limb(trunk, p0x, startY, p0z, 0.18f * s, p1x, midY, p1z, 0.11f * s, 6);
+            limb(trunk, p1x, midY, p1z, 0.11f * s, p2x, endY, p2z, 0.05f * s, 6);
+        }
+    }
+
+    /**
+     * A leafy canopy: a slightly smaller dark clump as the shaded core, wrapped in individual
+     * leaf cards scattered over the same lumpy surface. {@code cardCells} is the atlas cells the
+     * cards may use (0 leaf, 1 leaf fan, 2 feathery leaf, 3 blossoms) with {@code blossomChance}
+     * the odds a card is the blossom cell.
+     */
     static void foliage(MeshPartBuilder core, MeshPartBuilder cards, float cx, float cy, float cz,
                         float rx, float ry, float rz, float seed, float leafSize,
                         int[] cardCells, float blossomChance) {
@@ -138,7 +170,11 @@ final class TreeGeometry {
         leafCards(cards, cx, cy, cz, rx, ry, rz, seed, leafSize, cardCells, blossomChance);
     }
 
-    /** Scatters leaf cards over the canopy surface, facing outward with random tilt and spin. */
+    /**
+     * Scatters leaf cards over the canopy surface with Spherical Normal Blending:
+     * Blends 70% macro spherical normal pointing from canopy center with 30% local jitter.
+     * This creates rich volumetric wrap lighting across the whole tree instead of flat billboard facets.
+     */
     private static void leafCards(MeshPartBuilder mpb, float cx, float cy, float cz,
                                   float rx, float ry, float rz, float seed, float leafSize,
                                   int[] cardCells, float blossomChance) {
@@ -165,10 +201,23 @@ final class TreeGeometry {
             float py = cy + ry * lump * dy * yScale;
             float pz = cz + rz * lump * dz;
 
-            // Outward normal, leaned up (leaves face the sky) and jittered so no two match
-            float nx = dx / rx + (RNG.nextFloat() - 0.5f) * 0.5f;
-            float ny = dy / (ry * yScale) + 0.25f + (RNG.nextFloat() - 0.5f) * 0.4f;
-            float nz = dz / rz + (RNG.nextFloat() - 0.5f) * 0.5f;
+            // ── Spherical Canopy Normal Blending ─────────────────────────────
+            // Macro normal pointing radially outward from clump center (cx, cy, cz)
+            float mx = px - cx, my = py - cy, mz = pz - cz;
+            float ml = (float) Math.sqrt(mx * mx + my * my + mz * mz);
+            if (ml > 0.001f) { mx /= ml; my /= ml; mz /= ml; } else { mx = 0f; my = 1f; mz = 0f; }
+
+            // Upward-biased jittered leaf normal
+            float jx = dx / rx + (RNG.nextFloat() - 0.5f) * 0.4f;
+            float jy = dy / (ry * yScale) + 0.35f + (RNG.nextFloat() - 0.5f) * 0.3f;
+            float jz = dz / rz + (RNG.nextFloat() - 0.5f) * 0.4f;
+            float jl = (float) Math.sqrt(jx * jx + jy * jy + jz * jz);
+            if (jl > 0.001f) { jx /= jl; jy /= jl; jz /= jl; } else { jx = 0f; jy = 1f; jz = 0f; }
+
+            // 70% macro spherical volume + 30% individual leaf shimmer
+            float nx = 0.70f * mx + 0.30f * jx;
+            float ny = 0.70f * my + 0.30f * jy;
+            float nz = 0.70f * mz + 0.30f * jz;
             float nl = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
             nx /= nl;
             ny /= nl;
@@ -203,7 +252,7 @@ final class TreeGeometry {
                 .setNor(nx, ny, nz).setUV(u1, v1);
             V2.setPos(ox + tx * half + bx * half, oy + ty * half + by * half, oz + tz * half + bz * half)
                 .setNor(nx, ny, nz).setUV(u1, v0);
-            V3.setPos(ox - tx * half + bx * half, oy - ty * half + by * half, oz - tz * half + bz * half)
+            V3.setPos(ox - tx * half + bx * half, oy - ty * half + by * half, oz - tz * half - bz * half)
                 .setNor(nx, ny, nz).setUV(u0, v0);
             mpb.rect(V0, V1, V2, V3);
         }
@@ -216,7 +265,9 @@ final class TreeGeometry {
     }
 
     /**
-     * Rain tree: a flared trunk, five limbs that fork, and a broad shelf-like canopy.
+     * Rain tree (Samanea saman): broadleaf heritage tree of Dhaka University.
+     * Features flared buttress roots deeply anchored into turf, curved tapered trunk,
+     * spreading scaffold limbs, and broad volumetric umbrella canopy.
      * {@code s} scales the whole tree, {@code seed} varies limb angles and clump shapes.
      */
     static void rainTree(MeshPartBuilder trunk, MeshPartBuilder leaves, MeshPartBuilder cards,
@@ -225,9 +276,15 @@ final class TreeGeometry {
         float leanZ = 0.25f * s * MathUtils.cos(seed * 1.3f);
         float topX = x + lean, topZ = z + leanZ, topY = 3.6f * s;
 
-        // Flared root collar, then the trunk proper
-        limb(trunk, x, -0.15f, z, 0.95f * s, x, 0.7f * s, z, 0.62f * s, 10);
-        limb(trunk, x, 0.7f * s, z, 0.62f * s, topX, topY, topZ, 0.36f * s, 10);
+        // Organic flared buttress roots anchored into turf (y = -0.22 * s)
+        buttressRoots(trunk, x, z, 0.75f * s, s, seed, 5);
+
+        // Multi-segment curved tapered trunk
+        float m1x = x + lean * 0.25f, m1z = z + leanZ * 0.25f;
+        float m2x = x + lean * 0.60f, m2z = z + leanZ * 0.60f;
+        limb(trunk, x, -0.20f * s, z, 0.95f * s, m1x, 0.75f * s, m1z, 0.65f * s, 10);
+        limb(trunk, m1x, 0.75f * s, m1z, 0.65f * s, m2x, 1.95f * s, m2z, 0.48f * s, 10);
+        limb(trunk, m2x, 1.95f * s, m2z, 0.48f * s, topX, topY, topZ, 0.36f * s, 10);
 
         for (int k = 0; k < 5; k++) {
             float ang = seed + k * MathUtils.PI2 / 5f + 0.35f * MathUtils.sin(seed * 2.1f + k);
@@ -260,20 +317,28 @@ final class TreeGeometry {
             RAIN_LEAF * s, RAIN_CELLS, 0f);
     }
 
-    private static final float RAIN_LEAF = 0.95f;
-    private static final float KRISHNA_LEAF = 0.80f;
+    private static final float RAIN_LEAF = VegetationConfig.RAIN_TREE_LEAF_CARD_SIZE;
+    private static final float KRISHNA_LEAF = VegetationConfig.KRISHNA_LEAF_CARD_SIZE;
     private static final int[] RAIN_CELLS = {0, 0, 1, 1, 1};     // broad leaves and fans
     private static final int[] KRISHNA_CELLS = {2, 2, 2, 1};     // mostly feathery compound leaves
 
     /**
-     * Krishnachura (flame tree): short trunk, three heavy limbs and a wide, flat umbrella of
-     * blossom-covered leaves.
+     * Krishnachura (Delonix regia / Flame tree): iconic Dhaka University species.
+     * Features flared buttress roots, multi-segment trunk, heavy spreading limbs, and a wide
+     * umbrella canopy of fiery scarlet blossoms and feathery bipinnate foliage.
      */
     static void krishnaTree(MeshPartBuilder trunk, MeshPartBuilder blossom, MeshPartBuilder cards,
                             float x, float z, float s, float seed) {
         float topY = 3.0f * s;
-        limb(trunk, x, -0.15f, z, 0.78f * s, x, 0.6f * s, z, 0.52f * s, 9);
-        limb(trunk, x, 0.6f * s, z, 0.52f * s, x, topY, z, 0.34f * s, 9);
+        // Buttress roots anchored into turf
+        buttressRoots(trunk, x, z, 0.65f * s, s, seed, 4);
+
+        // Multi-segment curved trunk
+        float m1x = x + 0.08f * s * MathUtils.sin(seed);
+        float m1z = z + 0.08f * s * MathUtils.cos(seed);
+        limb(trunk, x, -0.20f * s, z, 0.82f * s, m1x, 0.65f * s, m1z, 0.56f * s, 9);
+        limb(trunk, m1x, 0.65f * s, m1z, 0.56f * s, x, 1.70f * s, z, 0.44f * s, 9);
+        limb(trunk, x, 1.70f * s, z, 0.44f * s, x, topY, z, 0.34f * s, 9);
 
         for (int k = 0; k < 3; k++) {
             float ang = seed + k * MathUtils.PI2 / 3f;
@@ -289,13 +354,13 @@ final class TreeGeometry {
             KRISHNA_LEAF * s, KRISHNA_CELLS, 0.60f);
     }
 
-    private static final float WHITE_LEAF = 0.92f;
+    private static final float WHITE_LEAF = VegetationConfig.WHITE_BLOSSOM_CARD_SIZE;
     private static final int[] WHITE_CELLS = {0, 1, 2, 3};
 
     /**
      * White Blossom Tree (Magnolia / Cherry / Bokul blossom):
-     * Majestic spreading 3D tree with dark weathered limbs and dense, fluffy white blossom canopies
-     * exactly matching user's uploaded reference image.
+     * Majestic spreading 3D tree with flared buttress roots, dark weathered limbs, and dense,
+     * fluffy white blossom canopies.
      */
     static void whiteBlossomTree(MeshPartBuilder trunk, MeshPartBuilder blossomCore, MeshPartBuilder blossomCards,
                                  float x, float z, float s, float seed) {
@@ -304,9 +369,14 @@ final class TreeGeometry {
         float topY = 3.6f * s;
         float topX = x + lean, topZ = z + leanZ;
 
-        // Dark gnarled weathered trunk
-        limb(trunk, x, -0.15f, z, 0.88f * s, x, 0.65f * s, z, 0.58f * s, 10);
-        limb(trunk, x, 0.65f * s, z, 0.58f * s, topX, topY, topZ, 0.35f * s, 10);
+        // Flared buttress roots anchored into turf
+        buttressRoots(trunk, x, z, 0.70f * s, s, seed, 5);
+
+        // Dark gnarled weathered multi-segment trunk
+        float m1x = x + lean * 0.3f, m1z = z + leanZ * 0.3f;
+        limb(trunk, x, -0.20f * s, z, 0.90f * s, m1x, 0.70f * s, m1z, 0.62f * s, 10);
+        limb(trunk, m1x, 0.70f * s, m1z, 0.62f * s, topX, 1.90f * s, topZ, 0.46f * s, 10);
+        limb(trunk, topX, 1.90f * s, topZ, 0.46f * s, topX, topY, topZ, 0.35f * s, 10);
 
         for (int k = 0; k < 5; k++) {
             float ang = seed + k * MathUtils.PI2 / 5f + 0.32f * MathUtils.sin(seed * 2.2f + k);
@@ -338,5 +408,56 @@ final class TreeGeometry {
             WHITE_LEAF * s, WHITE_CELLS, 0.90f);
         foliage(blossomCore, blossomCards, topX, topY + 0.8f * s, topZ, 2.9f * s, 1.6f * s, 2.9f * s, seed + 3f,
             WHITE_LEAF * s, WHITE_CELLS, 0.85f);
+    }
+
+    /**
+     * Royal Palm (Roystonea regia):
+     * Tall ringed columnar trunk with flared base, swollen midsection, smooth green crownshaft,
+     * and radiating, drooping pinnate fronds.
+     */
+    static void palmTree(MeshPartBuilder trunk, MeshPartBuilder crownshaft, MeshPartBuilder fronds,
+                         float x, float z, float s, float seed) {
+        float h = 9.2f * s;
+        // Flared root base into turf
+        limb(trunk, x, -0.20f * s, z, 0.52f * s, x, 0.6f * s, z, 0.38f * s, 10);
+        // Swollen lower-mid column
+        limb(trunk, x, 0.6f * s, z, 0.38f * s, x, 3.4f * s, z, 0.44f * s, 10);
+        // Tapered upper trunk
+        limb(trunk, x, 3.4f * s, z, 0.44f * s, x, h - 1.6f * s, z, 0.32f * s, 10);
+        // Smooth green crownshaft
+        MeshPartBuilder csMpb = (crownshaft != null) ? crownshaft : trunk;
+        limb(csMpb, x, h - 1.6f * s, z, 0.32f * s, x, h, z, 0.28f * s, 10);
+
+        // Radiating drooping pinnate fronds
+        int numFronds = 12;
+        for (int i = 0; i < numFronds; i++) {
+            float ang = seed + i * MathUtils.PI2 / numFronds + 0.15f * MathUtils.sin(i * 1.5f + seed);
+            float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
+            float tierFraction = (float) i / numFronds;
+            float reach = (3.4f + 0.5f * MathUtils.sin(i * 2.1f + seed)) * s;
+
+            float midReach = reach * 0.55f;
+            float midY = h + 1.2f * s * (1f - tierFraction * 0.4f);
+            float tipY = h + 0.4f * s - tierFraction * 1.6f * s;
+            float tipReach = reach;
+
+            float p0x = x, p0y = h, p0z = z;
+            float p1x = x + ca * midReach, p1y = midY, p1z = z + sa * midReach;
+            float p2x = x + ca * tipReach, p2y = tipY, p2z = z + sa * tipReach;
+
+            // Frond spine
+            limb(fronds, p0x, p0y, p0z, 0.07f * s, p1x, p1y, p1z, 0.045f * s, 4);
+            limb(fronds, p1x, p1y, p1z, 0.045f * s, p2x, p2y, p2z, 0.02f * s, 4);
+
+            // Frond pinnate blade quads
+            float sideX = -sa * 0.60f * s;
+            float sideZ = ca * 0.60f * s;
+
+            V0.setPos(p0x, p0y, p0z).setNor(0f, 1f, 0f).setUV(0f, 0f);
+            V1.setPos(p1x - sideX, p1y, p1z - sideZ).setNor(0f, 1f, 0f).setUV(0f, 1f);
+            V2.setPos(p2x, p2y, p2z).setNor(0f, 1f, 0f).setUV(0.5f, 1f);
+            V3.setPos(p1x + sideX, p1y, p1z + sideZ).setNor(0f, 1f, 0f).setUV(1f, 0f);
+            fronds.rect(V0, V1, V2, V3);
+        }
     }
 }
