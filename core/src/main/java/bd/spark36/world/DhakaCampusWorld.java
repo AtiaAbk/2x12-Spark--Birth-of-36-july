@@ -2543,6 +2543,10 @@ public class DhakaCampusWorld implements Disposable {
         return vegetationManager;
     }
 
+    public TerrainSurface getTerrainSurface() {
+        return terrainSurface;
+    }
+
     private static void setupPbr(Material mat, float metallic, float roughness) {
         mat.set(PBRFloatAttribute.createMetallic(metallic));
         mat.set(PBRFloatAttribute.createRoughness(roughness));
@@ -2568,6 +2572,7 @@ public class DhakaCampusWorld implements Disposable {
             waterRenderer.dispose();
         }
         vegetationManager.dispose();
+        terrainSurface.dispose();
         lilyPads.clear();
     }
 
