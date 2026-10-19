@@ -149,15 +149,16 @@ public class AtmosphereRenderer implements Disposable {
         // ── Cloud Layer 2: Soft natural billowing cumulus clouds ────────────
         for (float[] c : cloudLayer2) {
             float cx = c[0] * w;
-            float cy = (0.50f + c[1] * 0.38f) * h;
-            float cw = c[2] * w;
-            float ch = c[3] * h * 1.4f;
-            for (int s = 0; s < 4; s++) {
-                float ox = (s - 1.5f) * cw * 0.22f;
-                float oy = MathUtils.sin(s * 1.2f) * ch * 0.25f;
-                float cr = ch * (0.80f + s * 0.14f);
-                shapeRenderer.setColor(0.96f, 0.97f, 1.0f, c[5] * 0.20f);
-                shapeRenderer.circle(cx + ox, cy + oy, cr, 24);
+            float cy = (0.52f + c[1] * 0.35f) * h;
+            float cw = c[2] * w * 1.5f;
+            float ch = c[3] * h * 0.85f;
+            for (int s = 0; s < 3; s++) {
+                float ox = (s - 1.0f) * cw * 0.28f;
+                float oy = MathUtils.sin(s * 1.4f) * ch * 0.20f;
+                float ew = cw * (0.75f + s * 0.12f);
+                float eh = ch * (0.65f + s * 0.10f);
+                shapeRenderer.setColor(0.96f, 0.97f, 1.0f, c[5] * 0.10f);
+                shapeRenderer.ellipse(cx + ox - ew * 0.5f, cy + oy - eh * 0.5f, ew, eh, 32);
             }
         }
 

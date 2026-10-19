@@ -147,17 +147,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Scattered fallen white blossom petals matching reference image
-        for (int p = 0; p < 85; p++) {
-            int px = MathUtils.random(size - 8);
-            int py = MathUtils.random(size - 8);
-            int pr = MathUtils.random(2, 4);
-            pix.setColor(0.96f, 0.96f, 0.93f, 0.85f);
-            pix.fillCircle(px, py, pr);
-            pix.setColor(1.0f, 0.90f, 0.35f, 0.70f);
-            pix.drawPixel(px, py);
-        }
-
         Texture tex = new Texture(pix, Format.RGBA8888, true);
         tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);

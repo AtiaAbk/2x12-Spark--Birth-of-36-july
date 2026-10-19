@@ -1762,57 +1762,97 @@ public class DhakaCampusWorld implements Disposable {
         PerimeterEnclosure.build(mb, attr, curzonBrickMat, stoneCurb, barkTwoSidedMat, leafClumpMat, leafCardMat, blossomClumpMat, models, instances, colliders, this::registerFoliage);
 
         // ==========================================
-        // 8. WEST HUB: CENTRAL LIBRARY BUILDING (WITH INNER COURTYARD)
+        // 8. WEST HUB: CENTRAL LIBRARY BUILDING (MUZHARUL ISLAM 1953 MODERNIST LANDMARK)
         // ==========================================
-        // 4 wings forming rectangular building (36m x 32m x 11.5m) with central open-air atrium (16m x 16m)
+        // Elevated floating upper volumes on ground-floor pilotis colonnade, terracotta brick jali screens,
+        // and deep horizontal concrete bands allowing natural cross-ventilation.
         float clX = -68.0f, clZ = 22.0f;
-        Model clWingEW = mb.createBox(36f, 11.5f, 8f, curzonBrickMat, attr);
-        Model clWingNS = mb.createBox(8f, 11.5f, 16f, curzonBrickMat, attr);
-        Model clPortico = mb.createBox(8f, 11.5f, 16f, concreteMat, attr);
-        Model clSteps = mb.createBox(5f, 0.6f, 12f, stoneCurb, attr);
-        Model clLouver = mb.createBox(0.3f, 8.5f, 0.6f, concreteMat, attr);
-        Model clCornice = mb.createBox(38f, 0.8f, 34f, concreteMat, attr);
-        models.add(clWingEW);
-        models.add(clWingNS);
-        models.add(clPortico);
+        // Upper floor reading hall volumes (floating mass)
+        Model clUpperMain = mb.createBox(38f, 7.2f, 32f, curzonBrickMat, attr);
+        Model clUpperCore = mb.createBox(20f, 7.8f, 18f, concreteMat, attr);
+        Model clJaliScreenEW = mb.createBox(38.4f, 5.2f, 0.25f, curzonTrimMat, attr);
+        Model clJaliScreenNS = mb.createBox(0.25f, 5.2f, 32.4f, curzonTrimMat, attr);
+        // Ground floor open pilotis (concrete stilts) colonnade
+        Model clPilotiCol = mb.createCylinder(0.65f, 4.4f, 0.65f, 16, concreteMat, attr);
+        Model clGroundSlab = mb.createBox(42f, 0.35f, 36f, stoneCurb, attr);
+        Model clFirstFloorSlab = mb.createBox(40f, 0.55f, 34f, concreteMat, attr);
+        Model clRoofCornice = mb.createBox(40.6f, 0.65f, 34.6f, concreteMat, attr);
+        // Wide entrance approach steps & portico canopy
+        Model clSteps = mb.createBox(6f, 0.45f, 16f, stoneCurb, attr);
+        Model clCanopy = mb.createBox(7f, 0.30f, 14f, concreteMat, attr);
+        Model clLouver = mb.createBox(0.25f, 6.2f, 0.85f, concreteMat, attr);
+
+        models.add(clUpperMain);
+        models.add(clUpperCore);
+        models.add(clJaliScreenEW);
+        models.add(clJaliScreenNS);
+        models.add(clPilotiCol);
+        models.add(clGroundSlab);
+        models.add(clFirstFloorSlab);
+        models.add(clRoofCornice);
         models.add(clSteps);
+        models.add(clCanopy);
         models.add(clLouver);
-        models.add(clCornice);
 
-        // South Wing
-        ModelInstance clSouth = new ModelInstance(clWingEW);
-        clSouth.transform.setTranslation(clX, 5.75f, clZ + 12f);
-        instances.add(clSouth);
+        // Ground podium slab
+        ModelInstance clgsInst = new ModelInstance(clGroundSlab);
+        clgsInst.transform.setTranslation(clX, 0.18f, clZ);
+        instances.add(clgsInst);
 
-        // North Wing
-        ModelInstance clNorth = new ModelInstance(clWingEW);
-        clNorth.transform.setTranslation(clX, 5.75f, clZ - 12f);
-        instances.add(clNorth);
+        // Ground-floor open pilotis colonnade (Muzharul Islam signature: free movement under building)
+        for (float px = -16f; px <= 16.1f; px += 8.0f) {
+            for (float pz = -13f; pz <= 13.1f; pz += 6.5f) {
+                ModelInstance col = new ModelInstance(clPilotiCol);
+                col.transform.setTranslation(clX + px, 2.35f, clZ + pz);
+                instances.add(col);
+            }
+        }
 
-        // West Wing
-        ModelInstance clWest = new ModelInstance(clWingNS);
-        clWest.transform.setTranslation(clX - 14f, 5.75f, clZ);
-        instances.add(clWest);
+        // Heavy concrete transfer slab separating pilotis from upper brick volumes
+        ModelInstance clffsInst = new ModelInstance(clFirstFloorSlab);
+        clffsInst.transform.setTranslation(clX, 4.65f, clZ);
+        instances.add(clffsInst);
 
-        // East Wing (Facade with concrete portico entrance)
-        ModelInstance clEast = new ModelInstance(clPortico);
-        clEast.transform.setTranslation(clX + 14f, 5.75f, clZ);
-        instances.add(clEast);
+        // Floating upper brick reading halls
+        ModelInstance clumInst = new ModelInstance(clUpperMain);
+        clumInst.transform.setTranslation(clX, 8.45f, clZ);
+        instances.add(clumInst);
 
-        // Concrete roof cornice capping the building
-        ModelInstance clcInst = new ModelInstance(clCornice);
-        clcInst.transform.setTranslation(clX, 11.8f, clZ);
-        instances.add(clcInst);
+        // Exposed concrete central service and circulation core
+        ModelInstance clucInst = new ModelInstance(clUpperCore);
+        clucInst.transform.setTranslation(clX, 8.75f, clZ);
+        instances.add(clucInst);
 
-        // Grand Entrance Steps facing the walkway
+        // Terracotta perforated jali sunscreens on east and west facades (diffused tropical daylighting)
+        ModelInstance jaliEast = new ModelInstance(clJaliScreenEW);
+        jaliEast.transform.setTranslation(clX, 8.45f, clZ + 16.15f);
+        instances.add(jaliEast);
+        ModelInstance jaliWest = new ModelInstance(clJaliScreenEW);
+        jaliWest.transform.setTranslation(clX, 8.45f, clZ - 16.15f);
+        instances.add(jaliWest);
+        ModelInstance jaliSouth = new ModelInstance(clJaliScreenNS);
+        jaliSouth.transform.setTranslation(clX + 19.15f, 8.45f, clZ);
+        instances.add(jaliSouth);
+
+        // Deep cantilevered roof cornice capping the composition
+        ModelInstance clrcInst = new ModelInstance(clRoofCornice);
+        clrcInst.transform.setTranslation(clX, 12.25f, clZ);
+        instances.add(clrcInst);
+
+        // Wide entrance approach steps leading from the promenade
         ModelInstance clsInst = new ModelInstance(clSteps);
-        clsInst.transform.setTranslation(clX + 19.5f, 0.3f, clZ);
+        clsInst.transform.setTranslation(clX + 21.5f, 0.25f, clZ);
         instances.add(clsInst);
+
+        // Entrance canopy projection
+        ModelInstance clcpInst = new ModelInstance(clCanopy);
+        clcpInst.transform.setTranslation(clX + 21.0f, 4.65f, clZ);
+        instances.add(clcpInst);
 
         // Modernist vertical sun louvers on east facade
         for (int l = -5; l <= 5; l++) {
             ModelInstance luv = new ModelInstance(clLouver);
-            luv.transform.setTranslation(clX + 18.2f, 5.5f, clZ + l * 2.2f);
+            luv.transform.setTranslation(clX + 19.8f, 8.45f, clZ + l * 2.5f);
             instances.add(luv);
         }
 
@@ -1946,43 +1986,97 @@ public class DhakaCampusWorld implements Disposable {
         // 13. EAST HUB: TEACHER-STUDENT CENTRE (TSC) — MODERNIST DOXIADIS COMPLEX
         // ==========================================
         float tscX = 68.0f, tscZ = 20.0f;
-        Model tscMain = mb.createBox(38f, 9.5f, 30f, concreteMat, attr);
-        Model tscAuditorium = mb.createBox(18f, 4.5f, 18f, concreteMat, attr);
-        Model tscPyramidRoof = mb.createCone(18f, 3.2f, 18f, 4, canteenRoofMat, attr);
-        Model tscTerrace = mb.createBox(12f, 0.5f, 24f, stoneCurb, attr);
-        Model tscFins = mb.createBox(0.25f, 7.5f, 0.8f, concreteMat, attr);
+        // Doxiadis Tropical Modernist Complex:
+        // Main block: concrete structural grid with red brick infills and deep horizontal band windows
+        Model tscMain = mb.createBox(40f, 9.2f, 32f, concreteMat, attr);
+        Model tscBrickInfill = mb.createBox(38.4f, 7.8f, 30.4f, curzonBrickMat, attr);
+        Model tscWindowBand = mb.createBox(40.2f, 1.4f, 32.2f, archCavity, attr);
+        // Central Auditorium with signature folded-plate butterfly roof profile
+        Model tscAuditorium = mb.createBox(20f, 4.8f, 20f, concreteMat, attr);
+        Model tscFoldedRoofEast = mb.createBox(11.2f, 0.45f, 21.6f, concreteMat, attr);
+        Model tscFoldedRoofWest = mb.createBox(11.2f, 0.45f, 21.6f, concreteMat, attr);
+        // West Entrance Terrace, cantilevered canopy, and cafeteria colonnade
+        Model tscTerrace = mb.createBox(14f, 0.45f, 28f, stoneCurb, attr);
+        Model tscEntranceCanopy = mb.createBox(8.5f, 0.35f, 16f, concreteMat, attr);
+        Model tscCanopyPillar = mb.createCylinder(0.40f, 4.2f, 0.40f, 12, concreteMat, attr);
+        // Vertical and horizontal concrete brise-soleil sun louvers
+        Model tscVertFin = mb.createBox(0.24f, 7.4f, 0.95f, concreteMat, attr);
+        Model tscHorizLouver = mb.createBox(0.85f, 0.18f, 26f, concreteMat, attr);
         models.add(tscMain);
+        models.add(tscBrickInfill);
+        models.add(tscWindowBand);
         models.add(tscAuditorium);
-        models.add(tscPyramidRoof);
+        models.add(tscFoldedRoofEast);
+        models.add(tscFoldedRoofWest);
         models.add(tscTerrace);
-        models.add(tscFins);
+        models.add(tscEntranceCanopy);
+        models.add(tscCanopyPillar);
+        models.add(tscVertFin);
+        models.add(tscHorizLouver);
 
         // Main modernist building volume
         ModelInstance tmInst = new ModelInstance(tscMain);
-        tmInst.transform.setTranslation(tscX, 4.75f, tscZ);
+        tmInst.transform.setTranslation(tscX, 4.6f, tscZ);
         instances.add(tmInst);
 
-        // Central auditorium rising above roof
+        // Warm red brick infill panels contrasting with exposed concrete frame
+        ModelInstance tbiInst = new ModelInstance(tscBrickInfill);
+        tbiInst.transform.setTranslation(tscX, 4.6f, tscZ);
+        instances.add(tbiInst);
+
+        // Continuous ribbon windows on upper and lower floors
+        ModelInstance twin1 = new ModelInstance(tscWindowBand);
+        twin1.transform.setTranslation(tscX, 3.2f, tscZ);
+        instances.add(twin1);
+        ModelInstance twin2 = new ModelInstance(tscWindowBand);
+        twin2.transform.setTranslation(tscX, 6.8f, tscZ);
+        instances.add(twin2);
+
+        // Central auditorium rising above main roofline
         ModelInstance taInst = new ModelInstance(tscAuditorium);
-        taInst.transform.setTranslation(tscX, 11.5f, tscZ);
+        taInst.transform.setTranslation(tscX, 11.2f, tscZ);
         instances.add(taInst);
 
-        // Pyramidal clerestory roof
-        ModelInstance tprInst = new ModelInstance(tscPyramidRoof);
-        tprInst.transform.setTranslation(tscX, 15.0f, tscZ);
-        instances.add(tprInst);
+        // Signature butterfly / inverted folded-plate roof (Doxiadis architectural hallmark)
+        ModelInstance tfrE = new ModelInstance(tscFoldedRoofEast);
+        tfrE.transform.setTranslation(tscX + 5.2f, 13.9f, tscZ);
+        tfrE.transform.rotate(Vector3.Z, -11f);
+        instances.add(tfrE);
+
+        ModelInstance tfrW = new ModelInstance(tscFoldedRoofWest);
+        tfrW.transform.setTranslation(tscX - 5.2f, 13.9f, tscZ);
+        tfrW.transform.rotate(Vector3.Z, 11f);
+        instances.add(tfrW);
 
         // Covered cafeteria entrance terrace facing west towards campus
         ModelInstance ttInst = new ModelInstance(tscTerrace);
-        ttInst.transform.setTranslation(tscX - 22f, 0.25f, tscZ);
+        ttInst.transform.setTranslation(tscX - 22f, 0.22f, tscZ);
         instances.add(ttInst);
 
-        // Vertical concrete sun-breaker fins on west facade
+        // Cantilevered concrete entrance portico
+        ModelInstance tcInst = new ModelInstance(tscEntranceCanopy);
+        tcInst.transform.setTranslation(tscX - 23.5f, 4.3f, tscZ);
+        instances.add(tcInst);
+
+        // Support columns for entrance canopy
+        ModelInstance tcp1 = new ModelInstance(tscCanopyPillar);
+        tcp1.transform.setTranslation(tscX - 27.2f, 2.2f, tscZ - 6.5f);
+        instances.add(tcp1);
+        ModelInstance tcp2 = new ModelInstance(tscCanopyPillar);
+        tcp2.transform.setTranslation(tscX - 27.2f, 2.2f, tscZ + 6.5f);
+        instances.add(tcp2);
+
+        // Deep vertical concrete sun-breaker fins on west facade
         for (int f = -6; f <= 6; f++) {
-            ModelInstance fin = new ModelInstance(tscFins);
-            fin.transform.setTranslation(tscX - 19.3f, 4.8f, tscZ + f * 2.1f);
+            ModelInstance fin = new ModelInstance(tscVertFin);
+            fin.transform.setTranslation(tscX - 20.3f, 4.8f, tscZ + f * 2.1f);
             instances.add(fin);
         }
+
+        // Horizontal sun-shading brows across south and north facades
+        ModelInstance hlSouth = new ModelInstance(tscHorizLouver);
+        hlSouth.transform.setTranslation(tscX - 20.3f, 7.5f, tscZ);
+        instances.add(hlSouth);
 
         // ==========================================
         // 14. EAST HUB: RAJU MEMORIAL SCULPTURE (TSC ROUNDABOUT)
@@ -2069,12 +2163,18 @@ public class DhakaCampusWorld implements Disposable {
             instances.add(stat);
         }
 
-        // 7. Vintage Cast-Iron Lampposts with Student Movement Banners
-        Model postModel = mb.createCylinder(0.18f, 4.2f, 0.18f, 8, castIron, attr);
-        Model lanternModel = mb.createBox(0.48f, 0.52f, 0.48f, lanternGlow, attr);
+        // 7. Vintage Cast-Iron Lampposts with Student Movement Banners (Colonial Double-Lantern Posts)
+        Model postPedestal = mb.createCylinder(0.48f, 0.65f, 0.48f, 8, castIron, attr);
+        Model postShaft = mb.createCylinder(0.18f, 4.4f, 0.18f, 8, castIron, attr);
+        Model postCrossArm = mb.createBox(1.5f, 0.12f, 0.14f, castIron, attr);
+        Model lanternModel = mb.createBox(0.42f, 0.55f, 0.42f, lanternGlow, attr);
+        Model lanternCap = mb.createCone(0.52f, 0.28f, 0.52f, 8, castIron, attr);
         Model bannerModel = mb.createBox(0.75f, 1.5f, 0.04f, bannerMat, attr);
-        models.add(postModel);
+        models.add(postPedestal);
+        models.add(postShaft);
+        models.add(postCrossArm);
         models.add(lanternModel);
+        models.add(lanternCap);
         models.add(bannerModel);
 
         float[] lampZ = {-10f, 8f, 26f, 44f, 60f};
@@ -2083,18 +2183,36 @@ public class DhakaCampusWorld implements Disposable {
             // Lamp row at Z=8 would stand in the pukur, so it moves out to the ring paths
             float[] lampX = (lz == 8f) ? new float[]{-16.5f, 16.5f} : new float[]{-5.4f, 5.4f};
             for (float lx : lampX) {
-                ModelInstance pInst = new ModelInstance(postModel);
-                pInst.transform.setTranslation(lx, 2.1f, lz);
+                // Stepped ornamental base
+                ModelInstance pedInst = new ModelInstance(postPedestal);
+                pedInst.transform.setTranslation(lx, 0.32f, lz);
+                instances.add(pedInst);
+
+                // Fluted vertical post
+                ModelInstance pInst = new ModelInstance(postShaft);
+                pInst.transform.setTranslation(lx, 2.5f, lz);
                 instances.add(pInst);
 
-                ModelInstance lInst = new ModelInstance(lanternModel);
-                lInst.transform.setTranslation(lx, 4.2f, lz);
-                instances.add(lInst);
+                // Decorative double-lantern cross arm
+                ModelInstance armInst = new ModelInstance(postCrossArm);
+                armInst.transform.setTranslation(lx, 4.5f, lz);
+                instances.add(armInst);
 
-                // Hanging July 2024 movement banner
+                // Twin colonial carriage lanterns
+                for (float so : new float[]{-0.62f, 0.62f}) {
+                    ModelInstance lInst = new ModelInstance(lanternModel);
+                    lInst.transform.setTranslation(lx + so, 4.25f, lz);
+                    instances.add(lInst);
+
+                    ModelInstance capInst = new ModelInstance(lanternCap);
+                    capInst.transform.setTranslation(lx + so, 4.65f, lz);
+                    instances.add(capInst);
+                }
+
+                // Hanging July 2024 student movement banner
                 if (i % 2 == 0) {
                     ModelInstance bInst = new ModelInstance(bannerModel);
-                    bInst.transform.setTranslation(lx + (lx < 0 ? -0.55f : 0.55f), 2.9f, lz);
+                    bInst.transform.setTranslation(lx + (lx < 0 ? -0.75f : 0.75f), 2.9f, lz);
                     instances.add(bInst);
                 }
             }

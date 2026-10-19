@@ -495,56 +495,59 @@ public class StudentMesh implements Disposable {
         Material watchFace = flat(0.70f, 0.72f, 0.75f);
 
         // ---- Pelvis (frame y = 0.87): jeans seat; shirt hem hangs over the waist ----
-        put(r.pelvis, cyl(0.29f, 0.12f, 0.20f, jeans), 0f, 0.02f, 0f);
-        put(r.pelvis, ell(0.30f, 0.19f, 0.21f, jeans), 0f, -0.015f, 0f);
-        put(r.pelvis, box(0.012f, 0.07f, 0.004f, jeansShade), 0f, -0.045f, 0.101f);
+        put(r.pelvis, cyl(0.33f, 0.14f, 0.23f, jeans), 0f, 0.02f, 0f);
+        put(r.pelvis, ell(0.34f, 0.20f, 0.24f, jeans), 0f, -0.015f, 0f);
+        put(r.pelvis, box(0.012f, 0.08f, 0.004f, jeansShade), 0f, -0.045f, 0.115f);
 
-        // ---- Chest (frame y = 1.13): casual button-up shirt, worn untucked ----
-        put(r.chest, cyl(0.30f, 0.40f, 0.195f, shirt), 0f, 0f, -0.005f);
-        put(r.chest, ell(0.315f, 0.20f, 0.205f, shirt), 0f, 0.12f, 0.005f);
-        put(r.chest, ell(0.27f, 0.14f, 0.17f, shirt), 0f, 0.20f, -0.010f);
-        Model shoulder = ell(0.11f, 0.09f, 0.125f, shirt);
-        put(r.chest, shoulder, -0.165f, 0.19f, 0f, 0f, 0f, -12f);
-        put(r.chest, shoulder, 0.165f, 0.19f, 0f, 0f, 0f, 12f);
-        put(r.chest, cyl(0.312f, 0.06f, 0.208f, shirtShade), 0f, -0.20f, -0.005f);   // hem
-        put(r.chest, box(0.020f, 0.24f, 0.006f, shirtShade), 0f, -0.085f, 0.094f);  // placket
+        // ---- Chest (frame y = 1.13): casual button-up shirt, natural athletic V-taper ----
+        put(r.chest, cyl(0.34f, 0.40f, 0.22f, shirt), 0f, 0f, -0.005f);
+        put(r.chest, ell(0.36f, 0.22f, 0.23f, shirt), 0f, 0.12f, 0.005f);
+        put(r.chest, ell(0.31f, 0.15f, 0.19f, shirt), 0f, 0.20f, -0.010f);
+        Model shoulder = ell(0.135f, 0.105f, 0.140f, shirt);
+        put(r.chest, shoulder, -0.195f, 0.19f, 0f, 0f, 0f, -12f);
+        put(r.chest, shoulder, 0.195f, 0.19f, 0f, 0f, 0f, 12f);
+        put(r.chest, cyl(0.345f, 0.06f, 0.230f, shirtShade), 0f, -0.20f, -0.005f);   // hem
+        put(r.chest, box(0.022f, 0.25f, 0.008f, shirtShade), 0f, -0.085f, 0.108f);  // placket
         Model btn = ell(0.009f, 0.009f, 0.005f, button);
-        put(r.chest, btn, 0f, 0.165f, 0.101f);
-        put(r.chest, btn, 0f, 0.085f, 0.103f);
-        put(r.chest, btn, 0f, -0.140f, 0.098f);
-        put(r.chest, btn, 0f, -0.200f, 0.1045f);
+        put(r.chest, btn, 0f, 0.165f, 0.114f);
+        put(r.chest, btn, 0f, 0.085f, 0.116f);
+        put(r.chest, btn, 0f, -0.140f, 0.112f);
+        put(r.chest, btn, 0f, -0.200f, 0.116f);
         // collar band round the neck + two pointed collar wings
-        put(r.chest, cyl(0.118f, 0.036f, 0.112f, shirtShade), 0f, 0.232f, 0.004f);
-        strap(r.chest, 0.016f, 0.236f, 0.058f, 0.060f, 0.188f, 0.078f, 0.036f, 0.010f, shirtSeam);
-        strap(r.chest, -0.016f, 0.236f, 0.058f, -0.060f, 0.188f, 0.078f, 0.036f, 0.010f, shirtSeam);
+        put(r.chest, cyl(0.125f, 0.040f, 0.120f, shirtShade), 0f, 0.232f, 0.004f);
+        put(r.chest, ell(0.150f, 0.045f, 0.090f, shirtShade), 0f, 0.215f, -0.060f); // collar back
+        strap(r.chest, 0.018f, 0.236f, 0.065f, 0.070f, 0.188f, 0.088f, 0.038f, 0.010f, shirtSeam);
+        strap(r.chest, -0.018f, 0.236f, 0.065f, -0.070f, 0.188f, 0.088f, 0.038f, 0.010f, shirtSeam);
 
         addIdCard(r.chest, new float[]{
-            0.050f, 0.245f, 0.045f,
-            0.032f, 0.170f, 0.104f,
-            0.018f, 0.090f, 0.111f,
-            0.006f, 0.012f, 0.1015f}, 0.004f, 0.1005f);
+            0.055f, 0.245f, 0.050f,
+            0.036f, 0.170f, 0.114f,
+            0.020f, 0.090f, 0.122f,
+            0.008f, 0.012f, 0.112f}, 0.006f, 0.111f);
 
-        addBackpack(r.chest, 0.28f, 0.36f, 0.13f, 0.035f, -0.178f, new float[]{
-            0.085f, 0.190f, -0.112f,
-            0.085f, 0.262f, -0.030f,
-            0.085f, 0.245f, 0.045f,
-            0.085f, 0.150f, 0.092f,
-            0.085f, -0.060f, 0.084f,
-            0.158f, -0.090f, 0.020f,
-            0.135f, -0.110f, -0.115f});
+        // Backpack sits comfortably on upper-mid back, clearly below neckline
+        addBackpack(r.chest, 0.28f, 0.35f, 0.13f, -0.075f, -0.185f, new float[]{
+            0.095f, 0.190f, -0.112f,
+            0.095f, 0.262f, -0.030f,
+            0.095f, 0.245f, 0.045f,
+            0.095f, 0.150f, 0.092f,
+            0.095f, -0.060f, 0.084f,
+            0.165f, -0.090f, 0.020f,
+            0.145f, -0.110f, -0.115f});
 
-        // ---- Neck (frame y = 1.34) ----
-        put(r.neck, cyl(0.095f, 0.10f, 0.092f, skin), 0f, -0.005f, 0.004f);
+        // ---- Neck (frame y = 1.34) — sculpted with trapezius slope ----
+        put(r.neck, cyl(0.100f, 0.11f, 0.098f, skin), 0f, 0f, 0.004f);
+        put(r.neck, ell(0.180f, 0.065f, 0.135f, skinShade), 0f, -0.045f, -0.010f); // trapezius contour
 
         // ---- Head (frame y = 1.45) ----
-        put(r.head, ell(0.158f, 0.190f, 0.172f, skin), 0f, 0.022f, -0.008f);   // cranium
-        put(r.head, ell(0.132f, 0.100f, 0.125f, skin), 0f, -0.030f, 0.012f);   // jaw & cheeks
-        put(r.head, ell(0.050f, 0.034f, 0.040f, skin), 0f, -0.068f, 0.048f);   // chin
+        put(r.head, ell(0.162f, 0.195f, 0.176f, skin), 0f, 0.022f, -0.008f);   // cranium
+        put(r.head, ell(0.138f, 0.105f, 0.130f, skin), 0f, -0.030f, 0.012f);   // jaw & cheeks
+        put(r.head, ell(0.055f, 0.038f, 0.044f, skin), 0f, -0.068f, 0.048f);   // chin
         // Ears with distinct outer helix and lobe visible in silhouette from rear
-        put(r.head, ell(0.018f, 0.042f, 0.028f, skinShade), -0.082f, 0.005f, -0.008f, 0f, -12f, 5f);
-        put(r.head, ell(0.018f, 0.042f, 0.028f, skinShade),  0.082f, 0.005f, -0.008f, 0f,  12f, -5f);
-        put(r.head, ell(0.012f, 0.028f, 0.018f, skin), -0.084f, 0.002f, -0.006f, 0f, -12f, 5f);
-        put(r.head, ell(0.012f, 0.028f, 0.018f, skin),  0.084f, 0.002f, -0.006f, 0f,  12f, -5f);
+        put(r.head, ell(0.020f, 0.045f, 0.030f, skinShade), -0.084f, 0.005f, -0.008f, 0f, -12f, 5f);
+        put(r.head, ell(0.020f, 0.045f, 0.030f, skinShade),  0.084f, 0.005f, -0.008f, 0f,  12f, -5f);
+        put(r.head, ell(0.014f, 0.030f, 0.020f, skin), -0.086f, 0.002f, -0.006f, 0f, -12f, 5f);
+        put(r.head, ell(0.014f, 0.030f, 0.020f, skin),  0.086f, 0.002f, -0.006f, 0f,  12f, -5f);
         // eyes
         Model white = ell(0.024f, 0.013f, 0.010f, eyeWhite);
         Model irisM = ell(0.012f, 0.012f, 0.006f, iris);
@@ -563,44 +566,48 @@ public class StudentMesh implements Disposable {
         put(r.head, ell(0.025f, 0.010f, 0.010f, lips), 0f, -0.043f, 0.070f);
 
         // Neat short haircut with tapered scissor-cut neckline exposing neck skin
-        put(r.head, ell(0.162f, 0.118f, 0.168f, hair), 0f, 0.065f, -0.010f);    // crown & top
-        put(r.head, ell(0.146f, 0.092f, 0.108f, hair), 0f, 0.024f, -0.038f);    // mid-back
-        put(r.head, ell(0.115f, 0.055f, 0.055f, hair), 0f, -0.016f, -0.044f);   // tapered lower neckline
-        put(r.head, ell(0.080f, 0.025f, 0.065f, hairSheen), 0f, 0.105f, -0.025f, 8f, 0f, 0f); // rear crown sheen
-        Model side = ell(0.028f, 0.058f, 0.082f, hair);
-        put(r.head, side, -0.073f, 0.042f, -0.006f);
-        put(r.head, side,  0.073f, 0.042f, -0.006f);
-        put(r.head, ell(0.140f, 0.048f, 0.074f, hair), 0.006f, 0.104f, 0.046f, -14f, 0f, -5f);   // fringe
-        put(r.head, ell(0.070f, 0.030f, 0.060f, hairSheen), -0.020f, 0.128f, 0.030f, -10f, 0f, 8f);
+        put(r.head, ell(0.168f, 0.124f, 0.174f, hair), 0f, 0.065f, -0.010f);    // crown & top
+        put(r.head, ell(0.152f, 0.096f, 0.114f, hair), 0f, 0.024f, -0.038f);    // mid-back
+        put(r.head, ell(0.120f, 0.058f, 0.058f, hair), 0f, -0.016f, -0.044f);   // tapered lower neckline
+        put(r.head, ell(0.085f, 0.028f, 0.070f, hairSheen), 0f, 0.105f, -0.025f, 8f, 0f, 0f); // rear crown sheen
+        Model side = ell(0.030f, 0.062f, 0.086f, hair);
+        put(r.head, side, -0.076f, 0.042f, -0.006f);
+        put(r.head, side,  0.076f, 0.042f, -0.006f);
+        put(r.head, ell(0.145f, 0.050f, 0.078f, hair), 0.006f, 0.104f, 0.046f, -14f, 0f, -5f);   // fringe
+        put(r.head, ell(0.075f, 0.032f, 0.065f, hairSheen), -0.020f, 0.128f, 0.030f, -10f, 0f, 8f);
         put(r.head, box(0.004f, 0.006f, 0.070f, skinShade), -0.030f, 0.137f, 0.010f, -8f, 0f, 10f); // part line
-        Model burn = ell(0.010f, 0.028f, 0.016f, hair);
-        put(r.head, burn, -0.076f, 0.004f, 0.024f);
-        put(r.head, burn,  0.076f, 0.004f, 0.024f);
+        Model burn = ell(0.012f, 0.030f, 0.018f, hair);
+        put(r.head, burn, -0.078f, 0.004f, 0.024f);
+        put(r.head, burn,  0.078f, 0.004f, 0.024f);
 
         // ---- Arms (shoulder frame; forearm frame at elbow) ----
-        putPair(r.upperArm, ell(0.100f, 0.100f, 0.105f, shirt), 0f, -0.010f, 0f);
-        putPair(r.upperArm, cap(0.050f, 0.25f, shirt), 0f, -0.120f, 0f);
-        putPair(r.upperArm, cyl(0.106f, 0.040f, 0.106f, shirtShade), 0f, -0.225f, 0f);   // rolled cuff
+        putPair(r.upperArm, ell(0.115f, 0.115f, 0.120f, shirt), 0f, -0.010f, 0f);
+        putPair(r.upperArm, cap(0.058f, 0.25f, shirt), 0f, -0.120f, 0f);
+        putPair(r.upperArm, cyl(0.122f, 0.045f, 0.122f, shirtShade), 0f, -0.225f, 0f);   // rolled cuff
 
-        putPair(r.foreArm, ell(0.072f, 0.070f, 0.072f, skin), 0f, 0f, 0f);             // elbow
-        putPair(r.foreArm, cap(0.036f, 0.24f, skin), 0f, -0.110f, 0f);
-        put(r.foreArm[0], cyl(0.076f, 0.020f, 0.076f, watchBand), 0f, -0.195f, 0f);
-        put(r.foreArm[0], cyl(0.030f, 0.008f, 0.030f, watchFace), -0.037f, -0.195f, 0f, 0f, 0f, 90f);
-        addHands(r, skin, 0.056f, 0.080f, 0.032f, -0.255f);
+        putPair(r.foreArm, ell(0.080f, 0.078f, 0.080f, skin), 0f, 0f, 0f);             // elbow
+        putPair(r.foreArm, cap(0.042f, 0.24f, skin), 0f, -0.110f, 0f);
+        put(r.foreArm[0], cyl(0.085f, 0.020f, 0.085f, watchBand), 0f, -0.195f, 0f);
+        put(r.foreArm[0], cyl(0.034f, 0.008f, 0.034f, watchFace), -0.042f, -0.195f, 0f, 0f, 0f, 90f);
+        addHands(r, skin, 0.062f, 0.088f, 0.036f, -0.255f);
 
-        // ---- Legs ----
-        putPair(r.thigh, ell(0.125f, 0.140f, 0.130f, jeans), 0f, -0.020f, 0f);
-        putPair(r.thigh, cap(0.057f, 0.36f, jeans), 0f, -0.190f, 0f);
-        putPair(r.shin, ell(0.100f, 0.100f, 0.106f, jeans), 0f, 0f, 0.002f);           // knee
-        putPair(r.shin, cap(0.050f, 0.35f, jeans), 0f, -0.175f, -0.004f);
-        putPair(r.shin, cyl(0.104f, 0.035f, 0.108f, jeansShade), 0f, -0.335f, -0.004f); // hem
+        // ---- Legs: Realistic adult male proportions (quads, hamstrings, gastrocnemius calves) ----
+        putPair(r.thigh, ell(0.165f, 0.160f, 0.170f, jeans), 0f, -0.020f, 0f);           // hip joint
+        putPair(r.thigh, cap(0.076f, 0.36f, jeans), 0f, -0.190f, 0f);                   // muscular thigh
+        putPair(r.thigh, ell(0.150f, 0.240f, 0.155f, jeansShade), 0f, -0.170f, 0.008f); // quad contour
 
-        // sneakers
-        putPair(r.foot, cyl(0.088f, 0.045f, 0.095f, shoeShade), 0f, 0f, 0f);           // collar
-        putPair(r.foot, ell(0.095f, 0.085f, 0.245f, shoe), 0f, -0.022f, 0.045f);
-        putPair(r.foot, box(0.100f, 0.024f, 0.250f, sole), 0f, -0.058f, 0.045f);
-        putPair(r.foot, ell(0.100f, 0.030f, 0.080f, sole), 0f, -0.056f, 0.130f);        // round toe sole
-        putPair(r.foot, box(0.040f, 0.008f, 0.070f, sole), 0f, 0.020f, 0.075f, 14f, 0f, 0f); // laces
+        putPair(r.shin, ell(0.122f, 0.115f, 0.130f, jeans), 0f, 0f, 0.006f);             // patella / knee
+        putPair(r.shin, cap(0.066f, 0.35f, jeans), 0f, -0.175f, -0.002f);                 // shin bone
+        putPair(r.shin, ell(0.138f, 0.220f, 0.145f, jeansShade), 0f, -0.130f, -0.015f); // calf muscle bulge
+        putPair(r.shin, cyl(0.130f, 0.045f, 0.135f, jeansShade), 0f, -0.335f, -0.002f); // ankle hem
+
+        // athletic sneakers with wide stable profile
+        putPair(r.foot, cyl(0.115f, 0.050f, 0.125f, shoeShade), 0f, 0f, 0f);             // padded collar
+        putPair(r.foot, ell(0.125f, 0.095f, 0.270f, shoe), 0f, -0.022f, 0.055f);         // sneaker upper
+        putPair(r.foot, box(0.130f, 0.028f, 0.275f, sole), 0f, -0.058f, 0.055f);         // thick rubber outsole
+        putPair(r.foot, ell(0.125f, 0.038f, 0.095f, sole), 0f, -0.054f, 0.155f);         // toe guard
+        putPair(r.foot, ell(0.120f, 0.065f, 0.080f, shoeShade), 0f, -0.015f, -0.055f);   // reinforced heel
+        putPair(r.foot, box(0.055f, 0.012f, 0.090f, sole), 0f, 0.024f, 0.085f, 14f, 0f, 0f); // laces
     }
 
     /** Palm, curled fingers and a thumb pointing forward, at forearm-frame height y. */
@@ -671,7 +678,7 @@ public class StudentMesh implements Disposable {
             0.017f, 0.100f, 0.103f,
             0.006f, 0.000f, 0.093f}, -0.008f, 0.0925f);
 
-        addBackpack(r.chest, 0.26f, 0.34f, 0.12f, 0.030f, -0.165f, new float[]{
+        addBackpack(r.chest, 0.26f, 0.34f, 0.12f, -0.065f, -0.165f, new float[]{
             0.080f, 0.185f, -0.104f,
             0.080f, 0.250f, -0.020f,
             0.080f, 0.240f, 0.048f,
@@ -681,7 +688,8 @@ public class StudentMesh implements Disposable {
             0.130f, -0.110f, -0.105f});
 
         // ---- Neck ----
-        put(r.neck, cyl(0.080f, 0.10f, 0.078f, skin), 0f, 0f, 0.004f);
+        put(r.neck, cyl(0.088f, 0.10f, 0.086f, skin), 0f, 0f, 0.004f);
+        put(r.neck, ell(0.145f, 0.055f, 0.110f, skinShade), 0f, -0.042f, -0.008f); // trapezius contour
 
         // ---- Head ----
         put(r.head, ell(0.145f, 0.178f, 0.158f, skin), 0f, 0.018f, -0.006f);
@@ -720,28 +728,30 @@ public class StudentMesh implements Disposable {
         put(r.head, ell(0.064f, 0.028f, 0.056f, hairSheen), -0.018f, 0.112f, 0.026f, -10f, 0f, 8f);
 
         // ---- Arms: 3/4 kurti sleeves ----
-        putPair(r.upperArm, ell(0.090f, 0.090f, 0.095f, kurti), 0f, -0.010f, 0f);
-        putPair(r.upperArm, cap(0.043f, 0.25f, kurti), 0f, -0.120f, 0f);
-        putPair(r.foreArm, ell(0.080f, 0.072f, 0.082f, kurti), 0f, 0f, 0f);
-        putPair(r.foreArm, cap(0.039f, 0.12f, kurti), 0f, -0.050f, 0f);
-        putPair(r.foreArm, cyl(0.082f, 0.020f, 0.082f, kurtiTrim), 0f, -0.105f, 0f);
-        putPair(r.foreArm, cap(0.032f, 0.20f, skin), 0f, -0.135f, 0f);
-        put(r.foreArm[0], cyl(0.066f, 0.010f, 0.066f, gold), 0f, -0.195f, 0f);           // bangle
-        addHands(r, skin, 0.050f, 0.070f, 0.028f, -0.245f);
+        putPair(r.upperArm, ell(0.100f, 0.100f, 0.105f, kurti), 0f, -0.010f, 0f);
+        putPair(r.upperArm, cap(0.048f, 0.25f, kurti), 0f, -0.120f, 0f);
+        putPair(r.foreArm, ell(0.084f, 0.076f, 0.086f, kurti), 0f, 0f, 0f);
+        putPair(r.foreArm, cap(0.042f, 0.12f, kurti), 0f, -0.050f, 0f);
+        putPair(r.foreArm, cyl(0.088f, 0.020f, 0.088f, kurtiTrim), 0f, -0.105f, 0f);
+        putPair(r.foreArm, cap(0.036f, 0.20f, skin), 0f, -0.135f, 0f);
+        put(r.foreArm[0], cyl(0.072f, 0.010f, 0.072f, gold), 0f, -0.195f, 0f);           // bangle
+        addHands(r, skin, 0.054f, 0.076f, 0.030f, -0.245f);
 
         // ---- Legs: salwar / churidar ----
-        putPair(r.thigh, ell(0.115f, 0.130f, 0.125f, pants), 0f, -0.015f, 0f);
-        putPair(r.thigh, cap(0.054f, 0.36f, pants), 0f, -0.190f, 0f);
-        putPair(r.shin, ell(0.094f, 0.092f, 0.098f, pants), 0f, 0f, 0f);
-        putPair(r.shin, cap(0.046f, 0.30f, pants), 0f, -0.150f, -0.004f);
-        putPair(r.shin, cap(0.037f, 0.12f, pantsShade), 0f, -0.300f, -0.004f);
+        putPair(r.thigh, ell(0.145f, 0.150f, 0.150f, pants), 0f, -0.015f, 0f);
+        putPair(r.thigh, cap(0.068f, 0.36f, pants), 0f, -0.190f, 0f);
+        putPair(r.thigh, ell(0.135f, 0.220f, 0.140f, pantsShade), 0f, -0.170f, 0.006f);
+        putPair(r.shin, ell(0.110f, 0.105f, 0.115f, pants), 0f, 0f, 0f);
+        putPair(r.shin, cap(0.058f, 0.30f, pants), 0f, -0.150f, -0.004f);
+        putPair(r.shin, ell(0.122f, 0.190f, 0.126f, pantsShade), 0f, -0.125f, -0.012f); // calf drape
+        putPair(r.shin, cap(0.048f, 0.12f, pantsShade), 0f, -0.300f, -0.004f);
 
         // sandals
-        putPair(r.foot, cap(0.030f, 0.07f, skin), 0f, 0.012f, 0f);                        // ankle
-        putPair(r.foot, ell(0.070f, 0.045f, 0.190f, skin), 0f, -0.030f, 0.040f);
-        putPair(r.foot, box(0.080f, 0.014f, 0.210f, sole), 0f, -0.055f, 0.040f);
-        putPair(r.foot, box(0.078f, 0.014f, 0.036f, strapMat), 0f, -0.012f, 0.090f, 12f, 0f, 0f);
-        putPair(r.foot, cyl(0.070f, 0.010f, 0.070f, strapMat), 0f, -0.004f, 0f);
+        putPair(r.foot, cap(0.036f, 0.07f, skin), 0f, 0.012f, 0f);                        // ankle
+        putPair(r.foot, ell(0.088f, 0.050f, 0.220f, skin), 0f, -0.030f, 0.040f);
+        putPair(r.foot, box(0.098f, 0.018f, 0.235f, sole), 0f, -0.055f, 0.040f);
+        putPair(r.foot, box(0.094f, 0.016f, 0.042f, strapMat), 0f, -0.012f, 0.090f, 12f, 0f, 0f);
+        putPair(r.foot, cyl(0.082f, 0.012f, 0.082f, strapMat), 0f, -0.004f, 0f);
     }
 
     // =====================================================================
@@ -1171,7 +1181,7 @@ public class StudentMesh implements Disposable {
                     if (side == 1 && attackArmR != 0f) armSwing = attackArmR;
                 }
 
-                segment.set(rootTransform).translate(sx * (g == 1 ? 0.165f : 0.180f), chestY + 0.18f + breathe, chestZ)
+                segment.set(rootTransform).translate(sx * (g == 1 ? 0.178f : 0.205f), chestY + 0.18f + breathe, chestZ)
                     .rotate(Vector3.X, armBaseAngle + armSwing)
                     .rotate(Vector3.Z, sx * -3.5f)
                     .rotate(Vector3.Y, sx * 4.0f);

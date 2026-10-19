@@ -965,10 +965,11 @@ public class SparkGame extends ApplicationAdapter {
                 camera.setAngles(0f, -8f);
                 camera.setDistance(4.0f);
             } else if ("tsc".equalsIgnoreCase(viewpoint)) {
-                player.setPosition(52f, 0f, 48f);
-                player.setHeadingDegrees(90f);
-                camera.setAngles(270f, -4f);
-                camera.setDistance(5.0f);
+                player.setPosition(48f, 0f, 20f);
+                camera.setFixedView(36f, 9.5f, 42f, 68f, 7.5f, 20f);
+            } else if ("central_library".equalsIgnoreCase(viewpoint)) {
+                player.setPosition(-48f, 0f, 22f);
+                camera.setFixedView(-36f, 9.5f, 42f, -68f, 7.5f, 22f);
             } else if ("student_closeup".equalsIgnoreCase(viewpoint)) {
                 player.setPosition(0f, 0f, 70f);
                 player.setHeadingDegrees(180f);
