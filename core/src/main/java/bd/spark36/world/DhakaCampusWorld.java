@@ -68,6 +68,7 @@ public class DhakaCampusWorld implements Disposable {
     private static final int SHADOW_MAP_SIZE = bd.spark36.render.GraphicsTier.fromSystemProperty().shadowMapSize;
 
     private final Environment environment;
+    private final PbrEnvironment pbrEnvironment;
     private final DirectionalShadowLight sunLight;
     private final Array<Model> models = new Array<>();
     private final Array<ModelInstance> instances = new Array<>();
