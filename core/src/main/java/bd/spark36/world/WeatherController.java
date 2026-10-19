@@ -136,6 +136,8 @@ public class WeatherController {
         srcRainIntensity = currentRainIntensity;
         srcCloudAlphaFactor = currentCloudAlphaFactor;
         srcWindMultiplier = currentWindMultiplier;
+        srcTemperature = currentTemperature;
+        srcTint = currentTint;
 
         // Load target preset
         AtmosphereConfig.Preset p = AtmosphereConfig.getPreset(target);
@@ -156,6 +158,8 @@ public class WeatherController {
         tgtRainIntensity = p.rainIntensity;
         tgtCloudAlphaFactor = p.cloudAlphaFactor;
         tgtWindMultiplier = p.windMultiplier;
+        tgtTemperature = p.colorTemperature;
+        tgtTint = p.colorTint;
 
         this.targetState = target;
         this.transitionDuration = Math.max(0.05f, durationSeconds);
@@ -190,6 +194,8 @@ public class WeatherController {
         srcRainIntensity = p.rainIntensity;
         srcCloudAlphaFactor = p.cloudAlphaFactor;
         srcWindMultiplier = p.windMultiplier;
+        srcTemperature = p.colorTemperature;
+        srcTint = p.colorTint;
 
         tgtSunDir.set(srcSunDir);
         tgtSunColor.set(srcSunColor);
@@ -208,6 +214,8 @@ public class WeatherController {
         tgtRainIntensity = srcRainIntensity;
         tgtCloudAlphaFactor = srcCloudAlphaFactor;
         tgtWindMultiplier = srcWindMultiplier;
+        tgtTemperature = srcTemperature;
+        tgtTint = srcTint;
 
         currentSunDir.set(srcSunDir);
         currentSunColor.set(srcSunColor);
@@ -226,6 +234,8 @@ public class WeatherController {
         currentRainIntensity = srcRainIntensity;
         currentCloudAlphaFactor = srcCloudAlphaFactor;
         currentWindMultiplier = srcWindMultiplier;
+        currentTemperature = srcTemperature;
+        currentTint = srcTint;
     }
 
     public void update(float delta) {
@@ -264,6 +274,8 @@ public class WeatherController {
         currentRainIntensity = MathUtils.lerp(srcRainIntensity, tgtRainIntensity, t);
         currentCloudAlphaFactor = MathUtils.lerp(srcCloudAlphaFactor, tgtCloudAlphaFactor, t);
         currentWindMultiplier = MathUtils.lerp(srcWindMultiplier, tgtWindMultiplier, t);
+        currentTemperature = MathUtils.lerp(srcTemperature, tgtTemperature, t);
+        currentTint = MathUtils.lerp(srcTint, tgtTint, t);
     }
 
     public WeatherState getCurrentState() { return currentState; }
@@ -292,4 +304,6 @@ public class WeatherController {
     public float getCurrentRainIntensity() { return currentRainIntensity; }
     public float getCurrentCloudAlphaFactor() { return currentCloudAlphaFactor; }
     public float getCurrentWindMultiplier() { return currentWindMultiplier; }
+    public float getCurrentTemperature() { return currentTemperature; }
+    public float getCurrentTint() { return currentTint; }
 }
