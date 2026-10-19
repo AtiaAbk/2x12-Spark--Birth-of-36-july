@@ -971,12 +971,12 @@ public class StudentMesh implements Disposable {
         float torsoTwist = 0f;
 
         if (isMoving && !isSittingWater && !isDodging) {
-            float cycleSpeed = isSprinting ? 2.3f : 1.4f;
-            float phase = walkCycle * cycleSpeed;
-            float bobAmp = isSprinting ? 0.038f : 0.018f;
+            float phase = walkCycle;
+            float bobAmp = isSprinting ? 0.032f : 0.016f;
             bobOffset = Math.abs(MathUtils.sin(phase)) * bobAmp;
             swing = MathUtils.sin(phase);
-            torsoPitch = isSprinting ? 12f : 3f;
+            torsoPitch = isSprinting ? 12f : 3.5f;
+            torsoTwist = isSprinting ? swing * 6.5f : swing * 3.5f;
         }
 
         float breathe = (!isMoving && !isAttacking && !isDodging) ? MathUtils.sin(idle * 2.2f) * 0.006f : 0f;
@@ -1171,6 +1171,10 @@ public class StudentMesh implements Disposable {
                 drawParts(batch, env, rig.shin[side], segment);
 
                 tmp.set(segment).translate(0f, -0.37f, 0f);
+                if (isMoving) {
+                    float footFlex = (legAngle > 0f) ? -legAngle * 0.45f : -kneeAngle * 0.25f;
+                    tmp.rotate(Vector3.X, footFlex);
+                }
                 drawParts(batch, env, rig.foot[side], tmp);
 
                 float armSwing = isMoving ? -swing * (side == 0 ? 28f : -28f) * (isSprinting ? 1.6f : 1f) : 0f;

@@ -91,6 +91,7 @@ public class DhakaCampusWorld implements Disposable {
     private final java.util.Set<ModelInstance> nonSolid = new java.util.HashSet<>();
     // Architectural facade panels excluded from shadow pass to eliminate self-shadow acne and jagged cuts
     private final java.util.Set<ModelInstance> shadowExclusions = new java.util.HashSet<>();
+    private final Array<ModelInstance> foliageInstances = new Array<>();
 
     // Translucent effects (light shafts): drawn after the scene, never cast shadows or collide
     private final Array<ModelInstance> effects = new Array<>();
@@ -211,6 +212,7 @@ public class DhakaCampusWorld implements Disposable {
         models.add(foliageModel);
         ModelInstance foliageInstance = new ModelInstance(foliageModel);
         nonSolid.add(foliageInstance);
+        foliageInstances.add(foliageInstance);
         instances.add(foliageInstance);
     }
 
@@ -2322,6 +2324,18 @@ public class DhakaCampusWorld implements Disposable {
         // Light shafts breathe slowly, as if clouds and leaves drift across the sun
         if (beamBlend != null) {
             beamBlend.opacity = BEAM_BASE_OPACITY * (0.80f + 0.20f * MathUtils.sin(animTime * 0.45f));
+        }
+
+        // ── Dynamic Ambient Wind Sway across Campus Tree Canopies & Foliage ──
+        float windWave1 = MathUtils.sin(animTime * 1.15f);
+        float windWave2 = MathUtils.sin(animTime * 2.45f + 0.8f) * 0.35f;
+        float windGust = (windWave1 + windWave2) * 0.015f; // subtle natural sway (0.85 degrees)
+        for (int i = 0; i < foliageInstances.size; i++) {
+            ModelInstance fol = foliageInstances.get(i);
+            float phaseOffset = (i * 1.618f);
+            float swayX = MathUtils.sin(animTime * 1.3f + phaseOffset) * 0.45f;
+            float swayZ = MathUtils.cos(animTime * 0.9f + phaseOffset) * 0.35f;
+            fol.transform.idt().rotate(Vector3.X, swayX).rotate(Vector3.Z, swayZ);
         }
 
         // ── Animated Pukur Water Shimmer ──────────────────────────────────────

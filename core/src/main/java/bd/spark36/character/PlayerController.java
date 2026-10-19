@@ -666,10 +666,14 @@ public class PlayerController {
         prevPosition.set(position);
         resolveMovementAndCollisions(delta);
 
-        // 6. Walk cycle animation progression
-        if (isMoving) {
-            float cycleSpeed = isSprinting ? 14f : 8.5f;
-            walkCycle += cycleSpeed * delta;
+        // 6. Walk cycle animation progression (synchronized with physical velocity to eliminate foot sliding)
+        if (isMoving && isGrounded && !isSittingWater) {
+            float horizontalSpeed = (float) Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+            float strideLen = isSprinting ? 2.3f : 1.4f;
+            walkCycle += (horizontalSpeed / strideLen) * MathUtils.PI2 * delta;
+        } else if (!isGrounded) {
+            // Keep legs in natural jump pose
+            walkCycle = MathUtils.lerp(walkCycle, 0f, 6f * delta);
         } else {
             walkCycle = 0f;
         }
