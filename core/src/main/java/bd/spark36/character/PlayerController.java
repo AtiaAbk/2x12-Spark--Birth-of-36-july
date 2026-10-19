@@ -669,19 +669,23 @@ public class PlayerController {
 
         // 5. Physics and Collision Resolution
         prevPosition.set(position);
+        boolean wasGrounded = isGrounded;
+        float prevVerticalVelocity = verticalVelocity;
         resolveMovementAndCollisions(delta);
 
-        // 6. Walk cycle animation progression (synchronized with physical velocity to eliminate foot sliding)
-        if (isMoving && isGrounded && !isSittingWater) {
-            float horizontalSpeed = (float) Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-            float strideLen = isSprinting ? 2.3f : 1.4f;
-            walkCycle += (horizontalSpeed / strideLen) * MathUtils.PI2 * delta;
-        } else if (!isGrounded) {
-            // Keep legs in natural jump pose
-            walkCycle = MathUtils.lerp(walkCycle, 0f, 6f * delta);
-        } else {
-            walkCycle = 0f;
+        // Detect landing impact and trigger dynamic ground cushion compression
+        if (!wasGrounded && isGrounded && prevVerticalVelocity < -1.8f) {
+            animStateMachine.notifyLanded(prevVerticalVelocity);
         }
+
+        // 6. Update Character Animation State Machine & Procedural Locomotion
+        animStateMachine.update(
+            delta, position, headingDegrees, velocity, isGrounded, isMoving,
+            isSprinting, isCrouching, isClimbing, isWading(), isSittingWater,
+            isBlocking, isAttacking, attackCombo, attackProgress, isDodging,
+            dodgeProgress, staggerTimer
+        );
+        walkCycle = animStateMachine.getStridePhase();
     }
 
     /**
@@ -1075,5 +1079,21 @@ public class PlayerController {
 
     public void setGender(int gender) {
         this.gender = (gender == 1) ? 1 : 0;
+    }
+
+    public AnimationStateMachine getAnimStateMachine() {
+        return animStateMachine;
+    }
+
+    public CharacterPose getPose() {
+        return animStateMachine.getBlendedPose();
+    }
+
+    public LocomotionState getLocomotionState() {
+        return animStateMachine.getCurrentState();
+    }
+
+    public void resetAnimation() {
+        animStateMachine.reset();
     }
 }

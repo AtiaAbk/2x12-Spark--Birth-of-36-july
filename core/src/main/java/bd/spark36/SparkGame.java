@@ -647,19 +647,9 @@ public class SparkGame extends ApplicationAdapter {
                 null,
                 player.getPosition(),
                 player.getHeadingDegrees(),
-                player.getWalkCycle(),
-                player.isMoving(),
-                player.isSprinting(),
+                player.getPose(),
                 player.isCrouching(),
-                player.isBlocking(),
-                player.isAttacking(),
-                player.getAttackCombo(),
-                player.getAttackProgress(),
-                player.isDodging(),
-                player.getDodgeProgress(),
-                player.getStaggerTimer(),
                 player.isSittingWater(),
-                player.getSitProgress(),
                 player.getGender()
             );
             if (activeCrowd != null) {
@@ -703,19 +693,9 @@ public class SparkGame extends ApplicationAdapter {
             activeEnv,
             player.getPosition(),
             player.getHeadingDegrees(),
-            player.getWalkCycle(),
-            player.isMoving(),
-            player.isSprinting(),
+            player.getPose(),
             player.isCrouching(),
-            player.isBlocking(),
-            player.isAttacking(),
-            player.getAttackCombo(),
-            player.getAttackProgress(),
-            player.isDodging(),
-            player.getDodgeProgress(),
-            player.getStaggerTimer(),
             player.isSittingWater(),
-            player.getSitProgress(),
             player.getGender()
         );
         if (activeCrowd != null) {
