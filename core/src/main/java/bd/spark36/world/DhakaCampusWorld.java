@@ -2301,17 +2301,8 @@ public class DhakaCampusWorld implements Disposable {
             beamBlend.opacity = BEAM_BASE_OPACITY * (0.80f + 0.20f * MathUtils.sin(animTime * 0.45f));
         }
 
-        // ── Dynamic Ambient Wind Sway across Campus Tree Canopies & Foliage ──
-        float windWave1 = MathUtils.sin(animTime * 1.15f);
-        float windWave2 = MathUtils.sin(animTime * 2.45f + 0.8f) * 0.35f;
-        float windGust = (windWave1 + windWave2) * 0.015f; // subtle natural sway (0.85 degrees)
-        for (int i = 0; i < foliageInstances.size; i++) {
-            ModelInstance fol = foliageInstances.get(i);
-            float phaseOffset = (i * 1.618f);
-            float swayX = MathUtils.sin(animTime * 1.3f + phaseOffset) * 0.45f;
-            float swayZ = MathUtils.cos(animTime * 0.9f + phaseOffset) * 0.35f;
-            fol.transform.idt().rotate(Vector3.X, swayX).rotate(Vector3.Z, swayZ);
-        }
+        // ── Dynamic Multi-Frequency Wind Simulation across Campus Trees ──
+        vegetationManager.update(animTime, GraphicsTier.fromSystemProperty(), activeCam);
 
         // ── Buoyant Lily Pads Bobbing & Tilting on Gerstner Waves ─────────────
         for (int i = 0; i < lilyPads.size; i++) {
