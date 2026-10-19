@@ -1996,48 +1996,55 @@ public class TextureFactory implements Disposable {
         int height = 512;
         Pixmap pix = new Pixmap(width, height, Format.RGBA8888);
 
-        // Bamboo culm specification palette:
-        // #183B20 (deep forest green), #42652B (natural bamboo green), #68713A (olive green),
-        // #92733B (golden olive), #9A815D (weathered tan)
+        // Bamboo culm palette from reference images (Ref 4 & 5):
+        // #B8A832 bright yellow-green young culm (top)
+        // #9AB020 natural yellow-green mid culm
+        // #7A9A20 deeper yellow-green mature culm (base)
+        // Cylindrical shading: bright center, shadowed edges
         for (int x = 0; x < width; x++) {
             float xNorm = (float) x / (float) width;
-            float cylLight = 0.65f + 0.35f * MathUtils.sin(xNorm * MathUtils.PI);
-            float fiber = MathUtils.sin(x * 1.2f) * 0.035f + MathUtils.sin(x * 3.4f) * 0.02f;
+            // Cylinder cross-section lighting: bright center, dark edges
+            float cylLight = 0.55f + 0.50f * MathUtils.sin(xNorm * MathUtils.PI);
+            // Subtle vertical fiber grain
+            float fiber = MathUtils.sin(x * 1.4f) * 0.025f + MathUtils.sin(x * 4.1f) * 0.012f;
 
-            // Longitudinal color bands giving natural culm age variation across the sheet
-            float culmAge = (MathUtils.sin(xNorm * MathUtils.PI2 * 2f) + 1f) * 0.5f;
+            // Slight color variation band along width (culm age/sun exposure)
+            float culmVar = (MathUtils.sin(xNorm * MathUtils.PI2 * 1.5f) + 1f) * 0.5f;
 
             for (int y = 0; y < height; y++) {
-                // Base culm color blending from natural bamboo green #42652B to olive #68713A
-                float rBase = MathUtils.lerp(0.259f, 0.408f, culmAge);
-                float gBase = MathUtils.lerp(0.396f, 0.443f, culmAge);
-                float bBase = MathUtils.lerp(0.169f, 0.227f, culmAge);
+                // Height-gradient: slightly yellower at top (young growth), greener at base
+                float yNorm = (float) y / (float) height;
+                // Base yellow-green: lerp from #B8A832 (0.722, 0.659, 0.196) to #7A9A20 (0.478, 0.604, 0.125)
+                float rBase = MathUtils.lerp(0.722f, 0.478f, yNorm) + culmVar * 0.04f;
+                float gBase = MathUtils.lerp(0.659f, 0.604f, yNorm) + culmVar * 0.03f;
+                float bBase = MathUtils.lerp(0.196f, 0.125f, yNorm);
 
-                // Vertical micro-fibers and subtle golden olive undertones #92733B
-                float r = MathUtils.clamp((rBase + fiber) * cylLight, 0.094f, 0.604f);
-                float g = MathUtils.clamp((gBase + fiber) * cylLight, 0.231f, 0.550f);
-                float b = MathUtils.clamp((bBase + fiber * 0.5f) * cylLight, 0.125f, 0.365f);
+                float r = MathUtils.clamp((rBase + fiber) * cylLight, 0.15f, 0.95f);
+                float g = MathUtils.clamp((gBase + fiber) * cylLight, 0.18f, 0.88f);
+                float b = MathUtils.clamp((bBase + fiber * 0.5f) * cylLight, 0.03f, 0.28f);
 
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
             }
         }
 
-        // Horizontal bamboo joints / raised nodal rings spaced along culm
+        // Horizontal bamboo joints / raised nodal rings — dark brown rings (#3D3010)
         int nodeInterval = 64;
         for (int y = nodeInterval; y < height; y += nodeInterval) {
-            // Upper swollen nodal highlight line (golden olive / pale ivory: #92733B)
-            pix.setColor(0.573f, 0.481f, 0.251f, 0.95f);
+            // Swollen nodal bulge highlight (pale yellow-tan just above ring)
+            pix.setColor(0.82f, 0.78f, 0.30f, 0.90f);
+            pix.drawLine(0, y - 3, width, y - 3);
             pix.drawLine(0, y - 2, width, y - 2);
 
-            // Dark joint indentation ring (#183B20 deep forest green / woody boundary)
-            pix.setColor(0.094f, 0.181f, 0.095f, 1f);
+            // Dark ring itself (#3D3010 dark brown-green)
+            pix.setColor(0.239f, 0.188f, 0.063f, 1f);
             pix.drawLine(0, y - 1, width, y - 1);
-            pix.drawLine(0, y, width, y);
-
-            // Lower joint ring shadow (#34372A dark olive)
-            pix.setColor(0.204f, 0.216f, 0.165f, 0.85f);
+            pix.drawLine(0, y,     width, y);
             pix.drawLine(0, y + 1, width, y + 1);
+
+            // Lower shadow below ring
+            pix.setColor(0.38f, 0.42f, 0.14f, 0.80f);
+            pix.drawLine(0, y + 2, width, y + 2);
         }
 
         Texture tex = new Texture(pix);

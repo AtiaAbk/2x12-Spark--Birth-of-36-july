@@ -500,7 +500,7 @@ public class DhakaCampusWorld implements Disposable {
         Material bambooBarkMat = new Material(
             PBRTextureAttribute.createBaseColorTexture(textures.bambooCulm),
             IntAttribute.createCullFace(0),
-            ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.90f, 1f))
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
         );
 
         Material bambooLeafCardMat = new Material(
