@@ -1243,6 +1243,17 @@ public class DhakaCampusWorld implements Disposable {
         }
         TreeGeometry.leafDensity = 1f;
 
+        // Surface transitions (Phase 4): organic tree root soil collars, walkway dirt shoulders, pond verge
+        terrainSurface.buildSurfaceTransitions(
+            mb,
+            textures,
+            TREE_LOCATIONS,
+            GraphicsTier.fromSystemProperty(),
+            instances,
+            nonSolid,
+            shadowExclusions
+        );
+
         // ==========================================
         // GLADES: dense bamboo, leafy ground cover and worn dirt paths (the Boundary Stone woodland)
         // ==========================================
