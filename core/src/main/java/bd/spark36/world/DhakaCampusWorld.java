@@ -145,6 +145,10 @@ public class DhakaCampusWorld implements Disposable {
         // Clean atmospheric sky-blue depth haze (matches AtmosphereRenderer skyLowHaze)
         environment.set(new ColorAttribute(ColorAttribute.Fog, 0.84f, 0.88f, 0.92f, 1f));
 
+        pbrEnvironment = new PbrEnvironment();
+        pbrEnvironment.setupOutdoorIBL(sunLight);
+        pbrEnvironment.applyTo(environment);
+
         buildCampus(textures);
         buildColliders();
     }
@@ -2490,6 +2494,15 @@ public class DhakaCampusWorld implements Disposable {
         return environment;
     }
 
+    public PbrEnvironment getPbrEnvironment() {
+        return pbrEnvironment;
+    }
+
+    private static void setupPbr(Material mat, float metallic, float roughness) {
+        mat.set(PBRFloatAttribute.createMetallic(metallic));
+        mat.set(PBRFloatAttribute.createRoughness(roughness));
+    }
+
     @Override
     public void dispose() {
         for (Model m : models) {
@@ -2499,6 +2512,9 @@ public class DhakaCampusWorld implements Disposable {
         instances.clear();
         boundarySparkles.clear();
         sunLight.dispose();
+        if (pbrEnvironment != null) {
+            pbrEnvironment.dispose();
+        }
     }
 
     private void buildPondFishes(ModelBuilder mb, float cx, float cz, float pw, float pl, long attr) {
