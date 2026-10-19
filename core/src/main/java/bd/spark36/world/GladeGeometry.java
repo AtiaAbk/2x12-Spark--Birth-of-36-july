@@ -21,6 +21,10 @@ final class GladeGeometry {
 
     private GladeGeometry() {}
 
+    public interface PartSupplier {
+        MeshPartBuilder getPart(int needed);
+    }
+
     /**
      * Dense Realistic Bamboo Clump (Dense_Realistic_Bamboo_Clump specification):
      * - 5m x 5m footprint base.
@@ -31,7 +35,7 @@ final class GladeGeometry {
      * - Outward lean on perimeter culms, erect central culms.
      * - Slender branch sprays with lanceolate bamboo leaf cards.
      */
-    static void denseBambooClump(MeshPartBuilder culm, MeshPartBuilder leaves, float cx, float cz, long seed) {
+    static void denseBambooClump(PartSupplier culmSupplier, PartSupplier leafSupplier, float cx, float cz, long seed) {
         RNG.setSeed(TreeGeometry.mix(seed));
         int culmCount = 32; // Specification: 24 to 42 culms
         for (int c = 0; c < culmCount; c++) {
@@ -55,8 +59,14 @@ final class GladeGeometry {
             float leanAngle = theta + (RNG.nextFloat() - 0.5f) * 0.4f; // radiating outward
             float lean = MathUtils.lerp(0.30f, 1.45f, distNorm) + RNG.nextFloat() * 0.30f;
 
+            MeshPartBuilder culm = (culmSupplier != null) ? culmSupplier.getPart(1600) : null;
+            MeshPartBuilder leaves = (leafSupplier != null) ? leafSupplier.getPart(600) : null;
             bambooCane(culm, leaves, x, z, height, lean, leanAngle, radius, seed + c * 37L);
         }
+    }
+
+    static void denseBambooClump(MeshPartBuilder culm, MeshPartBuilder leaves, float cx, float cz, long seed) {
+        denseBambooClump(needed -> culm, needed -> leaves, cx, cz, seed);
     }
 
     /**

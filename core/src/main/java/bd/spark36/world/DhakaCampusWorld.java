@@ -189,7 +189,7 @@ public class DhakaCampusWorld implements Disposable {
      * A mesh being filled with one material, that quietly rolls over to a fresh mesh before it hits
      * the ~32k-vertex limit (16-bit indices), so callers can just keep adding geometry.
      */
-    private final class FoliageBatch {
+    private final class FoliageBatch implements GladeGeometry.PartSupplier {
         private static final int MAX_VERTICES = 30000;
         private final String id;
         private final Material material;
@@ -217,6 +217,11 @@ public class DhakaCampusWorld implements Disposable {
                 open();
             }
             return part;
+        }
+
+        @Override
+        public MeshPartBuilder getPart(int needed) {
+            return part(needed);
         }
 
         void close() {
@@ -1314,7 +1319,7 @@ public class DhakaCampusWorld implements Disposable {
         };
         long clumpSeed = 9200L;
         for (float[] cc : clumpCenters) {
-            GladeGeometry.denseBambooClump(caneBatch.part(1800), sprayBatch.part(1800),
+            GladeGeometry.denseBambooClump(caneBatch, sprayBatch,
                 cc[0], cc[1], clumpSeed += 120L);
             colliders.add(new float[]{cc[0] - 1.6f, 0f, cc[1] - 1.6f, cc[0] + 1.6f, 10f, cc[1] + 1.6f});
         }

@@ -140,6 +140,10 @@ public class CinematicCamera {
                            System.getProperty("bd.spark36.testCombatScreenshot") != null ||
                            System.getProperty("bd.spark36.testPondScreenshot") != null ||
                            System.getProperty("bd.spark36.testPauseScreenshot") != null ||
+                           System.getProperty("bd.spark36.testPauseMenu") != null ||
+                           System.getProperty("bd.spark36.testExitConfirm") != null ||
+                           System.getProperty("bd.spark36.testSummerCurzon") != null ||
+                           System.getProperty("bd.spark36.testBambooGrove") != null ||
                            System.getProperty("bd.spark36.testVictory") != null ||
                            System.getProperty("bd.spark36.testModalScreenshot") != null ||
                            System.getProperty("bd.spark36.testMapScreenshot") != null ||

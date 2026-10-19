@@ -124,6 +124,10 @@ public class SparkGame extends ApplicationAdapter {
              System.getProperty("bd.spark36.testCombatScreenshot") != null ||
              System.getProperty("bd.spark36.testPondScreenshot") != null ||
              System.getProperty("bd.spark36.testPauseScreenshot") != null ||
+             System.getProperty("bd.spark36.testPauseMenu") != null ||
+             System.getProperty("bd.spark36.testExitConfirm") != null ||
+             System.getProperty("bd.spark36.testSummerCurzon") != null ||
+             System.getProperty("bd.spark36.testBambooGrove") != null ||
              System.getProperty("bd.spark36.testCongratulations") != null ||
              System.getProperty("bd.spark36.testVictory") != null ||
              System.getProperty("bd.spark36.testNpcDialogue") != null ||
@@ -991,13 +995,54 @@ public class SparkGame extends ApplicationAdapter {
                     Gdx.app.exit();
                 }
             }
-        } else if (System.getProperty("bd.spark36.testPauseScreenshot") != null) {
+        } else if (System.getProperty("bd.spark36.testPauseScreenshot") != null || System.getProperty("bd.spark36.testPauseMenu") != null) {
             testTimer += delta;
-            if (testTimer >= 1.0f && !hud.isModalOpen()) {
+            if (testTimer >= 1.0f && !hud.isPauseMenuOpen()) {
                 hud.openPauseMenuForTest();
             }
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("pause_menu_interactive_verified");
                 takeScreenshot("spark36_pause_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testExitConfirm") != null) {
+            testTimer += delta;
+            if (testTimer >= 1.0f && !hud.isExitConfirmOpen()) {
+                hud.openExitConfirmForTest();
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("exit_confirmation_dialog_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testSummerCurzon") != null) {
+            hud.reset();
+            player.setPosition(0f, 0f, 72f);
+            player.setHeadingDegrees(180f);
+            camera.setAngles(0f, -2.5f);
+            camera.setDistance(2.8f);
+            testTimer += delta;
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("summer_natural_daylight_curzon");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testBambooGrove") != null) {
+            hud.reset();
+            player.setPosition(13.0f, 0f, 21.0f);
+            player.setHeadingDegrees(355f);
+            camera.setAngles(15f, 6.0f);
+            camera.setDistance(3.5f);
+            testTimer += delta;
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("dense_bamboo_clump_verified");
                 autoScreenshotTaken = true;
                 if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
                     Gdx.app.exit();
