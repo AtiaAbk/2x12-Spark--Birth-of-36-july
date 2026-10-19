@@ -88,19 +88,6 @@ public final class AtmosphereConfig {
         0.0f,                                       // Neutral white balance temperature
         0.0f                                        // Neutral tint
     );
-        35.0f, 140.0f, 1.0f,                         // Moderate summer haze
-        new Color(0.84f, 0.88f, 0.92f, 1.0f),       // Summer pearlescent sky-blue haze
-        new Color(0.24f, 0.42f, 0.66f, 1.0f),       // Filmic slate-azure zenith
-        new Color(0.44f, 0.60f, 0.76f, 1.0f),       // Soft atmospheric summer mid sky
-        new Color(0.68f, 0.78f, 0.86f, 1.0f),       // Pearlescent horizon
-        new Color(0.84f, 0.88f, 0.92f, 1.0f),       // Lower haze
-        new Color(1.0f, 0.98f, 0.90f, 0.95f),        // Intense white-gold solar disk
-        new Color(1.0f, 0.94f, 0.78f, 0.28f),        // Warm solar corona
-        1.0f,                                       // Full canopy god rays
-        0.0f,                                       // No rain
-        1.0f,                                       // Standard fair weather clouds
-        1.0f                                        // Standard breeze
-    );
 
     public static final Preset GOLDEN_HOUR = new Preset(
         new Vector3(-0.75f, -0.32f, -0.58f),        // Low late afternoon / sunset angle
@@ -117,7 +104,9 @@ public final class AtmosphereConfig {
         1.35f,                                      // Pronounced dramatic shafts
         0.0f,                                       // No rain
         1.2f,                                       // Golden illuminated clouds
-        0.85f                                       // Calmer evening breeze
+        0.85f,                                      // Calmer evening breeze
+        0.22f,                                      // Warm golden color temperature
+        0.04f                                       // Subtle warm magenta tint
     );
 
     public static final Preset OVERCAST_MONSOON = new Preset(
@@ -135,7 +124,9 @@ public final class AtmosphereConfig {
         0.20f,                                      // Faint diffused light shafts
         0.0f,                                       // Heavy clouds before rain
         2.2f,                                       // Dense cloud cover
-        1.45f                                       // Gusty pre-storm wind
+        1.45f,                                      // Gusty pre-storm wind
+        -0.10f,                                     // Cool overcast temperature
+        -0.02f                                      // Faint overcast cool tint
     );
 
     public static final Preset MONSOON_RAIN = new Preset(
@@ -153,7 +144,9 @@ public final class AtmosphereConfig {
         0.05f,                                      // Minimal direct rays
         1.0f,                                       // Active monsoon downpour
         2.6f,                                       // Overcast sky filled with storm clouds
-        1.85f                                       // Strong monsoon wind gusting
+        1.85f,                                      // Strong monsoon wind gusting
+        -0.14f,                                     // Cool rainy temperature
+        -0.03f                                      // Moody storm tint
     );
 
     public static Preset getPreset(WeatherState state) {
