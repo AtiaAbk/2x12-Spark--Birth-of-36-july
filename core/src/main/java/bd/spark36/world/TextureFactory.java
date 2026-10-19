@@ -62,6 +62,11 @@ public class TextureFactory implements Disposable {
     public final Texture modernistConcreteNormal;
     public final Texture treeBarkNormal;
     public final Texture waterRippleNormal;
+    public final Texture lawnGrassNormal;
+    public final Texture soilLoam;
+    public final Texture soilLoamNormal;
+    public final Texture dirtPathNormal;
+    public final Texture asphaltRoadNormal;
 
     public TextureFactory() {
         Texture[] brickPair = createBrickPavementWithNormal();
@@ -72,7 +77,13 @@ public class TextureFactory implements Disposable {
         curzonBrick = curzonPair[0];
         curzonBrickNormal = curzonPair[1];
 
-        lawnGrass = createLawnGrass();
+        Texture[] grassPair = createLawnGrassWithNormal();
+        lawnGrass = grassPair[0];
+        lawnGrassNormal = grassPair[1];
+
+        Texture[] soilPair = createSoilLoamWithNormal();
+        soilLoam = soilPair[0];
+        soilLoamNormal = soilPair[1];
 
         Texture[] barkPair = createTreeBarkWithNormal();
         treeBark = barkPair[0];
@@ -92,7 +103,11 @@ public class TextureFactory implements Disposable {
         teakDoorTexture = createTeakDoorTexture();
         curzonGrandPortal = createCurzonGrandPortal();
         curzonPorticoTripleWindow = createCurzonPorticoTripleWindow();
-        dirtPath = createDirtPath();
+
+        Texture[] dirtPair = createDirtPathWithNormal();
+        dirtPath = dirtPair[0];
+        dirtPathNormal = dirtPair[1];
+
         lightBeam = createLightBeam();
         rockSurface = createRockSurface();
         bambooCulm = createBambooCulm();
@@ -107,7 +122,10 @@ public class TextureFactory implements Disposable {
         movementBanner = createMovementBanner();
         bdFlag = createBdFlag();
         aparajeyoStone = createAparajeyoStone();
-        asphaltRoad = createAsphaltRoad();
+
+        Texture[] asphaltPair = createAsphaltRoadWithNormal();
+        asphaltRoad = asphaltPair[0];
+        asphaltRoadNormal = asphaltPair[1];
 
         Texture[] concretePair = createModernistConcreteWithNormal();
         modernistConcrete = concretePair[0];
@@ -126,7 +144,7 @@ public class TextureFactory implements Disposable {
                         backpackFabric, studentJacket, movementBanner, bdFlag, aparajeyoStone,
                         asphaltRoad, modernistConcrete, canteenTinRoof, mapVisualTarget, debugOrientationTestCard,
                         brickPavementNormal, curzonBrickNormal, modernistConcreteNormal, treeBarkNormal,
-                        waterRippleNormal);
+                        waterRippleNormal, lawnGrassNormal, soilLoam, soilLoamNormal, dirtPathNormal, asphaltRoadNormal);
     }
 
     public static Texture createNormalMap(Pixmap src, float bumpScale) {
@@ -275,7 +293,7 @@ public class TextureFactory implements Disposable {
         return new Texture[]{tex, norm};
     }
 
-    private Texture createLawnGrass() {
+    private Texture[] createLawnGrassWithNormal() {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
@@ -327,8 +345,52 @@ public class TextureFactory implements Disposable {
         Texture tex = new Texture(pix, Format.RGBA8888, true);
         tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        Texture norm = createNormalMap(pix, 3.2f);
         pix.dispose();
-        return tex;
+        return new Texture[]{tex, norm};
+    }
+
+    private Texture[] createSoilLoamWithNormal() {
+        int size = 512;
+        Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
+
+        // Rich dark alluvial monsoon silt / humus base
+        pix.setColor(0.18f, 0.13f, 0.09f, 1f);
+        pix.fill();
+
+        // Multi-frequency organic loam texture (earth grain, moist silt, micro-pebbles)
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                float n1 = (MathUtils.sin(x * 0.12f) * MathUtils.cos(y * 0.15f)
+                          + MathUtils.sin((x + y) * 0.28f) * 0.5f);
+                float n2 = (MathUtils.sin(x * 0.45f - y * 0.38f) * 0.25f);
+                float speckle = MathUtils.random(-0.03f, 0.03f);
+
+                float r = MathUtils.clamp(0.20f + (n1 + n2) * 0.035f + speckle, 0.12f, 0.28f);
+                float g = MathUtils.clamp(0.15f + (n1 + n2) * 0.028f + speckle, 0.09f, 0.22f);
+                float b = MathUtils.clamp(0.10f + (n1 + n2) * 0.020f + speckle * 0.7f, 0.06f, 0.16f);
+
+                pix.setColor(r, g, b, 1f);
+                pix.drawPixel(x, y);
+            }
+        }
+
+        // Decomposed organic mulch specks and tiny river pebbles
+        for (int i = 0; i < 600; i++) {
+            int px = MathUtils.random(size - 2);
+            int py = MathUtils.random(size - 2);
+            float pebble = MathUtils.random(0.08f, 0.16f);
+            pix.setColor(0.28f + pebble, 0.24f + pebble * 0.9f, 0.18f + pebble * 0.7f, 1f);
+            pix.drawPixel(px, py);
+            pix.drawPixel(px + 1, py);
+        }
+
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        Texture norm = createNormalMap(pix, 2.5f);
+        pix.dispose();
+        return new Texture[]{tex, norm};
     }
 
     /**
