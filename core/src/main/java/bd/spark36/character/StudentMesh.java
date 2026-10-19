@@ -111,52 +111,54 @@ public class StudentMesh implements Disposable {
         public static Appearance defaultLook(int gender) {
             Appearance a = new Appearance();
             if (gender == 1) {
-                a.skin.set(0.83f, 0.66f, 0.54f, 1f);
-                a.hair.set(0.12f, 0.10f, 0.09f, 1f);
-                a.shirt.set(0.16f, 0.45f, 0.48f, 1f);     // teal kurti
-                a.trousers.set(0.90f, 0.87f, 0.80f, 1f);  // cream salwar
-                a.shoes.set(0.55f, 0.35f, 0.22f, 1f);     // tan sandal straps
-                a.bag.set(0.45f, 0.20f, 0.25f, 1f);       // maroon backpack
-                a.accent.set(0.95f, 0.91f, 0.82f, 1f);    // off-white orna
+                // Female student: rich emerald kurti, warm sand salwar, saffron-ruby orna
+                a.skin.set(0.72f, 0.52f, 0.38f, 1f);     // warm Bengali bronze complexion
+                a.hair.set(0.08f, 0.07f, 0.07f, 1f);     // natural jet black hair
+                a.shirt.set(0.12f, 0.38f, 0.28f, 1f);    // rich deep emerald kurti
+                a.trousers.set(0.68f, 0.62f, 0.52f, 1f); // warm sand/khaki salwar
+                a.shoes.set(0.35f, 0.20f, 0.12f, 1f);    // deep brown leather sandal straps
+                a.bag.set(0.38f, 0.18f, 0.15f, 1f);      // rich oxblood/maroon leather backpack
+                a.accent.set(0.82f, 0.38f, 0.16f, 1f);   // warm saffron-terracotta orna
             } else {
-                a.skin.set(0.80f, 0.62f, 0.49f, 1f);
-                a.hair.set(0.12f, 0.10f, 0.09f, 1f);
-                a.shirt.set(0.72f, 0.81f, 0.91f, 1f);     // light sky-blue shirt
-                a.trousers.set(0.18f, 0.25f, 0.40f, 1f);  // blue jeans
-                a.shoes.set(0.16f, 0.16f, 0.18f, 1f);     // dark sneakers
-                a.bag.set(0.16f, 0.20f, 0.28f, 1f);       // navy/charcoal backpack
-                a.accent.set(0.92f, 0.92f, 0.90f, 1f);
+                // Male student: deep denim-navy cotton shirt, dark indigo jeans, brown leather bag
+                a.skin.set(0.70f, 0.50f, 0.36f, 1f);     // authentic warm Bengali sun-kissed skin
+                a.hair.set(0.08f, 0.07f, 0.07f, 1f);     // natural jet black hair
+                a.shirt.set(0.16f, 0.26f, 0.44f, 1f);    // deep indigo denim / navy cotton shirt
+                a.trousers.set(0.12f, 0.14f, 0.20f, 1f); // dark charcoal-indigo denim jeans
+                a.shoes.set(0.14f, 0.12f, 0.10f, 1f);    // dark espresso leather sneakers
+                a.bag.set(0.40f, 0.22f, 0.14f, 1f);      // vintage brown saddle leather backpack
+                a.accent.set(0.55f, 0.50f, 0.42f, 1f);
             }
             return a;
         }
 
         private static final float[][] SKINS = {
-            {0.80f, 0.62f, 0.49f}, {0.72f, 0.54f, 0.41f}, {0.86f, 0.69f, 0.56f},
-            {0.64f, 0.47f, 0.35f}, {0.76f, 0.58f, 0.45f}, {0.68f, 0.50f, 0.38f}};
+            {0.70f, 0.50f, 0.36f}, {0.64f, 0.45f, 0.32f}, {0.76f, 0.56f, 0.42f},
+            {0.58f, 0.40f, 0.28f}, {0.72f, 0.52f, 0.38f}, {0.66f, 0.46f, 0.34f}};
         private static final float[][] HAIRS = {
-            {0.12f, 0.10f, 0.09f}, {0.15f, 0.12f, 0.10f}, {0.18f, 0.14f, 0.11f}};
+            {0.08f, 0.07f, 0.07f}, {0.10f, 0.08f, 0.07f}, {0.12f, 0.09f, 0.08f}};
         private static final float[][] MALE_SHIRTS = {
-            {0.93f, 0.93f, 0.91f}, {0.72f, 0.81f, 0.91f}, {0.55f, 0.18f, 0.20f},
-            {0.40f, 0.46f, 0.32f}, {0.55f, 0.57f, 0.60f}, {0.20f, 0.26f, 0.42f},
-            {0.86f, 0.78f, 0.60f}, {0.30f, 0.52f, 0.40f}, {0.80f, 0.62f, 0.62f}};
+            {0.16f, 0.26f, 0.44f}, {0.18f, 0.32f, 0.22f}, {0.45f, 0.16f, 0.18f},
+            {0.32f, 0.36f, 0.26f}, {0.22f, 0.28f, 0.36f}, {0.14f, 0.22f, 0.32f},
+            {0.65f, 0.48f, 0.28f}, {0.24f, 0.38f, 0.30f}, {0.48f, 0.25f, 0.22f}};
         private static final float[][] FEMALE_KURTIS = {
-            {0.72f, 0.22f, 0.35f}, {0.16f, 0.45f, 0.48f}, {0.90f, 0.72f, 0.30f},
-            {0.40f, 0.30f, 0.60f}, {0.85f, 0.55f, 0.58f}, {0.25f, 0.35f, 0.60f},
-            {0.95f, 0.95f, 0.93f}, {0.35f, 0.50f, 0.30f}};
+            {0.12f, 0.38f, 0.28f}, {0.55f, 0.14f, 0.22f}, {0.72f, 0.48f, 0.18f},
+            {0.28f, 0.22f, 0.46f}, {0.68f, 0.32f, 0.38f}, {0.18f, 0.28f, 0.48f},
+            {0.52f, 0.42f, 0.30f}, {0.24f, 0.40f, 0.24f}};
         private static final float[][] MALE_TROUSERS = {
-            {0.18f, 0.25f, 0.40f}, {0.12f, 0.12f, 0.14f}, {0.55f, 0.48f, 0.36f},
-            {0.30f, 0.32f, 0.36f}, {0.28f, 0.36f, 0.52f}};
+            {0.12f, 0.14f, 0.20f}, {0.10f, 0.10f, 0.12f}, {0.42f, 0.36f, 0.28f},
+            {0.22f, 0.24f, 0.28f}, {0.20f, 0.26f, 0.38f}};
         private static final float[][] FEMALE_TROUSERS = {
-            {0.90f, 0.87f, 0.80f}, {0.95f, 0.95f, 0.94f}, {0.12f, 0.12f, 0.14f},
-            {0.18f, 0.25f, 0.40f}, {0.60f, 0.45f, 0.50f}};
+            {0.68f, 0.62f, 0.52f}, {0.55f, 0.50f, 0.44f}, {0.12f, 0.12f, 0.14f},
+            {0.16f, 0.20f, 0.30f}, {0.45f, 0.32f, 0.36f}};
         private static final float[][] SHOES = {
-            {0.16f, 0.16f, 0.18f}, {0.35f, 0.25f, 0.18f}, {0.82f, 0.82f, 0.82f}, {0.20f, 0.25f, 0.40f}};
+            {0.14f, 0.12f, 0.10f}, {0.26f, 0.18f, 0.12f}, {0.18f, 0.18f, 0.20f}, {0.15f, 0.18f, 0.26f}};
         private static final float[][] BAGS = {
-            {0.16f, 0.20f, 0.28f}, {0.12f, 0.12f, 0.13f}, {0.45f, 0.20f, 0.25f},
-            {0.25f, 0.35f, 0.25f}, {0.50f, 0.40f, 0.28f}, {0.20f, 0.40f, 0.60f}, {0.40f, 0.40f, 0.42f}};
+            {0.40f, 0.22f, 0.14f}, {0.12f, 0.14f, 0.18f}, {0.38f, 0.18f, 0.15f},
+            {0.20f, 0.26f, 0.20f}, {0.42f, 0.30f, 0.18f}, {0.16f, 0.26f, 0.38f}, {0.28f, 0.28f, 0.30f}};
         private static final float[][] ORNAS = {
-            {0.95f, 0.91f, 0.82f}, {0.85f, 0.40f, 0.45f}, {0.95f, 0.80f, 0.40f},
-            {0.35f, 0.55f, 0.60f}, {0.93f, 0.93f, 0.93f}, {0.55f, 0.30f, 0.55f}};
+            {0.82f, 0.38f, 0.16f}, {0.70f, 0.25f, 0.30f}, {0.78f, 0.55f, 0.20f},
+            {0.22f, 0.42f, 0.46f}, {0.65f, 0.58f, 0.48f}, {0.45f, 0.20f, 0.45f}};
 
         /**
          * Deterministic NPC look. Variant 0 (or negative) returns {@link #defaultLook(int)};

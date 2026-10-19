@@ -500,7 +500,7 @@ public class DhakaCampusWorld implements Disposable {
         Material bambooBarkMat = new Material(
             PBRTextureAttribute.createBaseColorTexture(textures.bambooCulm),
             IntAttribute.createCullFace(0),
-            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.90f, 1f))
         );
 
         Material bambooLeafCardMat = new Material(
@@ -509,6 +509,14 @@ public class DhakaCampusWorld implements Disposable {
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
             ColorAttribute.createEmissive(new Color(0.02f, 0.04f, 0.015f, 1f))
+        );
+
+        Material grassTuftMat = new Material(
+            PBRTextureAttribute.createBaseColorTexture(textures.grassTuftAtlas),
+            FloatAttribute.createAlphaTest(0.20f),
+            IntAttribute.createCullFace(0),
+            ColorAttribute.createDiffuse(new Color(0.96f, 0.98f, 0.92f, 1f)),
+            ColorAttribute.createEmissive(new Color(0.015f, 0.035f, 0.012f, 1f))
         );
 
         Material rockMat = new Material(
@@ -527,7 +535,7 @@ public class DhakaCampusWorld implements Disposable {
 
         Material bambooCulmMat = new Material(
             PBRTextureAttribute.createBaseColorTexture(textures.bambooCulm),
-            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
+            ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.92f, 1f))
         );
 
         Material bambooLeafMat = new Material(
@@ -535,7 +543,7 @@ public class DhakaCampusWorld implements Disposable {
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 1f),
             FloatAttribute.createAlphaTest(0.20f),
             IntAttribute.createCullFace(0),
-            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f))
+            ColorAttribute.createDiffuse(new Color(0.96f, 0.98f, 0.92f, 1f))
         );
 
         Material bushMat = new Material(
@@ -625,6 +633,7 @@ public class DhakaCampusWorld implements Disposable {
         setupPbr(leafCardMat, 0.0f, 0.68f);
         setupPbr(bambooBarkMat, 0.0f, 0.55f);
         setupPbr(bambooLeafCardMat, 0.0f, 0.70f);
+        setupPbr(grassTuftMat, 0.0f, 0.65f);
         setupPbr(rockMat, 0.0f, 0.85f);
         setupPbr(dirtMat, GroundConfig.DIRT_METALLIC, GroundConfig.DIRT_ROUGHNESS);
         if (textures.dirtPathNormal != null) dirtMat.set(PBRTextureAttribute.createNormalTexture(textures.dirtPathNormal));
@@ -1250,15 +1259,34 @@ public class DhakaCampusWorld implements Disposable {
             colliders
         );
 
-        // Ground shrub rings around prominent campus tree bases
+        // ==========================================
+        // GLADES & UNDER-TREE GROUND COVER:
+        // Dense bamboo, volumetric 3D grass tufts, leafy ground cover and worn dirt paths
+        // ==========================================
+        FoliageBatch caneBatch = new FoliageBatch("bambooCanes", bambooBarkMat, attr);
+        FoliageBatch sprayBatch = new FoliageBatch("bambooSprays", bambooLeafCardMat, attr);
+        FoliageBatch plantBatch = new FoliageBatch("groundPlants", leafCardMat, attr);
+        FoliageBatch rockBatch = new FoliageBatch("rocks", rockMat, attr);
+        FoliageBatch mossBatch = new FoliageBatch("moss", leafClumpMat, attr);
+        FoliageBatch pathBatch = new FoliageBatch("dirtPaths", dirtMat, attr);
+        FoliageBatch grassTuftBatch = new FoliageBatch("campusGrassTufts", grassTuftMat, attr);
+        FoliageBatch[] gladeBatches = {caneBatch, sprayBatch, plantBatch, rockBatch, mossBatch, pathBatch, grassTuftBatch};
+
+        // Volumetric 3D grass tufts around campus tree roots (matching Ref 2 under-tree turf)
         for (float[] loc : TREE_LOCATIONS) {
             float tx = loc[0], tz = loc[1];
-            int type = (int) loc[2];
-            if (type == 3 || type == 0) {
-                addCrossedQuads(mpbBushes, tx + 1.1f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
-                addCrossedQuads(mpbBushes, tx - 1.0f, 0f, tz - 1.0f, 1.6f, 1.1f, 3, 0f);
-            } else if (type == 1) {
-                addCrossedQuads(mpbBushes, tx + 0.9f, 0f, tz + 0.9f, 1.7f, 1.2f, 3, 0f);
+            float ts = (loc.length > 3) ? loc[3] : 1.0f;
+            long seed = (long) (Math.abs(tx * 31.0f + tz * 17.0f) * 100.0f);
+            java.util.Random r = new java.util.Random(seed);
+            int tufts = 16;
+            for (int i = 0; i < tufts; i++) {
+                float ang = r.nextFloat() * MathUtils.PI2;
+                float dist = (0.55f + 1.65f * r.nextFloat()) * ts;
+                float gx = tx + MathUtils.cos(ang) * dist;
+                float gz = tz + MathUtils.sin(ang) * dist;
+                float gw = (0.45f + 0.35f * r.nextFloat()) * ts;
+                float gh = (0.35f + 0.30f * r.nextFloat()) * ts;
+                GladeGeometry.grassTuft(grassTuftBatch.part(100), gx, 0f, gz, gw, gh, seed + i * 23L);
             }
         }
         TreeGeometry.leafDensity = 1f;
@@ -1273,17 +1301,6 @@ public class DhakaCampusWorld implements Disposable {
             nonSolid,
             shadowExclusions
         );
-
-        // ==========================================
-        // GLADES: dense bamboo, leafy ground cover and worn dirt paths (the Boundary Stone woodland)
-        // ==========================================
-        FoliageBatch caneBatch = new FoliageBatch("bambooCanes", bambooBarkMat, attr);
-        FoliageBatch sprayBatch = new FoliageBatch("bambooSprays", bambooLeafCardMat, attr);
-        FoliageBatch plantBatch = new FoliageBatch("groundPlants", leafCardMat, attr);
-        FoliageBatch rockBatch = new FoliageBatch("rocks", rockMat, attr);
-        FoliageBatch mossBatch = new FoliageBatch("moss", leafClumpMat, attr);
-        FoliageBatch pathBatch = new FoliageBatch("dirtPaths", dirtMat, attr);
-        FoliageBatch[] gladeBatches = {caneBatch, sprayBatch, plantBatch, rockBatch, mossBatch, pathBatch};
 
         java.util.Random gladeRng = new java.util.Random(4242L);
 
@@ -1350,32 +1367,7 @@ public class DhakaCampusWorld implements Disposable {
         GladeGeometry.ribbon(pathBatch.part(200),
             new float[][]{{6.9f, 40.3f}, {8.2f, 39.2f}, {9.2f, 38.0f}}, 0.7f, 0.021f, 2.6f);
 
-        // Shafts of sunlight slanting through the canopy along the paths
-        beamBlend = new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE, BEAM_BASE_OPACITY);
-        Material beamMat = new Material(
-            PBRTextureAttribute.createBaseColorTexture(textures.lightBeam),
-            beamBlend,
-            IntAttribute.createCullFace(0),
-            new DepthTestAttribute(GL20.GL_LEQUAL, false),   // read depth, don't write it
-            ColorAttribute.createDiffuse(new Color(0f, 0f, 0f, 1f)),
-            ColorAttribute.createEmissive(new Color(1f, 0.94f, 0.78f, 1f))
-        );
-        ModelBuilder beamBuilder = new ModelBuilder();
-        beamBuilder.begin();
-        MeshPartBuilder beamPart = beamBuilder.part("lightShafts", GL20.GL_TRIANGLES, attr, beamMat);
-        Vector3 towardSun = new Vector3(0.55f, 0.60f, 0.58f).nor();
-        // {baseX, baseZ, width, length}
-        float[][] shafts = {
-            {14f, 38f, 3.0f, 19f}, {19f, 41f, 2.4f, 22f}, {24.5f, 39f, 3.4f, 18f},
-            {30f, 40f, 2.6f, 20f}, {11f, 44f, 2.2f, 17f}
-        };
-        for (float[] s : shafts) {
-            addLightShaft(beamPart, s[0], s[1], s[2], s[3], towardSun);
-            addLightShaft(beamPart, -s[0] - 2f, s[1] + 1f, s[2] * 0.9f, s[3], towardSun);
-        }
-        Model beamModel = beamBuilder.end();
-        models.add(beamModel);
-        effects.add(new ModelInstance(beamModel));
+        // Artificial light shafts removed: campus glade lit by natural daylight without fake beams
         // ==========================================
         // HISTORICAL BOUNDARY STONE (1921) & MOSSY BOULDERS
         // (Directly echoing [RT] Boundary Stone from reference image)

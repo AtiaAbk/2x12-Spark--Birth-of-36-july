@@ -118,22 +118,64 @@ final class GladeGeometry {
         }
     }
 
-    /** A hanging leaf spray: 3 intersecting vertical cards pivoting at their top centre for full 3D volume. */
+    /**
+     * A hanging bamboo leaf spray: 4 gracefully drooping cross-cards fanning out and downward
+     * from branch nodes, with outward-facing normals matching real bamboo foliage (Ref 4 & 5).
+     */
     private static void spray(MeshPartBuilder mpb, float x, float y, float z, float yaw, float size) {
         int cell = RNG.nextInt(4);
         float u0 = (cell % 2) * 0.5f, u1 = u0 + 0.5f;
         float v0 = (cell / 2) * 0.5f, v1 = v0 + 0.5f;
-        float half = size * 0.5f;
-        float top = y + 0.06f * size, bottom = y - 0.94f * size;
+        float half = size * 0.55f;
+        float top = y + 0.08f * size;
+        float bottom = y - 0.92f * size;
 
-        // 3 planes at 60 degree increments for lush volumetric foliage
+        // 4 gracefully angled cross-cards at 45 degree intervals for full, natural 3D volume
+        for (int k = 0; k < 4; k++) {
+            float a = yaw + k * (MathUtils.PI / 4f);
+            float ca = MathUtils.cos(a), sa = MathUtils.sin(a);
+            float txTop = ca * half * 0.70f, tzTop = sa * half * 0.70f;
+            float txBot = ca * half * 1.15f, tzBot = sa * half * 1.15f;
+
+            // Outward-facing volumetric normal for soft, natural wrap lighting
+            float nx = ca * 0.55f;
+            float ny = 0.75f;
+            float nz = sa * 0.55f;
+            float nl = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
+            nx /= nl; ny /= nl; nz /= nl;
+
+            V0.setPos(x - txBot, bottom, z - tzBot).setNor(nx, ny, nz).setUV(u0, v1);
+            V1.setPos(x + txBot, bottom, z + tzBot).setNor(nx, ny, nz).setUV(u1, v1);
+            V2.setPos(x + txTop, top, z + tzTop).setNor(nx, ny, nz).setUV(u1, v0);
+            V3.setPos(x - txTop, top, z - tzTop).setNor(nx, ny, nz).setUV(u0, v0);
+            mpb.rect(V0, V1, V2, V3);
+        }
+    }
+
+    /**
+     * A 3D volumetric grass tuft: 3 intersecting cross-cards anchored into the turf,
+     * utilizing the grassTuftAtlas with natural blade splay (matching Ref 2 under-tree turf).
+     */
+    static void grassTuft(MeshPartBuilder mpb, float x, float y, float z, float width, float height, long seed) {
+        RNG.setSeed(TreeGeometry.mix(seed));
+        int cell = RNG.nextInt(4);
+        float u0 = (cell % 2) * 0.5f, u1 = u0 + 0.5f;
+        float v0 = (cell / 2) * 0.5f, v1 = v0 + 0.5f;
+        float halfW = width * 0.5f;
+        float baseY = y - 0.04f;
+        float topY = y + height;
+
+        float baseAngle = RNG.nextFloat() * MathUtils.PI;
         for (int k = 0; k < 3; k++) {
-            float a = yaw + k * (MathUtils.PI / 3f);
-            float tx = MathUtils.cos(a) * half, tz = MathUtils.sin(a) * half;
-            V0.setPos(x - tx, bottom, z - tz).setNor(0f, 1f, 0f).setUV(u0, v1);
-            V1.setPos(x + tx, bottom, z + tz).setNor(0f, 1f, 0f).setUV(u1, v1);
-            V2.setPos(x + tx, top, z + tz).setNor(0f, 1f, 0f).setUV(u1, v0);
-            V3.setPos(x - tx, top, z - tz).setNor(0f, 1f, 0f).setUV(u0, v0);
+            float ang = baseAngle + k * (MathUtils.PI / 3f);
+            float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
+            float tx = ca * halfW, tz = sa * halfW;
+            float nx = -sa * 0.35f, ny = 0.90f, nz = ca * 0.35f;
+
+            V0.setPos(x - tx, baseY, z - tz).setNor(nx, ny, nz).setUV(u0, v1);
+            V1.setPos(x + tx, baseY, z + tz).setNor(nx, ny, nz).setUV(u1, v1);
+            V2.setPos(x + tx * 1.20f, topY, z + tz * 1.20f).setNor(nx, ny, nz).setUV(u1, v0);
+            V3.setPos(x - tx * 1.20f, topY, z - tz * 1.20f).setNor(nx, ny, nz).setUV(u0, v0);
             mpb.rect(V0, V1, V2, V3);
         }
     }

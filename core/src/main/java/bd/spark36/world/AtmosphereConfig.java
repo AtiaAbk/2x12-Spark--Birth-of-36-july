@@ -81,7 +81,7 @@ public final class AtmosphereConfig {
         new Color(0.78f, 0.82f, 0.86f, 1.0f),       // Lower haze
         new Color(1.0f, 0.98f, 0.90f, 0.95f),        // Intense white-gold solar disk
         new Color(1.0f, 0.94f, 0.78f, 0.28f),        // Warm solar corona
-        1.0f,                                       // Full canopy god rays
+        0.0f,                                       // No artificial god rays / shafts
         0.0f,                                       // No rain
         1.0f,                                       // Standard fair weather clouds
         1.0f,                                       // Standard breeze

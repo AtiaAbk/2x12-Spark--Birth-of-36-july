@@ -212,36 +212,7 @@ public class AtmosphereRenderer implements Disposable {
             shapeRenderer.rect(0, 0, w, Math.min(h, yBase), lColor, lColor, lColor, lColor);
         }
 
-        // ── Solar Disk and Corona Rendering ───────────────────────────
-        if (camera != null) {
-            Vector3 sunDir = (weather != null) ? weather.getCurrentSunDirection() : new Vector3(-0.45f, -0.75f, -0.45f).nor();
-            tmpSunDir.set(sunDir).scl(-1f).nor(); // vector toward the sun
-            float sunFacing = camera.direction.dot(tmpSunDir);
-
-            if (sunFacing > 0.05f) {
-                tmpSunProj.set(camera.position).add(tmpSunDir.x * 500f, tmpSunDir.y * 500f, tmpSunDir.z * 500f);
-                camera.project(tmpSunProj, 0, 0, w, h);
-                if (tmpSunProj.z > 0f && tmpSunProj.z < 1.0f) {
-                    float sx = tmpSunProj.x;
-                    float sy = tmpSunProj.y;
-
-                    Color diskColor = (weather != null) ? weather.getCurrentSunDiskColor() : new Color(1.0f, 0.98f, 0.90f, 0.95f);
-                    Color coronaColor = (weather != null) ? weather.getCurrentSunCoronaColor() : new Color(1.0f, 0.94f, 0.78f, 0.28f);
-
-                    // Outer corona
-                    shapeRenderer.setColor(coronaColor.r, coronaColor.g, coronaColor.b, coronaColor.a * sunFacing * 0.40f);
-                    shapeRenderer.circle(sx, sy, h * 0.16f, 32);
-
-                    // Inner corona
-                    shapeRenderer.setColor(coronaColor.r, coronaColor.g, coronaColor.b, coronaColor.a * sunFacing * 0.85f);
-                    shapeRenderer.circle(sx, sy, h * 0.09f, 32);
-
-                    // Crisp solar disk
-                    shapeRenderer.setColor(diskColor.r, diskColor.g, diskColor.b, diskColor.a * sunFacing);
-                    shapeRenderer.circle(sx, sy, h * 0.032f, 28);
-                }
-            }
-        }
+        // ── Clean natural sky (artificial solar disks removed for authentic natural lighting) ──
 
         // ── Atmospheric horizon glow ──────────────────────────────────
         float pulse = 0.04f + 0.012f * MathUtils.sin(time * 0.5f);

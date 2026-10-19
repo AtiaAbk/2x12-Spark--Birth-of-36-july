@@ -32,6 +32,7 @@ public class TextureFactory implements Disposable {
     public final Texture whiteBlossomAtlas;
     public final Texture kashfulAtlas;
     public final Texture lotusAtlas;
+    public final Texture grassTuftAtlas;
     public final Texture colonialWindow;
     public final Texture teakDoorTexture;
     public final Texture curzonGrandPortal;
@@ -99,6 +100,7 @@ public class TextureFactory implements Disposable {
         whiteBlossomAtlas = createWhiteBlossomAtlas();
         kashfulAtlas = createKashfulAtlas();
         lotusAtlas = createLotusAtlas();
+        grassTuftAtlas = createGrassTuftAtlas();
         colonialWindow = createColonialWindow();
         teakDoorTexture = createTeakDoorTexture();
         curzonGrandPortal = createCurzonGrandPortal();
@@ -137,7 +139,7 @@ public class TextureFactory implements Disposable {
 
         textures.addAll(brickPavement, curzonBrick, lawnGrass, treeBark,
                         foliage, krishnachuraBlossom, leafClump, blossomClump, whiteBlossomClump,
-                        leafAtlas, bambooAtlas, whiteBlossomAtlas, kashfulAtlas, lotusAtlas,
+                        leafAtlas, bambooAtlas, whiteBlossomAtlas, kashfulAtlas, lotusAtlas, grassTuftAtlas,
                         colonialWindow, teakDoorTexture, curzonGrandPortal, curzonPorticoTripleWindow,
                         dirtPath, lightBeam, rockSurface, bambooCulm, bambooFoliage,
                         bushFoliage, weatheredStone, curzonWater, waterRipple,
@@ -493,38 +495,39 @@ public class TextureFactory implements Disposable {
     private Texture createLeafAtlas() {
         int cell = 256;
         Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
-        pix.setColor(0f, 0f, 0f, 0f);
+        // Color bleed transparent background with matching foliage green to eliminate black halos
+        pix.setColor(0.18f, 0.42f, 0.16f, 0f);
         pix.fill();
         final float up = -MathUtils.HALF_PI; // pixmap y points down, so "up" is -90 degrees
 
-        // Cell 0: one broad ovate leaf (calibrated to reference: #17451E base -> #39852E tip)
+        // Cell 0: broad tropical leaf (Samanea saman rain tree / banyan leaf)
         drawLeaf(pix, 0, 0, 128, 244, 226, 74, up,
-            0.090f, 0.271f, 0.118f, 0.224f, 0.522f, 0.180f);
+            0.12f, 0.34f, 0.14f, 0.28f, 0.60f, 0.20f);
 
-        // Cell 1: fan of three leaves in natural layered summer greens (#24652A, #59A934, #8BCB45)
-        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up - 0.62f, 0.141f, 0.396f, 0.165f, 0.349f, 0.663f, 0.204f);
-        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up + 0.62f, 0.090f, 0.271f, 0.118f, 0.545f, 0.796f, 0.271f);
-        drawLeaf(pix, cell, 0, 128, 246, 214, 54, up, 0.141f, 0.396f, 0.165f, 0.224f, 0.522f, 0.180f);
+        // Cell 1: fan of three spreading foliage leaves in lush summer greens
+        drawLeaf(pix, cell, 0, 128, 246, 168, 48, up - 0.58f, 0.16f, 0.42f, 0.18f, 0.38f, 0.70f, 0.24f);
+        drawLeaf(pix, cell, 0, 128, 246, 168, 48, up + 0.58f, 0.12f, 0.32f, 0.14f, 0.46f, 0.76f, 0.26f);
+        drawLeaf(pix, cell, 0, 128, 246, 214, 56, up, 0.16f, 0.42f, 0.18f, 0.28f, 0.58f, 0.20f);
 
-        // Cell 2: feathery compound leaf: a central rachis with pairs of small leaflets
+        // Cell 2: feathery compound frond with central rachis and pairs of leaflets
         int ox = 0, oy = cell;
         for (int i = 0; i < 15; i++) {
             float t = 0.10f + i * 0.058f;
             float ry = 246f - t * 232f;
             float rx = 128f + MathUtils.sin(t * 2.2f) * 10f;
             float len = 78f * (1f - 0.45f * t);
-            float hw = 13f * (1f - 0.25f * t);
-            drawLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f, 0.110f, 0.320f, 0.130f, 0.320f, 0.620f, 0.190f);
-            drawLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f, 0.110f, 0.320f, 0.130f, 0.320f, 0.620f, 0.190f);
+            float hw = 14f * (1f - 0.25f * t);
+            drawLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f, 0.14f, 0.36f, 0.15f, 0.34f, 0.66f, 0.22f);
+            drawLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f, 0.14f, 0.36f, 0.15f, 0.34f, 0.66f, 0.22f);
         }
-        drawLeaf(pix, ox, oy, 128, 250, 236, 4, up, 0.14f, 0.28f, 0.10f, 0.24f, 0.42f, 0.14f);
+        drawLeaf(pix, ox, oy, 128, 250, 236, 4, up, 0.18f, 0.34f, 0.12f, 0.28f, 0.48f, 0.16f);
 
         // Cell 3: blazing scarlet Krishnachura blossom clusters over feathery leaflets
         ox = cell;
         oy = cell;
-        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up - 0.55f, 0.110f, 0.320f, 0.130f, 0.280f, 0.580f, 0.170f);
-        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up + 0.55f, 0.110f, 0.320f, 0.130f, 0.280f, 0.580f, 0.170f);
-        drawLeaf(pix, ox, oy, 128, 250, 190, 36, up, 0.141f, 0.396f, 0.165f, 0.349f, 0.663f, 0.204f);
+        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up - 0.55f, 0.14f, 0.36f, 0.15f, 0.32f, 0.64f, 0.19f);
+        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up + 0.55f, 0.14f, 0.36f, 0.15f, 0.32f, 0.64f, 0.19f);
+        drawLeaf(pix, ox, oy, 128, 250, 190, 36, up, 0.16f, 0.42f, 0.18f, 0.38f, 0.70f, 0.22f);
 
         float[][] flowers = {
             {92, 96}, {168, 86}, {124, 140}, {70, 168}, {180, 158}, {132, 62},
@@ -533,10 +536,8 @@ public class TextureFactory implements Disposable {
         for (float[] f : flowers) {
             for (int p = 0; p < 5; p++) {
                 float ang = p * MathUtils.PI2 / 5f + f[0] * 0.15f;
-                // Rich scarlet-crimson petals
-                drawLeaf(pix, ox, oy, f[0], f[1], 44f, 17f, ang, 0.90f, 0.08f, 0.05f, 0.98f, 0.24f, 0.08f);
+                drawLeaf(pix, ox, oy, f[0], f[1], 44f, 17f, ang, 0.92f, 0.12f, 0.08f, 0.99f, 0.28f, 0.10f);
             }
-            // Golden central stamens
             pix.setColor(1.0f, 0.90f, 0.20f, 1f);
             pix.fillCircle(ox + (int) f[0], oy + (int) f[1], 5);
             pix.setColor(1.0f, 0.98f, 0.60f, 1f);
@@ -552,63 +553,64 @@ public class TextureFactory implements Disposable {
 
     /**
      * 2x2 atlas of hanging bamboo leaf sprays (each cell 256px, hung from the top-centre):
-     * Calibrated to the Dense_Realistic_Bamboo_Clump specification leaf palette:
-     * #123D23, #1E542B, #2F7136, #4B8A43, #79A957.
+     * Strictly calibrated to the Bamboo reference photos (Ref 4 & 5):
+     * Slender lanceolate leaf blades with clear pale green midrib, subtle micro-veins,
+     * delicate drooping posture, and color bleeding background to eliminate dark borders.
      */
     private Texture createBambooAtlas() {
         int cell = 256;
         Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
-        pix.setColor(0f, 0f, 0f, 0f);
+        // Color bleed transparent background with matching bamboo green
+        pix.setColor(0.24f, 0.52f, 0.18f, 0f);
         pix.fill();
         final float down = MathUtils.HALF_PI; // pixmap y points down
 
-        // Palette RGB constants
-        final float c0R = 0.071f, c0G = 0.239f, c0B = 0.137f; // #123D23
-        final float c1R = 0.118f, c1G = 0.329f, c1B = 0.169f; // #1E542B
-        final float c2R = 0.184f, c2G = 0.443f, c2B = 0.212f; // #2F7136
-        final float c3R = 0.294f, c3G = 0.541f, c3B = 0.263f; // #4B8A43
-        final float c4R = 0.475f, c4G = 0.663f, c4B = 0.341f; // #79A957
+        // Palette RGB constants calibrated to Ref 4 & 5:
+        final float c0R = 0.12f, c0G = 0.28f, c0B = 0.14f; // deep forest bamboo
+        final float c1R = 0.18f, c1G = 0.38f, c1B = 0.16f; // natural bamboo green
+        final float c2R = 0.26f, c2G = 0.50f, c2B = 0.20f; // vibrant mid green
+        final float c3R = 0.38f, c3G = 0.62f, c3B = 0.24f; // fresh shoot green
+        final float c4R = 0.52f, c4G = 0.74f, c4B = 0.28f; // sunlit golden-green tip
 
-        // Cell 0: full spray, nine lanceolate leaves fanning from the pivot in rich natural bamboo green
-        float[] fan = {-1.15f, -0.85f, -0.55f, -0.25f, 0f, 0.25f, 0.55f, 0.85f, 1.15f};
-        float[] fanLen = {150f, 175f, 205f, 220f, 230f, 220f, 205f, 175f, 150f};
-        for (int i = 0; i < fan.length; i++) {
-            boolean outer = (i == 0 || i == fan.length - 1);
-            float baseR = outer ? c0R : c1R;
-            float baseG = outer ? c0G : c1G;
-            float baseB = outer ? c0B : c1B;
-            float tipR = (i % 2 == 0) ? c3R : c2R;
-            float tipG = (i % 2 == 0) ? c3G : c2G;
-            float tipB = (i % 2 == 0) ? c3B : c2B;
-            drawLeaf(pix, 0, 0, 128, 10, fanLen[i], 11f, down + fan[i],
-                baseR, baseG, baseB, tipR, tipG, tipB);
+        // In each cell, draw delicate central branchlet twig and drooping lanceolate blades:
+        // Cell 0: Full drooping bamboo spray with 9 lanceolate blades
+        drawBambooTwig(pix, 0, 0, 128, 6, 128, 55);
+        float[] fan0 = {-1.05f, -0.75f, -0.45f, -0.20f, 0f, 0.20f, 0.45f, 0.75f, 1.05f};
+        float[] len0 = {155f, 180f, 210f, 225f, 235f, 225f, 210f, 180f, 155f};
+        for (int i = 0; i < fan0.length; i++) {
+            float sy = 12f + i * 4.5f;
+            drawBambooLeaf(pix, 0, 0, 128, sy, len0[i], 9.5f, down + fan0[i],
+                c1R, c1G, c1B, (i % 2 == 0) ? c4R : c3R, (i % 2 == 0) ? c4G : c3G, (i % 2 == 0) ? c4B : c3B);
         }
 
-        // Cell 1: airy spray of seven long slender leaves
-        for (int i = 0; i < 7; i++) {
-            float a = -0.9f + i * 0.3f;
-            float len = 205f + 20f * (1f - Math.abs(a));
-            drawLeaf(pix, cell, 0, 128, 10, len, 8.5f, down + a,
+        // Cell 1: Airy graceful spray with 7 slender arching blades
+        drawBambooTwig(pix, cell, 0, 128, 6, 128, 65);
+        float[] fan1 = {-0.85f, -0.55f, -0.25f, 0.05f, 0.35f, 0.65f, 0.95f};
+        float[] len1 = {175f, 205f, 225f, 235f, 220f, 195f, 165f};
+        for (int i = 0; i < fan1.length; i++) {
+            float sy = 14f + i * 5.5f;
+            drawBambooLeaf(pix, cell, 0, 128, sy, len1[i], 8.5f, down + fan1[i],
                 c1R, c1G, c1B, c3R, c3G, c3B);
         }
 
-        // Cell 2: short sprig of five leaves in rich deep forest and emerald bamboo
-        for (int i = 0; i < 5; i++) {
-            float a = -0.6f + i * 0.3f;
-            float len = 135f + 25f * (1f - Math.abs(a));
-            drawLeaf(pix, 0, cell, 128, 10, len, 10.5f, down + a,
+        // Cell 2: Young vibrant emerald bamboo sprig of 5 drooping blades
+        drawBambooTwig(pix, 0, cell, 128, 6, 128, 48);
+        float[] fan2 = {-0.60f, -0.30f, 0f, 0.30f, 0.60f};
+        float[] len2 = {145f, 185f, 215f, 185f, 145f};
+        for (int i = 0; i < fan2.length; i++) {
+            float sy = 15f + i * 6f;
+            drawBambooLeaf(pix, 0, cell, 128, sy, len2[i], 10.5f, down + fan2[i],
                 c0R, c0G, c0B, c2R, c2G, c2B);
         }
 
-        // Cell 3: spray with sunlit golden-emerald highlights on tips
-        for (int i = 0; i < 8; i++) {
-            float a = -1.0f + i * 0.285f;
-            boolean sunlit = (i % 3 == 1);
-            float tipR = sunlit ? c4R : c3R;
-            float tipG = sunlit ? c4G : c3G;
-            float tipB = sunlit ? c4B : c3B;
-            drawLeaf(pix, cell, cell, 128, 10, 195f, 10f, down + a,
-                c1R, c1G, c1B, tipR, tipG, tipB);
+        // Cell 3: Sun-dappled spray with 8 lanceolate blades and golden-green highlights
+        drawBambooTwig(pix, cell, cell, 128, 6, 128, 58);
+        float[] fan3 = {-0.95f, -0.68f, -0.40f, -0.12f, 0.15f, 0.42f, 0.70f, 0.98f};
+        for (int i = 0; i < fan3.length; i++) {
+            float sy = 12f + i * 5f;
+            boolean highlight = (i % 3 == 1);
+            drawBambooLeaf(pix, cell, cell, 128, sy, 200f - Math.abs(fan3[i]) * 45f, 9.0f, down + fan3[i],
+                c1R, c1G, c1B, highlight ? c4R : c3R, highlight ? c4G : c3G, highlight ? c4B : c3B);
         }
 
         Texture tex = new Texture(pix, Format.RGBA8888, true);
@@ -616,6 +618,139 @@ public class TextureFactory implements Disposable {
         tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
         pix.dispose();
         return tex;
+    }
+
+    private void drawBambooTwig(Pixmap pix, int ox, int oy, int x0, int y0, int x1, int y1) {
+        pix.setColor(0.38f, 0.32f, 0.16f, 1f); // delicate bamboo twig brown
+        pix.drawLine(ox + x0, oy + y0, ox + x1, oy + y1);
+        pix.drawLine(ox + x0 + 1, oy + y0, ox + x1 + 1, oy + y1);
+    }
+
+    private void drawBambooLeaf(Pixmap pix, int ox, int oy, float bx, float by, float length, float maxHalfWidth,
+                                float angle, float baseR, float baseG, float baseB, float tipR, float tipG, float tipB) {
+        float dx = MathUtils.cos(angle), dy = MathUtils.sin(angle);
+        float px = -dy, py = dx;
+
+        float reach = length + maxHalfWidth + 2f;
+        int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(255, (int) (bx + reach));
+        int minY = Math.max(0, (int) (by - reach)), maxY = Math.min(255, (int) (by + reach));
+
+        for (int y = minY; y <= maxY; y++) {
+            for (int x = minX; x <= maxX; x++) {
+                float rx = x + 0.5f - bx, ry = y + 0.5f - by;
+                float along = rx * dx + ry * dy;
+                float t = along / length;
+                if (t < 0f || t > 1f) continue;
+                float across = Math.abs(rx * px + ry * py);
+                // Slender lanceolate profile: widest at t ~ 0.28, tapering gradually to needle tip at t = 1.0
+                float profile = (float) Math.sin(t * Math.PI) * (1.15f - 0.40f * t);
+                float w = maxHalfWidth * profile;
+                if (across > w + 0.5f) continue;
+
+                float alpha = MathUtils.clamp(w - across + 0.5f, 0f, 1f);
+                float edge = w > 0.5f ? across / w : 1f;
+
+                // Color gradient along blade length
+                float r = MathUtils.lerp(baseR, tipR, t);
+                float g = MathUtils.lerp(baseG, tipG, t);
+                float b = MathUtils.lerp(baseB, tipB, t);
+
+                // Pale bright green central midrib (pale yellowish-green, characteristic of bamboo in Ref 4 & 5)
+                float midrib = (across < 1.3f) ? 0.08f : 0f;
+                // Longitudinal fine parallel venation (parallel micro-striations)
+                float fineVein = (MathUtils.sin(across * 3.8f) > 0.6f) ? 0.02f : 0f;
+
+                pix.setColor(MathUtils.clamp(r + midrib + fineVein, 0f, 1f),
+                             MathUtils.clamp(g + midrib * 1.3f + fineVein, 0f, 1f),
+                             MathUtils.clamp(b + midrib * 0.4f, 0f, 1f), alpha);
+                pix.drawPixel(ox + x, oy + y);
+            }
+        }
+    }
+
+    /**
+     * 2x2 atlas of natural volumetric 3D grass tufts (each cell 256px):
+     * Multi-blade organic clusters for planting around tree trunks, buttress roots, and lawn glades.
+     * Calibrated to under-tree turf in reference image (Ref 2).
+     */
+    private Texture createGrassTuftAtlas() {
+        int cell = 256;
+        Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
+        // Color bleed transparent background with lush monsoon grass green
+        pix.setColor(0.20f, 0.45f, 0.18f, 0f);
+        pix.fill();
+
+        // 4 cells of diverse 3D grass tufts:
+        // Cell 0: Dense lush upright and arching lawn grass tuft (matching Ref 2 under-tree turf)
+        drawGrassTuft(pix, 0, 0, 16, 220f, 6.5f, 0.85f);
+
+        // Cell 1: Spreading meadow grass cluster with gracefully drooping outer blades
+        drawGrassTuft(pix, cell, 0, 18, 200f, 5.8f, 1.15f);
+
+        // Cell 2: Clump of fresh young monsoon grass blades
+        drawGrassTuft(pix, 0, cell, 14, 185f, 6.0f, 0.70f);
+
+        // Cell 3: Tall wild grass tuft for buttress roots and grove undergrowth
+        drawGrassTuft(pix, cell, cell, 20, 235f, 6.2f, 0.95f);
+
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
+        pix.dispose();
+        return tex;
+    }
+
+    private void drawGrassTuft(Pixmap pix, int ox, int oy, int bladeCount, float maxHeight, float maxHalfW, float spread) {
+        float bx = 128f;
+        float by = 250f; // base at bottom of cell
+
+        for (int b = 0; b < bladeCount; b++) {
+            float frac = (float) b / (float) (bladeCount - 1);
+            float angleOffset = (frac - 0.5f) * spread;
+            float angle = -MathUtils.HALF_PI + angleOffset;
+            float h = maxHeight * (0.75f + 0.30f * MathUtils.sin(b * 2.3f));
+            float hw = maxHalfW * (0.80f + 0.35f * MathUtils.cos(b * 1.7f));
+            float curvature = angleOffset * 0.45f;
+
+            drawCurvedGrassBlade(pix, ox, oy, bx + (frac - 0.5f) * 22f, by, h, hw, angle, curvature);
+        }
+    }
+
+    private void drawCurvedGrassBlade(Pixmap pix, int ox, int oy, float bx, float by, float length, float maxHalfW, float startAngle, float curve) {
+        int steps = (int) (length * 0.8f);
+        float curX = bx;
+        float curY = by;
+        float angle = startAngle;
+
+        for (int s = 0; s <= steps; s++) {
+            float t = (float) s / (float) steps;
+            angle += curve / (float) steps;
+            float dirX = MathUtils.cos(angle);
+            float dirY = MathUtils.sin(angle);
+            float perpX = -dirY;
+            float perpY = dirX;
+
+            float w = maxHalfW * (1.0f - t * 0.92f); // tapers to sharp tip at top
+            float r = MathUtils.lerp(0.11f, 0.46f, t);
+            float g = MathUtils.lerp(0.25f, 0.70f, t);
+            float b = MathUtils.lerp(0.10f, 0.22f, t);
+
+            int span = (int) Math.ceil(w);
+            for (int d = -span; d <= span; d++) {
+                if (Math.abs(d) <= w) {
+                    int px = Math.round(curX + perpX * d);
+                    int py = Math.round(curY + perpY * d);
+                    if (px >= 0 && px < 256 && py >= 0 && py < 256) {
+                        float alpha = MathUtils.clamp(w - Math.abs(d) + 0.5f, 0f, 1f);
+                        float highlight = (Math.abs(d) < 1.0f) ? 0.05f : 0f;
+                        pix.setColor(r + highlight, g + highlight * 1.2f, b, alpha);
+                        pix.drawPixel(ox + px, oy + py);
+                    }
+                }
+            }
+            curX += dirX * (length / steps);
+            curY += dirY * (length / steps);
+        }
     }
 
     /**
@@ -629,7 +764,8 @@ public class TextureFactory implements Disposable {
     private Texture createWhiteBlossomAtlas() {
         int cell = 256;
         Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
-        pix.setColor(0f, 0f, 0f, 0f);
+        // Color bleed transparent background with foliage green
+        pix.setColor(0.18f, 0.44f, 0.16f, 0f);
         pix.fill();
 
         // Cell 0: Main upright feathery bipinnate frond ("jira jira pata")
@@ -1813,19 +1949,18 @@ public class TextureFactory implements Disposable {
                 float g = MathUtils.lerp(bg, tg, t) * gain;
                 float b = MathUtils.lerp(bb, tb, t) * gain;
 
-                // Subtle natural midrib and lateral veins; the rim darkens
+                // Subtle natural midrib and lateral veins; NO darkening rim!
                 float vein = 0f;
-                if (across < 1.6f) vein = 0.03f;
+                if (across < 1.6f) vein = 0.035f;
                 else {
                     float phase = (t * 9f - edge * 1.6f) % 1f;
                     if (phase < 0f) phase += 1f;
-                    if (phase < 0.10f) vein = 0.015f;
+                    if (phase < 0.10f) vein = 0.02f;
                 }
-                float rim = 1f - 0.30f * MathUtils.clamp((edge - 0.72f) / 0.28f, 0f, 1f);
 
-                pix.setColor(MathUtils.clamp((r + vein) * rim, 0f, 1f),
-                             MathUtils.clamp((g + vein) * rim, 0f, 1f),
-                             MathUtils.clamp((b + vein * 0.5f) * rim, 0f, 1f), alpha);
+                pix.setColor(MathUtils.clamp(r + vein, 0f, 1f),
+                             MathUtils.clamp(g + vein, 0f, 1f),
+                             MathUtils.clamp(b + vein * 0.5f, 0f, 1f), alpha);
                 pix.drawPixel(ox + x, oy + y);
             }
         }
@@ -1866,8 +2001,9 @@ public class TextureFactory implements Disposable {
     private Texture createFoliage() {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
-        pix.setColor(0f, 0f, 0f, 0f);
-        pix.fill(); // Fully transparent background for crisp alpha cutout
+        // Color bleed transparent background with foliage green to eliminate black halos
+        pix.setColor(0.18f, 0.42f, 0.16f, 0f);
+        pix.fill();
 
         // Central woody branch network
         pix.setColor(0.28f, 0.18f, 0.12f, 1f);
@@ -1941,8 +2077,9 @@ public class TextureFactory implements Disposable {
     private Texture createKrishnachuraBlossom() {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
-        pix.setColor(0f, 0f, 0f, 0f);
-        pix.fill(); // Fully transparent background
+        // Color bleed transparent background with foliage green to eliminate black halos
+        pix.setColor(0.18f, 0.42f, 0.16f, 0f);
+        pix.fill();
 
         // Delicate woody branchlets
         pix.setColor(0.30f, 0.20f, 0.12f, 1f);
@@ -1996,55 +2133,48 @@ public class TextureFactory implements Disposable {
         int height = 512;
         Pixmap pix = new Pixmap(width, height, Format.RGBA8888);
 
-        // Bamboo culm palette from reference images (Ref 4 & 5):
-        // #B8A832 bright yellow-green young culm (top)
-        // #9AB020 natural yellow-green mid culm
-        // #7A9A20 deeper yellow-green mature culm (base)
-        // Cylindrical shading: bright center, shadowed edges
+        // Bamboo culm specification palette:
+        // #183B20 (deep forest green), #42652B (natural bamboo green), #68713A (olive green),
+        // #92733B (golden olive), #9A815D (weathered tan)
         for (int x = 0; x < width; x++) {
             float xNorm = (float) x / (float) width;
-            // Cylinder cross-section lighting: bright center, dark edges
-            float cylLight = 0.55f + 0.50f * MathUtils.sin(xNorm * MathUtils.PI);
-            // Subtle vertical fiber grain
-            float fiber = MathUtils.sin(x * 1.4f) * 0.025f + MathUtils.sin(x * 4.1f) * 0.012f;
+            float cylLight = 0.65f + 0.35f * MathUtils.sin(xNorm * MathUtils.PI);
+            float fiber = MathUtils.sin(x * 1.2f) * 0.035f + MathUtils.sin(x * 3.4f) * 0.02f;
 
-            // Slight color variation band along width (culm age/sun exposure)
-            float culmVar = (MathUtils.sin(xNorm * MathUtils.PI2 * 1.5f) + 1f) * 0.5f;
+            // Longitudinal color bands giving natural culm age variation across the sheet
+            float culmAge = (MathUtils.sin(xNorm * MathUtils.PI2 * 2f) + 1f) * 0.5f;
 
             for (int y = 0; y < height; y++) {
-                // Height-gradient: slightly yellower at top (young growth), greener at base
-                float yNorm = (float) y / (float) height;
-                // Base yellow-green: lerp from #B8A832 (0.722, 0.659, 0.196) to #7A9A20 (0.478, 0.604, 0.125)
-                float rBase = MathUtils.lerp(0.722f, 0.478f, yNorm) + culmVar * 0.04f;
-                float gBase = MathUtils.lerp(0.659f, 0.604f, yNorm) + culmVar * 0.03f;
-                float bBase = MathUtils.lerp(0.196f, 0.125f, yNorm);
+                // Base culm color blending from natural bamboo green #42652B to olive #68713A
+                float rBase = MathUtils.lerp(0.259f, 0.408f, culmAge);
+                float gBase = MathUtils.lerp(0.396f, 0.443f, culmAge);
+                float bBase = MathUtils.lerp(0.169f, 0.227f, culmAge);
 
-                float r = MathUtils.clamp((rBase + fiber) * cylLight, 0.15f, 0.95f);
-                float g = MathUtils.clamp((gBase + fiber) * cylLight, 0.18f, 0.88f);
-                float b = MathUtils.clamp((bBase + fiber * 0.5f) * cylLight, 0.03f, 0.28f);
+                // Vertical micro-fibers and subtle golden olive undertones #92733B
+                float r = MathUtils.clamp((rBase + fiber) * cylLight, 0.094f, 0.604f);
+                float g = MathUtils.clamp((gBase + fiber) * cylLight, 0.231f, 0.550f);
+                float b = MathUtils.clamp((bBase + fiber * 0.5f) * cylLight, 0.125f, 0.365f);
 
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
             }
         }
 
-        // Horizontal bamboo joints / raised nodal rings — dark brown rings (#3D3010)
+        // Horizontal bamboo joints / raised nodal rings spaced along culm
         int nodeInterval = 64;
         for (int y = nodeInterval; y < height; y += nodeInterval) {
-            // Swollen nodal bulge highlight (pale yellow-tan just above ring)
-            pix.setColor(0.82f, 0.78f, 0.30f, 0.90f);
-            pix.drawLine(0, y - 3, width, y - 3);
+            // Upper swollen nodal highlight line (golden olive / pale ivory: #92733B)
+            pix.setColor(0.573f, 0.481f, 0.251f, 0.95f);
             pix.drawLine(0, y - 2, width, y - 2);
 
-            // Dark ring itself (#3D3010 dark brown-green)
-            pix.setColor(0.239f, 0.188f, 0.063f, 1f);
+            // Dark joint indentation ring (#183B20 deep forest green / woody boundary)
+            pix.setColor(0.094f, 0.181f, 0.095f, 1f);
             pix.drawLine(0, y - 1, width, y - 1);
-            pix.drawLine(0, y,     width, y);
-            pix.drawLine(0, y + 1, width, y + 1);
+            pix.drawLine(0, y, width, y);
 
-            // Lower shadow below ring
-            pix.setColor(0.38f, 0.42f, 0.14f, 0.80f);
-            pix.drawLine(0, y + 2, width, y + 2);
+            // Lower joint ring shadow (#34372A dark olive)
+            pix.setColor(0.204f, 0.216f, 0.165f, 0.85f);
+            pix.drawLine(0, y + 1, width, y + 1);
         }
 
         Texture tex = new Texture(pix);
@@ -2057,8 +2187,9 @@ public class TextureFactory implements Disposable {
     private Texture createBambooFoliage() {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
-        pix.setColor(0f, 0f, 0f, 0f);
-        pix.fill(); // 100% transparent background
+        // Color bleed transparent background with bamboo green
+        pix.setColor(0.24f, 0.52f, 0.18f, 0f);
+        pix.fill();
 
         // Slender bamboo twigs
         pix.setColor(0.38f, 0.46f, 0.18f, 1f);
@@ -2107,8 +2238,9 @@ public class TextureFactory implements Disposable {
     private Texture createBushFoliage() {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
-        pix.setColor(0f, 0f, 0f, 0f);
-        pix.fill(); // Transparent background
+        // Color bleed transparent background with foliage green
+        pix.setColor(0.18f, 0.44f, 0.16f, 0f);
+        pix.fill();
 
         // Ground-hugging shrub dome with radiating rosettes of serrated leaves
         float[][] bushCenters = {
@@ -2342,8 +2474,10 @@ public class TextureFactory implements Disposable {
                         if (Math.abs(d) < 1.0f) {
                             pix.setColor(veinCol);
                         } else {
-                            float edgeDarken = 1.0f - 0.22f * (Math.abs(d) / (w + 0.01f));
-                            pix.setColor(bladeCol.r * edgeDarken, bladeCol.g * edgeDarken, bladeCol.b * edgeDarken, 1f);
+                            float edgeSoft = 1.0f + 0.04f * (Math.abs(d) / (w + 0.01f));
+                            pix.setColor(MathUtils.clamp(bladeCol.r * edgeSoft, 0f, 1f),
+                                         MathUtils.clamp(bladeCol.g * edgeSoft, 0f, 1f),
+                                         MathUtils.clamp(bladeCol.b * edgeSoft, 0f, 1f), 1f);
                         }
                         pix.drawPixel(ix, iy);
                     }

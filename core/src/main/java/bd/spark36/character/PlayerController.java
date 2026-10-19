@@ -328,10 +328,14 @@ public class PlayerController {
         boolean dodgeKey = false;
 
         if (inputEnabled) {
-            boolean up = GameInput.isPressed(GameAction.MOVE_FORWARD);
-            boolean down = GameInput.isPressed(GameAction.MOVE_BACK);
-            boolean left = GameInput.isPressed(GameAction.MOVE_LEFT);
-            boolean right = GameInput.isPressed(GameAction.MOVE_RIGHT);
+            boolean up = GameInput.isPressed(GameAction.MOVE_FORWARD) ||
+                         (Gdx.input != null && (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP)));
+            boolean down = GameInput.isPressed(GameAction.MOVE_BACK) ||
+                           (Gdx.input != null && (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)));
+            boolean left = GameInput.isPressed(GameAction.MOVE_LEFT) ||
+                           (Gdx.input != null && (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)));
+            boolean right = GameInput.isPressed(GameAction.MOVE_RIGHT) ||
+                            (Gdx.input != null && (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)));
 
             // SPRINT / RUN: SHIFT, CONTROL, or R key
             sprintKey = GameInput.isPressed(GameAction.SPRINT) ||

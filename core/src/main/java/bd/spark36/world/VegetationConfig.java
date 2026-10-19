@@ -18,14 +18,14 @@ public final class VegetationConfig {
     public static final int SPECIES_BANYAN        = 4; // Ficus benghalensis (Sprawling limbs and aerial prop roots)
 
     // ── Physically Grounded Leaf & Card Dimensions (World Scale: 1 unit = 1m) ──
-    /** Realistic broadleaf card size (Rain tree): ~38 cm across. */
-    public static final float RAIN_TREE_LEAF_CARD_SIZE = 0.42f;
+    /** Realistic broadleaf card size (Rain tree): ~35 cm across. */
+    public static final float RAIN_TREE_LEAF_CARD_SIZE = 0.35f;
 
-    /** Bipinnate frond card size (Krishnachura compound leaf): ~36 cm across. */
-    public static final float KRISHNA_LEAF_CARD_SIZE = 0.36f;
+    /** Bipinnate frond card size (Krishnachura compound leaf): ~32 cm across. */
+    public static final float KRISHNA_LEAF_CARD_SIZE = 0.32f;
 
-    /** Blossom spray card size (White blossom / cherry / magnolia): ~38 cm across. */
-    public static final float WHITE_BLOSSOM_CARD_SIZE = 0.38f;
+    /** Blossom spray card size (White blossom / cherry / magnolia): ~34 cm across. */
+    public static final float WHITE_BLOSSOM_CARD_SIZE = 0.34f;
 
     /** Palm frond feather card width and length. */
     public static final float PALM_FROND_LENGTH = 4.8f;

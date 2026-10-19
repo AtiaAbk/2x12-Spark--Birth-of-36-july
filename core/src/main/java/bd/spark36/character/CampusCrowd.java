@@ -67,14 +67,18 @@ public class CampusCrowd {
                 float nx = -dz / len, nz = dx / len;
 
                 // Pick an initial lane offset
-                float[] edgeLanes = lanes[e];
-                float chosenLane = (edgeLanes != null && edgeLanes.length > 0) ?
-                    edgeLanes[MathUtils.random(edgeLanes.length - 1)] : 0f;
+                float chosenLane = (i % 2 == 0 ? 1f : -1f) * MathUtils.random(0.3f, 1.2f);
+                float spawnX = MathUtils.lerp(a[0], b[0], t) + nx * chosenLane;
+                float spawnZ = MathUtils.lerp(a[1], b[1], t) + nz * chosenLane;
+                // Keep the spawn area at the main gate (Z > 56m, |X| < 8m) completely clear of standing NPCs
+                if (Math.abs(spawnX) < 8f && spawnZ > 56f) {
+                    spawnZ = 52f - (float) i * 2.2f;
+                }
 
                 s.setPosition(
-                    MathUtils.lerp(a[0], b[0], t) + nx * chosenLane,
-                    graph.supportHeight(a[0], a[1]),
-                    MathUtils.lerp(a[1], b[1], t) + nz * chosenLane
+                    spawnX,
+                    graph.supportHeight(spawnX, spawnZ),
+                    spawnZ
                 );
                 s.setHeading(MathUtils.atan2(dx, dz) * MathUtils.radiansToDegrees);
             }
@@ -146,12 +150,14 @@ public class CampusCrowd {
 
                 case 1: // July 1–14: Peaceful Academic Life & Early Quota Awareness
                 default:
-                    if (i % 4 == 0) {
-                        s.transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(4f, 9f));
-                    } else if (i % 4 == 1) {
-                        s.transitionTo(NpcBehaviorState.IDLE, MathUtils.random(3f, 8f));
+                    if (i % 3 == 0) {
+                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(14f, 28f));
+                        s.routeToNode(graph, CampusWaypointGraph.NODE_ARTS_PLAZA);
+                    } else if (i % 3 == 1) {
+                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(12f, 24f));
+                        s.routeToNode(graph, CampusWaypointGraph.NODE_CURZON_STEPS);
                     } else {
-                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(8f, 20f));
+                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(10f, 20f));
                     }
                     break;
             }
