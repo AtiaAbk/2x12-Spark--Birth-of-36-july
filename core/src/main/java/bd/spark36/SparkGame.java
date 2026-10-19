@@ -14,6 +14,9 @@ import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import bd.spark36.camera.CinematicCamera;
+import bd.spark36.render.RenderPipelineConfig;
+import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
+import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
 import bd.spark36.character.CampusCrowd;
 import bd.spark36.character.PlayerController;
 import bd.spark36.character.StudentMesh;
@@ -131,8 +134,18 @@ public class SparkGame extends ApplicationAdapter {
     private void initGameplay() {
         if (gameplayInitialized) return;
 
-        modelBatch = new ModelBatch();
-        shadowBatch = new ModelBatch(new DepthShaderProvider());
+        if (RenderPipelineConfig.pbrEnabled) {
+            PBRShaderConfig pbrConfig = PBRShaderProvider.createDefaultConfig();
+            pbrConfig.numDirectionalLights = 2;
+            pbrConfig.numBones = 16;
+            pbrConfig.manualGammaCorrection = false;
+            pbrConfig.manualSRGB = PBRShaderConfig.SRGB.FAST;
+            modelBatch = new ModelBatch(PBRShaderProvider.createDefault(pbrConfig));
+            shadowBatch = new ModelBatch(PBRShaderProvider.createDefaultDepth(16));
+        } else {
+            modelBatch = new ModelBatch();
+            shadowBatch = new ModelBatch(new DepthShaderProvider());
+        }
         textures = new TextureFactory();
         studentMesh = new StudentMesh(textures);
         player = new PlayerController();

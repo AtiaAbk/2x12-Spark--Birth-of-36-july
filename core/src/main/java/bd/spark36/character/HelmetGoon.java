@@ -17,6 +17,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import bd.spark36.world.TextureFactory;
+import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 
 /**
  * The Antagonist Boss for Level 1: A helmet-wearing, lathi-wielding student thug/goon
@@ -127,6 +128,11 @@ public class HelmetGoon implements Disposable {
         buildModels(textures);
     }
 
+    private static void setupPbr(Material mat, float metallic, float roughness) {
+        mat.set(PBRFloatAttribute.createMetallic(metallic));
+        mat.set(PBRFloatAttribute.createRoughness(roughness));
+    }
+
     private void buildModels(TextureFactory textures) {
         // Material: Thug dark leather/tactical jacket (charcoal with slight gloss)
         Material jacketMat = new Material(ColorAttribute.createDiffuse(new Color(0.18f, 0.20f, 0.24f, 1f)));
@@ -143,6 +149,21 @@ public class HelmetGoon implements Disposable {
         Material lathiWoodMat = new Material(ColorAttribute.createDiffuse(new Color(0.48f, 0.32f, 0.16f, 1f)));
         Material brassMat = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.72f, 0.22f, 1f)));
 
+        // Build Campus Security / Proctor Uniform Primitives (Peaceful Role)
+        Material capMat = new Material(ColorAttribute.createDiffuse(new Color(0.10f, 0.14f, 0.22f, 1f)));
+        Material badgeMat = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.75f, 0.25f, 1f)));
+
+        setupPbr(jacketMat, 0.0f, 0.65f);
+        setupPbr(skinMat, 0.0f, 0.60f);
+        setupPbr(pantsMat, 0.0f, 0.85f);
+        setupPbr(bootMat, 0.0f, 0.70f);
+        setupPbr(helmetMat, 0.20f, 0.35f);
+        setupPbr(visorMat, 0.10f, 0.15f);
+        setupPbr(stripeMat, 0.0f, 0.40f);
+        setupPbr(lathiWoodMat, 0.0f, 0.75f);
+        setupPbr(brassMat, 0.85f, 0.28f);
+        setupPbr(capMat, 0.0f, 0.85f);
+        setupPbr(badgeMat, 0.85f, 0.25f);
         // Build Body Primitives
         torsoModel = mb.createBox(0.48f, 0.62f, 0.30f, jacketMat, attr);
         headModel = mb.createSphere(0.24f, 0.28f, 0.26f, 14, 12, skinMat, attr);
@@ -160,9 +181,6 @@ public class HelmetGoon implements Disposable {
         lathiStickModel = mb.createCylinder(0.052f, 1.60f, 0.052f, 12, lathiWoodMat, attr);
         lathiTipModel = mb.createCylinder(0.058f, 0.08f, 0.058f, 12, brassMat, attr);
 
-        // Build Campus Security / Proctor Uniform Primitives (Peaceful Role)
-        Material capMat = new Material(ColorAttribute.createDiffuse(new Color(0.10f, 0.14f, 0.22f, 1f)));
-        Material badgeMat = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.75f, 0.25f, 1f)));
         securityCapModel = mb.createCylinder(0.30f, 0.09f, 0.30f, 16, capMat, attr);
         securityBadgeModel = mb.createBox(0.06f, 0.06f, 0.03f, badgeMat, attr);
 

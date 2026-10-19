@@ -1423,6 +1423,7 @@ public class DhakaCampusWorld implements Disposable {
 
         // Dark silty pond bed just above the ground plane, so fish read against it through the water
         Material pondBedMat = new Material(ColorAttribute.createDiffuse(new Color(0.07f, 0.16f, 0.17f, 1f)));
+        setupPbr(pondBedMat, 0.0f, 0.95f);
         Model pondBed = mb.createBox(pukurW - 0.2f, 0.02f, pukurL - 0.2f, pondBedMat, attr);
         models.add(pondBed);
         ModelInstance pondBedInst = new ModelInstance(pondBed);
@@ -1435,6 +1436,7 @@ public class DhakaCampusWorld implements Disposable {
             new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.68f),
             ColorAttribute.createDiffuse(new Color(0.20f, 0.55f, 0.72f, 1f))
         );
+        setupPbr(waterAnimMat, 0.05f, 0.12f);
         Model pukurWater = mb.createBox(pukurW - 0.2f, 0.04f, pukurL - 0.2f, waterAnimMat, attr);
         models.add(pukurWater);
         waterSurface = new ModelInstance(pukurWater);
@@ -1451,6 +1453,7 @@ public class DhakaCampusWorld implements Disposable {
             new DepthTestAttribute(GL20.GL_LEQUAL, false),
             ColorAttribute.createDiffuse(new Color(0.80f, 0.94f, 1.0f, 1f))
         );
+        setupPbr(shimmerMat, 0.05f, 0.10f);
         Model pukurShimmer = mb.createBox(pukurW - 0.2f, 0.005f, pukurL - 0.2f, shimmerMat, attr);
         models.add(pukurShimmer);
         waterShimmer = new ModelInstance(pukurShimmer);
@@ -1465,6 +1468,7 @@ public class DhakaCampusWorld implements Disposable {
             new DepthTestAttribute(GL20.GL_LEQUAL, false),
             new IntAttribute(IntAttribute.CullFace, 0)
         );
+        setupPbr(lotusMat, 0.0f, 0.65f);
 
         mb.begin();
         MeshPartBuilder lpb = mb.part("lotusPads", GL20.GL_TRIANGLES, attr, lotusMat);
@@ -2591,6 +2595,7 @@ public class DhakaCampusWorld implements Disposable {
                 ColorAttribute.createDiffuse(c),
                 new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.92f)
             );
+            setupPbr(fishMat, 0.1f, 0.35f);
             Model bodyModel = mb.createSphere(0.13f, 0.055f, 0.36f, 12, 8, fishMat, attr);
             Model tailModel = mb.createBox(0.025f, 0.05f, 0.15f, fishMat, attr);
             models.add(bodyModel);

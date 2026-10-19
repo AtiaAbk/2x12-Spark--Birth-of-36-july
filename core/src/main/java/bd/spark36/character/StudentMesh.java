@@ -18,6 +18,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.IdentityMap;
 import bd.spark36.world.TextureFactory;
+import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 
 /**
  * Procedural 3D university student (Level 1: an ordinary Dhaka University student at the
@@ -306,6 +307,18 @@ public class StudentMesh implements Disposable {
         Material mat = new Material(ColorAttribute.createDiffuse(new Color(
             MathUtils.clamp(c.r * tr, 0f, 1f), MathUtils.clamp(c.g * tg, 0f, 1f),
             MathUtils.clamp(c.b * tb, 0f, 1f), 1f)));
+        float roughness = 0.75f;
+        if (slot == SLOT_SKIN) {
+            roughness = 0.60f;
+        } else if (slot == SLOT_HAIR) {
+            roughness = 0.50f;
+        } else if (slot == SLOT_SHIRT || slot == SLOT_TROUSERS || slot == SLOT_ACCENT) {
+            roughness = 0.85f;
+        } else if (slot == SLOT_SHOES || slot == SLOT_BAG) {
+            roughness = 0.65f;
+        }
+        mat.set(PBRFloatAttribute.createMetallic(0.0f));
+        mat.set(PBRFloatAttribute.createRoughness(roughness));
         slotInfo.put(mat, new float[]{slot, tr, tg, tb});
         return mat;
     }
@@ -319,7 +332,10 @@ public class StudentMesh implements Disposable {
     }
 
     private static Material flat(float r, float g, float b) {
-        return new Material(ColorAttribute.createDiffuse(new Color(r, g, b, 1f)));
+        Material mat = new Material(ColorAttribute.createDiffuse(new Color(r, g, b, 1f)));
+        mat.set(PBRFloatAttribute.createMetallic(0.0f));
+        mat.set(PBRFloatAttribute.createRoughness(0.70f));
+        return mat;
     }
 
     private Part part(Model model, Matrix4 local) {
