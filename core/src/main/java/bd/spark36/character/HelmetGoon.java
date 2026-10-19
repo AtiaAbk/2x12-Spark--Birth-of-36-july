@@ -132,6 +132,10 @@ public class HelmetGoon implements Disposable {
     private static void setupPbr(Material mat, float metallic, float roughness) {
         mat.set(PBRFloatAttribute.createMetallic(metallic));
         mat.set(PBRFloatAttribute.createRoughness(roughness));
+        ColorAttribute diff = (ColorAttribute) mat.get(ColorAttribute.Diffuse);
+        if (diff != null && !mat.has(PBRColorAttribute.BaseColorFactor)) {
+            mat.set(PBRColorAttribute.createBaseColorFactor(diff.color));
+        }
     }
 
     private void buildModels(TextureFactory textures) {
