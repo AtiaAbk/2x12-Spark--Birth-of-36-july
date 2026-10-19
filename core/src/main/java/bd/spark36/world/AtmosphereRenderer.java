@@ -148,9 +148,32 @@ public class AtmosphereRenderer implements Disposable {
         }
     }
 
+    private final Vector3 tmpSunProj = new Vector3();
+    private final Vector3 tmpSunDir = new Vector3();
+
     public void renderSkyBackground(int w, int h) {
+        renderSkyBackground(w, h, null, null);
+    }
+
+    public void renderSkyBackground(int w, int h, Camera camera) {
+        renderSkyBackground(w, h, camera, null);
+    }
+
+    public void renderSkyBackground(int w, int h, Camera camera, WeatherController weather) {
         screenW = w;
         screenH = h;
+
+        Color zColor = (weather != null) ? weather.getCurrentSkyZenith() : skyZenith;
+        Color mColor = (weather != null) ? weather.getCurrentSkyMidBlue() : skyMidBlue;
+        Color hColor = (weather != null) ? weather.getCurrentSkyHorizon() : skyHorizon;
+        Color lColor = (weather != null) ? weather.getCurrentSkyLowHaze() : skyLowHaze;
+
+        float cloudAlpha = (weather != null) ? weather.getCurrentCloudAlphaFactor() : 1.0f;
+        float rainIntensity = (weather != null) ? weather.getCurrentRainIntensity() : 0.0f;
+
+        // Camera pitch and yaw coupling
+        float pitch = (camera != null) ? camera.direction.y : 0f;
+        float pitchOffset = -pitch * h * 0.50f;
 
         shapeRenderer.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
@@ -159,33 +182,87 @@ public class AtmosphereRenderer implements Disposable {
 
         shapeRenderer.begin(ShapeType.Filled);
 
-        // ── 4-band gradient sky ──────────────────────────────────────────
-        // Band 1: Lower haze (horizon-to-20%)
-        shapeRenderer.rect(0, 0, w, h * 0.20f, skyLowHaze, skyLowHaze, skyHorizon, skyHorizon);
-        // Band 2: Horizon (20%-45%)
-        shapeRenderer.rect(0, h * 0.20f, w, h * 0.25f, skyHorizon, skyHorizon, skyMidBlue, skyMidBlue);
-        // Band 3: Mid sky (45%-75%)
-        shapeRenderer.rect(0, h * 0.45f, w, h * 0.30f, skyMidBlue, skyMidBlue, skyZenith, skyZenith);
-        // Band 4: Zenith (75%-100%)
-        shapeRenderer.rect(0, h * 0.75f, w, h * 0.25f, skyZenith, skyZenith, skyZenith, skyZenith);
+        // ── 4-band gradient sky with camera pitch coupling ───────────────
+        float yBase = pitchOffset;
+        float y0 = 0f;
+        float y1 = MathUtils.clamp(yBase + h * 0.22f, 0f, h);
+        float y2 = MathUtils.clamp(yBase + h * 0.48f, y1, h);
+        float y3 = MathUtils.clamp(yBase + h * 0.78f, y2, h);
+        float y4 = h;
 
-        // ── Clean solar horizon glow ────────────────────────────────
+        // Band 1: Lower haze (horizon-to-22%)
+        if (y1 > y0) {
+            shapeRenderer.rect(0, y0, w, y1 - y0, lColor, lColor, hColor, hColor);
+        }
+        // Band 2: Horizon (22%-48%)
+        if (y2 > y1) {
+            shapeRenderer.rect(0, y1, w, y2 - y1, hColor, hColor, mColor, mColor);
+        }
+        // Band 3: Mid sky (48%-78%)
+        if (y3 > y2) {
+            shapeRenderer.rect(0, y2, w, y3 - y2, mColor, mColor, zColor, zColor);
+        }
+        // Band 4: Zenith (78%-100%)
+        if (y4 > y3) {
+            shapeRenderer.rect(0, y3, w, y4 - y3, zColor, zColor, zColor, zColor);
+        }
+
+        // Fill below horizon if looking down steeply
+        if (yBase > 0f) {
+            shapeRenderer.rect(0, 0, w, Math.min(h, yBase), lColor, lColor, lColor, lColor);
+        }
+
+        // ── Solar Disk and Corona Rendering ───────────────────────────
+        if (camera != null) {
+            Vector3 sunDir = (weather != null) ? weather.getCurrentSunDirection() : new Vector3(-0.45f, -0.75f, -0.45f).nor();
+            tmpSunDir.set(sunDir).scl(-1f).nor(); // vector toward the sun
+            float sunFacing = camera.direction.dot(tmpSunDir);
+
+            if (sunFacing > 0.05f) {
+                tmpSunProj.set(camera.position).add(tmpSunDir.x * 500f, tmpSunDir.y * 500f, tmpSunDir.z * 500f);
+                camera.project(tmpSunProj, 0, 0, w, h);
+                if (tmpSunProj.z > 0f && tmpSunProj.z < 1.0f) {
+                    float sx = tmpSunProj.x;
+                    float sy = tmpSunProj.y;
+
+                    Color diskColor = (weather != null) ? weather.getCurrentSunDiskColor() : new Color(1.0f, 0.98f, 0.90f, 0.95f);
+                    Color coronaColor = (weather != null) ? weather.getCurrentSunCoronaColor() : new Color(1.0f, 0.94f, 0.78f, 0.28f);
+
+                    // Outer corona
+                    shapeRenderer.setColor(coronaColor.r, coronaColor.g, coronaColor.b, coronaColor.a * sunFacing * 0.40f);
+                    shapeRenderer.circle(sx, sy, h * 0.16f, 32);
+
+                    // Inner corona
+                    shapeRenderer.setColor(coronaColor.r, coronaColor.g, coronaColor.b, coronaColor.a * sunFacing * 0.85f);
+                    shapeRenderer.circle(sx, sy, h * 0.09f, 32);
+
+                    // Crisp solar disk
+                    shapeRenderer.setColor(diskColor.r, diskColor.g, diskColor.b, diskColor.a * sunFacing);
+                    shapeRenderer.circle(sx, sy, h * 0.032f, 28);
+                }
+            }
+        }
+
+        // ── Atmospheric horizon glow ──────────────────────────────────
         float pulse = 0.04f + 0.012f * MathUtils.sin(time * 0.5f);
-        shapeRenderer.setColor(0.90f, 0.94f, 1.0f, pulse);
-        shapeRenderer.rect(0, h * 0.22f, w, h * 0.14f);
+        float horizonGlowY = MathUtils.clamp(yBase + h * 0.22f, 0f, h - h * 0.14f);
+        shapeRenderer.setColor(hColor.r, hColor.g, hColor.b, pulse);
+        shapeRenderer.rect(0, horizonGlowY, w, h * 0.14f);
 
         // ── Cloud Layer 2: Soft natural billowing cumulus clouds ────────────
         for (float[] c : cloudLayer2) {
             float cx = c[0] * w;
-            float cy = (0.52f + c[1] * 0.35f) * h;
+            float cy = (0.52f + c[1] * 0.35f) * h + pitchOffset * 0.55f;
             float cw = c[2] * w * 1.5f;
             float ch = c[3] * h * 0.85f;
+            float calpha = Math.min(1.0f, c[5] * 0.10f * cloudAlpha);
+            if (calpha <= 0.005f) continue;
             for (int s = 0; s < 3; s++) {
                 float ox = (s - 1.0f) * cw * 0.28f;
                 float oy = MathUtils.sin(s * 1.4f) * ch * 0.20f;
                 float ew = cw * (0.75f + s * 0.12f);
                 float eh = ch * (0.65f + s * 0.10f);
-                shapeRenderer.setColor(0.96f, 0.97f, 1.0f, c[5] * 0.10f);
+                shapeRenderer.setColor(0.96f, 0.97f, 1.0f, calpha);
                 shapeRenderer.ellipse(cx + ox - ew * 0.5f, cy + oy - eh * 0.5f, ew, eh, 32);
             }
         }
@@ -193,60 +270,66 @@ public class AtmosphereRenderer implements Disposable {
         // ── Cloud Layer 1: High soft cirrus wisps ─────────────────────
         for (float[] c : cloudLayer1) {
             float cx = c[0] * w;
-            float cy = c[1] * h;
+            float cy = c[1] * h + pitchOffset * 0.70f;
             float cw = c[2] * w;
             float ch = c[3] * h * 1.6f;
-            shapeRenderer.setColor(0.95f, 0.97f, 1.00f, c[5] * 0.16f);
+            float calpha = Math.min(1.0f, c[5] * 0.16f * cloudAlpha);
+            if (calpha <= 0.005f) continue;
+            shapeRenderer.setColor(0.95f, 0.97f, 1.00f, calpha);
             shapeRenderer.ellipse(cx - cw * 0.5f, cy - ch * 0.5f, cw, ch, 28);
         }
 
         // ── Bird silhouettes (Kites & raptors soaring over campus) ────
-        shapeRenderer.setColor(0.14f, 0.12f, 0.10f, 0.65f);
-        for (int i = 0; i < BIRD_COUNT; i++) {
-            float bx = birdX[i] * w;
-            float by = birdY[i] * h;
-            float bs = birdSize[i];
-            float dir = birdVX[i] >= 0 ? 1f : -1f;
+        // During heavy rain, birds seek shelter and fade out
+        float birdAlpha = Math.max(0.0f, 1.0f - rainIntensity * 1.6f);
+        if (birdAlpha > 0.05f) {
+            shapeRenderer.setColor(0.14f, 0.12f, 0.10f, 0.65f * birdAlpha);
+            for (int i = 0; i < BIRD_COUNT; i++) {
+                float bx = birdX[i] * w;
+                float by = birdY[i] * h + pitchOffset * 0.40f;
+                if (by < 0 || by > h) continue;
+                float bs = birdSize[i];
+                float dir = birdVX[i] >= 0 ? 1f : -1f;
 
-            // Wing animation: flap oscillation or gentle soaring bank
-            boolean isFlapping = birdFlapTimer[i] > 0f;
-            float flapAngle;
-            if (isFlapping) {
-                flapAngle = MathUtils.sin(time * 8.5f + birdPhase[i]) * 0.55f;
-            } else {
-                // Smooth thermal banking
-                flapAngle = MathUtils.sin(birdThermalAngle[i]) * 0.12f;
+                // Wing animation: flap oscillation or gentle soaring bank
+                boolean isFlapping = birdFlapTimer[i] > 0f;
+                float flapAngle;
+                if (isFlapping) {
+                    flapAngle = MathUtils.sin(time * 8.5f + birdPhase[i]) * 0.55f;
+                } else {
+                    flapAngle = MathUtils.sin(birdThermalAngle[i]) * 0.12f;
+                }
+
+                // Head and tail relative to flight direction
+                float headX = bx + dir * bs * 0.85f;
+                float tailX = bx - dir * bs * 0.95f;
+                float bodyY = by;
+
+                // Arched raptor wing joints (elbow) and tips
+                float elbowOffset = bs * 1.35f;
+                float wingSpan = bs * 2.8f;
+                float flapY = MathUtils.sin(flapAngle) * bs * 1.1f;
+
+                // Left wing (upper)
+                float lElbowX = bx + dir * bs * 0.25f;
+                float lElbowY = bodyY + elbowOffset * 0.5f + flapY * 0.45f;
+                float lTipX = bx - dir * bs * 0.45f;
+                float lTipY = bodyY + wingSpan * 0.5f + flapY;
+
+                // Right wing (lower)
+                float rElbowX = bx + dir * bs * 0.25f;
+                float rElbowY = bodyY - elbowOffset * 0.5f - flapY * 0.45f;
+                float rTipX = bx - dir * bs * 0.45f;
+                float rTipY = bodyY - wingSpan * 0.5f - flapY;
+
+                // Fuselage / body
+                shapeRenderer.triangle(headX, bodyY, tailX, bodyY + bs * 0.25f, tailX, bodyY - bs * 0.25f);
+
+                // Left gull wing (inner + outer)
+                shapeRenderer.triangle(bx, bodyY, lElbowX, lElbowY, lTipX, lTipY);
+                // Right gull wing (inner + outer)
+                shapeRenderer.triangle(bx, bodyY, rElbowX, rElbowY, rTipX, rTipY);
             }
-
-            // Head and tail relative to flight direction
-            float headX = bx + dir * bs * 0.85f;
-            float tailX = bx - dir * bs * 0.95f;
-            float bodyY = by;
-
-            // Arched raptor wing joints (elbow) and tips
-            float elbowOffset = bs * 1.35f;
-            float wingSpan = bs * 2.8f;
-            float flapY = MathUtils.sin(flapAngle) * bs * 1.1f;
-
-            // Left wing (upper)
-            float lElbowX = bx + dir * bs * 0.25f;
-            float lElbowY = bodyY + elbowOffset * 0.5f + flapY * 0.45f;
-            float lTipX = bx - dir * bs * 0.45f;
-            float lTipY = bodyY + wingSpan * 0.5f + flapY;
-
-            // Right wing (lower)
-            float rElbowX = bx + dir * bs * 0.25f;
-            float rElbowY = bodyY - elbowOffset * 0.5f - flapY * 0.45f;
-            float rTipX = bx - dir * bs * 0.45f;
-            float rTipY = bodyY - wingSpan * 0.5f - flapY;
-
-            // Fuselage / body
-            shapeRenderer.triangle(headX, bodyY, tailX, bodyY + bs * 0.25f, tailX, bodyY - bs * 0.25f);
-
-            // Left gull wing (inner + outer)
-            shapeRenderer.triangle(bx, bodyY, lElbowX, lElbowY, lTipX, lTipY);
-            // Right gull wing (inner + outer)
-            shapeRenderer.triangle(bx, bodyY, rElbowX, rElbowY, rTipX, rTipY);
         }
 
         shapeRenderer.end();
