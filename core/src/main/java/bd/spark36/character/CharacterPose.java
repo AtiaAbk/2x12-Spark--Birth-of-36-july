@@ -84,6 +84,16 @@ public class CharacterPose {
         }
     }
 
+    public void copyFrom(CharacterPose other) {
+        set(other);
+    }
+
+    public static void lerp(CharacterPose a, CharacterPose b, float t, CharacterPose out) {
+        if (out != null) {
+            out.lerp(a, b, t);
+        }
+    }
+
     public void set(CharacterPose other) {
         if (other == null) return;
         this.bobOffset = other.bobOffset;

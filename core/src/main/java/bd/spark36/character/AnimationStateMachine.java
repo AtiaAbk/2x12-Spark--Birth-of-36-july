@@ -31,7 +31,7 @@ public class AnimationStateMachine {
 
     // Stride and Locomotion timing
     private float stridePhase = 0f;
-    private float prevHeading = 180f;
+    private float prevHeading = Float.NaN;
     private float angularVelocity = 0f; // degrees/sec
     private float currentBankingRoll = 0f;
     private float landingTimer = 0f;
@@ -62,6 +62,7 @@ public class AnimationStateMachine {
         transitionTime = 0f;
         isTransitioning = false;
         stridePhase = 0f;
+        prevHeading = Float.NaN;
         angularVelocity = 0f;
         currentBankingRoll = 0f;
         landingTimer = 0f;
@@ -105,6 +106,9 @@ public class AnimationStateMachine {
         stateTime += safeDelta;
 
         // 1. Calculate turn rate and centrifugal banking
+        if (Float.isNaN(prevHeading)) {
+            prevHeading = headingDegrees;
+        }
         float headingDiff = (headingDegrees - prevHeading) % 360f;
         if (headingDiff > 180f) headingDiff -= 360f;
         if (headingDiff < -180f) headingDiff += 360f;
@@ -732,6 +736,10 @@ public class AnimationStateMachine {
 
     public LocomotionState getPreviousState() {
         return previousState;
+    }
+
+    public boolean isTransitioning() {
+        return isTransitioning;
     }
 
     public float getTransitionProgress() {

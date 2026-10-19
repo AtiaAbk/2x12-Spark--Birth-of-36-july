@@ -669,13 +669,13 @@ public class PlayerController {
 
         // 5. Physics and Collision Resolution
         prevPosition.set(position);
-        boolean wasGrounded = isGrounded;
-        float prevVerticalVelocity = verticalVelocity;
+        boolean airborneBeforeResolution = !isGrounded;
+        float fallingVelocityBeforeResolution = verticalVelocity;
         resolveMovementAndCollisions(delta);
 
         // Detect landing impact and trigger dynamic ground cushion compression
-        if (!wasGrounded && isGrounded && prevVerticalVelocity < -1.8f) {
-            animStateMachine.notifyLanded(prevVerticalVelocity);
+        if (airborneBeforeResolution && isGrounded && fallingVelocityBeforeResolution < -1.8f) {
+            animStateMachine.notifyLanded(fallingVelocityBeforeResolution);
         }
 
         // 6. Update Character Animation State Machine & Procedural Locomotion
