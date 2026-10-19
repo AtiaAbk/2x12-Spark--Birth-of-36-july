@@ -49,6 +49,7 @@ public class TerrainSurface implements Disposable {
 
         Material grassMat = new Material(
             PBRTextureAttribute.createBaseColorTexture(textures.lawnGrass),
+            IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(0.92f, 0.95f, 0.90f, 1f))
         );
         if (textures.lawnGrassNormal != null) {
@@ -83,10 +84,12 @@ public class TerrainSurface implements Disposable {
                 float u1 = (xNext - minX) * uvScale;
                 float v1 = (zNext - minZ) * uvScale;
 
+                // CCW winding convention matching LibGDX box top face:
+                // (x, z) -> (x, zNext) -> (xNext, zNext) -> (xNext, z)
                 V0.setPos(x,     0.0f, z).setNor(0f, 1f, 0f).setUV(u0, v0);
-                V1.setPos(xNext, 0.0f, z).setNor(0f, 1f, 0f).setUV(u1, v0);
+                V1.setPos(x,     0.0f, zNext).setNor(0f, 1f, 0f).setUV(u0, v1);
                 V2.setPos(xNext, 0.0f, zNext).setNor(0f, 1f, 0f).setUV(u1, v1);
-                V3.setPos(x,     0.0f, zNext).setNor(0f, 1f, 0f).setUV(u0, v1);
+                V3.setPos(xNext, 0.0f, z).setNor(0f, 1f, 0f).setUV(u1, v0);
 
                 mpb.rect(V0, V1, V2, V3);
             }
@@ -213,7 +216,7 @@ public class TerrainSurface implements Disposable {
                 V1.setPos(x1, yOffset, z1).setNor(0f, 1f, 0f).setUV(u1, v1).setCol(outerColor);
                 V2.setPos(x2, yOffset, z2).setNor(0f, 1f, 0f).setUV(u2, v2).setCol(outerColor);
 
-                mpbSoil.triangle(V0, V1, V2);
+                mpbSoil.triangle(V0, V2, V1);
             }
         }
 
@@ -244,18 +247,18 @@ public class TerrainSurface implements Disposable {
             float v0 = z * GroundConfig.DIRT_UV_SCALE;
             float v1 = zEnd * GroundConfig.DIRT_UV_SCALE;
 
-            // West shoulder (Left of curb at X = -halfWalk)
+            // West shoulder (Left of curb at X = -halfWalk): +Z x -X = +Y (UP)
             V0.setPos(-halfWalk, yOffset, z).setNor(0f, 1f, 0f).setUV(0f, v0).setCol(curbEdgeCol);
-            V1.setPos(-halfWalk - shoulderW, yOffset, z).setNor(0f, 1f, 0f).setUV(1f, v0).setCol(turfEdgeCol);
+            V1.setPos(-halfWalk, yOffset, zEnd).setNor(0f, 1f, 0f).setUV(0f, v1).setCol(curbEdgeCol);
             V2.setPos(-halfWalk - shoulderW, yOffset, zEnd).setNor(0f, 1f, 0f).setUV(1f, v1).setCol(turfEdgeCol);
-            V3.setPos(-halfWalk, yOffset, zEnd).setNor(0f, 1f, 0f).setUV(0f, v1).setCol(curbEdgeCol);
+            V3.setPos(-halfWalk - shoulderW, yOffset, z).setNor(0f, 1f, 0f).setUV(1f, v0).setCol(turfEdgeCol);
             mpbShoulder.rect(V0, V1, V2, V3);
 
-            // East shoulder (Right of curb at X = +halfWalk)
-            V0.setPos(halfWalk, yOffset, z).setNor(0f, 1f, 0f).setUV(0f, v0).setCol(curbEdgeCol);
-            V1.setPos(halfWalk + shoulderW, yOffset, z).setNor(0f, 1f, 0f).setUV(1f, v0).setCol(turfEdgeCol);
-            V2.setPos(halfWalk + shoulderW, yOffset, zEnd).setNor(0f, 1f, 0f).setUV(1f, v1).setCol(turfEdgeCol);
-            V3.setPos(halfWalk, yOffset, zEnd).setNor(0f, 1f, 0f).setUV(0f, v1).setCol(curbEdgeCol);
+            // East shoulder (Right of curb at X = +halfWalk): -Z x +X = +Y (UP)
+            V0.setPos(halfWalk, yOffset, zEnd).setNor(0f, 1f, 0f).setUV(0f, v1).setCol(curbEdgeCol);
+            V1.setPos(halfWalk, yOffset, z).setNor(0f, 1f, 0f).setUV(0f, v0).setCol(curbEdgeCol);
+            V2.setPos(halfWalk + shoulderW, yOffset, z).setNor(0f, 1f, 0f).setUV(1f, v0).setCol(turfEdgeCol);
+            V3.setPos(halfWalk + shoulderW, yOffset, zEnd).setNor(0f, 1f, 0f).setUV(1f, v1).setCol(turfEdgeCol);
             mpbShoulder.rect(V0, V1, V2, V3);
         }
 
@@ -267,32 +270,32 @@ public class TerrainSurface implements Disposable {
         float pMaxZ = GroundConfig.POND_MAX_Z + 0.3f;
         float vergeW = GroundConfig.POND_VERGE_WIDTH;
 
-        // North curb verge
-        V0.setPos(pMinX, yOffset, pMinZ).setNor(0f, 1f, 0f).setUV(0f, 0f).setCol(curbEdgeCol);
-        V1.setPos(pMaxX, yOffset, pMinZ).setNor(0f, 1f, 0f).setUV(2f, 0f).setCol(curbEdgeCol);
-        V2.setPos(pMaxX, yOffset, pMinZ - vergeW).setNor(0f, 1f, 0f).setUV(2f, 1f).setCol(turfEdgeCol);
-        V3.setPos(pMinX, yOffset, pMinZ - vergeW).setNor(0f, 1f, 0f).setUV(0f, 1f).setCol(turfEdgeCol);
+        // North curb verge: -X x -Z = +Y (UP)
+        V0.setPos(pMaxX, yOffset, pMinZ).setNor(0f, 1f, 0f).setUV(2f, 0f).setCol(curbEdgeCol);
+        V1.setPos(pMinX, yOffset, pMinZ).setNor(0f, 1f, 0f).setUV(0f, 0f).setCol(curbEdgeCol);
+        V2.setPos(pMinX, yOffset, pMinZ - vergeW).setNor(0f, 1f, 0f).setUV(0f, 1f).setCol(turfEdgeCol);
+        V3.setPos(pMaxX, yOffset, pMinZ - vergeW).setNor(0f, 1f, 0f).setUV(2f, 1f).setCol(turfEdgeCol);
         mpbShoulder.rect(V0, V1, V2, V3);
 
-        // South curb verge
+        // South curb verge: +X x +Z = +Y (UP)
         V0.setPos(pMinX, yOffset, pMaxZ).setNor(0f, 1f, 0f).setUV(0f, 0f).setCol(curbEdgeCol);
         V1.setPos(pMaxX, yOffset, pMaxZ).setNor(0f, 1f, 0f).setUV(2f, 0f).setCol(curbEdgeCol);
         V2.setPos(pMaxX, yOffset, pMaxZ + vergeW).setNor(0f, 1f, 0f).setUV(2f, 1f).setCol(turfEdgeCol);
         V3.setPos(pMinX, yOffset, pMaxZ + vergeW).setNor(0f, 1f, 0f).setUV(0f, 1f).setCol(turfEdgeCol);
         mpbShoulder.rect(V0, V1, V2, V3);
 
-        // West curb verge
+        // West curb verge: +Z x -X = +Y (UP)
         V0.setPos(pMinX, yOffset, pMinZ).setNor(0f, 1f, 0f).setUV(0f, 0f).setCol(curbEdgeCol);
         V1.setPos(pMinX, yOffset, pMaxZ).setNor(0f, 1f, 0f).setUV(3f, 0f).setCol(curbEdgeCol);
         V2.setPos(pMinX - vergeW, yOffset, pMaxZ).setNor(0f, 1f, 0f).setUV(3f, 1f).setCol(turfEdgeCol);
         V3.setPos(pMinX - vergeW, yOffset, pMinZ).setNor(0f, 1f, 0f).setUV(0f, 1f).setCol(turfEdgeCol);
         mpbShoulder.rect(V0, V1, V2, V3);
 
-        // East curb verge
-        V0.setPos(pMaxX, yOffset, pMinZ).setNor(0f, 1f, 0f).setUV(0f, 0f).setCol(curbEdgeCol);
-        V1.setPos(pMaxX, yOffset, pMaxZ).setNor(0f, 1f, 0f).setUV(3f, 0f).setCol(curbEdgeCol);
-        V2.setPos(pMaxX + vergeW, yOffset, pMaxZ).setNor(0f, 1f, 0f).setUV(3f, 1f).setCol(turfEdgeCol);
-        V3.setPos(pMaxX + vergeW, yOffset, pMinZ).setNor(0f, 1f, 0f).setUV(0f, 1f).setCol(turfEdgeCol);
+        // East curb verge: -Z x +X = +Y (UP)
+        V0.setPos(pMaxX, yOffset, pMaxZ).setNor(0f, 1f, 0f).setUV(3f, 0f).setCol(curbEdgeCol);
+        V1.setPos(pMaxX, yOffset, pMinZ).setNor(0f, 1f, 0f).setUV(0f, 0f).setCol(curbEdgeCol);
+        V2.setPos(pMaxX + vergeW, yOffset, pMinZ).setNor(0f, 1f, 0f).setUV(0f, 1f).setCol(turfEdgeCol);
+        V3.setPos(pMaxX + vergeW, yOffset, pMaxZ).setNor(0f, 1f, 0f).setUV(3f, 1f).setCol(turfEdgeCol);
         mpbShoulder.rect(V0, V1, V2, V3);
 
         Model shoulderModel = mb.end();
