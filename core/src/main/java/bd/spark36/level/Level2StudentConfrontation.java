@@ -24,6 +24,9 @@ import bd.spark36.hud.WhereWindsMeetHUD;
 import bd.spark36.world.DhakaCampusWorld;
 import bd.spark36.world.TextureFactory;
 import bd.spark36.world.landmarks.BarricadeBuilder;
+import bd.spark36.mission.MissionObjective;
+import bd.spark36.mission.MissionTracker;
+import bd.spark36.mission.ObjectiveType;
 
 /**
  * LEVEL 2: "The Day the Streets Changed" (যেদিন পথ বদলে গেল)
@@ -38,6 +41,7 @@ public class Level2StudentConfrontation implements CampaignLevel {
     private final Array<HelmetGoon> aggressors = new Array<>();
     private CampusCrowd crowd;
     private Environment environment;
+    private final MissionTracker missionTracker = new MissionTracker(true);
 
     private final Array<Model> barricadeModels = new Array<>();
     private final Array<ModelInstance> barricadeInstances = new Array<>();
@@ -190,6 +194,7 @@ public class Level2StudentConfrontation implements CampaignLevel {
         // Injured student 1
         if (!objectivesDone[3] && playerPos.dst(objectiveWaypoints[3]) <= 3.5f) {
             objectivesDone[3] = true;
+            missionTracker.completeObjective(3);
             hud.triggerMissionToast("FIRST AID ADMINISTERED", getCompletedObjectiveCount());
             checkCompletion(hud);
             return true;
@@ -197,6 +202,7 @@ public class Level2StudentConfrontation implements CampaignLevel {
         // Medical tent
         if (!objectivesDone[4] && playerPos.dst(objectiveWaypoints[4]) <= 4.0f) {
             objectivesDone[4] = true;
+            missionTracker.completeObjective(4);
             hud.triggerMissionToast("MEDICAL SHELTER SECURED", getCompletedObjectiveCount());
             checkCompletion(hud);
             return true;
@@ -238,6 +244,15 @@ public class Level2StudentConfrontation implements CampaignLevel {
     @Override
     public void init(TextureFactory textures, PlayerController player, CinematicCamera camera) {
         this.world = new DhakaCampusWorld(textures);
+
+        missionTracker.reset();
+        if (missionTracker.getTotalCount() == 0) {
+            missionTracker.addObjective(new MissionObjective("l2_1", "DEFEND RAJU ROUNDABOUT", "Target: Helmeted Aggressor near Raju Sculpture", CHECKLIST[0], ObjectiveType.TRIGGER_EVENT, objectiveWaypoints[0], 4.5f, true));
+            missionTracker.addObjective(new MissionObjective("l2_2", "INTERCEPT FLANKING AGGRESSOR", "Target: Secondary Aggressor on west roadway", CHECKLIST[1], ObjectiveType.TRIGGER_EVENT, objectiveWaypoints[1], 4.5f, false));
+            missionTracker.addObjective(new MissionObjective("l2_3", "SECURE ARTS FACULTY APPROACH", "Target: Roadway barricade enforcer", CHECKLIST[2], ObjectiveType.TRIGGER_EVENT, objectiveWaypoints[2], 4.5f, false));
+            missionTracker.addObjective(new MissionObjective("l2_4", "TRIAGE INJURED STUDENT", "Target: Fallen student requiring first aid", CHECKLIST[3], ObjectiveType.INTERACT, objectiveWaypoints[3], 3.5f, false));
+            missionTracker.addObjective(new MissionObjective("l2_5", "EVACUATE TO MEDICAL TENT", "Target: Emergency Medical Triage Tent", CHECKLIST[4], ObjectiveType.INTERACT, objectiveWaypoints[4], 4.0f, false));
+        }
 
         // Overcast, stormy monsoon environment
         environment = new Environment();
@@ -422,6 +437,7 @@ public class Level2StudentConfrontation implements CampaignLevel {
                     if (ko) {
                         camera.addShake(0.24f);
                         objectivesDone[i] = true;
+                        missionTracker.completeObjective(i);
                         hud.triggerMissionToast("AGGRESSOR DISARMED", getCompletedObjectiveCount());
                         checkCompletion(hud);
                     }
@@ -443,8 +459,14 @@ public class Level2StudentConfrontation implements CampaignLevel {
     }
 
     @Override
+    public MissionTracker getMissionTracker() {
+        return missionTracker;
+    }
+
+    @Override
     public void completeAllObjectivesForTest() {
         java.util.Arrays.fill(objectivesDone, true);
+        if (missionTracker != null) missionTracker.completeAllForTest();
     }
 
     @Override

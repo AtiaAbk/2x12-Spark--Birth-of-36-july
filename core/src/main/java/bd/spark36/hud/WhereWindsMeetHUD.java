@@ -283,8 +283,19 @@ public class WhereWindsMeetHUD implements Disposable {
 
     private bd.spark36.level.DialogueRepository.DialogueLine activeNpcDialogue = null;
     private float npcDialogueTimer = 0f;
+    private final bd.spark36.dialogue.DialogueManager dialogueManager = new bd.spark36.dialogue.DialogueManager();
+
+    public bd.spark36.dialogue.DialogueManager getDialogueManager() {
+        return dialogueManager;
+    }
+
+    public void startDialogueSequence(bd.spark36.dialogue.DialogueSequence sequence) {
+        clearNpcDialogue();
+        dialogueManager.startDialogue(sequence);
+    }
 
     public void showNpcDialogue(bd.spark36.level.DialogueRepository.DialogueLine line, float duration) {
+        dialogueManager.cancelDialogue();
         this.activeNpcDialogue = line;
         this.npcDialogueTimer = duration;
     }
@@ -295,7 +306,7 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     public boolean isNpcDialogueActive() {
-        return activeNpcDialogue != null && npcDialogueTimer > 0f;
+        return (activeNpcDialogue != null && npcDialogueTimer > 0f) || (dialogueManager != null && dialogueManager.isDialogueActive());
     }
 
     public void triggerMissionToast(String title, int count) {
@@ -580,7 +591,14 @@ public class WhereWindsMeetHUD implements Disposable {
             return;
         }
 
-        if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+        if (dialogueManager.isDialogueActive()) {
+            dialogueManager.update(delta);
+            if (dialogueManager.handleInput()) {
+                return;
+            }
+        }
+
+        if (activeLevel != null) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.E) || Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
                 if (activeModalEntry != null) {
                     activeModalEntry = null;
@@ -874,8 +892,10 @@ public class WhereWindsMeetHUD implements Disposable {
         }
 
         // 4c. Interactive Student NPC Dialogue Subtitle Box
-        if (activeNpcDialogue != null && !isVictoryOpen && !isDisqualified && !isDefeated && !isPauseMenuOpen && !isMapOpen && activeModalEntry == null) {
-            renderStudentNpcDialogue(activeNpcDialogue, w, h);
+        bd.spark36.level.DialogueRepository.DialogueLine activeLine = (dialogueManager.isDialogueActive()) ?
+            dialogueManager.getCurrentLine() : activeNpcDialogue;
+        if (activeLine != null && !isVictoryOpen && !isDisqualified && !isDefeated && !isPauseMenuOpen && !isMapOpen && activeModalEntry == null) {
+            renderStudentNpcDialogue(activeLine, w, h);
         }
 
         // 5. Overlays: Historical Archival Modal, Map, Pause Menu, Victory, Disqualification, or Defeat Screen
@@ -2817,6 +2837,15 @@ public class WhereWindsMeetHUD implements Disposable {
 
         fonts.promptFont.setColor(goldAccent);
         fonts.promptFont.draw(spriteBatch, "\"" + diag.getTextEnglish() + "\"", dx + 18f, dy + 22f);
+
+        // Advance prompt if sequence is active
+        if (dialogueManager.isDialogueActive()) {
+            int cur = dialogueManager.getCurrentLineIndex() + 1;
+            int tot = dialogueManager.getTotalLines();
+            String promptText = dialogueManager.isLastLine() ? "[SPACE] CLOSE / FINISH" : "[SPACE] NEXT (" + cur + "/" + tot + ")";
+            fonts.keyFont.setColor(goldAccent);
+            fonts.keyFont.draw(spriteBatch, promptText, dx + dw - 230f, dy + 22f);
+        }
         spriteBatch.end();
     }
 
@@ -3294,6 +3323,8 @@ public class WhereWindsMeetHUD implements Disposable {
         victoryAutoAdvanceTimer = 0f;
         missionBannerTime = 0f;
         exitAction = 0;
+        clearNpcDialogue();
+        dialogueManager.cancelDialogue();
     }
 
     @Override

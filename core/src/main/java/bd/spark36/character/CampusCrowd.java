@@ -93,6 +93,7 @@ public class CampusCrowd {
 
         for (int i = 0; i < students.length; i++) {
             StudentNPC s = students[i];
+            s.setLevelNumber(levelNumber);
             switch (levelNumber) {
                 case 2: // July 15–16: Student Confrontation & Resistance
                     if (i % 3 == 0) {
@@ -241,13 +242,8 @@ public class CampusCrowd {
     public boolean interactWithClosest(Vector3 playerPos, float maxDistance, int levelNumber, WhereWindsMeetHUD hud) {
         StudentNPC npc = getClosestInteractable(playerPos, maxDistance);
         if (npc != null) {
-            npc.startPlayerInteraction(levelNumber);
-            DialogueRepository.DialogueLine line = npc.getActiveDialogue();
-            if (line != null && hud != null) {
-                hud.showNpcDialogue(line, 5.0f);
-                bd.spark36.audio.SoundManager.get().playWhoosh();
-            }
-            return true;
+            npc.setLevelNumber(levelNumber);
+            return npc.onInteract(playerPos, null, hud);
         }
         return false;
     }

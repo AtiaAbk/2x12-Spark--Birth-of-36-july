@@ -582,7 +582,7 @@ public class SparkGame extends ApplicationAdapter {
         }
 
         // 1. Update Game Logic
-        boolean canMove = !hud.isModalOpen() && System.getProperty("bd.spark36.testHeroScreenshot") == null;
+        boolean canMove = !hud.isModalOpen() && !hud.isNpcDialogueActive() && System.getProperty("bd.spark36.testHeroScreenshot") == null;
         if (Gdx.input.isKeyJustPressed(Input.Keys.E) && !hud.isModalOpen()) {
             if (levelManager != null) {
                 boolean consumed = levelManager.handleInteraction(player.getPosition());

@@ -18,6 +18,10 @@ import bd.spark36.world.JulyMemorials;
 import bd.spark36.world.JulyMemorials.MemorialEntry;
 import bd.spark36.world.TextureFactory;
 
+import bd.spark36.mission.MissionObjective;
+import bd.spark36.mission.MissionTracker;
+import bd.spark36.mission.ObjectiveType;
+
 /**
  * LEVEL 1: "Where It All Began" (যেখান থেকে সব শুরু)
  * Period: July 1 – 14, 2024 (Pre-crackdown peaceful student solidarity).
@@ -32,6 +36,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
     private CampusCrowd crowd;
     private HelmetGoon campusSecurity;
     private TextureFactory textures;
+    private final MissionTracker missionTracker = new MissionTracker(false);
 
     private static final String[] CHECKLIST = {
         "1. Curzon Hall Central Arcade",
@@ -107,6 +112,9 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
     @Override
     public boolean isChecklistItemDone(int index) {
+        if (missionTracker.getTotalCount() > 0) {
+            return missionTracker.isChecklistItemDone(index);
+        }
         if (memorials == null) return false;
         Array<MemorialEntry> entries = memorials.getEntries();
         if (index >= 0 && index < entries.size) {
@@ -117,11 +125,17 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
     @Override
     public int getCompletedObjectiveCount() {
+        if (missionTracker.getTotalCount() > 0) {
+            return missionTracker.getCompletedCount();
+        }
         return (memorials != null) ? memorials.getInspectedCount() : 0;
     }
 
     @Override
     public int getTotalObjectiveCount() {
+        if (missionTracker.getTotalCount() > 0) {
+            return missionTracker.getTotalCount();
+        }
         return (memorials != null) ? memorials.getTotalCount() : 5;
     }
 
@@ -153,9 +167,10 @@ public class Level1PeacefulCampus implements CampaignLevel {
         for (MemorialEntry entry : memorials.getEntries()) {
             if (!entry.inspected && playerPos.dst(entry.position) <= 3.8f) {
                 entry.inspected = true;
+                missionTracker.completeObjective("m" + entry.id);
                 hud.openMemorialModal(entry);
-                hud.triggerMissionToast(entry.title, memorials.getInspectedCount());
-                if (memorials.isAllInspected()) {
+                hud.triggerMissionToast(entry.title, getCompletedObjectiveCount());
+                if (isLevelComplete()) {
                     hud.triggerVictory();
                 }
                 return true;
@@ -188,6 +203,9 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
     @Override
     public boolean isLevelComplete() {
+        if (missionTracker.getTotalCount() > 0) {
+            return missionTracker.isAllCompleted();
+        }
         return (memorials != null) && memorials.isAllInspected();
     }
 
@@ -203,7 +221,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
     @Override
     public float getSpawnHeading() {
-        return 180f; // Facing north toward Curzon Hall
+        return 180.0f; // Facing north toward Curzon Hall
     }
 
     @Override
@@ -211,6 +229,16 @@ public class Level1PeacefulCampus implements CampaignLevel {
         this.textures = textures;
         this.world = new DhakaCampusWorld(textures);
         this.memorials = new JulyMemorials();
+
+        // Initialize decoupled mission tracker objectives matching historical archives
+        this.missionTracker.reset();
+        if (this.missionTracker.getTotalCount() == 0) {
+            this.missionTracker.addObjective(new MissionObjective("m0", "THE SPARK OF SOLIDARITY", "Target: Curzon Hall Central Arcade", "1. Curzon Hall Central Arcade", ObjectiveType.INTERACT, new Vector3(0f, 0f, -14f), 3.8f, true));
+            this.missionTracker.addObjective(new MissionObjective("m1", "THE CALL FOR JUSTICE", "Target: Aparajeyo Bangla (Arts Plaza)", "2. Aparajeyo Bangla (Arts Plaza)", ObjectiveType.INTERACT, new Vector3(-45f, 0f, 18f), 3.8f, true));
+            this.missionTracker.addObjective(new MissionObjective("m2", "THE RESISTANCE BEGINS", "Target: TSC Raju Anti-Terrorism Sculpture", "3. TSC Raju Anti-Terrorism Sculpture", ObjectiveType.INTERACT, new Vector3(-6.5f, 0f, 48f), 3.8f, true));
+            this.missionTracker.addObjective(new MissionObjective("m3", "COMMUNAL AWAKENING", "Target: Central Library & Hakim Chattar", "4. Central Library & Hakim Chattar", ObjectiveType.INTERACT, new Vector3(48f, 0f, 18f), 3.8f, true));
+            this.missionTracker.addObjective(new MissionObjective("m4", "THE UNBROKEN CHAIN", "Target: Teacher-Student Centre (TSC)", "5. Teacher-Student Centre (TSC)", ObjectiveType.INTERACT, new Vector3(28f, 0f, -10f), 3.8f, true));
+        }
 
         player.setExtraColliders(world.getColliders());
         this.crowd = new CampusCrowd(16, player.getColliders());
@@ -293,9 +321,17 @@ public class Level1PeacefulCampus implements CampaignLevel {
     }
 
     @Override
+    public MissionTracker getMissionTracker() {
+        return missionTracker;
+    }
+
+    @Override
     public void completeAllObjectivesForTest() {
         if (memorials != null && memorials.getEntries() != null) {
             for (JulyMemorials.MemorialEntry e : memorials.getEntries()) e.inspected = true;
+        }
+        if (missionTracker != null) {
+            missionTracker.completeAllForTest();
         }
     }
 

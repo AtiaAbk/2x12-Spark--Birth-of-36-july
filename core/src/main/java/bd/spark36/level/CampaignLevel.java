@@ -108,6 +108,9 @@ public interface CampaignLevel extends Disposable {
     default bd.spark36.world.DhakaCampusWorld getWorld() { return null; }
     default bd.spark36.world.JulyMemorials getMemorials() { return null; }
     default bd.spark36.character.CampusCrowd getCrowd() { return null; }
+    default bd.spark36.mission.MissionTracker getMissionTracker() { return null; }
+    default bd.spark36.interaction.InteractionSystem getInteractionSystem() { return null; }
+    default bd.spark36.dialogue.DialogueManager getDialogueManager() { return null; }
 
     /** Marks all level objectives complete (used for automated visual verification) */
     default void completeAllObjectivesForTest() {}

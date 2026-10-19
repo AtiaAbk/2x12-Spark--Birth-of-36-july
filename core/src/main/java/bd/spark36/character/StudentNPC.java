@@ -16,12 +16,13 @@ import bd.spark36.world.TerrainSurface;
  * - Waypoint-following and Dijkstra path navigation.
  * - Contextual Bengali and English dialogue interactions.
  */
-public class StudentNPC {
+public class StudentNPC implements bd.spark36.interaction.Interactable {
 
     private final int id;
     private final String roleTitle;
     private final int gender; // 0 = Male, 1 = Female
     private final int variant; // 1 .. StudentMesh.getVariantCount() - 1
+    private int activeLevelNumber = 1;
 
     // Spatial & Kinematic State
     private final Vector3 position = new Vector3();
@@ -451,5 +452,66 @@ public class StudentNPC {
     public void setHeading(float headingDeg) {
         this.heading = headingDeg;
         this.targetHeading = headingDeg;
+    }
+
+    public void setLevelNumber(int levelNumber) {
+        this.activeLevelNumber = levelNumber;
+    }
+
+    // =========================================================================
+    // INTERACTABLE INTERFACE IMPLEMENTATION
+    // =========================================================================
+
+    @Override
+    public Vector3 getInteractionPosition() {
+        return position;
+    }
+
+    @Override
+    public float getInteractionRadius() {
+        return 2.6f;
+    }
+
+    @Override
+    public String getInteractionPrompt() {
+        return "[E] TALK TO " + (roleTitle != null ? roleTitle.toUpperCase() : "DU STUDENT");
+    }
+
+    @Override
+    public boolean canInteract(Vector3 playerPos, float playerHeading) {
+        return isInteractable() && state != NpcBehaviorState.INTERACTING_PLAYER;
+    }
+
+    @Override
+    public boolean onInteract(Vector3 playerPos, PlayerController player, bd.spark36.hud.WhereWindsMeetHUD hud) {
+        if (!isInteractable() || state == NpcBehaviorState.INTERACTING_PLAYER) return false;
+
+        bd.spark36.dialogue.DialogueSequence seq = DialogueRepository.getStudentDialogueSequence(activeLevelNumber, id);
+        seq.setCallback(new bd.spark36.dialogue.DialogueCallback() {
+            @Override
+            public void onDialogueComplete(String sequenceId) {
+                endInteraction();
+            }
+        });
+
+        startPlayerInteraction(activeLevelNumber);
+        if (playerPos != null) {
+            turnTowards(playerPos.x - position.x, playerPos.z - position.z, 1f, 100f);
+        }
+        if (hud != null) {
+            hud.startDialogueSequence(seq);
+            bd.spark36.audio.SoundManager.get().playWhoosh();
+        }
+        return true;
+    }
+
+    @Override
+    public int getInteractionPriority() {
+        return 2;
+    }
+
+    @Override
+    public String getInteractableId() {
+        return "StudentNPC_" + id;
     }
 }
