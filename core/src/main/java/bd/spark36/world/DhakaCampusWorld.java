@@ -124,6 +124,9 @@ public class DhakaCampusWorld implements Disposable {
     private final VegetationManager vegetationManager = new VegetationManager();
     private com.badlogic.gdx.graphics.Camera activeCam = null;
 
+    // Realistic Terrain, Ground Materials & Surface Blending System (Phase 4)
+    private final TerrainSurface terrainSurface = new TerrainSurface();
+
     // Facade opening materials & orientation debug test card
     private final TextureFactory texturesRef;
     public Material colonialWindowMat;
