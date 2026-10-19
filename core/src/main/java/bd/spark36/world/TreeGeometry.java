@@ -260,10 +260,13 @@ final class TreeGeometry {
     }
 
     /**
-     * Rain tree (Samanea saman): broadleaf heritage tree of Dhaka University.
-     * Features flared buttress roots deeply anchored into turf, curved tapered trunk,
-     * spreading scaffold limbs, and broad volumetric umbrella canopy.
-     * {@code s} scales the whole tree, {@code seed} varies limb angles and clump shapes.
+     * Broadleaf Tree (Samanea saman / Rain tree):
+     * Implemented to the user's Broadleaf_Green_Tree_Reference specification:
+     * - Tapered trunk with clear trunk height ~2.8m, base radius ~0.42m, crown split ~0.20m.
+     * - 7 major spreading scaffold limbs (spec: 7 major branches, range 5-10).
+     * - Secondary branching and tertiary twigs spreading upward and outward.
+     * - Broad, dense, asymmetrical multi-lobed canopy with gaps revealing branch network.
+     * - Flared buttress roots firmly anchoring into turf (y = -0.22 * s).
      */
     static void rainTree(MeshPartBuilder trunk, MeshPartBuilder leaves, MeshPartBuilder cards,
                          float x, float z, float s, float seed) {
@@ -274,41 +277,50 @@ final class TreeGeometry {
         // Organic flared buttress roots anchored into turf (y = -0.22 * s)
         buttressRoots(trunk, x, z, 0.52f * s, s, seed, 5);
 
-        // Multi-segment curved tapered trunk (botanical proportions: r0 ~ 0.52s, r1 ~ 0.40s, r2 ~ 0.30s)
+        // Multi-segment curved tapered trunk (botanical proportions matching spec)
         float m1x = x + lean * 0.25f, m1z = z + leanZ * 0.25f;
         float m2x = x + lean * 0.60f, m2z = z + leanZ * 0.60f;
-        limb(trunk, x, -0.20f * s, z, 0.62f * s, m1x, 0.75f * s, m1z, 0.46f * s, 10);
-        limb(trunk, m1x, 0.75f * s, m1z, 0.46f * s, m2x, 1.95f * s, m2z, 0.36f * s, 10);
-        limb(trunk, m2x, 1.95f * s, m2z, 0.36f * s, topX, topY, topZ, 0.26f * s, 10);
+        limb(trunk, x, -0.20f * s, z, 0.58f * s, m1x, 0.85f * s, m1z, 0.44f * s, 10);
+        limb(trunk, m1x, 0.85f * s, m1z, 0.44f * s, m2x, 2.05f * s, m2z, 0.34f * s, 10);
+        limb(trunk, m2x, 2.05f * s, m2z, 0.34f * s, topX, topY, topZ, 0.24f * s, 10);
 
-        for (int k = 0; k < 5; k++) {
-            float ang = seed + k * MathUtils.PI2 / 5f + 0.35f * MathUtils.sin(seed * 2.1f + k);
+        // 7 major scaffold limbs radiating upward and outward (spec: 7 major branches)
+        for (int k = 0; k < 7; k++) {
+            float ang = seed + k * MathUtils.PI2 / 7f + 0.32f * MathUtils.sin(seed * 2.1f + k);
             float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
-            float h0 = (2.7f + 0.22f * k) * s;
+            float h0 = (2.6f + 0.16f * k) * s;
             float t = h0 / topY;
             float sx = x + lean * t, sz = z + leanZ * t;
 
-            float reach = (3.3f + 0.4f * MathUtils.sin(seed + k * 1.7f)) * s;
-            float rise = (1.5f + 0.35f * MathUtils.sin(k * 2.1f + seed)) * s;
+            float reach = (3.4f + 0.55f * MathUtils.sin(seed + k * 1.7f)) * s;
+            float rise = (1.6f + 0.40f * MathUtils.sin(k * 2.1f + seed)) * s;
             float ex = sx + ca * reach, ey = h0 + rise, ez = sz + sa * reach;
-            limb(trunk, sx, h0, sz, 0.24f * s, ex, ey, ez, 0.08f * s, 7);
+            limb(trunk, sx, h0, sz, 0.22f * s, ex, ey, ez, 0.08f * s, 7);
 
-            // Fork off the outer half of each limb
-            float fa = ang + (k % 2 == 0 ? 0.7f : -0.7f);
-            float mx = sx + ca * reach * 0.6f, my = h0 + rise * 0.6f, mz = sz + sa * reach * 0.6f;
-            float fx = mx + MathUtils.cos(fa) * 1.8f * s, fy = my + 1.1f * s, fz = mz + MathUtils.sin(fa) * 1.8f * s;
-            limb(trunk, mx, my, mz, 0.12f * s, fx, fy, fz, 0.05f * s, 6);
+            // Secondary branch division (each major branch forks into 2 sub-branches)
+            float fa = ang + (k % 2 == 0 ? 0.65f : -0.65f);
+            float mx = sx + ca * reach * 0.58f, my = h0 + rise * 0.58f, mz = sz + sa * reach * 0.58f;
+            float fx = mx + MathUtils.cos(fa) * 1.9f * s, fy = my + 1.15f * s, fz = mz + MathUtils.sin(fa) * 1.9f * s;
+            limb(trunk, mx, my, mz, 0.12f * s, fx, fy, fz, 0.045f * s, 6);
 
-            foliage(leaves, cards, ex, ey + 0.9f * s, ez, 2.7f * s, 1.9f * s, 2.7f * s, seed + k,
+            // Tertiary twig reaches extending near crown edges
+            float ta = ang + (k % 2 == 0 ? -0.45f : 0.45f);
+            float tx = ex + MathUtils.cos(ta) * 1.3f * s, ty = ey + 0.65f * s, tz = ez + MathUtils.sin(ta) * 1.3f * s;
+            limb(trunk, ex, ey, ez, 0.06f * s, tx, ty, tz, 0.03f * s, 4);
+
+            // Layered foliage masses with natural gaps revealing inner branch network
+            foliage(leaves, cards, ex, ey + 0.85f * s, ez, 2.7f * s, 1.8f * s, 2.7f * s, seed + k,
                 RAIN_LEAF * s, RAIN_CELLS, 0f);
-            foliage(leaves, cards, fx, fy + 0.7f * s, fz, 2.0f * s, 1.5f * s, 2.0f * s, seed + k * 2.3f,
+            foliage(leaves, cards, fx, fy + 0.65f * s, fz, 2.1f * s, 1.4f * s, 2.1f * s, seed + k * 2.3f,
+                RAIN_LEAF * s, RAIN_CELLS, 0f);
+            foliage(leaves, cards, tx, ty + 0.50f * s, tz, 1.6f * s, 1.2f * s, 1.6f * s, seed + k * 3.7f,
                 RAIN_LEAF * s, RAIN_CELLS, 0f);
         }
 
-        // Crown and inner fill so the trunk top and limb roots are never visible from below
-        foliage(leaves, cards, topX, topY + 2.2f * s, topZ, 3.5f * s, 2.3f * s, 3.5f * s, seed + 9f,
+        // Broad umbrella crown and inner fill
+        foliage(leaves, cards, topX, topY + 2.3f * s, topZ, 3.6f * s, 2.4f * s, 3.6f * s, seed + 9f,
             RAIN_LEAF * s, RAIN_CELLS, 0f);
-        foliage(leaves, cards, topX, topY + 0.7f * s, topZ, 2.7f * s, 1.5f * s, 2.7f * s, seed + 4f,
+        foliage(leaves, cards, topX, topY + 0.8f * s, topZ, 2.8f * s, 1.6f * s, 2.8f * s, seed + 4f,
             RAIN_LEAF * s, RAIN_CELLS, 0f);
     }
 
@@ -406,53 +418,117 @@ final class TreeGeometry {
     }
 
     /**
-     * Royal Palm (Roystonea regia):
-     * Tall ringed columnar trunk with flared base, swollen midsection, smooth green crownshaft,
-     * and radiating, drooping pinnate fronds.
+     * Coconut Palm / Royal Palm (tropical_palm_tree specification):
+     * - Tall curved palm trunk with natural lean and horizontal ring scars.
+     * - 3 frond tiers: young upright fresh green, mature spreading emerald, and drooping dry tan/brown.
+     * - Feathered pinnate fronds with individual thin leaflet quads along curved central spines.
      */
     static void palmTree(MeshPartBuilder trunk, MeshPartBuilder crownshaft, MeshPartBuilder fronds,
                          float x, float z, float s, float seed) {
-        float h = 9.2f * s;
+        float h = 9.4f * s;
+
+        // Natural curved palm trunk lean (spec: curves slightly left/right)
+        float leanX = 0.55f * s * MathUtils.sin(seed * 1.7f);
+        float leanZ = 0.55f * s * MathUtils.cos(seed * 1.3f);
+
         // Flared root base into turf
-        limb(trunk, x, -0.20f * s, z, 0.36f * s, x, 0.6f * s, z, 0.26f * s, 10);
-        // Swollen lower-mid column
-        limb(trunk, x, 0.6f * s, z, 0.26f * s, x, 3.4f * s, z, 0.30f * s, 10);
-        // Tapered upper trunk
-        limb(trunk, x, 3.4f * s, z, 0.30f * s, x, h - 1.6f * s, z, 0.22f * s, 10);
-        // Smooth green crownshaft
+        limb(trunk, x, -0.22f * s, z, 0.38f * s, x, 0.6f * s, z, 0.28f * s, 10);
+
+        // Curved trunk segments with horizontal ring scars
+        int trunkSegs = 6;
+        float prevX = x, prevY = 0.6f * s, prevZ = z;
+        float prevR = 0.28f * s;
+        for (int i = 1; i <= trunkSegs; i++) {
+            float t = (float) i / trunkSegs;
+            float segY = 0.6f * s + (h - 2.0f * s) * t;
+            float segX = x + leanX * t * t; // subtle natural quadratic curve
+            float segZ = z + leanZ * t * t;
+            float segR = MathUtils.lerp(0.28f, 0.18f, t) * s;
+
+            limb(trunk, prevX, prevY, prevZ, prevR, segX, segY, segZ, segR, 10);
+
+            // Horizontal ring scar at each trunk node
+            limb(trunk, segX, segY - 0.035f * s, segZ, segR * 1.18f,
+                 segX, segY + 0.035f * s, segZ, segR * 1.18f, 10);
+
+            prevX = segX;
+            prevY = segY;
+            prevZ = segZ;
+            prevR = segR;
+        }
+
+        // Smooth green crownshaft at the top of the curved column
         MeshPartBuilder csMpb = (crownshaft != null) ? crownshaft : trunk;
-        limb(csMpb, x, h - 1.6f * s, z, 0.22f * s, x, h, z, 0.18f * s, 10);
+        float topX = x + leanX;
+        float topZ = z + leanZ;
+        limb(csMpb, prevX, prevY, prevZ, prevR, topX, h, topZ, 0.16f * s, 10);
 
-        // Radiating drooping pinnate fronds
-        int numFronds = 14;
+        // Pinnate feather-shaped palm fronds with 3 natural age tiers (spec: upright young, spreading mature, drooping old)
+        int numFronds = 20;
         for (int i = 0; i < numFronds; i++) {
-            float ang = seed + i * MathUtils.PI2 / numFronds + 0.15f * MathUtils.sin(i * 1.5f + seed);
+            float ang = seed + i * MathUtils.PI2 / numFronds + 0.18f * MathUtils.sin(i * 1.7f + seed);
             float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
-            float tierFraction = (float) i / numFronds;
-            float reach = (3.4f + 0.5f * MathUtils.sin(i * 2.1f + seed)) * s;
+            float tierFraction = (float) i / numFronds; // 0..1 (0=young upright, 1=old drooping)
 
-            float midReach = reach * 0.55f;
-            float midY = h + 1.2f * s * (1f - tierFraction * 0.4f);
-            float tipY = h + 0.4f * s - tierFraction * 1.6f * s;
-            float tipReach = reach;
+            float frondLen = (3.6f + 0.5f * MathUtils.sin(i * 2.3f + seed)) * s;
+            float midReach = frondLen * 0.52f;
+            float tipReach = frondLen;
 
-            float p0x = x, p0y = h, p0z = z;
-            float p1x = x + ca * midReach, p1y = midY, p1z = z + sa * midReach;
-            float p2x = x + ca * tipReach, p2y = tipY, p2z = z + sa * tipReach;
+            // Tier pitch: young fronds arch high, old fronds droop down
+            float midY, tipY;
+            if (tierFraction < 0.35f) {
+                // Young upright fronds
+                midY = h + 1.4f * s;
+                tipY = h + 0.8f * s;
+            } else if (tierFraction < 0.70f) {
+                // Mature spreading fronds
+                midY = h + 0.9f * s;
+                tipY = h - 0.2f * s;
+            } else {
+                // Old drooping fronds (weathered brown/tan)
+                midY = h + 0.3f * s;
+                tipY = h - 1.5f * s;
+            }
 
-            // Frond spine
-            limb(fronds, p0x, p0y, p0z, 0.06f * s, p1x, p1y, p1z, 0.038f * s, 4);
-            limb(fronds, p1x, p1y, p1z, 0.038f * s, p2x, p2y, p2z, 0.018f * s, 4);
+            float p0x = topX, p0y = h, p0z = topZ;
+            float p1x = topX + ca * midReach, p1y = midY, p1z = topZ + sa * midReach;
+            float p2x = topX + ca * tipReach, p2y = tipY, p2z = topZ + sa * tipReach;
 
-            // Frond pinnate blade quads
-            float sideX = -sa * 0.55f * s;
-            float sideZ = ca * 0.55f * s;
+            // Central arching rachis spine
+            limb(fronds, p0x, p0y, p0z, 0.055f * s, p1x, p1y, p1z, 0.032f * s, 4);
+            limb(fronds, p1x, p1y, p1z, 0.032f * s, p2x, p2y, p2z, 0.015f * s, 4);
 
-            V0.setPos(p0x, p0y, p0z).setNor(0f, 1f, 0f).setUV(0f, 0f);
-            V1.setPos(p1x - sideX, p1y, p1z - sideZ).setNor(0f, 1f, 0f).setUV(0f, 1f);
-            V2.setPos(p2x, p2y, p2z).setNor(0f, 1f, 0f).setUV(0.5f, 1f);
-            V3.setPos(p1x + sideX, p1y, p1z + sideZ).setNor(0f, 1f, 0f).setUV(1f, 0f);
-            fronds.rect(V0, V1, V2, V3);
+            // Pinnate feather leaflet quads along spine (spec: many thin individual leaflets)
+            int leafletPairs = 7;
+            for (int lp = 1; lp <= leafletPairs; lp++) {
+                float lt = (float) lp / (leafletPairs + 1);
+                // Position along spine
+                float lx = MathUtils.lerp(p0x, p2x, lt);
+                float ly = (lt < 0.5f) ? MathUtils.lerp(p0y, p1y, lt * 2f) : MathUtils.lerp(p1y, p2y, (lt - 0.5f) * 2f);
+                float lz = MathUtils.lerp(p0z, p2z, lt);
+
+                // Leaflet span width
+                float spanW = (0.50f + 0.25f * MathUtils.sin(lt * MathUtils.PI)) * s;
+                float sideX = -sa * spanW;
+                float sideZ = ca * spanW;
+                float droopY = -0.15f * spanW;
+
+                // Leaflet quad
+                V0.setPos(lx, ly, lz).setNor(0f, 1f, 0f).setUV(0f, 0f);
+                V1.setPos(lx - sideX, ly + droopY, lz - sideZ).setNor(0f, 1f, 0f).setUV(0f, 1f);
+                V2.setPos(lx - sideX * 0.7f + ca * 0.25f * s, ly + droopY - 0.05f * s, lz - sideZ * 0.7f + sa * 0.25f * s)
+                    .setNor(0f, 1f, 0f).setUV(0.5f, 1f);
+                V3.setPos(lx + ca * 0.25f * s, ly, lz + sa * 0.25f * s).setNor(0f, 1f, 0f).setUV(0.5f, 0f);
+                fronds.rect(V0, V1, V2, V3);
+
+                // Opposite side leaflet
+                V0.setPos(lx, ly, lz).setNor(0f, 1f, 0f).setUV(0.5f, 0f);
+                V1.setPos(lx + sideX, ly + droopY, lz + sideZ).setNor(0f, 1f, 0f).setUV(0.5f, 1f);
+                V2.setPos(lx + sideX * 0.7f + ca * 0.25f * s, ly + droopY - 0.05f * s, lz + sideZ * 0.7f + sa * 0.25f * s)
+                    .setNor(0f, 1f, 0f).setUV(1f, 1f);
+                V3.setPos(lx + ca * 0.25f * s, ly, lz + sa * 0.25f * s).setNor(0f, 1f, 0f).setUV(1f, 0f);
+                fronds.rect(V0, V1, V2, V3);
+            }
         }
     }
 }
