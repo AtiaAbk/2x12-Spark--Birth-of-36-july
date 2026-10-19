@@ -83,6 +83,9 @@ public class WhereWindsMeetHUD implements Disposable {
         this.parametersVisible = visible;
     }
     private boolean isPauseMenuOpen = false;
+    private boolean isExitConfirmOpen = false;
+    private int pauseMenuSelection = 0; // 0=Resume, 1=Restart, 2=Tone Mapping/Settings, 3=Main Menu, 4=Exit Game
+    private int exitConfirmSelection = 0; // 0=Cancel, 1=Quit Game
     private boolean isVictoryOpen = false;
     private boolean victoryShown = false;
     private boolean congratulationsPopupActive = false;
@@ -484,6 +487,52 @@ public class WhereWindsMeetHUD implements Disposable {
                     isDefeated = false;
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
+            } else if (isExitConfirmOpen) {
+                // Click Cancel or Quit to desktop in Exit Confirmation modal
+                float cw = 640f, ch = 280f;
+                float cx = (virtW - cw) / 2f, cy = (virtH - ch) / 2f;
+                float btnY = cy + 34f, btnH = 48f;
+                float b0X = cx + 45f, b0W = 250f;
+                float b1X = cx + cw - 295f, b1W = 250f;
+                if (mouseX >= b0X && mouseX <= b0X + b0W && mouseY >= btnY && mouseY <= btnY + btnH) {
+                    isExitConfirmOpen = false;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                } else if (mouseX >= b1X && mouseX <= b1X + b1W && mouseY >= btnY && mouseY <= btnY + btnH) {
+                    exitAction = 2; // Quit Game
+                    isPauseMenuOpen = false;
+                    isExitConfirmOpen = false;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+            } else if (isPauseMenuOpen) {
+                float pw = 980f, ph = 520f;
+                float px = (virtW - pw) / 2f, py = (virtH - ph) / 2f;
+                float dividerX = px + 360f;
+                float btnX = px + 28f, btnW = dividerX - px - 46f, btnH = 44f;
+                float startY = py + ph - 110f;
+                float spacingY = 52f;
+                for (int i = 0; i < 5; i++) {
+                    float by = startY - i * spacingY;
+                    if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= by && mouseY <= by + btnH) {
+                        pauseMenuSelection = i;
+                        bd.spark36.audio.SoundManager.get().playClick();
+                        if (i == 0) {
+                            isPauseMenuOpen = false;
+                        } else if (i == 1) {
+                            exitAction = 3; // Restart level
+                            isPauseMenuOpen = false;
+                        } else if (i == 2) {
+                            bd.spark36.render.RenderPipelineConfig.toneMappingMode =
+                                (bd.spark36.render.RenderPipelineConfig.toneMappingMode + 1) % 3;
+                        } else if (i == 3) {
+                            exitAction = 1; // Return to main menu
+                            isPauseMenuOpen = false;
+                        } else if (i == 4) {
+                            isExitConfirmOpen = true;
+                            exitConfirmSelection = 0;
+                        }
+                        break;
+                    }
+                }
             } else if (isMapOpen) {
                 // Click close button on map
                 float cbX = virtW - 200f;
@@ -498,6 +547,34 @@ public class WhereWindsMeetHUD implements Disposable {
                     mouseY >= currentLayout.mapBtnY && mouseY <= currentLayout.mapBtnY + currentLayout.mapBtnH) {
                     isMapOpen = true;
                     bd.spark36.audio.SoundManager.get().playClick();
+                }
+            }
+        }
+
+        // Mouse hover tracking for pause menu & exit confirmation
+        if (isExitConfirmOpen) {
+            float cw = 640f, ch = 280f;
+            float cx = (virtW - cw) / 2f, cy = (virtH - ch) / 2f;
+            float btnY = cy + 34f, btnH = 48f;
+            if (mouseY >= btnY && mouseY <= btnY + btnH) {
+                if (mouseX >= cx + 45f && mouseX <= cx + 295f) {
+                    exitConfirmSelection = 0;
+                } else if (mouseX >= cx + cw - 295f && mouseX <= cx + cw - 45f) {
+                    exitConfirmSelection = 1;
+                }
+            }
+        } else if (isPauseMenuOpen) {
+            float pw = 980f, ph = 520f;
+            float px = (virtW - pw) / 2f, py = (virtH - ph) / 2f;
+            float dividerX = px + 360f;
+            float btnX = px + 28f, btnW = dividerX - px - 46f, btnH = 44f;
+            float startY = py + ph - 110f;
+            float spacingY = 52f;
+            for (int i = 0; i < 5; i++) {
+                float by = startY - i * spacingY;
+                if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= by && mouseY <= by + btnH) {
+                    pauseMenuSelection = i;
+                    break;
                 }
             }
         }
@@ -683,8 +760,17 @@ public class WhereWindsMeetHUD implements Disposable {
 
         if (isMapOpen && Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             isMapOpen = false;
-        } else if (activeModalEntry == null && !isMapOpen && !isVictoryOpen && Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            isPauseMenuOpen = !isPauseMenuOpen;
+        } else if (activeModalEntry == null && !isMapOpen && !isVictoryOpen && !isDisqualified && !isDefeated && Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            if (isExitConfirmOpen) {
+                isExitConfirmOpen = false;
+                bd.spark36.audio.SoundManager.get().playClick();
+            } else {
+                isPauseMenuOpen = !isPauseMenuOpen;
+                if (isPauseMenuOpen) {
+                    pauseMenuSelection = 0;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+            }
         }
 
         if (isVictoryOpen) {
@@ -710,23 +796,82 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Pause menu actions & shortcuts
         if (isPauseMenuOpen) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
-                isMapOpen = true;
-                isPauseMenuOpen = false;
-            }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
-                parametersVisible = !parametersVisible;
-            }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.G)) {
-                player.setGender(player.getGender() == 0 ? 1 : 0);
-            }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
-                exitAction = 1; // Return to main menu
-                isPauseMenuOpen = false;
-            }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.X)) {
-                exitAction = 2; // Quit game
-                isPauseMenuOpen = false;
+            if (isExitConfirmOpen) {
+                if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.A)
+                    || Gdx.input.isKeyJustPressed(Input.Keys.RIGHT) || Gdx.input.isKeyJustPressed(Input.Keys.D)) {
+                    exitConfirmSelection = 1 - exitConfirmSelection;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                    if (exitConfirmSelection == 0) {
+                        isExitConfirmOpen = false;
+                        bd.spark36.audio.SoundManager.get().playClick();
+                    } else {
+                        exitAction = 2; // Quit Game -> Gdx.app.exit()
+                        isPauseMenuOpen = false;
+                        isExitConfirmOpen = false;
+                        bd.spark36.audio.SoundManager.get().playClick();
+                    }
+                }
+            } else {
+                if (Gdx.input.isKeyJustPressed(Input.Keys.UP) || Gdx.input.isKeyJustPressed(Input.Keys.W)) {
+                    pauseMenuSelection = (pauseMenuSelection - 1 + 5) % 5;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) || Gdx.input.isKeyJustPressed(Input.Keys.S)) {
+                    pauseMenuSelection = (pauseMenuSelection + 1) % 5;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                    bd.spark36.audio.SoundManager.get().playClick();
+                    if (pauseMenuSelection == 0) {
+                        isPauseMenuOpen = false;
+                    } else if (pauseMenuSelection == 1) {
+                        exitAction = 3; // Restart level
+                        isPauseMenuOpen = false;
+                    } else if (pauseMenuSelection == 2) {
+                        bd.spark36.render.RenderPipelineConfig.toneMappingMode =
+                            (bd.spark36.render.RenderPipelineConfig.toneMappingMode + 1) % 3;
+                    } else if (pauseMenuSelection == 3) {
+                        exitAction = 1; // Return to main menu
+                        isPauseMenuOpen = false;
+                    } else if (pauseMenuSelection == 4) {
+                        isExitConfirmOpen = true;
+                        exitConfirmSelection = 0;
+                    }
+                }
+
+                if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
+                    isMapOpen = true;
+                    isPauseMenuOpen = false;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
+                    parametersVisible = !parametersVisible;
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.G)) {
+                    player.setGender(player.getGender() == 0 ? 1 : 0);
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+                    exitAction = 3; // Restart Level
+                    isPauseMenuOpen = false;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.T)) {
+                    bd.spark36.render.RenderPipelineConfig.toneMappingMode =
+                        (bd.spark36.render.RenderPipelineConfig.toneMappingMode + 1) % 3;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
+                    exitAction = 1; // Return to main menu
+                    isPauseMenuOpen = false;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.X)) {
+                    isExitConfirmOpen = true;
+                    exitConfirmSelection = 1;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
             }
         }
     }
@@ -2420,6 +2565,9 @@ public class WhereWindsMeetHUD implements Disposable {
     // ==========================================
     // PAUSE MENU
     // ==========================================
+    // ==========================================
+    // PAUSE MENU & EXIT CONFIRMATION
+    // ==========================================
     private void renderPauseMenu(float w, float h) {
         beginShapes(ShapeType.Filled);
         shapeRenderer.setColor(0f, 0f, 0f, 0.82f);
@@ -2442,6 +2590,28 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(goldDark.r, goldDark.g, goldDark.b, 0.40f);
         shapeRenderer.rect(dividerX, py + 24f, 1.5f, ph - 48f);
 
+        // Interactive button fills in Left Column
+        float btnX = px + 28f;
+        float btnW = dividerX - px - 46f;
+        float btnH = 44f;
+        float startY = py + ph - 110f;
+        float spacingY = 52f;
+
+        for (int i = 0; i < 5; i++) {
+            float by = startY - i * spacingY;
+            if (pauseMenuSelection == i && !isExitConfirmOpen) {
+                if (i == 4) {
+                    shapeRenderer.setColor(0.92f, 0.35f, 0.28f, 0.25f);
+                } else {
+                    shapeRenderer.setColor(goldAccent.r, goldAccent.g, goldAccent.b, 0.22f);
+                }
+                shapeRenderer.rect(btnX, by, btnW, btnH);
+            } else {
+                shapeRenderer.setColor(0.06f, 0.08f, 0.10f, 0.60f);
+                shapeRenderer.rect(btnX, by, btnW, btnH);
+            }
+        }
+
         // Rule of July Highlight Box at bottom of right column
         float ruleX = dividerX + 24f;
         float ruleY = py + 24f;
@@ -2456,11 +2626,37 @@ public class WhereWindsMeetHUD implements Disposable {
         beginShapes(ShapeType.Line);
         strokeGlassBorder(px, py, pw, ph);
 
+        // Button borders and corner brackets
+        for (int i = 0; i < 5; i++) {
+            float by = startY - i * spacingY;
+            if (pauseMenuSelection == i && !isExitConfirmOpen) {
+                if (i == 4) {
+                    shapeRenderer.setColor(0.95f, 0.40f, 0.35f, 1f);
+                } else {
+                    shapeRenderer.setColor(goldAccent);
+                }
+                shapeRenderer.rect(btnX, by, btnW, btnH);
+                // Corner brackets
+                float cb = 8f;
+                shapeRenderer.line(btnX - 2f, by + btnH + 2f, btnX - 2f + cb, by + btnH + 2f);
+                shapeRenderer.line(btnX - 2f, by + btnH + 2f, btnX - 2f, by + btnH + 2f - cb);
+                shapeRenderer.line(btnX + btnW + 2f, by + btnH + 2f, btnX + btnW + 2f - cb, by + btnH + 2f);
+                shapeRenderer.line(btnX + btnW + 2f, by + btnH + 2f, btnX + btnW + 2f, by + btnH + 2f - cb);
+                shapeRenderer.line(btnX - 2f, by - 2f, btnX - 2f + cb, by - 2f);
+                shapeRenderer.line(btnX - 2f, by - 2f, btnX - 2f, by - 2f + cb);
+                shapeRenderer.line(btnX + btnW + 2f, by - 2f, btnX + btnW + 2f - cb, by - 2f);
+                shapeRenderer.line(btnX + btnW + 2f, by - 2f, btnX + btnW + 2f, by - 2f + cb);
+            } else {
+                shapeRenderer.setColor(goldDark.r, goldDark.g, goldDark.b, 0.45f);
+                shapeRenderer.rect(btnX, by, btnW, btnH);
+            }
+        }
+
         // Border around Rule box
         shapeRenderer.setColor(0.92f, 0.55f, 0.22f, 0.80f);
         shapeRenderer.rect(ruleX, ruleY, ruleW, ruleH);
 
-        // Decorative corner brackets
+        // Decorative corner brackets on main pause panel
         float cb = 16f;
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.line(px - 4f, py + ph + 4f, px - 4f + cb, py + ph + 4f);
@@ -2481,21 +2677,41 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.setColor(goldMuted);
         fonts.smallFont.draw(spriteBatch, "2x12: Spark • Birth of 36 July", px + 38f, py + ph - 54f);
 
-        // Menu items
-        fonts.headerFont.setColor(Color.WHITE);
-        fonts.headerFont.draw(spriteBatch, "[ESC]  Resume Game", px + 40f, py + ph - 105f);
-        fonts.headerFont.draw(spriteBatch, "[M]    Campus Map", px + 40f, py + ph - 150f);
-        fonts.headerFont.draw(spriteBatch, "[P]    Toggle Parameters", px + 40f, py + ph - 195f);
-        fonts.headerFont.draw(spriteBatch, "[G]    Switch Gender (M/F)", px + 40f, py + ph - 240f);
+        // Menu items labels
+        String tmName;
+        int tmMode = bd.spark36.render.RenderPipelineConfig.toneMappingMode;
+        if (tmMode == 1) tmName = "ACES FILMIC";
+        else if (tmMode == 2) tmName = "REINHARD";
+        else tmName = "LINEAR";
 
-        fonts.headerFont.setColor(new Color(1f, 0.78f, 0.38f, 1f));
-        fonts.headerFont.draw(spriteBatch, "[Q]    Exit to Main Menu", px + 40f, py + ph - 305f);
+        String[] itemLabels = {
+            "RESUME GAME",
+            "RESTART LEVEL",
+            "TONE MAP: " + tmName,
+            "MAIN MENU",
+            "EXIT GAME"
+        };
+        String[] itemShortcuts = {"[ESC]", "[R]", "[T]", "[Q]", "[X]"};
 
-        fonts.headerFont.setColor(new Color(0.96f, 0.40f, 0.35f, 1f));
-        fonts.headerFont.draw(spriteBatch, "[X]    Quit to Desktop", px + 40f, py + ph - 350f);
+        for (int i = 0; i < 5; i++) {
+            float by = startY - i * spacingY;
+            boolean sel = (pauseMenuSelection == i && !isExitConfirmOpen);
 
-        fonts.smallFont.setColor(new Color(0.60f, 0.58f, 0.55f, 0.85f));
-        fonts.smallFont.draw(spriteBatch, "Dhaka University Campus • July 2024", px + 40f, py + 36f);
+            if (sel) {
+                fonts.headerFont.setColor((i == 4) ? new Color(1.0f, 0.45f, 0.40f, 1f) : goldAccent);
+            } else {
+                fonts.headerFont.setColor((i == 4) ? new Color(0.92f, 0.45f, 0.40f, 0.9f) : ((i == 3) ? new Color(1f, 0.85f, 0.45f, 0.9f) : new Color(0.90f, 0.88f, 0.85f, 1f)));
+            }
+
+            fonts.headerFont.draw(spriteBatch, itemShortcuts[i] + "  " + itemLabels[i], btnX + 16f, by + btnH / 2f + 8f);
+        }
+
+        // Hints underneath buttons
+        fonts.smallFont.setColor(new Color(0.70f, 0.68f, 0.64f, 0.85f));
+        fonts.smallFont.draw(spriteBatch, "[M] Campus Map  •  [P] Parameters  •  [G] Switch Gender", btnX, py + 56f);
+
+        fonts.smallFont.setColor(new Color(0.55f, 0.52f, 0.50f, 0.80f));
+        fonts.smallFont.draw(spriteBatch, "Dhaka University Campus • July 2024", btnX, py + 34f);
 
         // Right Column: Martial Arts & Controls Codex
         fonts.headerFont.setColor(goldAccent);
@@ -2528,6 +2744,120 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.draw(spriteBatch, "CAMPUS RULE OF JULY:", ruleX + 16f, ruleY + ruleH - 14f);
         fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.88f, 0.90f));
         fonts.smallFont.draw(spriteBatch, "Striking unarmed, innocent students results in instant disqualification.", ruleX + 16f, ruleY + ruleH - 34f);
+        spriteBatch.end();
+
+        // Exit Confirmation Dialog Overlay (if active)
+        if (isExitConfirmOpen) {
+            renderExitConfirmationDialog(w, h);
+        }
+    }
+
+    /**
+     * Renders the modal Exit Confirmation Dialog on top of the pause menu.
+     */
+    private void renderExitConfirmationDialog(float w, float h) {
+        float cw = 640f;
+        float ch = 280f;
+        float cx = (w - cw) / 2f;
+        float cy = (h - ch) / 2f;
+
+        // Dark dimming backdrop
+        beginShapes(ShapeType.Filled);
+        shapeRenderer.setColor(0f, 0f, 0f, 0.85f);
+        shapeRenderer.rect(0, 0, w, h);
+
+        fillGlassPanel(cx, cy, cw, ch);
+
+        // Top accent bar (Crimson alert)
+        shapeRenderer.setColor(0.92f, 0.35f, 0.28f, 1f);
+        shapeRenderer.rect(cx, cy + ch - 4f, cw, 4f);
+
+        // Buttons filled background
+        float btnY = cy + 34f;
+        float btnH = 48f;
+        float b0X = cx + 45f, b0W = 250f;
+        float b1X = cx + cw - 295f, b1W = 250f;
+
+        if (exitConfirmSelection == 0) {
+            shapeRenderer.setColor(goldAccent.r, goldAccent.g, goldAccent.b, 0.24f);
+            shapeRenderer.rect(b0X, btnY, b0W, btnH);
+            shapeRenderer.setColor(0.06f, 0.08f, 0.10f, 0.60f);
+            shapeRenderer.rect(b1X, btnY, b1W, btnH);
+        } else {
+            shapeRenderer.setColor(0.06f, 0.08f, 0.10f, 0.60f);
+            shapeRenderer.rect(b0X, btnY, b0W, btnH);
+            shapeRenderer.setColor(0.92f, 0.35f, 0.28f, 0.28f);
+            shapeRenderer.rect(b1X, btnY, b1W, btnH);
+        }
+        shapeRenderer.end();
+
+        beginShapes(ShapeType.Line);
+        strokeGlassBorder(cx, cy, cw, ch);
+
+        // Button borders & corner brackets
+        shapeRenderer.setColor(exitConfirmSelection == 0 ? goldAccent : new Color(goldDark.r, goldDark.g, goldDark.b, 0.5f));
+        shapeRenderer.rect(b0X, btnY, b0W, btnH);
+
+        shapeRenderer.setColor(exitConfirmSelection == 1 ? new Color(0.98f, 0.42f, 0.36f, 1f) : new Color(0.70f, 0.30f, 0.25f, 0.5f));
+        shapeRenderer.rect(b1X, btnY, b1W, btnH);
+
+        // Corner brackets on selected button
+        float cb = 10f;
+        float selX = (exitConfirmSelection == 0) ? b0X : b1X;
+        float selW = (exitConfirmSelection == 0) ? b0W : b1W;
+        Color selCol = (exitConfirmSelection == 0) ? goldAccent : new Color(0.98f, 0.42f, 0.36f, 1f);
+        shapeRenderer.setColor(selCol);
+        shapeRenderer.line(selX - 2f, btnY + btnH + 2f, selX - 2f + cb, btnY + btnH + 2f);
+        shapeRenderer.line(selX - 2f, btnY + btnH + 2f, selX - 2f, btnY + btnH + 2f - cb);
+        shapeRenderer.line(selX + selW + 2f, btnY + btnH + 2f, selX + selW + 2f - cb, btnY + btnH + 2f);
+        shapeRenderer.line(selX + selW + 2f, btnY + btnH + 2f, selX + selW + 2f, btnY + btnH + 2f - cb);
+        shapeRenderer.line(selX - 2f, btnY - 2f, selX - 2f + cb, btnY - 2f);
+        shapeRenderer.line(selX - 2f, btnY - 2f, selX - 2f, btnY - 2f + cb);
+        shapeRenderer.line(selX + selW + 2f, btnY - 2f, selX + selW + 2f - cb, btnY - 2f);
+        shapeRenderer.line(selX + selW + 2f, btnY - 2f, selX + selW + 2f, btnY - 2f + cb);
+
+        // Dialog outer corner brackets
+        float dcb = 14f;
+        shapeRenderer.setColor(goldAccent);
+        shapeRenderer.line(cx - 3f, cy + ch + 3f, cx - 3f + dcb, cy + ch + 3f);
+        shapeRenderer.line(cx - 3f, cy + ch + 3f, cx - 3f, cy + ch + 3f - dcb);
+        shapeRenderer.line(cx + cw + 3f, cy + ch + 3f, cx + cw + 3f - dcb, cy + ch + 3f);
+        shapeRenderer.line(cx + cw + 3f, cy + ch + 3f, cx + cw + 3f, cy + ch + 3f - dcb);
+        shapeRenderer.line(cx - 3f, cy - 3f, cx - 3f + dcb, cy - 3f);
+        shapeRenderer.line(cx - 3f, cy - 3f, cx - 3f, cy - 3f + dcb);
+        shapeRenderer.line(cx + cw + 3f, cy - 3f, cx + cw + 3f - dcb, cy - 3f);
+        shapeRenderer.line(cx + cw + 3f, cy - 3f, cx + cw + 3f, cy - 3f + dcb);
+        shapeRenderer.end();
+
+        spriteBatch.begin();
+        // Title: EXIT GAME?
+        fonts.titleFont.setColor(new Color(0.98f, 0.42f, 0.36f, 1f));
+        glyphLayout.setText(fonts.titleFont, "EXIT GAME?");
+        fonts.titleFont.draw(spriteBatch, "EXIT GAME?", cx + (cw - glyphLayout.width) / 2f, cy + ch - 26f);
+
+        // Warning text
+        fonts.bodyFont.setColor(new Color(0.90f, 0.88f, 0.84f, 1f));
+        String msg1 = "Are you sure you want to quit to desktop?";
+        glyphLayout.setText(fonts.bodyFont, msg1);
+        fonts.bodyFont.draw(spriteBatch, msg1, cx + (cw - glyphLayout.width) / 2f, cy + ch - 78f);
+
+        fonts.smallFont.setColor(new Color(0.70f, 0.66f, 0.60f, 0.9f));
+        String msg2 = "Any unsaved progress in the current chapter will be lost.";
+        glyphLayout.setText(fonts.smallFont, msg2);
+        fonts.smallFont.draw(spriteBatch, msg2, cx + (cw - glyphLayout.width) / 2f, cy + ch - 110f);
+
+        // Button 0: Cancel
+        fonts.headerFont.setColor(exitConfirmSelection == 0 ? goldAccent : new Color(0.85f, 0.82f, 0.78f, 0.95f));
+        String cancelLabel = "[ESC] CANCEL";
+        glyphLayout.setText(fonts.headerFont, cancelLabel);
+        fonts.headerFont.draw(spriteBatch, cancelLabel, b0X + (b0W - glyphLayout.width) / 2f, btnY + btnH / 2f + 8f);
+
+        // Button 1: Quit
+        fonts.headerFont.setColor(exitConfirmSelection == 1 ? new Color(1.0f, 0.45f, 0.40f, 1f) : new Color(0.90f, 0.45f, 0.40f, 0.85f));
+        String quitLabel = "[ENTER] QUIT GAME";
+        glyphLayout.setText(fonts.headerFont, quitLabel);
+        fonts.headerFont.draw(spriteBatch, quitLabel, b1X + (b1W - glyphLayout.width) / 2f, btnY + btnH / 2f + 8f);
+
         spriteBatch.end();
     }
 
@@ -3315,10 +3645,43 @@ public class WhereWindsMeetHUD implements Disposable {
     /** Open pause menu directly (used for automated visual verification) */
     public void openPauseMenuForTest() {
         this.isPauseMenuOpen = true;
+        this.isExitConfirmOpen = false;
+        this.pauseMenuSelection = 0;
+    }
+
+    /** Open exit confirmation dialog directly (used for automated visual verification) */
+    public void openExitConfirmForTest() {
+        this.isPauseMenuOpen = true;
+        this.isExitConfirmOpen = true;
+        this.exitConfirmSelection = 0;
+    }
+
+    public boolean isPauseMenuOpen() {
+        return isPauseMenuOpen;
+    }
+
+    public boolean isExitConfirmOpen() {
+        return isExitConfirmOpen;
+    }
+
+    public int getPauseMenuSelection() {
+        return pauseMenuSelection;
+    }
+
+    public int getExitConfirmSelection() {
+        return exitConfirmSelection;
+    }
+
+    public void setPauseMenuSelection(int index) {
+        this.pauseMenuSelection = Math.max(0, Math.min(4, index));
+    }
+
+    public void setExitConfirmSelection(int index) {
+        this.exitConfirmSelection = Math.max(0, Math.min(1, index));
     }
 
     public boolean isModalOpen() {
-        return activeModalEntry != null || isMapOpen || isPauseMenuOpen || isVictoryOpen || isDisqualified || isDefeated;
+        return activeModalEntry != null || isMapOpen || isPauseMenuOpen || isExitConfirmOpen || isVictoryOpen || isDisqualified || isDefeated;
     }
 
     /** Reset HUD state (used when returning from main menu or replaying) */
@@ -3326,6 +3689,9 @@ public class WhereWindsMeetHUD implements Disposable {
         activeModalEntry = null;
         isMapOpen = false;
         isPauseMenuOpen = false;
+        isExitConfirmOpen = false;
+        pauseMenuSelection = 0;
+        exitConfirmSelection = 0;
         isVictoryOpen = false;
         isDisqualified = false;
         isDefeated = false;

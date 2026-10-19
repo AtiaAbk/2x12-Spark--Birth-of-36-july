@@ -260,10 +260,68 @@ public class SparkGame extends ApplicationAdapter {
         int screenW = Gdx.graphics.getBackBufferWidth();
         int screenH = Gdx.graphics.getBackBufferHeight();
 
+        // Virtual coordinates scaling (1600 baseline)
+        float w = 1600f;
+        float h = 1600f * ((float) screenH / (float) screenW);
+        float centerX = w / 2f;
+
+        float btnW = 480f;
+        float btnH = 50f;
+        float btnX = centerX - btnW / 2f;
+        float playBtnY = h * 0.40f;
+        float arenaBtnY = playBtnY - btnH - 16f;
+        float exitBtnY = arenaBtnY - btnH - 16f;
+
         // Automated testing support: auto start gameplay if system property set
         if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoStartGame"))) {
             startGameplay();
             return;
+        }
+
+        // Handle Mouse Navigation (Hover & Click)
+        float mouseX = ((float) Gdx.input.getX() / (float) Gdx.graphics.getWidth()) * w;
+        float mouseY = (1.0f - (float) Gdx.input.getY() / (float) Gdx.graphics.getHeight()) * h;
+        boolean mouseClicked = Gdx.input.isButtonJustPressed(Input.Buttons.LEFT);
+
+        if (mouseX >= btnX && mouseX <= btnX + btnW) {
+            if (mouseY >= playBtnY && mouseY <= playBtnY + btnH) {
+                if (menuSelection != 0) {
+                    menuSelection = 0;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+                if (mouseClicked) {
+                    if (!bd.spark36.level.LevelConfig.isLevelUnlocked(selectedChapter)) {
+                        bd.spark36.audio.SoundManager.get().playBlock();
+                        menuNotice = "CHAPTER " + selectedChapter + " IS LOCKED! Complete Chapter " + (selectedChapter - 1) + " to unlock.";
+                        menuNoticeTimer = 3.5f;
+                    } else {
+                        bd.spark36.audio.SoundManager.get().playClick();
+                        bd.spark36.level.LevelConfig.reset(selectedChapter, bd.spark36.level.LevelConfig.GameMode.STORY);
+                        startGameplay();
+                        return;
+                    }
+                }
+            } else if (mouseY >= arenaBtnY && mouseY <= arenaBtnY + btnH) {
+                if (menuSelection != 1) {
+                    menuSelection = 1;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+                if (mouseClicked) {
+                    bd.spark36.audio.SoundManager.get().playClick();
+                    startArenaMode();
+                    return;
+                }
+            } else if (mouseY >= exitBtnY && mouseY <= exitBtnY + btnH) {
+                if (menuSelection != 2) {
+                    menuSelection = 2;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+                if (mouseClicked) {
+                    bd.spark36.audio.SoundManager.get().playClick();
+                    Gdx.app.exit();
+                    return;
+                }
+            }
         }
 
         // Handle menu navigation (WASD + Arrow Keys + ENTER/SPACE)
@@ -307,10 +365,6 @@ public class SparkGame extends ApplicationAdapter {
             }
         }
 
-        // Virtual coordinates scaling (1600 baseline)
-        float w = 1600f;
-        float h = 1600f * ((float) screenH / (float) screenW);
-
         // Clear screen with deep dark atmospheric color
         Gdx.gl.glViewport(0, 0, screenW, screenH);
         Gdx.gl.glClearColor(0.02f, 0.04f, 0.06f, 1f);
@@ -342,7 +396,6 @@ public class SparkGame extends ApplicationAdapter {
 
         // --- Decorative Gold Elements ---
         shapeRenderer.begin(ShapeType.Filled);
-        float centerX = w / 2f;
         float titleBlockY = h * 0.62f;
 
         // Gold diamond ornament above title
@@ -364,13 +417,6 @@ public class SparkGame extends ApplicationAdapter {
         shapeRenderer.rect(centerX - 120f, titleBlockY + 55f, 240f, 1.5f);
 
         // --- Menu Buttons ---
-        float btnW = 480f;
-        float btnH = 50f;
-        float btnX = centerX - btnW / 2f;
-        float playBtnY = h * 0.40f;
-        float arenaBtnY = playBtnY - btnH - 16f;
-        float exitBtnY = arenaBtnY - btnH - 16f;
-
         // 1. PLAY CAMPAIGN (Peaceful)
         if (menuSelection == 0) {
             shapeRenderer.setColor(menuSelectedBg);
@@ -581,9 +627,12 @@ public class SparkGame extends ApplicationAdapter {
             player.clearCombatTarget();
         }
 
+        boolean isSimulationFrozen = (hud != null && (hud.isPauseMenuOpen() || hud.isExitConfirmOpen()));
+        float simDelta = isSimulationFrozen ? 0f : delta;
+
         // 1. Update Game Logic
         boolean canMove = !hud.isModalOpen() && !hud.isNpcDialogueActive() && System.getProperty("bd.spark36.testHeroScreenshot") == null;
-        if (Gdx.input.isKeyJustPressed(Input.Keys.E) && !hud.isModalOpen()) {
+        if (!isSimulationFrozen && Gdx.input.isKeyJustPressed(Input.Keys.E) && !hud.isModalOpen()) {
             if (levelManager != null) {
                 boolean consumed = levelManager.handleInteraction(player.getPosition());
                 if (consumed) {
@@ -598,30 +647,30 @@ public class SparkGame extends ApplicationAdapter {
                 }
             }
         }
-        player.update(delta, camera.getYaw(), canMove);
+        player.update(simDelta, camera.getYaw(), canMove && !isSimulationFrozen);
 
         // Procedural footstep audio
-        if (canMove && !player.isSittingWater() && !player.isDodging()) {
-            bd.spark36.audio.SoundManager.get().updateFootsteps(delta, player.isMoving(), player.isSprinting());
+        if (!isSimulationFrozen && canMove && !player.isSittingWater() && !player.isDodging()) {
+            bd.spark36.audio.SoundManager.get().updateFootsteps(simDelta, player.isMoving(), player.isSprinting());
         }
 
         if (levelManager != null) {
-            levelManager.update(delta, canMove);
+            levelManager.update(simDelta, canMove && !isSimulationFrozen);
         } else {
-            if (activeCrowd != null) activeCrowd.update(delta, player.getPosition());
-            if (helmetGoon != null && canMove) helmetGoon.update(delta, player);
-            if (activeWorld != null) activeWorld.update(delta);
-            if (activeMemorials != null) activeMemorials.update(delta);
+            if (activeCrowd != null) activeCrowd.update(simDelta, player.getPosition());
+            if (helmetGoon != null && canMove && !isSimulationFrozen) helmetGoon.update(simDelta, player);
+            if (activeWorld != null) activeWorld.update(simDelta);
+            if (activeMemorials != null) activeMemorials.update(simDelta);
         }
 
         // Combat attack resolution
-        if (currentLevel != null && currentLevel.isCombatEnabled()) {
+        if (!isSimulationFrozen && currentLevel != null && currentLevel.isCombatEnabled()) {
             levelManager.handlePlayerAttack();
         }
 
         // Enhanced camera: pass movement state for bob + FOV push + shake
-        camera.update(delta, player.getPosition(), canMove,
-            player.isMoving(), player.isSprinting(), player.getHeadingDegrees());
+        camera.update(simDelta, player.getPosition(), canMove && !isSimulationFrozen,
+            player.isMoving() && !isSimulationFrozen, player.isSprinting() && !isSimulationFrozen, player.getHeadingDegrees());
 
         hud.update(delta, player, activeMemorials);
 
