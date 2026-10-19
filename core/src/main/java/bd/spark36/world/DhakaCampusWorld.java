@@ -292,6 +292,61 @@ public class DhakaCampusWorld implements Disposable {
         return mb.end();
     }
 
+    /**
+     * Creates a horizontal paved ground slab with explicit real-world UV scaling
+     * to eliminate extreme texture stretching on walkways and roads.
+     */
+    public static Model createPavedSlab(ModelBuilder mb, float width, float height, float length,
+                                        float uScale, float vScale, Material material, long attributes) {
+        mb.begin();
+        MeshPartBuilder mpb = mb.part("pavedSlab", GL20.GL_TRIANGLES, attributes, material);
+        float hw = width * 0.5f;
+        float hh = height * 0.5f;
+        float hl = length * 0.5f;
+
+        float uMax = width * uScale;
+        float vMax = length * vScale;
+
+        // Top surface (+Y)
+        VertexInfo v00 = new VertexInfo().setPos(-hw, hh, -hl).setNor(0f, 1f, 0f).setUV(0f, 0f);
+        VertexInfo v10 = new VertexInfo().setPos( hw, hh, -hl).setNor(0f, 1f, 0f).setUV(uMax, 0f);
+        VertexInfo v11 = new VertexInfo().setPos( hw, hh,  hl).setNor(0f, 1f, 0f).setUV(uMax, vMax);
+        VertexInfo v01 = new VertexInfo().setPos(-hw, hh,  hl).setNor(0f, 1f, 0f).setUV(0f, vMax);
+        mpb.rect(v00, v10, v11, v01);
+
+        // Sides
+        // North (-Z)
+        mpb.rect(
+            new VertexInfo().setPos(-hw, -hh, -hl).setNor(0f, 0f, -1f).setUV(0f, 1f),
+            new VertexInfo().setPos( hw, -hh, -hl).setNor(0f, 0f, -1f).setUV(uMax, 1f),
+            new VertexInfo().setPos( hw,  hh, -hl).setNor(0f, 0f, -1f).setUV(uMax, 0f),
+            new VertexInfo().setPos(-hw,  hh, -hl).setNor(0f, 0f, -1f).setUV(0f, 0f)
+        );
+        // South (+Z)
+        mpb.rect(
+            new VertexInfo().setPos( hw, -hh,  hl).setNor(0f, 0f, 1f).setUV(0f, 1f),
+            new VertexInfo().setPos(-hw, -hh,  hl).setNor(0f, 0f, 1f).setUV(uMax, 1f),
+            new VertexInfo().setPos(-hw,  hh,  hl).setNor(0f, 0f, 1f).setUV(uMax, 0f),
+            new VertexInfo().setPos( hw,  hh,  hl).setNor(0f, 0f, 1f).setUV(0f, 0f)
+        );
+        // West (-X)
+        mpb.rect(
+            new VertexInfo().setPos(-hw, -hh,  hl).setNor(-1f, 0f, 0f).setUV(0f, 1f),
+            new VertexInfo().setPos(-hw, -hh, -hl).setNor(-1f, 0f, 0f).setUV(vMax, 1f),
+            new VertexInfo().setPos(-hw,  hh, -hl).setNor(-1f, 0f, 0f).setUV(vMax, 0f),
+            new VertexInfo().setPos(-hw,  hh,  hl).setNor(-1f, 0f, 0f).setUV(0f, 0f)
+        );
+        // East (+X)
+        mpb.rect(
+            new VertexInfo().setPos( hw, -hh, -hl).setNor(1f, 0f, 0f).setUV(0f, 1f),
+            new VertexInfo().setPos( hw, -hh,  hl).setNor(1f, 0f, 0f).setUV(vMax, 1f),
+            new VertexInfo().setPos( hw,  hh,  hl).setNor(1f, 0f, 0f).setUV(vMax, 0f),
+            new VertexInfo().setPos( hw,  hh, -hl).setNor(1f, 0f, 0f).setUV(0f, 0f)
+        );
+
+        return mb.end();
+    }
+
     private void buildCampus(TextureFactory textures) {
         ModelBuilder mb = new ModelBuilder();
         long attr = Usage.Position | Usage.Normal | Usage.TextureCoordinates;
