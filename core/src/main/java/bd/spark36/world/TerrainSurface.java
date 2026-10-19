@@ -9,10 +9,10 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
-import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
-import com.badlogic.gdx.graphics.g3d.attributes.PBRColorAttribute;
-import com.badlogic.gdx.graphics.g3d.attributes.PBRTextureAttribute;
+import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
+import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
+import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder.VertexInfo;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
@@ -325,10 +325,12 @@ public class TerrainSurface implements Disposable {
     }
 
     public static void setupPbr(Material mat, float metallic, float roughness) {
-        mat.set(PBRColorAttribute.createBaseColorFactor(new Color(1f, 1f, 1f, 1f)));
-        mat.set(PBRColorAttribute.createEmissive(new Color(0f, 0f, 0f, 1f)));
-        mat.set(FloatAttribute.createMetallic(metallic));
-        mat.set(FloatAttribute.createRoughness(roughness));
+        mat.set(PBRFloatAttribute.createMetallic(metallic));
+        mat.set(PBRFloatAttribute.createRoughness(roughness));
+        ColorAttribute diff = (ColorAttribute) mat.get(ColorAttribute.Diffuse);
+        if (diff != null && !mat.has(PBRColorAttribute.BaseColorFactor)) {
+            mat.set(PBRColorAttribute.createBaseColorFactor(diff.color));
+        }
     }
 
     @Override
