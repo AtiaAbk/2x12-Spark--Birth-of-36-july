@@ -126,7 +126,52 @@ public class TextureFactory implements Disposable {
                         brickPavementNormal, curzonBrickNormal, modernistConcreteNormal, treeBarkNormal);
     }
 
-    private Texture createBrickPavement() {
+    public static Texture createNormalMap(Pixmap src, float bumpScale) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+        Pixmap normPix = new Pixmap(w, h, Format.RGBA8888);
+
+        for (int y = 0; y < h; y++) {
+            int yPrev = (y - 1 + h) % h;
+            int yNext = (y + 1) % h;
+            for (int x = 0; x < w; x++) {
+                int xPrev = (x - 1 + w) % w;
+                int xNext = (x + 1) % w;
+
+                float left  = getLuminance(src.getPixel(xPrev, y));
+                float right = getLuminance(src.getPixel(xNext, y));
+                float down  = getLuminance(src.getPixel(x, yPrev));
+                float up    = getLuminance(src.getPixel(x, yNext));
+
+                float dx = (right - left) * bumpScale;
+                float dy = (up - down) * bumpScale;
+                float dz = 1.0f;
+
+                float len = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+                float nx = -dx / len;
+                float ny = -dy / len;
+                float nz = dz / len;
+
+                normPix.setColor(nx * 0.5f + 0.5f, ny * 0.5f + 0.5f, nz * 0.5f + 0.5f, 1.0f);
+                normPix.drawPixel(x, y);
+            }
+        }
+
+        Texture tex = new Texture(normPix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        normPix.dispose();
+        return tex;
+    }
+
+    private static float getLuminance(int rgba) {
+        float r = ((rgba >>> 24) & 0xff) / 255.0f;
+        float g = ((rgba >>> 16) & 0xff) / 255.0f;
+        float b = ((rgba >>> 8) & 0xff) / 255.0f;
+        return 0.299f * r + 0.587f * g + 0.114f * b;
+    }
+
+    private Texture[] createBrickPavementWithNormal() {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
@@ -171,11 +216,12 @@ public class TextureFactory implements Disposable {
         Texture tex = new Texture(pix, Format.RGBA8888, true);
         tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        Texture norm = createNormalMap(pix, 2.5f);
         pix.dispose();
-        return tex;
+        return new Texture[]{tex, norm};
     }
 
-    private Texture createCurzonBrick() {
+    private Texture[] createCurzonBrickWithNormal() {
         int size = 1024;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
@@ -221,8 +267,9 @@ public class TextureFactory implements Disposable {
         Texture tex = new Texture(pix, Format.RGBA8888, true);
         tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        Texture norm = createNormalMap(pix, 3.0f);
         pix.dispose();
-        return tex;
+        return new Texture[]{tex, norm};
     }
 
     private Texture createLawnGrass() {
