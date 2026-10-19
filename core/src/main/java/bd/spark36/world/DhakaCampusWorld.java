@@ -120,6 +120,10 @@ public class DhakaCampusWorld implements Disposable {
     private final Array<LilyPad> lilyPads = new Array<>();
     private final Array<Model> padModels = new Array<>();
 
+    // Realistic Vegetation & Wind Simulation System (Phase 3)
+    private final VegetationManager vegetationManager = new VegetationManager();
+    private com.badlogic.gdx.graphics.Camera activeCam = null;
+
     // Facade opening materials & orientation debug test card
     private final TextureFactory texturesRef;
     public Material colonialWindowMat;
@@ -1152,114 +1156,34 @@ public class DhakaCampusWorld implements Disposable {
         }
 
         // 4. REALISTIC DHAKA UNIVERSITY CAMPUS VEGETATION & LANDMARKS
-        // Rain Tree & Krishnachura Trunks & Branches
-        Model rainTrunk = mb.createCylinder(1.10f, 4.4f, 1.10f, 12, treeTrunkMat, attr);
-        Model rainBranch = mb.createBox(0.42f, 3.2f, 0.42f, treeTrunkMat, attr);
-        Model krishnaTrunk = mb.createCylinder(0.82f, 4.0f, 0.82f, 10, treeTrunkMat, attr);
-        Model krishnaBranch = mb.createBox(0.35f, 2.8f, 0.35f, treeTrunkMat, attr);
-        Model palmTrunk = mb.createCylinder(0.38f, 9.6f, 0.38f, 10, treeTrunkMat, attr);
-        models.add(rainTrunk);
-        models.add(rainBranch);
-        models.add(krishnaTrunk);
-        models.add(krishnaBranch);
-        models.add(palmTrunk);
-
-        // Foliage meshes (batch-rendered for 60fps). Each material gets its OWN ModelBuilder:
-        ModelBuilder mbPalm = new ModelBuilder();
-        mbPalm.begin();
-        MeshPartBuilder mpbRain = mbPalm.part("palmFronds", GL20.GL_TRIANGLES, attr, foliageMat);
-
         ModelBuilder mbBush = new ModelBuilder();
         mbBush.begin();
         MeshPartBuilder mpbBushes = mbBush.part("bushes", GL20.GL_TRIANGLES, attr, bushMat);
+        ModelBuilder[] foliageBuilders = {mbBush};
 
-        ModelBuilder[] foliageBuilders = {mbPalm, mbBush};
+        // Authentic procedural trees (Rain Tree, Krishnachura, White Blossom, Royal Palm)
+        // built in local space with flared buttress roots into turf (y <= 0), spherical normal blending, and distance LOD
+        vegetationManager.buildCampusTrees(
+            TREE_LOCATIONS,
+            barkTwoSidedMat,
+            leafClumpMat,
+            leafCardMat,
+            blossomClumpMat,
+            whiteBlossomClumpMat,
+            whiteBlossomCardMat,
+            foliageMat,
+            colliders
+        );
 
-        float[][] treeLocations = TREE_LOCATIONS;
-
-        int treeIndex = 0;
-        for (float[] loc : treeLocations) {
-            float tx = loc[0];
-            float tz = loc[1];
+        // Ground shrub rings around prominent campus tree bases
+        for (float[] loc : TREE_LOCATIONS) {
+            float tx = loc[0], tz = loc[1];
             int type = (int) loc[2];
-            // Deterministic per-tree variety so no two neighbours are identical
-            float seed = treeIndex * 2.399f;
-            float scale = 0.9f + 0.28f * (0.5f + 0.5f * MathUtils.sin(treeIndex * 1.7f));
-            treeIndex++;
-
-            // Every third broadleaf tree has a thinner, airier canopy; the rest stay full
-            TreeGeometry.leafDensity = (treeIndex % 3 == 1) ? 0.55f : 1f;
-
-            // Trunk footprint collider
-            float trunkHalf = (type == 2) ? 0.45f : 0.75f * scale;
-            colliders.add(new float[]{tx - trunkHalf, 0f, tz - trunkHalf, tx + trunkHalf, 6f, tz + trunkHalf});
-
-            if (type == 3) {
-                // White Blossom Tree (Dense white magnolia/cherry petals matching user reference image)
-                ModelBuilder limbsB = new ModelBuilder();
-                ModelBuilder coreB = new ModelBuilder();
-                ModelBuilder cardsB = new ModelBuilder();
-                limbsB.begin();
-                coreB.begin();
-                cardsB.begin();
-                TreeGeometry.whiteBlossomTree(
-                    limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
-                    coreB.part("blossomCore", GL20.GL_TRIANGLES, attr, whiteBlossomClumpMat),
-                    cardsB.part("blossomCards", GL20.GL_TRIANGLES, attr, whiteBlossomCardMat),
-                    tx, tz, scale, seed);
-                registerFoliage(limbsB);
-                registerFoliage(coreB);
-                registerFoliage(cardsB);
-
-                // Lush green shrub ring around base
+            if (type == 3 || type == 0) {
                 addCrossedQuads(mpbBushes, tx + 1.1f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
                 addCrossedQuads(mpbBushes, tx - 1.0f, 0f, tz - 1.0f, 1.6f, 1.1f, 3, 0f);
             } else if (type == 1) {
-                // Krishnachura Tree (Vibrant fiery scarlet-red blossoms & bipinnate fronds)
-                ModelBuilder limbsB = new ModelBuilder();
-                ModelBuilder coreB = new ModelBuilder();
-                ModelBuilder cardsB = new ModelBuilder();
-                limbsB.begin();
-                coreB.begin();
-                cardsB.begin();
-                TreeGeometry.krishnaTree(
-                    limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
-                    coreB.part("core", GL20.GL_TRIANGLES, attr, blossomClumpMat),
-                    cardsB.part("leaves", GL20.GL_TRIANGLES, attr, leafCardMat),
-                    tx, tz, scale, seed);
-                registerFoliage(limbsB);
-                registerFoliage(coreB);
-                registerFoliage(cardsB);
-
                 addCrossedQuads(mpbBushes, tx + 0.9f, 0f, tz + 0.9f, 1.7f, 1.2f, 3, 0f);
-            } else if (type == 0) {
-                // Rain Tree (Majestic spreading broadleaf umbrella canopy)
-                ModelBuilder limbsB = new ModelBuilder();
-                ModelBuilder coreB = new ModelBuilder();
-                ModelBuilder cardsB = new ModelBuilder();
-                limbsB.begin();
-                coreB.begin();
-                cardsB.begin();
-                TreeGeometry.rainTree(
-                    limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
-                    coreB.part("core", GL20.GL_TRIANGLES, attr, leafClumpMat),
-                    cardsB.part("leaves", GL20.GL_TRIANGLES, attr, leafCardMat),
-                    tx, tz, scale, seed);
-                registerFoliage(limbsB);
-                registerFoliage(coreB);
-                registerFoliage(cardsB);
-
-                addCrossedQuads(mpbBushes, tx + 1.2f, 0f, tz + 0.8f, 1.8f, 1.3f, 3, 0f);
-                addCrossedQuads(mpbBushes, tx - 1.0f, 0f, tz - 1.1f, 1.6f, 1.1f, 3, 0f);
-            } else {
-                TreeGeometry.leafDensity = 1f;
-                // Royal Palm Tree with radiating fronds
-                ModelInstance pInst = new ModelInstance(palmTrunk);
-                pInst.transform.setTranslation(tx, 4.8f, tz);
-                instances.add(pInst);
-
-                addCrossedQuads(mpbRain, tx, 8.8f, tz, 5.8f, 2.4f, 4, 0f);
-                addHorizontalQuad(mpbRain, tx, 9.6f, tz, 5.0f);
             }
         }
         TreeGeometry.leafDensity = 1f;
