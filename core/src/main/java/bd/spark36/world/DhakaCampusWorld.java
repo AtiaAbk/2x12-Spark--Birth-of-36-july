@@ -1459,32 +1459,32 @@ public class DhakaCampusWorld implements Disposable {
         for (int v = 0; v < 4; v++) {
             int col = (v == 1 || v == 2) ? 1 : 0;
             int row = (v >= 2) ? 1 : 0;
-            float u0 = col * 0.5f, v0 = row * 0.5f;
-            float u1 = u0 + 0.5f, v1 = v0 + 0.5f;
+            float texU0 = col * 0.5f, texV0 = row * 0.5f;
+            float texU1 = texU0 + 0.5f, texV1 = texV0 + 0.5f;
 
             mb.begin();
             MeshPartBuilder pb = mb.part("pad_" + v, GL20.GL_TRIANGLES, attr, lotusMat);
             // Unit quad at origin [-1, 1] in X and Z
-            VertexInfo v0 = new VertexInfo().setPos(-1f, 0f, -1f).setNor(0f, 1f, 0f).setUV(u0, v1);
-            VertexInfo v1 = new VertexInfo().setPos( 1f, 0f, -1f).setNor(0f, 1f, 0f).setUV(u1, v1);
-            VertexInfo v2 = new VertexInfo().setPos( 1f, 0f,  1f).setNor(0f, 1f, 0f).setUV(u1, v0);
-            VertexInfo v3 = new VertexInfo().setPos(-1f, 0f,  1f).setNor(0f, 1f, 0f).setUV(u0, v0);
-            pb.rect(v0, v1, v2, v3);
+            VertexInfo vert0 = new VertexInfo().setPos(-1f, 0f, -1f).setNor(0f, 1f, 0f).setUV(texU0, texV1);
+            VertexInfo vert1 = new VertexInfo().setPos( 1f, 0f, -1f).setNor(0f, 1f, 0f).setUV(texU1, texV1);
+            VertexInfo vert2 = new VertexInfo().setPos( 1f, 0f,  1f).setNor(0f, 1f, 0f).setUV(texU1, texV0);
+            VertexInfo vert3 = new VertexInfo().setPos(-1f, 0f,  1f).setNor(0f, 1f, 0f).setUV(texU0, texV0);
+            pb.rect(vert0, vert1, vert2, vert3);
 
             // Variant 3 is blooming sacred lotus (col=0, row=1): add upright petal cross-quads
             if (col == 0 && row == 1) {
                 float fRad = 0.85f;
                 float fH = 0.38f;
-                VertexInfo fv0 = new VertexInfo().setPos(-fRad, 0f, 0f).setNor(0f, 1f, 0f).setUV(u0, v1);
-                VertexInfo fv1 = new VertexInfo().setPos( fRad, 0f, 0f).setNor(0f, 1f, 0f).setUV(u1, v1);
-                VertexInfo fv2 = new VertexInfo().setPos( fRad, fH, 0f).setNor(0f, 1f, 0f).setUV(u1, v0);
-                VertexInfo fv3 = new VertexInfo().setPos(-fRad, fH, 0f).setNor(0f, 1f, 0f).setUV(u0, v0);
+                VertexInfo fv0 = new VertexInfo().setPos(-fRad, 0f, 0f).setNor(0f, 1f, 0f).setUV(texU0, texV1);
+                VertexInfo fv1 = new VertexInfo().setPos( fRad, 0f, 0f).setNor(0f, 1f, 0f).setUV(texU1, texV1);
+                VertexInfo fv2 = new VertexInfo().setPos( fRad, fH, 0f).setNor(0f, 1f, 0f).setUV(texU1, texV0);
+                VertexInfo fv3 = new VertexInfo().setPos(-fRad, fH, 0f).setNor(0f, 1f, 0f).setUV(texU0, texV0);
                 pb.rect(fv0, fv1, fv2, fv3);
 
-                VertexInfo fz0 = new VertexInfo().setPos(0f, 0f, -fRad).setNor(0f, 1f, 0f).setUV(u0, v1);
-                VertexInfo fz1 = new VertexInfo().setPos(0f, 0f,  fRad).setNor(0f, 1f, 0f).setUV(u1, v1);
-                VertexInfo fz2 = new VertexInfo().setPos(0f, fH,  fRad).setNor(0f, 1f, 0f).setUV(u1, v0);
-                VertexInfo fz3 = new VertexInfo().setPos(0f, fH, -fRad).setNor(0f, 1f, 0f).setUV(u0, v0);
+                VertexInfo fz0 = new VertexInfo().setPos(0f, 0f, -fRad).setNor(0f, 1f, 0f).setUV(texU0, texV1);
+                VertexInfo fz1 = new VertexInfo().setPos(0f, 0f,  fRad).setNor(0f, 1f, 0f).setUV(texU1, texV1);
+                VertexInfo fz2 = new VertexInfo().setPos(0f, fH,  fRad).setNor(0f, 1f, 0f).setUV(texU1, texV0);
+                VertexInfo fz3 = new VertexInfo().setPos(0f, fH, -fRad).setNor(0f, 1f, 0f).setUV(texU0, texV0);
                 pb.rect(fz0, fz1, fz2, fz3);
             }
 
