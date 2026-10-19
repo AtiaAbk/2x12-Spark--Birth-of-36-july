@@ -305,9 +305,12 @@ public class StudentMesh implements Disposable {
     /** Material bound to an Appearance slot, tinted by (tr,tg,tb) relative to the slot colour. */
     private Material m(int slot, float tr, float tg, float tb) {
         Color c = cur.slot(slot);
-        Material mat = new Material(ColorAttribute.createDiffuse(new Color(
+        Color col = new Color(
             MathUtils.clamp(c.r * tr, 0f, 1f), MathUtils.clamp(c.g * tg, 0f, 1f),
-            MathUtils.clamp(c.b * tb, 0f, 1f), 1f)));
+            MathUtils.clamp(c.b * tb, 0f, 1f), 1f);
+        Material mat = new Material(
+            ColorAttribute.createDiffuse(col),
+            PBRColorAttribute.createBaseColorFactor(col));
         float roughness = 0.75f;
         if (slot == SLOT_SKIN) {
             roughness = 0.60f;
@@ -333,7 +336,10 @@ public class StudentMesh implements Disposable {
     }
 
     private static Material flat(float r, float g, float b) {
-        Material mat = new Material(ColorAttribute.createDiffuse(new Color(r, g, b, 1f)));
+        Color col = new Color(r, g, b, 1f);
+        Material mat = new Material(
+            ColorAttribute.createDiffuse(col),
+            PBRColorAttribute.createBaseColorFactor(col));
         mat.set(PBRFloatAttribute.createMetallic(0.0f));
         mat.set(PBRFloatAttribute.createRoughness(0.70f));
         return mat;
