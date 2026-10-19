@@ -805,11 +805,14 @@ public class StudentMesh implements Disposable {
             ModelInstance inst = new ModelInstance(p.model); // copies materials
             if (p.slot != SLOT_FIXED) {
                 Color c = look.slot(p.slot);
+                Color tint = new Color(
+                    MathUtils.clamp(c.r * p.tr, 0f, 1f), MathUtils.clamp(c.g * p.tg, 0f, 1f),
+                    MathUtils.clamp(c.b * p.tb, 0f, 1f), 1f);
                 ColorAttribute ca = (ColorAttribute) inst.materials.first().get(ColorAttribute.Diffuse);
                 if (ca != null) {
-                    ca.color.set(MathUtils.clamp(c.r * p.tr, 0f, 1f), MathUtils.clamp(c.g * p.tg, 0f, 1f),
-                        MathUtils.clamp(c.b * p.tb, 0f, 1f), 1f);
+                    ca.color.set(tint);
                 }
+                inst.materials.first().set(PBRColorAttribute.createBaseColorFactor(tint));
             }
             to.add(new Part(p.model, inst, p.local, p.slot, p.tr, p.tg, p.tb, p.group));
         }
