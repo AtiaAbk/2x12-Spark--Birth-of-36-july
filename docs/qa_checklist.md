@@ -23,6 +23,9 @@
 - [x] Level 6: "36 July: Epilogue" (August 5 victory march, monument flower tribute, epilogue credits verified).
 - [x] Level transitions cleanly unload previous level geometry and advance via `[SPACE] Next Level (N)`.
 - [x] Main Menu interactive Chapter Selector allows direct launch into any Chapter (1..6) via `A`/`D` or `Left`/`Right`.
+- [x] Persistent chapter unlock state saved across game restarts via LibGDX Preferences (`Spark36Preferences`).
+- [x] Automatic victory progression: 5-second countdown timer on victory screen automatically transitions player to next unlocked level.
+- [x] Main Menu chapter selection protection: locked chapters display `[LOCKED]` badge and cannot be started until previous chapter is completed.
 
 ## 3. AUDIO SYSTEM & SOUND SYNTHESIS
 - [x] Procedural 16-bit PCM sound synthesizer (`SoundManager.java`) with zero unlicensed audio dependencies.

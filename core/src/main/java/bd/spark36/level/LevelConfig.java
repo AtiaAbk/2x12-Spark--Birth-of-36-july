@@ -112,4 +112,44 @@ public class LevelConfig {
             combatEnabled = true;
         }
     }
+
+    // ==========================================
+    // CAMPAIGN PROGRESSION & UNLOCK MANAGEMENT
+    // ==========================================
+    private static int unlockedLevel = 1;
+    private static final String PREF_NAME = "Spark36Preferences";
+    private static final String PREF_KEY_UNLOCKED = "unlockedChapter";
+
+    public static int getUnlockedLevel() {
+        if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.unlockAll"))) {
+            return 6; // Developer test bypass
+        }
+        if (Gdx.app != null) {
+            try {
+                com.badlogic.gdx.Preferences prefs = Gdx.app.getPreferences(PREF_NAME);
+                int saved = prefs.getInteger(PREF_KEY_UNLOCKED, 1);
+                if (saved > unlockedLevel) unlockedLevel = saved;
+            } catch (Exception ignored) {}
+        }
+        return Math.max(1, Math.min(6, unlockedLevel));
+    }
+
+    public static void unlockNextLevel(int completedLevel) {
+        int next = Math.min(6, completedLevel + 1);
+        if (next > unlockedLevel) {
+            unlockedLevel = next;
+            if (Gdx.app != null) {
+                try {
+                    com.badlogic.gdx.Preferences prefs = Gdx.app.getPreferences(PREF_NAME);
+                    prefs.putInteger(PREF_KEY_UNLOCKED, unlockedLevel);
+                    prefs.flush();
+                    Gdx.app.log("LevelConfig", "Progress saved! Unlocked Chapter: " + unlockedLevel);
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    public static boolean isLevelUnlocked(int level) {
+        return level <= getUnlockedLevel();
+    }
 }

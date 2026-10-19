@@ -7,6 +7,18 @@
 
 ## RECENT SESSIONS & ENTRY LOGS
 
+### 2026-10-19 — Persistent Campaign Progression, Auto-Advancement & Locked Chapter Gating
+- **Action:**
+  - Implemented persistent campaign unlock tracking in `LevelConfig.java` backed by LibGDX cross-platform `Preferences` (`Spark36Preferences`, key: `unlockedChapter`).
+  - Added auto-advancement countdown timer (`victoryAutoAdvanceTimer = 5.0f`) on chapter victory in `WhereWindsMeetHUD.java`, automatically advancing the player to the next unlocked level after victory celebration without requiring menu traversal.
+  - Added immediate skip controls on the victory screen (`ENTER`, `SPACE`, `N`) to advance without waiting, while `M` returns to Main Menu and `R` replays the chapter.
+  - Rendered `*** CHAPTER X UNLOCKED! ***` achievement banner and live countdown display on the victory screen.
+  - Implemented locked chapter protection in `SparkGame.java` on the Main Menu Chapter Selector: locked chapters display `[LOCKED]` in muted reddish styling, and attempting to launch them plays a defensive block sound and surfaces an interactive lock notification (`CHAPTER X IS LOCKED! Complete Chapter X-1 to unlock`).
+- **Verification:**
+  - Verified compilation and packaging via `./gradlew build -x test` and `./gradlew :lwjgl3:jar`.
+  - Verified runtime victory screen with countdown timer and unlock notification: `assets/screenshots/spark36_victory_verified.png`.
+  - Verified runtime Main Menu gating: unlocked Chapter 2 defaults cleanly (`assets/screenshots/spark36_menu_verified.png`), and locked Chapter 3 displays `[LOCKED]` badge.
+
 ### 2026-10-19 — Procedural Audio Engine, Dynamic Victory Navigation, Chapter Selector & Full Documentation Suite
 - **Action:**
   - Designed and implemented `SoundManager.java` with 10 procedural 16-bit PCM sound synthesizers at 44.1 kHz (UI click, attack whooshes, punches, kicks, blocks, objective chimes, Freedom Bell toll, water splashes, footsteps, and CS tear gas hissing) — achieving 100% royalty-free legal safety with 0 unlicensed audio assets.

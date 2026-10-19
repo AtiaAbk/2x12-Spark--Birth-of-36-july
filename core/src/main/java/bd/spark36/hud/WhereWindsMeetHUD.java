@@ -88,6 +88,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private boolean congratulationsPopupActive = false;
     private float congratulationsPopupTimer = 0f;
     private float victoryTransitionTimer = 0f;
+    private float victoryAutoAdvanceTimer = 0f;
     private float animTime = 0f;
 
     // Toast Notification Banner (triggered on memorial inspection)
@@ -294,6 +295,9 @@ public class WhereWindsMeetHUD implements Disposable {
         this.victoryTransitionTimer = 2.4f;
         this.victoryShown = true;
         this.isVictoryOpen = false;
+        this.victoryAutoAdvanceTimer = 5.0f;
+        int currentLvl = (activeLevel != null) ? activeLevel.getLevelNumber() : 1;
+        bd.spark36.level.LevelConfig.unlockNextLevel(currentLvl);
         bd.spark36.audio.SoundManager.get().playBell();
     }
 
@@ -380,6 +384,7 @@ public class WhereWindsMeetHUD implements Disposable {
                 }
                 if (victoryTransitionTimer <= 0f) {
                     isVictoryOpen = true;
+                    victoryAutoAdvanceTimer = 5.0f;
                 }
             }
             if (congratulationsPopupTimer <= 0f) {
@@ -488,30 +493,46 @@ public class WhereWindsMeetHUD implements Disposable {
             return;
         }
 
-        // Handle Victory Screen input
+        // Handle Victory Screen input & auto-advance timer
         if (isVictoryOpen) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.N)) {
-                exitAction = 3; // Next Level or Replay
+            victoryAutoAdvanceTimer -= delta;
+            int lvlNum = (activeLevel != null) ? activeLevel.getLevelNumber() : 1;
+
+            // Auto-advance when countdown expires
+            if (victoryAutoAdvanceTimer <= 0f) {
+                exitAction = (lvlNum < 6) ? 3 : 1;
                 isVictoryOpen = false;
                 victoryShown = false;
                 bd.spark36.audio.SoundManager.get().playClick();
                 return;
             }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
-                exitAction = 1; // Return to Main Menu
+
+            // [ENTER], [SPACE], or [N] immediately advances to next level / finishes campaign
+            if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.N)) {
+                exitAction = (lvlNum < 6) ? 3 : 1;
+                isVictoryOpen = false;
+                victoryShown = false;
+                bd.spark36.audio.SoundManager.get().playClick();
+                return;
+            }
+            // [M] returns to Main Menu
+            if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
+                exitAction = 1;
                 isVictoryOpen = false;
                 bd.spark36.audio.SoundManager.get().playClick();
                 return;
             }
+            // [R] replays current chapter
             if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
-                exitAction = 3; // Replay
+                exitAction = 3;
                 isVictoryOpen = false;
                 victoryShown = false;
                 bd.spark36.audio.SoundManager.get().playClick();
                 return;
             }
+            // [X] or [ESCAPE] exits game
             if (Gdx.input.isKeyJustPressed(Input.Keys.X) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-                exitAction = 2; // Quit Game
+                exitAction = 2;
                 isVictoryOpen = false;
                 bd.spark36.audio.SoundManager.get().playClick();
                 return;
@@ -529,6 +550,9 @@ public class WhereWindsMeetHUD implements Disposable {
             missionBannerCount = 5;
             isVictoryOpen = true;
             victoryShown = true;
+            victoryAutoAdvanceTimer = 5.0f;
+            int currentLvl = (activeLevel != null) ? activeLevel.getLevelNumber() : 1;
+            bd.spark36.level.LevelConfig.unlockNextLevel(currentLvl);
             return;
         }
 
@@ -2985,7 +3009,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Narrative box
         float nx = vx + 35f;
-        float ny = vy + 245f;
+        float ny = vy + 265f;
         float nw = vw - 70f;
         float nh = 120f;
         shapeRenderer.setColor(0.05f, 0.07f, 0.10f, 0.75f);
@@ -2993,7 +3017,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Statistics sub-card
         float sx = vx + 35f;
-        float sy = vy + 105f;
+        float sy = vy + 124f;
         float sw = vw - 70f;
         float sh = 125f;
         shapeRenderer.setColor(0.06f, 0.09f, 0.12f, 0.85f);
@@ -3130,13 +3154,36 @@ public class WhereWindsMeetHUD implements Disposable {
         String rankStr = (lvlNum == 6) ? "RANK S+ -- LIBERATOR OF 36 JULY" : "RANK S -- HERO OF 36 JULY";
         fonts.headerFont.draw(spriteBatch, rankStr, sx + sw - 290f, sy + 58f);
 
+        // Chapter unlock & auto-advance notice
+        if (lvlNum < 6) {
+            fonts.promptFont.setColor(new Color(0.35f, 1.0f, 0.45f, 1f));
+            String unlockBanner = "*** CHAPTER " + (lvlNum + 1) + " UNLOCKED! ***";
+            glyphLayout.setText(fonts.promptFont, unlockBanner);
+            fonts.promptFont.draw(spriteBatch, unlockBanner, vx + (vw - glyphLayout.width) / 2f, vy + 114f);
+
+            fonts.smallFont.setColor(new Color(1f, 0.88f, 0.50f, 0.95f));
+            String advanceNotice = String.format("Auto-advancing in %.1fs... [SPACE / ENTER to skip]", Math.max(0f, victoryAutoAdvanceTimer));
+            glyphLayout.setText(fonts.smallFont, advanceNotice);
+            fonts.smallFont.draw(spriteBatch, advanceNotice, vx + (vw - glyphLayout.width) / 2f, vy + 97f);
+        } else {
+            fonts.promptFont.setColor(new Color(1f, 0.85f, 0.25f, 1f));
+            String unlockBanner = "*** ALL 6 CHAPTERS COMPLETED! 36 JULY LIBERATION ***";
+            glyphLayout.setText(fonts.promptFont, unlockBanner);
+            fonts.promptFont.draw(spriteBatch, unlockBanner, vx + (vw - glyphLayout.width) / 2f, vy + 114f);
+
+            fonts.smallFont.setColor(new Color(1f, 0.88f, 0.50f, 0.95f));
+            String advanceNotice = String.format("Auto-returning to Menu in %.1fs... [SPACE / ENTER to skip]", Math.max(0f, victoryAutoAdvanceTimer));
+            glyphLayout.setText(fonts.smallFont, advanceNotice);
+            fonts.smallFont.draw(spriteBatch, advanceNotice, vx + (vw - glyphLayout.width) / 2f, vy + 97f);
+        }
+
         // Interactive action prompts
         fonts.promptFont.setColor(b1Hover ? Color.WHITE : goldAccent);
-        fonts.promptFont.draw(spriteBatch, "[ENTER] Main Menu", b1X + 35f, btnY + 30f);
+        fonts.promptFont.draw(spriteBatch, "[M] Main Menu", b1X + 45f, btnY + 30f);
 
         fonts.promptFont.setColor(b2Hover ? Color.WHITE : new Color(1f, 0.85f, 0.45f, 1f));
-        String b2Label = (lvlNum < 6) ? "[SPACE] Next Level (N)" : "[R] Replay Campaign";
-        fonts.promptFont.draw(spriteBatch, b2Label, b2X + 25f, btnY + 30f);
+        String b2Label = (lvlNum < 6) ? "[SPACE] Next Chapter (N)" : "[R] Replay Campaign";
+        fonts.promptFont.draw(spriteBatch, b2Label, b2X + 15f, btnY + 30f);
 
         fonts.promptFont.setColor(b3Hover ? Color.WHITE : new Color(0.95f, 0.45f, 0.40f, 1f));
         fonts.promptFont.draw(spriteBatch, "[X] Exit Game", b3X + 50f, btnY + 30f);
@@ -3154,6 +3201,9 @@ public class WhereWindsMeetHUD implements Disposable {
     public void triggerVictoryForTest() {
         isVictoryOpen = true;
         victoryShown = true;
+        victoryAutoAdvanceTimer = 5.0f;
+        int currentLvl = (activeLevel != null) ? activeLevel.getLevelNumber() : 1;
+        bd.spark36.level.LevelConfig.unlockNextLevel(currentLvl);
     }
 
     /** Open memorial modal directly (used for automated visual verification) */
@@ -3182,6 +3232,7 @@ public class WhereWindsMeetHUD implements Disposable {
         congratulationsPopupActive = false;
         congratulationsPopupTimer = 0f;
         victoryTransitionTimer = 0f;
+        victoryAutoAdvanceTimer = 0f;
         missionBannerTime = 0f;
         exitAction = 0;
     }

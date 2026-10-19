@@ -75,6 +75,8 @@ public class SparkGame extends ApplicationAdapter {
     private float hitStopTimer = 0f;
     private boolean gameplayInitialized = false;
     private int selectedChapter = 1;
+    private String menuNotice = null;
+    private float menuNoticeTimer = 0f;
 
     // Auto-screenshot support
     private float testTimer = 0f;
@@ -94,6 +96,8 @@ public class SparkGame extends ApplicationAdapter {
             try {
                 selectedChapter = Integer.parseInt(levelProp.trim());
             } catch (Exception ignored) {}
+        } else {
+            selectedChapter = bd.spark36.level.LevelConfig.getUnlockedLevel();
         }
 
         if (System.getProperty("bd.spark36.testHeroScreenshot") != null ||
@@ -208,6 +212,9 @@ public class SparkGame extends ApplicationAdapter {
     public void returnToMainMenu() {
         gameState = GameState.MAIN_MENU;
         menuSelection = 0;
+        if (levelManager != null && levelManager.getActiveLevel() != null) {
+            selectedChapter = Math.min(bd.spark36.level.LevelConfig.getUnlockedLevel(), levelManager.getActiveLevel().getLevelNumber());
+        }
         Gdx.input.setCursorCatched(false);
     }
 
@@ -259,15 +266,23 @@ public class SparkGame extends ApplicationAdapter {
             }
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.J)) {
-            bd.spark36.audio.SoundManager.get().playClick();
             if (menuSelection == 0) {
+                if (!bd.spark36.level.LevelConfig.isLevelUnlocked(selectedChapter)) {
+                    bd.spark36.audio.SoundManager.get().playBlock();
+                    menuNotice = "CHAPTER " + selectedChapter + " IS LOCKED! Complete Chapter " + (selectedChapter - 1) + " to unlock.";
+                    menuNoticeTimer = 3.5f;
+                    return;
+                }
+                bd.spark36.audio.SoundManager.get().playClick();
                 bd.spark36.level.LevelConfig.reset(selectedChapter, bd.spark36.level.LevelConfig.GameMode.STORY);
                 startGameplay();
                 return;
             } else if (menuSelection == 1) {
+                bd.spark36.audio.SoundManager.get().playClick();
                 startArenaMode();
                 return;
             } else {
+                bd.spark36.audio.SoundManager.get().playClick();
                 Gdx.app.exit();
                 return;
             }
@@ -418,7 +433,7 @@ public class SparkGame extends ApplicationAdapter {
             centerX - glyphLayout.width / 2f, titleBlockY - 14f);
 
         // Button 1: Campaign
-        fontRenderer.headerFont.setColor(menuSelection == 0 ? menuGoldAccent : new Color(0.85f, 0.82f, 0.75f, 1f));
+        boolean isUnlocked = bd.spark36.level.LevelConfig.isLevelUnlocked(selectedChapter);
         String chapterName;
         switch (selectedChapter) {
             case 1: chapterName = "CH 1: CURZON SOLIDARITY (JUL 1-14)"; break;
@@ -429,10 +444,26 @@ public class SparkGame extends ApplicationAdapter {
             case 6: chapterName = "CH 6: VICTORY & 36 JULY (AUG 5)"; break;
             default: chapterName = "START CAMPAIGN"; break;
         }
+        if (!isUnlocked) {
+            chapterName += " [LOCKED]";
+        }
         String playLabel = (menuSelection == 0) ? "<  " + chapterName + "  >" : chapterName;
         glyphLayout.setText(fontRenderer.headerFont, playLabel);
+        if (menuSelection == 0) {
+            fontRenderer.headerFont.setColor(isUnlocked ? menuGoldAccent : new Color(0.85f, 0.45f, 0.45f, 0.95f));
+        } else {
+            fontRenderer.headerFont.setColor(isUnlocked ? new Color(0.85f, 0.82f, 0.75f, 1f) : new Color(0.55f, 0.50f, 0.50f, 0.7f));
+        }
         fontRenderer.headerFont.draw(menuBatch, playLabel,
             centerX - glyphLayout.width / 2f, playBtnY + btnH / 2f + 8f);
+
+        if (menuNoticeTimer > 0f && menuNotice != null) {
+            menuNoticeTimer -= delta;
+            fontRenderer.smallFont.setColor(new Color(1f, 0.40f, 0.35f, Math.min(1f, menuNoticeTimer)));
+            glyphLayout.setText(fontRenderer.smallFont, menuNotice);
+            fontRenderer.smallFont.draw(menuBatch, menuNotice,
+                centerX - glyphLayout.width / 2f, playBtnY - 14f);
+        }
 
         // Button 2: Arena
         fontRenderer.headerFont.setColor(menuSelection == 1 ? menuGoldAccent : new Color(0.85f, 0.82f, 0.75f, 1f));
@@ -501,6 +532,9 @@ public class SparkGame extends ApplicationAdapter {
         } else if (exitAction == 3) {
             if (levelManager != null) {
                 if (levelManager.getActiveLevel() != null && levelManager.getActiveLevel().isLevelComplete()) {
+                    int currentLvl = levelManager.getActiveLevel().getLevelNumber();
+                    bd.spark36.level.LevelConfig.unlockNextLevel(currentLvl);
+                    selectedChapter = Math.min(6, currentLvl + 1);
                     levelManager.nextLevel();
                 } else {
                     levelManager.restartCurrentLevel();
