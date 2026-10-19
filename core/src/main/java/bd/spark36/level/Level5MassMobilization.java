@@ -269,6 +269,7 @@ public class Level5MassMobilization implements CampaignLevel {
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
         this.crowd = new CampusCrowd(24, player.getColliders());
+        this.crowd.setLevelProfile(5);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 

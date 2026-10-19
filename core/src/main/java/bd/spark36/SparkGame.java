@@ -126,6 +126,7 @@ public class SparkGame extends ApplicationAdapter {
              System.getProperty("bd.spark36.testPauseScreenshot") != null ||
              System.getProperty("bd.spark36.testCongratulations") != null ||
              System.getProperty("bd.spark36.testVictory") != null ||
+             System.getProperty("bd.spark36.testNpcDialogue") != null ||
              System.getProperty("bd.spark36.baseline") != null ||
              System.getProperty("bd.spark36.testCard") != null)) {
             startGameplay();
@@ -948,6 +949,23 @@ public class SparkGame extends ApplicationAdapter {
             }
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
                 takeScreenshot("spark36_pause_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (System.getProperty("bd.spark36.testNpcDialogue") != null) {
+            hud.reset();
+            player.setPosition(0f, 0f, 70f);
+            player.setHeadingDegrees(180f);
+            camera.setAngles(0f, -2f);
+            camera.setDistance(2.2f);
+            testTimer += delta;
+            if (testTimer >= 0.8f && !hud.isNpcDialogueActive()) {
+                hud.showNpcDialogue(bd.spark36.level.DialogueRepository.getStudentDialogue(1, 0), 5.0f);
+            }
+            if (!autoScreenshotTaken && testTimer >= 2.0f) {
+                takeScreenshot("phase8_crowd_dialogue_interaction");
                 autoScreenshotTaken = true;
                 if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
                     Gdx.app.exit();

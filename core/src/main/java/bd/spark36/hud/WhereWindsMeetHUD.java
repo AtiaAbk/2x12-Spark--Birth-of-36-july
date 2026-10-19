@@ -281,6 +281,23 @@ public class WhereWindsMeetHUD implements Disposable {
         return isDefeated;
     }
 
+    private bd.spark36.level.DialogueRepository.DialogueLine activeNpcDialogue = null;
+    private float npcDialogueTimer = 0f;
+
+    public void showNpcDialogue(bd.spark36.level.DialogueRepository.DialogueLine line, float duration) {
+        this.activeNpcDialogue = line;
+        this.npcDialogueTimer = duration;
+    }
+
+    public void clearNpcDialogue() {
+        this.activeNpcDialogue = null;
+        this.npcDialogueTimer = 0f;
+    }
+
+    public boolean isNpcDialogueActive() {
+        return activeNpcDialogue != null && npcDialogueTimer > 0f;
+    }
+
     public void triggerMissionToast(String title, int count) {
         this.missionBannerTitle = title;
         this.missionBannerCount = count;
@@ -354,6 +371,13 @@ public class WhereWindsMeetHUD implements Disposable {
 
     public void update(float delta, PlayerController player, JulyMemorials memorials) {
         animTime += delta;
+
+        if (npcDialogueTimer > 0f) {
+            npcDialogueTimer -= delta;
+            if (npcDialogueTimer <= 0f) {
+                activeNpcDialogue = null;
+            }
+        }
 
         // ── VFX Animations ─────────────────────────────────────────────────
         // Checkpoint flash decay
@@ -847,6 +871,11 @@ public class WhereWindsMeetHUD implements Disposable {
             if (combatText != null) {
                 renderCombatFloatingPopup(combatText, helmetGoon.getCombatPopupColor(), w, h);
             }
+        }
+
+        // 4c. Interactive Student NPC Dialogue Subtitle Box
+        if (activeNpcDialogue != null && !isVictoryOpen && !isDisqualified && !isDefeated && !isPauseMenuOpen && !isMapOpen && activeModalEntry == null) {
+            renderStudentNpcDialogue(activeNpcDialogue, w, h);
         }
 
         // 5. Overlays: Historical Archival Modal, Map, Pause Menu, Victory, Disqualification, or Defeat Screen
@@ -2758,6 +2787,36 @@ public class WhereWindsMeetHUD implements Disposable {
 
         fonts.promptFont.setColor(goldAccent);
         fonts.promptFont.draw(spriteBatch, "\"" + diag.getTextEnglish() + "\"  |  [F] ACCEPT CHALLENGE   [LMB/F] PUNCH   [Q/K] KICK   [C] DUCK", dx + 18f, dy + 22f);
+        spriteBatch.end();
+    }
+
+    private void renderStudentNpcDialogue(bd.spark36.level.DialogueRepository.DialogueLine diag, float w, float h) {
+        float dw = currentLayout.dialW;
+        float dh = currentLayout.dialH;
+        float dx = currentLayout.dialX;
+        float dy = currentLayout.dialY;
+
+        beginShapes(ShapeType.Filled);
+        fillGlassPanel(dx, dy, dw, dh);
+        shapeRenderer.setColor(0.32f, 0.85f, 0.52f, 0.90f); // Emerald top stripe for student dialogue
+        shapeRenderer.rect(dx, dy + dh - 3f, dw, 3f);
+        shapeRenderer.end();
+
+        beginShapes(ShapeType.Line);
+        strokeGlassBorder(dx, dy, dw, dh);
+        shapeRenderer.end();
+
+        spriteBatch.begin();
+        fonts.headerFont.setColor(new Color(0.42f, 0.95f, 0.65f, 1f));
+        fonts.headerFont.draw(spriteBatch, diag.getSpeaker() + " :", dx + 18f, dy + dh - 16f);
+
+        // Authentic Bengali student voice
+        com.badlogic.gdx.graphics.g2d.BitmapFont bFont = (fonts.bengaliFont != null) ? fonts.bengaliFont : fonts.headerFont;
+        bFont.setColor(Color.WHITE);
+        bFont.draw(spriteBatch, "\"" + diag.getTextBengali() + "\"", dx + 285f, dy + dh - 16f);
+
+        fonts.promptFont.setColor(goldAccent);
+        fonts.promptFont.draw(spriteBatch, "\"" + diag.getTextEnglish() + "\"", dx + 18f, dy + 22f);
         spriteBatch.end();
     }
 

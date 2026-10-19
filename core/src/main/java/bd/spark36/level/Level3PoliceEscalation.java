@@ -295,6 +295,7 @@ public class Level3PoliceEscalation implements CampaignLevel {
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
         this.crowd = new CampusCrowd(16, player.getColliders());
+        this.crowd.setLevelProfile(3);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 

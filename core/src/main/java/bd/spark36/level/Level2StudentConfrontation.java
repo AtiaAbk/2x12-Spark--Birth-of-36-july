@@ -179,6 +179,9 @@ public class Level2StudentConfrontation implements CampaignLevel {
         if (!objectivesDone[4] && playerPos.dst(objectiveWaypoints[4]) <= 4.0f) {
             return "[E] COORDINATE EMERGENCY MEDICAL SHELTER";
         }
+        if (crowd != null && crowd.getClosestInteractable(playerPos, 2.6f) != null) {
+            return "[E] TALK TO DU STUDENT";
+        }
         return null;
     }
 
@@ -196,6 +199,10 @@ public class Level2StudentConfrontation implements CampaignLevel {
             objectivesDone[4] = true;
             hud.triggerMissionToast("MEDICAL SHELTER SECURED", getCompletedObjectiveCount());
             checkCompletion(hud);
+            return true;
+        }
+        // Student crowd interaction
+        if (crowd != null && crowd.interactWithClosest(playerPos, 2.6f, getLevelNumber(), hud)) {
             return true;
         }
         return false;
@@ -293,6 +300,7 @@ public class Level2StudentConfrontation implements CampaignLevel {
         }
         player.setExtraColliders(colliders);
         this.crowd = new CampusCrowd(12, player.getColliders());
+        this.crowd.setLevelProfile(2);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 

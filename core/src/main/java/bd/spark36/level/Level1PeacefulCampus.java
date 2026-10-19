@@ -139,6 +139,9 @@ public class Level1PeacefulCampus implements CampaignLevel {
         if (world != null && world.isNearPondGhat(playerPos)) {
             return "[E] SIT BY CURZON PUKUR GHAT";
         }
+        if (crowd != null && crowd.getClosestInteractable(playerPos, 2.6f) != null) {
+            return "[E] TALK TO DU STUDENT";
+        }
         return null;
     }
 
@@ -175,6 +178,11 @@ public class Level1PeacefulCampus implements CampaignLevel {
             return true;
         }
 
+        // 4. Talk to nearby DU Student in crowd
+        if (crowd != null && crowd.interactWithClosest(playerPos, 2.6f, getLevelNumber(), hud)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -206,6 +214,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
         player.setExtraColliders(world.getColliders());
         this.crowd = new CampusCrowd(16, player.getColliders());
+        this.crowd.setLevelProfile(1);
 
         this.campusSecurity = new HelmetGoon(textures);
         this.campusSecurity.setRole(HelmetGoon.Role.CAMPUS_SECURITY);
