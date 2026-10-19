@@ -955,17 +955,15 @@ public class SparkGame extends ApplicationAdapter {
                 }
             }
         } else if (System.getProperty("bd.spark36.testPhase9Dialogue") != null) {
-            if (testTimer == 0f) {
-                hud.reset();
-                if (levelManager.getActiveLevel() == null || levelManager.getActiveLevel().getLevelNumber() != 1) {
-                    levelManager.loadLevel(1);
-                    syncLevelSubsystems();
-                }
-                player.setPosition(0f, 0f, 70f);
-                player.setHeadingDegrees(180f);
-                camera.setAngles(0f, -2f);
-                camera.setDistance(2.2f);
+            hud.reset();
+            if (levelManager.getActiveLevel() == null || levelManager.getActiveLevel().getLevelNumber() != 1) {
+                levelManager.loadLevel(1);
+                syncLevelSubsystems();
             }
+            player.setPosition(0f, 0f, 70f);
+            player.setHeadingDegrees(180f);
+            camera.setAngles(0f, -2f);
+            camera.setDistance(2.2f);
             testTimer += delta;
             if (testTimer >= 0.8f && !hud.getDialogueManager().isDialogueActive()) {
                 hud.startDialogueSequence(bd.spark36.level.DialogueRepository.getStudentDialogueSequence(1, 0));
@@ -978,17 +976,15 @@ public class SparkGame extends ApplicationAdapter {
                 }
             }
         } else if (System.getProperty("bd.spark36.testPhase9Prompt") != null) {
-            if (testTimer == 0f) {
-                hud.reset();
-                if (levelManager.getActiveLevel() == null || levelManager.getActiveLevel().getLevelNumber() != 1) {
-                    levelManager.loadLevel(1);
-                    syncLevelSubsystems();
-                }
-                player.setPosition(3.6f, 0f, -14.2f);
-                player.setHeadingDegrees(180f);
-                camera.setAngles(0f, -2f);
-                camera.setDistance(2.8f);
+            hud.reset();
+            if (levelManager.getActiveLevel() == null || levelManager.getActiveLevel().getLevelNumber() != 1) {
+                levelManager.loadLevel(1);
+                syncLevelSubsystems();
             }
+            player.setPosition(3.6f, 0f, -14.2f);
+            player.setHeadingDegrees(180f);
+            camera.setAngles(0f, -2f);
+            camera.setDistance(2.8f);
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 1.5f) {
                 takeScreenshot("phase9_interaction_prompt");

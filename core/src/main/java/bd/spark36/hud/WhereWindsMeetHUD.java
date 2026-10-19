@@ -210,8 +210,8 @@ public class WhereWindsMeetHUD implements Disposable {
             l.checkY = l.safeMarginY;
 
             // 5. Bottom-Center Cinematic Subtitle / Challenge Dialogue
-            l.dialW = 780f;
-            l.dialH = 74f;
+            l.dialW = 860f;
+            l.dialH = 82f;
             l.dialX = (l.virtW - l.dialW) / 2f;
             l.dialY = l.safeMarginY + 20f;
 
@@ -2836,14 +2836,28 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.promptFont.setColor(goldAccent);
         fonts.promptFont.draw(spriteBatch, "\"" + diag.getTextEnglish() + "\"", dx + 18f, dy + 22f);
 
-        // Advance prompt if sequence is active (placed in top-right header area to avoid subtitle overlap)
+        // Advance prompt if sequence is active (placed in bottom-right corner as a distinct key badge)
         if (dialogueManager.isDialogueActive()) {
             int cur = dialogueManager.getCurrentLineIndex() + 1;
             int tot = dialogueManager.getTotalLines();
             String promptText = dialogueManager.isLastLine() ? "[SPACE] FINISH" : "[SPACE] NEXT (" + cur + "/" + tot + ")";
             glyphLayout.setText(fonts.keyFont, promptText);
+            float badgeW = glyphLayout.width + 16f;
+            float badgeH = 22f;
+            float badgeX = dx + dw - badgeW - 14f;
+            float badgeY = dy + 12f;
+
+            spriteBatch.end();
+            beginShapes(ShapeType.Filled);
+            shapeRenderer.setColor(0.08f, 0.12f, 0.10f, 0.95f);
+            shapeRenderer.rect(badgeX, badgeY, badgeW, badgeH);
+            shapeRenderer.setColor(goldAccent);
+            shapeRenderer.rect(badgeX, badgeY, 2f, badgeH);
+            shapeRenderer.end();
+            spriteBatch.begin();
+
             fonts.keyFont.setColor(goldAccent);
-            fonts.keyFont.draw(spriteBatch, promptText, dx + dw - glyphLayout.width - 18f, dy + dh - 16f);
+            fonts.keyFont.draw(spriteBatch, promptText, badgeX + 9f, badgeY + 16f);
         }
         spriteBatch.end();
     }
