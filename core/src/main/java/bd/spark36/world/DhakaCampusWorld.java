@@ -1282,7 +1282,7 @@ public class DhakaCampusWorld implements Disposable {
 
         java.util.Random gladeRng = new java.util.Random(4242L);
 
-        // Bamboo stands run either side of a dirt path east and west of the promenade:
+        // Bamboo stands and Dense_Realistic_Bamboo_Clump groves:
         // {minX, maxX, minZ, maxZ}
         float[][] bambooBands = {
             {13f, 32f, 33.5f, 38.5f}, {13f, 32f, 42.5f, 45.5f},
@@ -1291,19 +1291,32 @@ public class DhakaCampusWorld implements Disposable {
         long caneSeed = 9000L;
         for (float[] band : bambooBands) {
             float bandArea = (band[1] - band[0]) * (band[3] - band[2]);
-            int canes = Math.round(bandArea * 0.45f);
+            int canes = Math.round(bandArea * 0.38f);
             for (int c = 0; c < canes; c++) {
                 float cx = band[0] + gladeRng.nextFloat() * (band[1] - band[0]);
                 float cz = band[2] + gladeRng.nextFloat() * (band[3] - band[2]);
-                float height = 8f + gladeRng.nextFloat() * 5f;
-                float lean = 0.5f + gladeRng.nextFloat() * 1.8f;
+                // Botanical spec: 4.5m to 10.0m (mostly 6.0m to 8.5m), radii 0.018m to 0.045m
+                float height = 6.2f + gladeRng.nextFloat() * 2.8f;
+                float lean = 0.35f + gladeRng.nextFloat() * 1.2f;
                 float leanAngle = gladeRng.nextFloat() * MathUtils.PI2;
-                float radius = 0.05f + gladeRng.nextFloat() * 0.025f;
+                float radius = 0.020f + gladeRng.nextFloat() * 0.022f;
                 GladeGeometry.bambooCane(caneBatch.part(1800), sprayBatch.part(1800),
                     cx, cz, height, lean, leanAngle, radius, caneSeed++);
             }
-            // A bamboo stand is dense enough to be one solid
             colliders.add(new float[]{band[0], 0f, band[2], band[1], 12f, band[3]});
+        }
+
+        // Dedicated Dense_Realistic_Bamboo_Clump groves (5x5m footprint, 32 culms each, spec-compliant)
+        float[][] clumpCenters = {
+            {18f, 36f}, {26f, 36f}, {18f, 44f}, {26f, 44f},
+            {-18f, 36f}, {-26f, 36f}, {-18f, 44f}, {-26f, 44f},
+            {13.5f, 15f}, {-13.5f, 15f} // Curzon pondside garden groves
+        };
+        long clumpSeed = 9200L;
+        for (float[] cc : clumpCenters) {
+            GladeGeometry.denseBambooClump(caneBatch.part(1800), sprayBatch.part(1800),
+                cc[0], cc[1], clumpSeed += 120L);
+            colliders.add(new float[]{cc[0] - 1.6f, 0f, cc[1] - 1.6f, cc[0] + 1.6f, 10f, cc[1] + 1.6f});
         }
 
         // Ground cover: lush low plants either side of the paths (kept off the path itself)

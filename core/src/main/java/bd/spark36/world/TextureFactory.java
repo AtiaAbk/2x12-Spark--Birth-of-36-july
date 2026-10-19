@@ -552,7 +552,8 @@ public class TextureFactory implements Disposable {
 
     /**
      * 2x2 atlas of hanging bamboo leaf sprays (each cell 256px, hung from the top-centre):
-     * Vibrant, fresh sunlit bamboo emerald and chartreuse greens matching user's reference image.
+     * Calibrated to the Dense_Realistic_Bamboo_Clump specification leaf palette:
+     * #123D23, #1E542B, #2F7136, #4B8A43, #79A957.
      */
     private Texture createBambooAtlas() {
         int cell = 256;
@@ -561,38 +562,53 @@ public class TextureFactory implements Disposable {
         pix.fill();
         final float down = MathUtils.HALF_PI; // pixmap y points down
 
-        // Cell 0: full spray, nine leaves fanning from the pivot in vibrant sunlit bamboo emerald
+        // Palette RGB constants
+        final float c0R = 0.071f, c0G = 0.239f, c0B = 0.137f; // #123D23
+        final float c1R = 0.118f, c1G = 0.329f, c1B = 0.169f; // #1E542B
+        final float c2R = 0.184f, c2G = 0.443f, c2B = 0.212f; // #2F7136
+        final float c3R = 0.294f, c3G = 0.541f, c3B = 0.263f; // #4B8A43
+        final float c4R = 0.475f, c4G = 0.663f, c4B = 0.341f; // #79A957
+
+        // Cell 0: full spray, nine lanceolate leaves fanning from the pivot in rich natural bamboo green
         float[] fan = {-1.15f, -0.85f, -0.55f, -0.25f, 0f, 0.25f, 0.55f, 0.85f, 1.15f};
-        float[] fanLen = {150f, 175f, 200f, 215f, 225f, 215f, 200f, 175f, 150f};
+        float[] fanLen = {150f, 175f, 205f, 220f, 230f, 220f, 205f, 175f, 150f};
         for (int i = 0; i < fan.length; i++) {
-            float shade = (i % 2 == 0) ? 0f : 0.04f;
-            drawLeaf(pix, 0, 0, 128, 10, fanLen[i], 12f, down + fan[i],
-                0.10f + shade, 0.32f + shade, 0.08f, 0.22f + shade, 0.58f, 0.14f);
+            boolean outer = (i == 0 || i == fan.length - 1);
+            float baseR = outer ? c0R : c1R;
+            float baseG = outer ? c0G : c1G;
+            float baseB = outer ? c0B : c1B;
+            float tipR = (i % 2 == 0) ? c3R : c2R;
+            float tipG = (i % 2 == 0) ? c3G : c2G;
+            float tipB = (i % 2 == 0) ? c3B : c2B;
+            drawLeaf(pix, 0, 0, 128, 10, fanLen[i], 11f, down + fan[i],
+                baseR, baseG, baseB, tipR, tipG, tipB);
         }
 
-        // Cell 1: airy spray of seven long thin leaves in fresh bamboo greens
+        // Cell 1: airy spray of seven long slender leaves
         for (int i = 0; i < 7; i++) {
             float a = -0.9f + i * 0.3f;
-            drawLeaf(pix, cell, 0, 128, 10, 205f + 20f * (1f - Math.abs(a)), 9f, down + a,
-                0.11f, 0.34f, 0.08f, 0.24f, 0.60f, 0.15f);
+            float len = 205f + 20f * (1f - Math.abs(a));
+            drawLeaf(pix, cell, 0, 128, 10, len, 8.5f, down + a,
+                c1R, c1G, c1B, c3R, c3G, c3B);
         }
 
-        // Cell 2: short sprig of five leaves in rich sunlit bamboo jade
+        // Cell 2: short sprig of five leaves in rich deep forest and emerald bamboo
         for (int i = 0; i < 5; i++) {
             float a = -0.6f + i * 0.3f;
-            drawLeaf(pix, 0, cell, 128, 10, 120f + 25f * (1f - Math.abs(a)), 11f, down + a,
-                0.12f, 0.36f, 0.09f, 0.25f, 0.62f, 0.16f);
+            float len = 135f + 25f * (1f - Math.abs(a));
+            drawLeaf(pix, 0, cell, 128, 10, len, 10.5f, down + a,
+                c0R, c0G, c0B, c2R, c2G, c2B);
         }
 
-        // Cell 3: spray with vibrant bamboo and sunlit golden-amber highlights
+        // Cell 3: spray with sunlit golden-emerald highlights on tips
         for (int i = 0; i < 8; i++) {
             float a = -1.0f + i * 0.285f;
-            boolean dry = i % 3 == 1;
-            if (dry) {
-                drawLeaf(pix, cell, cell, 128, 10, 185f, 11f, down + a, 0.28f, 0.38f, 0.10f, 0.44f, 0.54f, 0.14f);
-            } else {
-                drawLeaf(pix, cell, cell, 128, 10, 200f, 11f, down + a, 0.10f, 0.32f, 0.08f, 0.22f, 0.58f, 0.14f);
-            }
+            boolean sunlit = (i % 3 == 1);
+            float tipR = sunlit ? c4R : c3R;
+            float tipG = sunlit ? c4G : c3G;
+            float tipB = sunlit ? c4B : c3B;
+            drawLeaf(pix, cell, cell, 128, 10, 195f, 10f, down + a,
+                c1R, c1G, c1B, tipR, tipG, tipB);
         }
 
         Texture tex = new Texture(pix, Format.RGBA8888, true);
@@ -1980,36 +1996,47 @@ public class TextureFactory implements Disposable {
         int height = 512;
         Pixmap pix = new Pixmap(width, height, Format.RGBA8888);
 
-        // Authentic bamboo cane base color (olive-yellowish green)
+        // Bamboo culm specification palette:
+        // #183B20 (deep forest green), #42652B (natural bamboo green), #68713A (olive green),
+        // #92733B (golden olive), #9A815D (weathered tan)
         for (int x = 0; x < width; x++) {
             float xNorm = (float) x / (float) width;
-            // Cylindrical lighting shading across cane width
-            float cylLight = MathUtils.sin(xNorm * MathUtils.PI);
-            float vertFiber = MathUtils.sin(x * 0.85f) * 0.04f;
+            float cylLight = 0.65f + 0.35f * MathUtils.sin(xNorm * MathUtils.PI);
+            float fiber = MathUtils.sin(x * 1.2f) * 0.035f + MathUtils.sin(x * 3.4f) * 0.02f;
+
+            // Longitudinal color bands giving natural culm age variation across the sheet
+            float culmAge = (MathUtils.sin(xNorm * MathUtils.PI2 * 2f) + 1f) * 0.5f;
 
             for (int y = 0; y < height; y++) {
-                float r = MathUtils.clamp((0.44f + vertFiber) * (0.6f + 0.4f * cylLight), 0.22f, 0.65f);
-                float g = MathUtils.clamp((0.68f + vertFiber) * (0.6f + 0.4f * cylLight), 0.38f, 0.88f);
-                float b = MathUtils.clamp((0.24f + vertFiber * 0.5f) * (0.6f + 0.4f * cylLight), 0.12f, 0.40f);
+                // Base culm color blending from natural bamboo green #42652B to olive #68713A
+                float rBase = MathUtils.lerp(0.259f, 0.408f, culmAge);
+                float gBase = MathUtils.lerp(0.396f, 0.443f, culmAge);
+                float bBase = MathUtils.lerp(0.169f, 0.227f, culmAge);
+
+                // Vertical micro-fibers and subtle golden olive undertones #92733B
+                float r = MathUtils.clamp((rBase + fiber) * cylLight, 0.094f, 0.604f);
+                float g = MathUtils.clamp((gBase + fiber) * cylLight, 0.231f, 0.550f);
+                float b = MathUtils.clamp((bBase + fiber * 0.5f) * cylLight, 0.125f, 0.365f);
+
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
             }
         }
 
-        // Horizontal bamboo joints / nodal rings every 64 pixels
+        // Horizontal bamboo joints / raised nodal rings spaced along culm
         int nodeInterval = 64;
         for (int y = nodeInterval; y < height; y += nodeInterval) {
-            // Upper swollen highlight line (pale ivory-gold)
-            pix.setColor(0.78f, 0.84f, 0.45f, 0.95f);
+            // Upper swollen nodal highlight line (golden olive / pale ivory: #92733B)
+            pix.setColor(0.573f, 0.481f, 0.251f, 0.95f);
             pix.drawLine(0, y - 2, width, y - 2);
 
-            // Dark joint ring indentation (woody brownish olive)
-            pix.setColor(0.20f, 0.24f, 0.10f, 1f);
+            // Dark joint indentation ring (#183B20 deep forest green / woody boundary)
+            pix.setColor(0.094f, 0.181f, 0.095f, 1f);
             pix.drawLine(0, y - 1, width, y - 1);
             pix.drawLine(0, y, width, y);
 
-            // Subtle lower shadow line
-            pix.setColor(0.28f, 0.34f, 0.14f, 0.75f);
+            // Lower joint ring shadow (#34372A dark olive)
+            pix.setColor(0.204f, 0.216f, 0.165f, 0.85f);
             pix.drawLine(0, y + 1, width, y + 1);
         }
 

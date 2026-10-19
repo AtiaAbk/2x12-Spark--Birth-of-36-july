@@ -22,53 +22,93 @@ final class GladeGeometry {
     private GladeGeometry() {}
 
     /**
+     * Dense Realistic Bamboo Clump (Dense_Realistic_Bamboo_Clump specification):
+     * - 5m x 5m footprint base.
+     * - 32 culms (range 24-42) clustered naturally (dense core, spreading outward).
+     * - Heights 4.5m to 10.0m (mostly 6.0m to 8.5m).
+     * - Diameters 0.035m to 0.095m (radii 0.0175m to 0.0475m) tapering toward top.
+     * - Raised nodal rings spaced every 0.22m to 0.48m.
+     * - Outward lean on perimeter culms, erect central culms.
+     * - Slender branch sprays with lanceolate bamboo leaf cards.
+     */
+    static void denseBambooClump(MeshPartBuilder culm, MeshPartBuilder leaves, float cx, float cz, long seed) {
+        RNG.setSeed(TreeGeometry.mix(seed));
+        int culmCount = 32; // Specification: 24 to 42 culms
+        for (int c = 0; c < culmCount; c++) {
+            // Clustered distribution within 5x5m footprint:
+            // Core culms (60%) within 1.35m radius, perimeter culms (40%) out to 2.35m
+            float r = (c < 20) ? (0.20f + 1.15f * (float) Math.sqrt(RNG.nextFloat()))
+                               : (1.35f + 1.00f * (float) Math.sqrt(RNG.nextFloat()));
+            float theta = RNG.nextFloat() * MathUtils.PI2;
+            float x = cx + MathUtils.cos(theta) * r;
+            float z = cz + MathUtils.sin(theta) * r;
+
+            // Heights: mostly 6.0m - 8.5m, range 4.5m - 10.0m
+            float distNorm = r / 2.35f;
+            float baseH = 6.4f + (1.0f - distNorm) * 1.8f; // taller in core
+            float height = MathUtils.clamp(baseH + (RNG.nextFloat() - 0.45f) * 2.4f, 4.8f, 9.6f);
+
+            // Diameters: 0.035m - 0.095m (radii: 0.0175m - 0.0475m)
+            float radius = MathUtils.clamp(0.020f + (height / 10.0f) * 0.024f + (RNG.nextFloat() - 0.5f) * 0.006f, 0.018f, 0.048f);
+
+            // Natural lean: inner culms erect (lean 0.2 - 0.5m), outer culms lean outward (lean 0.8 - 1.6m)
+            float leanAngle = theta + (RNG.nextFloat() - 0.5f) * 0.4f; // radiating outward
+            float lean = MathUtils.lerp(0.30f, 1.45f, distNorm) + RNG.nextFloat() * 0.30f;
+
+            bambooCane(culm, leaves, x, z, height, lean, leanAngle, radius, seed + c * 37L);
+        }
+    }
+
+    /**
      * One bamboo cane: a tapering, slightly arching stem built from segments with a raised ring at
-     * every node, carrying pairs of thin branches that end in hanging leaf sprays over its upper
+     * every node (spaced 0.22m to 0.48m), carrying slender branches that end in hanging leaf sprays over its upper
      * half. {@code culm} takes the stem meshes (bamboo bark texture), {@code leaves} the sprays
      * (bamboo leaf atlas).
      */
     static void bambooCane(MeshPartBuilder culm, MeshPartBuilder leaves, float x, float z,
                            float height, float lean, float leanAngle, float radius, long seed) {
         RNG.setSeed(TreeGeometry.mix(seed));
-        int nodes = Math.max(6, Math.round(height));
+        // Node spacing between 0.22m and 0.48m (target ~0.32m)
+        int nodes = Math.max(12, Math.round(height / 0.32f));
         float lx = MathUtils.cos(leanAngle) * lean;
         float lz = MathUtils.sin(leanAngle) * lean;
 
         float[] px = new float[nodes + 1], py = new float[nodes + 1], pz = new float[nodes + 1], pr = new float[nodes + 1];
         for (int i = 0; i <= nodes; i++) {
             float t = (float) i / nodes;
-            px[i] = x + lx * t * t;          // arches more toward the top
+            px[i] = x + lx * (t * t * 0.75f + t * 0.25f); // graceful upper arching
             py[i] = height * t;
-            pz[i] = z + lz * t * t;
+            pz[i] = z + lz * (t * t * 0.75f + t * 0.25f);
             pr[i] = radius * (1f - 0.55f * t);
         }
 
         for (int i = 0; i < nodes; i++) {
             TreeGeometry.limb(culm, px[i], py[i], pz[i], pr[i], px[i + 1], py[i + 1], pz[i + 1], pr[i + 1], 6);
-            // Node ring: a short, slightly fatter band where the internodes meet
-            TreeGeometry.limb(culm, px[i], py[i] - 0.03f, pz[i], pr[i] * 1.3f,
-                px[i], py[i] + 0.03f, pz[i], pr[i] * 1.3f, 6);
+            // Raised nodal ring: swollen band at each internode joint
+            TreeGeometry.limb(culm, px[i], py[i] - 0.025f, pz[i], pr[i] * 1.35f,
+                px[i], py[i] + 0.025f, pz[i], pr[i] * 1.35f, 6);
         }
 
-        int firstBranchNode = (int) (nodes * 0.42f);
+        // Branching begins around 38% height (lower culm remains clean cane)
+        int firstBranchNode = (int) (nodes * 0.38f);
         for (int i = firstBranchNode; i <= nodes; i++) {
             float t = (float) i / nodes;
-            int branches = i == nodes ? 1 : 3;
+            int branches = (i == nodes) ? 2 : (t > 0.75f ? 3 : 2);
             for (int b = 0; b < branches; b++) {
                 float yaw = RNG.nextFloat() * MathUtils.PI2;
-                float reach = i == nodes ? 0.15f : 0.45f + 0.75f * t * RNG.nextFloat();
+                float reach = (i == nodes) ? 0.20f : 0.45f + 0.65f * t * RNG.nextFloat();
                 float ex = px[i] + MathUtils.cos(yaw) * reach;
-                float ey = py[i] - 0.05f - 0.25f * RNG.nextFloat();
+                float ey = py[i] - 0.04f - 0.20f * RNG.nextFloat();
                 float ez = pz[i] + MathUtils.sin(yaw) * reach;
                 if (i < nodes) {
-                    TreeGeometry.limb(culm, px[i], py[i], pz[i], pr[i] * 0.4f, ex, ey, ez, 0.010f, 4);
+                    TreeGeometry.limb(culm, px[i], py[i], pz[i], pr[i] * 0.40f, ex, ey, ez, 0.009f, 4);
                 }
                 spray(leaves, ex, ey, ez, yaw, 0.85f + 0.45f * RNG.nextFloat());
             }
         }
     }
 
-    /** A hanging leaf spray: two crossed vertical cards pivoting at their top centre. */
+    /** A hanging leaf spray: 3 intersecting vertical cards pivoting at their top centre for full 3D volume. */
     private static void spray(MeshPartBuilder mpb, float x, float y, float z, float yaw, float size) {
         int cell = RNG.nextInt(4);
         float u0 = (cell % 2) * 0.5f, u1 = u0 + 0.5f;
@@ -76,8 +116,9 @@ final class GladeGeometry {
         float half = size * 0.5f;
         float top = y + 0.06f * size, bottom = y - 0.94f * size;
 
-        for (int k = 0; k < 2; k++) {
-            float a = yaw + k * MathUtils.HALF_PI;
+        // 3 planes at 60 degree increments for lush volumetric foliage
+        for (int k = 0; k < 3; k++) {
+            float a = yaw + k * (MathUtils.PI / 3f);
             float tx = MathUtils.cos(a) * half, tz = MathUtils.sin(a) * half;
             V0.setPos(x - tx, bottom, z - tz).setNor(0f, 1f, 0f).setUV(u0, v1);
             V1.setPos(x + tx, bottom, z + tz).setNor(0f, 1f, 0f).setUV(u1, v1);
