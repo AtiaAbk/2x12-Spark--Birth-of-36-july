@@ -976,9 +976,13 @@ public class SparkGame extends ApplicationAdapter {
                 camera.setDistance(6.0f);
             } else if ("pond_ghat".equalsIgnoreCase(viewpoint)) {
                 player.setPosition(0f, 0.28f, 18.0f);
-                player.setHeadingDegrees(180f);
-                camera.setAngles(0f, -8f);
-                camera.setDistance(4.0f);
+                player.setHeadingDegrees(0f);
+                camera.setAngles(180f, -12f);
+                camera.setDistance(4.5f);
+            } else if ("pond_water".equalsIgnoreCase(viewpoint)) {
+                player.setPosition(0f, 0.28f, 17.5f);
+                player.setHeadingDegrees(0f);
+                camera.setFixedView(0f, 3.2f, 18.5f, 0f, 0.12f, 6.0f);
             } else if ("tsc".equalsIgnoreCase(viewpoint)) {
                 player.setPosition(48f, 0f, 20f);
                 camera.setFixedView(36f, 9.5f, 42f, 68f, 7.5f, 20f);
