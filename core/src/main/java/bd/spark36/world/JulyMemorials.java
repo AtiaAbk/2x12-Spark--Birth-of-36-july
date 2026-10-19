@@ -13,6 +13,8 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
+import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
+import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 
 /**
  * Manages the 5 authentic historical memorials from the July 2024 Student Mass Uprising.
