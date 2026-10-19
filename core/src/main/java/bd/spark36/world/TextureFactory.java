@@ -497,14 +497,14 @@ public class TextureFactory implements Disposable {
         pix.fill();
         final float up = -MathUtils.HALF_PI; // pixmap y points down, so "up" is -90 degrees
 
-        // Cell 0: one broad ovate leaf (deep forest jade)
+        // Cell 0: one broad ovate leaf (calibrated to reference: #17451E base -> #39852E tip)
         drawLeaf(pix, 0, 0, 128, 244, 226, 74, up,
-            0.06f, 0.17f, 0.05f, 0.11f, 0.28f, 0.09f);
+            0.090f, 0.271f, 0.118f, 0.224f, 0.522f, 0.180f);
 
-        // Cell 1: fan of three leaves of different lengths in natural moss greens
-        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up - 0.62f, 0.07f, 0.19f, 0.06f, 0.12f, 0.30f, 0.09f);
-        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up + 0.62f, 0.08f, 0.20f, 0.06f, 0.13f, 0.32f, 0.10f);
-        drawLeaf(pix, cell, 0, 128, 246, 214, 54, up, 0.06f, 0.16f, 0.05f, 0.11f, 0.27f, 0.08f);
+        // Cell 1: fan of three leaves in natural layered summer greens (#24652A, #59A934, #8BCB45)
+        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up - 0.62f, 0.141f, 0.396f, 0.165f, 0.349f, 0.663f, 0.204f);
+        drawLeaf(pix, cell, 0, 128, 246, 168, 46, up + 0.62f, 0.090f, 0.271f, 0.118f, 0.545f, 0.796f, 0.271f);
+        drawLeaf(pix, cell, 0, 128, 246, 214, 54, up, 0.141f, 0.396f, 0.165f, 0.224f, 0.522f, 0.180f);
 
         // Cell 2: feathery compound leaf: a central rachis with pairs of small leaflets
         int ox = 0, oy = cell;
@@ -514,17 +514,17 @@ public class TextureFactory implements Disposable {
             float rx = 128f + MathUtils.sin(t * 2.2f) * 10f;
             float len = 78f * (1f - 0.45f * t);
             float hw = 13f * (1f - 0.25f * t);
-            drawLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f, 0.07f, 0.20f, 0.06f, 0.13f, 0.31f, 0.09f);
-            drawLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f, 0.07f, 0.20f, 0.06f, 0.13f, 0.31f, 0.09f);
+            drawLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f, 0.110f, 0.320f, 0.130f, 0.320f, 0.620f, 0.190f);
+            drawLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f, 0.110f, 0.320f, 0.130f, 0.320f, 0.620f, 0.190f);
         }
-        drawLeaf(pix, ox, oy, 128, 250, 236, 4, up, 0.10f, 0.18f, 0.06f, 0.14f, 0.24f, 0.08f);
+        drawLeaf(pix, ox, oy, 128, 250, 236, 4, up, 0.14f, 0.28f, 0.10f, 0.24f, 0.42f, 0.14f);
 
         // Cell 3: blazing scarlet Krishnachura blossom clusters over feathery leaflets
         ox = cell;
         oy = cell;
-        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up - 0.55f, 0.07f, 0.20f, 0.06f, 0.12f, 0.29f, 0.09f);
-        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up + 0.55f, 0.07f, 0.20f, 0.06f, 0.12f, 0.29f, 0.09f);
-        drawLeaf(pix, ox, oy, 128, 250, 190, 36, up, 0.08f, 0.22f, 0.06f, 0.13f, 0.31f, 0.09f);
+        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up - 0.55f, 0.110f, 0.320f, 0.130f, 0.280f, 0.580f, 0.170f);
+        drawLeaf(pix, ox, oy, 128, 250, 160, 42, up + 0.55f, 0.110f, 0.320f, 0.130f, 0.280f, 0.580f, 0.170f);
+        drawLeaf(pix, ox, oy, 128, 250, 190, 36, up, 0.141f, 0.396f, 0.165f, 0.349f, 0.663f, 0.204f);
 
         float[][] flowers = {
             {92, 96}, {168, 86}, {124, 140}, {70, 168}, {180, 158}, {132, 62},
