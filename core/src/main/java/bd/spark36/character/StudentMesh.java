@@ -942,6 +942,37 @@ public class StudentMesh implements Disposable {
     }
 
     /**
+     * High-fidelity render path using an evaluated CharacterPose from the AnimationStateMachine.
+     */
+    public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
+                       CharacterPose pose, boolean isCrouching, boolean isSittingWater, int gender) {
+        render(batch, env, pos, headingDegrees, pose, isCrouching, isSittingWater, gender, 0);
+    }
+
+    /**
+     * High-fidelity render path using an evaluated CharacterPose and NPC variant index.
+     */
+    public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
+                       CharacterPose pose, boolean isCrouching, boolean isSittingWater, int gender, int variant) {
+        tick();
+        if (pose == null) return;
+        int g = (gender == 1) ? 1 : 0;
+        drawPose(batch, env, rigFor(g, variant), g, pos, headingDegrees, pose, isCrouching, isSittingWater);
+    }
+
+    /**
+     * High-fidelity render path using an evaluated CharacterPose and custom Appearance.
+     */
+    public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
+                       CharacterPose pose, boolean isCrouching, boolean isSittingWater, int gender, Appearance look) {
+        tick();
+        if (pose == null) return;
+        int g = (gender == 1) ? 1 : 0;
+        Rig rig = look == null ? baseRigs[g] : rigFor(g, look);
+        drawPose(batch, env, rig, g, pos, headingDegrees, pose, isCrouching, isSittingWater);
+    }
+
+    /**
      * Full render with a custom {@link Appearance}. The rig is cached per Appearance object
      * (identity) and built on first use, so reuse the same instance each frame and don't mutate it
      * afterwards. Prefer the int-variant overload for crowds.
