@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import bd.spark36.camera.CinematicCamera;
+import bd.spark36.render.GraphicsTier;
 import bd.spark36.render.RenderPipelineConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
@@ -28,6 +29,8 @@ import bd.spark36.world.JulyMemorials;
 import bd.spark36.world.ParticleSystem;
 import bd.spark36.world.PostProcessor;
 import bd.spark36.world.TextureFactory;
+import bd.spark36.world.WeatherController;
+import bd.spark36.world.WeatherState;
 
 
 public class SparkGame extends ApplicationAdapter {
