@@ -2468,7 +2468,7 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    private Texture createAsphaltRoad() {
+    private Texture[] createAsphaltRoadWithNormal() {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
@@ -2493,11 +2493,12 @@ public class TextureFactory implements Disposable {
             pix.fillRectangle(centerX, y, stripeW, stripeH);
         }
 
-        Texture tex = new Texture(pix);
-        tex.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        Texture tex = new Texture(pix, Format.RGBA8888, true);
+        tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
         tex.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+        Texture norm = createNormalMap(pix, 2.8f);
         pix.dispose();
-        return tex;
+        return new Texture[]{tex, norm};
     }
 
     private Texture[] createModernistConcreteWithNormal() {
