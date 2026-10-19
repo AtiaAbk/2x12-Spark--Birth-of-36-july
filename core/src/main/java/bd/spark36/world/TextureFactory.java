@@ -56,11 +56,27 @@ public class TextureFactory implements Disposable {
     public final Texture mapVisualTarget;
     public final Texture debugOrientationTestCard;
 
+    // ── Tangent-Space Normal Maps for PBR ──────────────────────────────────
+    public final Texture brickPavementNormal;
+    public final Texture curzonBrickNormal;
+    public final Texture modernistConcreteNormal;
+    public final Texture treeBarkNormal;
+
     public TextureFactory() {
-        brickPavement = createBrickPavement();
-        curzonBrick = createCurzonBrick();
+        Texture[] brickPair = createBrickPavementWithNormal();
+        brickPavement = brickPair[0];
+        brickPavementNormal = brickPair[1];
+
+        Texture[] curzonPair = createCurzonBrickWithNormal();
+        curzonBrick = curzonPair[0];
+        curzonBrickNormal = curzonPair[1];
+
         lawnGrass = createLawnGrass();
-        treeBark = createTreeBark();
+
+        Texture[] barkPair = createTreeBarkWithNormal();
+        treeBark = barkPair[0];
+        treeBarkNormal = barkPair[1];
+
         foliage = createFoliage();
         krishnachuraBlossom = createKrishnachuraBlossom();
         leafClump = createLeafClump(false);
@@ -90,7 +106,11 @@ public class TextureFactory implements Disposable {
         bdFlag = createBdFlag();
         aparajeyoStone = createAparajeyoStone();
         asphaltRoad = createAsphaltRoad();
-        modernistConcrete = createModernistConcrete();
+
+        Texture[] concretePair = createModernistConcreteWithNormal();
+        modernistConcrete = concretePair[0];
+        modernistConcreteNormal = concretePair[1];
+
         canteenTinRoof = createCanteenTinRoof();
         mapVisualTarget = createMapVisualTarget();
         debugOrientationTestCard = createDebugOrientationTestCard();
@@ -102,7 +122,8 @@ public class TextureFactory implements Disposable {
                         dirtPath, lightBeam, rockSurface, bambooCulm, bambooFoliage,
                         bushFoliage, weatheredStone, curzonWater, waterRipple,
                         backpackFabric, studentJacket, movementBanner, bdFlag, aparajeyoStone,
-                        asphaltRoad, modernistConcrete, canteenTinRoof, mapVisualTarget, debugOrientationTestCard);
+                        asphaltRoad, modernistConcrete, canteenTinRoof, mapVisualTarget, debugOrientationTestCard,
+                        brickPavementNormal, curzonBrickNormal, modernistConcreteNormal, treeBarkNormal);
     }
 
     private Texture createBrickPavement() {
