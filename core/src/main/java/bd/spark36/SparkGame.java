@@ -981,6 +981,14 @@ public class SparkGame extends ApplicationAdapter {
                 camera.setFixedView(0f, 3.20f, -23.5f, 0f, 3.20f, -20.59f);
             } else if ("curzon_dome".equalsIgnoreCase(viewpoint)) {
                 camera.setFixedView(0f, 16.0f, -8.0f, 0f, 19.0f, -22.5f);
+            } else if ("gate_street".equalsIgnoreCase(viewpoint)) {
+                // T8: from inside the main gate, looking out at the Doel Chattar road and its street dressing
+                player.setPosition(0f, 0f, 70f);
+                camera.setFixedView(0f, 3.4f, 66f, 0f, 1.6f, 92f);
+            } else if ("street_road".equalsIgnoreCase(viewpoint)) {
+                // T8: on the road outside the gate, looking east along the shopfronts
+                player.setPosition(-16f, 0f, 84f);
+                camera.setFixedView(-24f, 1.8f, 83f, 6f, 1.6f, 89f);
             }
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {

@@ -33,6 +33,7 @@ import bd.spark36.world.landmarks.ShaheedMinarBuilder;
 public class Level5MassMobilization implements CampaignLevel {
 
     private DhakaCampusWorld world;
+    private final StreetDressing street = new StreetDressing(5); // T8 street identity
     private CampusCrowd crowd;
     private Environment sunsetEnvironment;
 
@@ -266,6 +267,7 @@ public class Level5MassMobilization implements CampaignLevel {
         colliders.add(new float[] { minarPos.x - 11f, 0f, minarPos.z - 8f,
                                     minarPos.x + 11f, 1.5f, minarPos.z + 8f });
 
+        street.build(colliders);
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
         this.crowd = new CampusCrowd(24, player.getColliders());
@@ -287,12 +289,14 @@ public class Level5MassMobilization implements CampaignLevel {
     @Override
     public void renderShadow(ModelBatch shadowBatch) {
         if (world != null) world.renderShadowCasters(shadowBatch);
+        street.renderShadow(shadowBatch);
         for (ModelInstance mi : instances) shadowBatch.render(mi);
     }
 
     @Override
     public void render3D(ModelBatch modelBatch, Environment env) {
         if (world != null) world.render(modelBatch);
+        if (world != null) street.render(modelBatch, world.getEnvironment());
         for (ModelInstance mi : instances) modelBatch.render(mi, sunsetEnvironment);
     }
 
@@ -339,6 +343,7 @@ public class Level5MassMobilization implements CampaignLevel {
 
     @Override
     public void dispose() {
+        street.dispose();
         if (world != null) { world.dispose(); world = null; }
         for (Model m : models) m.dispose();
         models.clear();

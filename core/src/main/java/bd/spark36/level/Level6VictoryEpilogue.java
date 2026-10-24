@@ -32,6 +32,7 @@ import bd.spark36.world.landmarks.ShaheedMinarBuilder;
 public class Level6VictoryEpilogue implements CampaignLevel {
 
     private DhakaCampusWorld world;
+    private final StreetDressing street = new StreetDressing(6); // T8 street identity
     private CampusCrowd crowd;
     private Environment goldenEnvironment;
 
@@ -270,6 +271,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
         bi.transform.setTranslation(waypoints[2]);
         instances.add(bi);
 
+        street.build(colliders);
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
         this.crowd = new CampusCrowd(20, player.getColliders());
@@ -291,12 +293,14 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     @Override
     public void renderShadow(ModelBatch shadowBatch) {
         if (world != null) world.renderShadowCasters(shadowBatch);
+        street.renderShadow(shadowBatch);
         for (ModelInstance mi : instances) shadowBatch.render(mi);
     }
 
     @Override
     public void render3D(ModelBatch modelBatch, Environment env) {
         if (world != null) world.render(modelBatch);
+        if (world != null) street.render(modelBatch, world.getEnvironment());
         for (ModelInstance mi : instances) modelBatch.render(mi, goldenEnvironment);
     }
 
@@ -343,6 +347,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
 
     @Override
     public void dispose() {
+        street.dispose();
         if (world != null) { world.dispose(); world = null; }
         for (Model m : models) m.dispose();
         models.clear();
