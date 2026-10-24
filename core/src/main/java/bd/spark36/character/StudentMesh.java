@@ -843,6 +843,12 @@ public class StudentMesh implements Disposable {
     // Rendering
     // =====================================================================
 
+    /** True when a body at {@code pos} cannot touch the batch camera's view (or the sun's shadow map). */
+    private static boolean outsideView(ModelBatch batch, Vector3 pos) {
+        com.badlogic.gdx.graphics.Camera cam = batch.getCamera();
+        return cam != null && !cam.frustum.sphereInFrustum(pos.x, pos.y + 0.9f, pos.z, 1.7f);
+    }
+
     /** Draw-call-merged copy of {@code src}; built once per rig, then cached on it. */
     private Rig baked(Rig src) {
         if (src.baked != null) return src.baked;
@@ -1040,6 +1046,7 @@ public class StudentMesh implements Disposable {
 
     private void drawPose(ModelBatch batch, Environment env, Rig rig, int g, Vector3 pos, float headingDegrees,
                           CharacterPose pose, boolean isCrouching, boolean isSittingWater) {
+        if (outsideView(batch, pos)) return;
         rig = baked(rig);
 
         rootTransform.idt();
@@ -1128,6 +1135,7 @@ public class StudentMesh implements Disposable {
                       boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,
                       boolean isDodging, float dodgeProgress, float staggerTimer,
                       boolean isSittingWater, float sitProgress, float idlePhase) {
+        if (outsideView(batch, pos)) return;
         rig = baked(rig);
 
         float idle = idleTime + idlePhase;
