@@ -202,4 +202,26 @@ public class MissionTracker {
             objectives.get(i).complete();
         }
     }
+
+    /**
+     * Restores completion state from a checkpoint: resets, then marks every flagged
+     * objective complete in order (sequential trackers activate the next one as usual).
+     * The listener is not notified, so no toasts or victory fire on restore.
+     */
+    public void restoreCompleted(boolean[] flags) {
+        reset();
+        if (flags == null) return;
+        MissionListener saved = listener;
+        listener = null;
+        try {
+            for (int i = 0; i < objectives.size && i < flags.length; i++) {
+                if (!flags[i]) continue;
+                MissionObjective obj = objectives.get(i);
+                obj.activate();
+                completeObjective(i);
+            }
+        } finally {
+            listener = saved;
+        }
+    }
 }

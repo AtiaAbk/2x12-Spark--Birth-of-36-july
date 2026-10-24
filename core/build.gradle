@@ -7,6 +7,8 @@ dependencies {
   api "com.github.mgsx-dev.gdx-gltf:gltf:2.2.1"
 
   testImplementation "org.junit.jupiter:junit-jupiter:5.10.0"
+  // Native math (Matrix4.prj) for tests that drive a real PerspectiveCamera, e.g. SettingsApplyTest
+  testImplementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
   testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
   if(enableGraalNative == 'true') {

@@ -59,7 +59,7 @@ public class JulyMemorials implements Disposable {
             "THE SPARK OF SOLIDARITY",
             "July 1, 2024",
             "Curzon Hall Central Arcade",
-            "Here on the historic red-brick verandahs of Curzon Hall, Dhaka University science students joined arts and social science peers to launch peaceful demonstrations. Demanding reform in the civil service quota system, they declared: 'Merit over privilege. Equality for all citizens.'",
+            "In early July 2024, Dhaka University students, science faculties among them, returned to peaceful protest against the High Court's 5 June verdict reinstating the civil service quota. Sources place the protests on campus and at Shahbagh; this Curzon Hall setting is a game reconstruction.",
             new Vector3(3.6f, 0f, -16.8f)
         ));
 
@@ -68,7 +68,7 @@ public class JulyMemorials implements Disposable {
             "VOICE OF THE INVINCIBLE",
             "July 7, 2024",
             "Aparajeyo Bangla (Arts Plaza)",
-            "Beneath the iconic three freedom fighters of Aparajeyo Bangla, thousands gathered for the mass oath of non-violent resistance. The chant resonated across the campus: 'Amar Shonar Bangla, Boishammo Mukto Bangla' (My Golden Bengal, Free of Discrimination).",
+            "Aparajeyo Bangla honours three youths of the 1971 Liberation War. In the first week of July 2024, students called a 'Bangla Blockade', sitting in at Shahbagh and other junctions until Dhaka was largely at a standstill on 7 July. The gathering shown here is a game reconstruction.",
             new Vector3(-32f, 0f, 26f)
         ));
 
@@ -77,7 +77,7 @@ public class JulyMemorials implements Disposable {
             "RESISTANCE AGAINST INJUSTICE",
             "July 15, 2024",
             "TSC Raju Anti-Terrorism Sculpture",
-            "Named after martyr Moin Hossain Raju, this roundabout became the pulsing heartbeat of student resistance. When peaceful protesters faced brutal crackdowns, students locked arms, stood together, and held the line for democracy.",
+            "This sculpture of students with linked arms honours Moin Hossain Raju, shot near TSC in 1992 while leading a march against campus violence. On 15 July 2024, armed Chhatra League supporters attacked student protesters across the campus and later at Dhaka Medical College Hospital.",
             new Vector3(44f, 0f, 42f)
         ));
 
@@ -86,7 +86,7 @@ public class JulyMemorials implements Disposable {
             "INTELLECTUAL RESISTANCE",
             "July 18, 2024",
             "Central Library & Hakim Chattar",
-            "At the iconic gathering hub of Hakim Chattar and the steps of the Central Library, students coordinated medical relief, food distribution, and digital dispatches during communications blackouts, proving truth cannot be silenced.",
+            "On the evening of 18 July 2024 the government shut down internet access nationwide; it stayed down until 23 July. News and help travelled by word of mouth. This scene of students at Hakim Chattar sharing water, food and first aid is a game reconstruction, not a documented event at this spot.",
             new Vector3(-58f, 0f, 36f)
         ));
 
@@ -95,7 +95,7 @@ public class JulyMemorials implements Disposable {
             "THE 36 JULY TRIUMPH",
             "August 5, 2024 (36 July)",
             "Teacher-Student Centre (TSC)",
-            "Here at the historic Teacher-Student Centre, generations of student movements culminated into the July Revolution. Protesters famously marked the day '36 July' to declare that justice had rewritten time and restored the people's sovereignty.",
+            "Protesters kept counting the days of July until their demand was met, so 5 August 2024, the day Sheikh Hasina resigned and left the country, became '36 July'. The Teacher-Student Centre has hosted generations of student movements; this memorial is a game reconstruction.",
             new Vector3(66f, 0f, 20f)
         ));
     }

@@ -15,6 +15,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import bd.spark36.camera.CinematicCamera;
 import bd.spark36.input.GameInput;
+import bd.spark36.diagnostics.GlStats;
 import bd.spark36.render.GraphicsTier;
 import bd.spark36.render.RenderPipelineConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
@@ -42,22 +43,14 @@ public class SparkGame extends ApplicationAdapter {
     private enum GameState { MAIN_MENU, PLAYING }
     private GameState gameState = GameState.MAIN_MENU;
 
-    // Main Menu State
-    private int menuSelection = 0; // 0 = PLAY, 1 = EXIT
-    private float menuAnimTime = 0f;
+    // Main Menu (rendering and input live in bd.spark36.hud.screens.MainMenuScreen)
+    private bd.spark36.hud.screens.MainMenuScreen mainMenu;
 
     // Shared Renderers (initialized in create — lightweight, used by both states)
     private ShapeRenderer shapeRenderer;
     private SpriteBatch menuBatch;
     private FontRenderer fontRenderer;
     private GlyphLayout glyphLayout;
-
-    // Menu Color Palette (Where Winds Meet aesthetic)
-    private final Color menuGlassBg = new Color(0.05f, 0.07f, 0.10f, 0.88f);
-    private final Color menuGoldAccent = new Color(1.0f, 0.85f, 0.40f, 1f);
-    private final Color menuGoldBorder = new Color(0.92f, 0.76f, 0.32f, 0.88f);
-    private final Color menuGoldMuted = new Color(0.68f, 0.58f, 0.32f, 0.70f);
-    private final Color menuSelectedBg = new Color(0.12f, 0.11f, 0.08f, 0.92f);
 
     // ==========================================
     // 3D GAMEPLAY SUBSYSTEMS (lazy init on first play)
@@ -82,12 +75,14 @@ public class SparkGame extends ApplicationAdapter {
     private float hitStopTimer = 0f;
     private boolean gameplayInitialized = false;
     private int selectedChapter = 1;
-    private String menuNotice = null;
-    private float menuNoticeTimer = 0f;
 
     // Auto-screenshot support
     private float testTimer = 0f;
     private boolean autoScreenshotTaken = false;
+
+    // T7: screenshots, F10 photo mode, F11 gallery (logic lives in bd.spark36.capture)
+    private bd.spark36.capture.CaptureController capture;
+    private boolean photoFrame = false;
 
     @Override
     public void create() {
@@ -97,6 +92,7 @@ public class SparkGame extends ApplicationAdapter {
         fontRenderer = new FontRenderer();
         glyphLayout = new GlyphLayout();
         gameState = GameState.MAIN_MENU;
+        bd.spark36.app.GameProfile.get().applyStartupSettings();
 
         String levelProp = System.getProperty("bd.spark36.level");
         if (levelProp != null) {
@@ -164,6 +160,7 @@ public class SparkGame extends ApplicationAdapter {
         atmosphere = new AtmosphereRenderer(fontRenderer);
         hud = new WhereWindsMeetHUD(fontRenderer);
         hud.setTextures(textures);
+        capture = new bd.spark36.capture.CaptureController(fontRenderer);
 
         levelManager = new bd.spark36.level.LevelManager(textures, player, camera, hud);
         levelManager.loadLevel(selectedChapter);
@@ -192,6 +189,8 @@ public class SparkGame extends ApplicationAdapter {
                 if (active.getWorld() != null) world = active.getWorld();
                 if (active.getMemorials() != null) memorials = active.getMemorials();
                 if (active.getCrowd() != null) crowd = active.getCrowd();
+                bd.spark36.app.GameProfile.get().onLevelActive(active.getLevelNumber(),
+                    bd.spark36.level.LevelConfig.getGameMode() == bd.spark36.level.LevelConfig.GameMode.STORY);
                 if (active instanceof bd.spark36.level.Level1PeacefulCampus) {
                     helmetGoon = ((bd.spark36.level.Level1PeacefulCampus) active).getCampusSecurity();
                     hud.setHelmetGoon(helmetGoon);
@@ -235,16 +234,34 @@ public class SparkGame extends ApplicationAdapter {
     /** Transitions from Gameplay back to Main Menu */
     public void returnToMainMenu() {
         gameState = GameState.MAIN_MENU;
-        menuSelection = 0;
         selectedChapter = bd.spark36.level.LevelConfig.getUnlockedLevel();
+        if (mainMenu != null) {
+            mainMenu.setSelectedChapter(selectedChapter);
+            mainMenu.onShow();
+        }
+        bd.spark36.app.GameProfile.get().onMainMenu();
         Gdx.input.setCursorCatched(false);
     }
 
     // ==========================================
     // MAIN RENDER DISPATCH
     // ==========================================
+    private static final boolean DEV_KEYS = Boolean.getBoolean("bd.spark36.devKeys");
+
+    private final bd.spark36.diagnostics.FrameStats frameStats =
+        bd.spark36.diagnostics.FrameStats.fromSystemProperties();
+
     @Override
     public void render() {
+        if (frameStats != null && gameState != GameState.MAIN_MENU
+                && frameStats.record(Gdx.graphics.getDeltaTime())) {
+            Gdx.app.log("FrameStats", frameStats.summary());
+            Gdx.app.exit();
+        }
+        if (capture != null && capture.isGalleryOpen()) {
+            capture.renderGallery(Math.min(0.1f, Gdx.graphics.getDeltaTime())); // T7: gallery replaces the frame
+            return;
+        }
         if (gameState == GameState.MAIN_MENU) {
             renderMainMenu();
         } else {
@@ -258,22 +275,6 @@ public class SparkGame extends ApplicationAdapter {
     private void renderMainMenu() {
         float delta = Gdx.graphics.getDeltaTime();
         if (delta > 0.1f) delta = 0.1f;
-        menuAnimTime += delta;
-
-        int screenW = Gdx.graphics.getBackBufferWidth();
-        int screenH = Gdx.graphics.getBackBufferHeight();
-
-        // Virtual coordinates scaling (1600 baseline)
-        float w = 1600f;
-        float h = 1600f * ((float) screenH / (float) screenW);
-        float centerX = w / 2f;
-
-        float btnW = 480f;
-        float btnH = 50f;
-        float btnX = centerX - btnW / 2f;
-        float playBtnY = h * 0.40f;
-        float arenaBtnY = playBtnY - btnH - 16f;
-        float exitBtnY = arenaBtnY - btnH - 16f;
 
         // Automated testing support: auto start gameplay if system property set
         if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoStartGame"))) {
@@ -281,293 +282,51 @@ public class SparkGame extends ApplicationAdapter {
             return;
         }
 
-        // Handle Mouse Navigation (Hover & Click)
-        float mouseX = ((float) Gdx.input.getX() / (float) Gdx.graphics.getWidth()) * w;
-        float mouseY = (1.0f - (float) Gdx.input.getY() / (float) Gdx.graphics.getHeight()) * h;
-        boolean mouseClicked = Gdx.input.isButtonJustPressed(Input.Buttons.LEFT);
-
-        if (mouseX >= btnX && mouseX <= btnX + btnW) {
-            if (mouseY >= playBtnY && mouseY <= playBtnY + btnH) {
-                if (menuSelection != 0) {
-                    menuSelection = 0;
-                    bd.spark36.audio.SoundManager.get().playClick();
-                }
-                if (mouseClicked) {
-                    if (!bd.spark36.level.LevelConfig.isLevelUnlocked(selectedChapter)) {
-                        bd.spark36.audio.SoundManager.get().playBlock();
-                        menuNotice = "CHAPTER " + selectedChapter + " IS LOCKED! Complete Chapter " + (selectedChapter - 1) + " to unlock.";
-                        menuNoticeTimer = 3.5f;
-                    } else {
-                        bd.spark36.audio.SoundManager.get().playClick();
-                        bd.spark36.level.LevelConfig.reset(selectedChapter, bd.spark36.level.LevelConfig.GameMode.STORY);
-                        startGameplay();
-                        return;
-                    }
-                }
-            } else if (mouseY >= arenaBtnY && mouseY <= arenaBtnY + btnH) {
-                if (menuSelection != 1) {
-                    menuSelection = 1;
-                    bd.spark36.audio.SoundManager.get().playClick();
-                }
-                if (mouseClicked) {
-                    bd.spark36.audio.SoundManager.get().playClick();
-                    startArenaMode();
-                    return;
-                }
-            } else if (mouseY >= exitBtnY && mouseY <= exitBtnY + btnH) {
-                if (menuSelection != 2) {
-                    menuSelection = 2;
-                    bd.spark36.audio.SoundManager.get().playClick();
-                }
-                if (mouseClicked) {
-                    bd.spark36.audio.SoundManager.get().playClick();
-                    Gdx.app.exit();
-                    return;
-                }
-            }
+        if (mainMenu == null) {
+            mainMenu = new bd.spark36.hud.screens.MainMenuScreen(shapeRenderer, menuBatch, fontRenderer);
+            mainMenu.setSelectedChapter(selectedChapter);
         }
-
-        // Handle menu navigation (WASD + Arrow Keys + ENTER/SPACE)
-        if (Gdx.input.isKeyJustPressed(Input.Keys.UP) || Gdx.input.isKeyJustPressed(Input.Keys.W)) {
-            menuSelection = (menuSelection - 1 + 3) % 3;
-            bd.spark36.audio.SoundManager.get().playClick();
-        }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) || Gdx.input.isKeyJustPressed(Input.Keys.S)) {
-            menuSelection = (menuSelection + 1) % 3;
-            bd.spark36.audio.SoundManager.get().playClick();
-        }
-        if (menuSelection == 0) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.A)) {
-                selectedChapter = (selectedChapter - 2 + 6) % 6 + 1; // 1 to 6
-                bd.spark36.audio.SoundManager.get().playClick();
-            } else if (Gdx.input.isKeyJustPressed(Input.Keys.RIGHT) || Gdx.input.isKeyJustPressed(Input.Keys.D)) {
-                selectedChapter = (selectedChapter % 6) + 1; // 1 to 6
-                bd.spark36.audio.SoundManager.get().playClick();
-            }
-        }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.J)) {
-            if (menuSelection == 0) {
-                if (!bd.spark36.level.LevelConfig.isLevelUnlocked(selectedChapter)) {
-                    bd.spark36.audio.SoundManager.get().playBlock();
-                    menuNotice = "CHAPTER " + selectedChapter + " IS LOCKED! Complete Chapter " + (selectedChapter - 1) + " to unlock.";
-                    menuNoticeTimer = 3.5f;
-                    return;
-                }
-                bd.spark36.audio.SoundManager.get().playClick();
+        bd.spark36.hud.screens.MainMenuScreen.Action action = mainMenu.update(delta);
+        selectedChapter = mainMenu.getSelectedChapter();
+        switch (action) {
+            case CONTINUE:
+                selectedChapter = mainMenu.continueChapter();
                 bd.spark36.level.LevelConfig.reset(selectedChapter, bd.spark36.level.LevelConfig.GameMode.STORY);
                 startGameplay();
                 return;
-            } else if (menuSelection == 1) {
-                bd.spark36.audio.SoundManager.get().playClick();
+            case START_CHAPTER:
+                bd.spark36.level.LevelConfig.reset(selectedChapter, bd.spark36.level.LevelConfig.GameMode.STORY);
+                startGameplay();
+                return;
+            case ARENA:
                 startArenaMode();
                 return;
-            } else {
-                bd.spark36.audio.SoundManager.get().playClick();
+            case EXIT:
                 Gdx.app.exit();
                 return;
-            }
+            default:
+                break;
         }
-
-        // Clear screen with deep dark atmospheric color
-        Gdx.gl.glViewport(0, 0, screenW, screenH);
-        Gdx.gl.glClearColor(0.02f, 0.04f, 0.06f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-
-        shapeRenderer.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
-        menuBatch.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
-
-        // --- Background: Atmospheric dark gradient ---
-        shapeRenderer.begin(ShapeType.Filled);
-        Color bottomL = new Color(0.02f, 0.03f, 0.06f, 1f);
-        Color bottomR = new Color(0.03f, 0.04f, 0.07f, 1f);
-        Color topR = new Color(0.08f, 0.06f, 0.12f, 1f);
-        Color topL = new Color(0.06f, 0.05f, 0.10f, 1f);
-        shapeRenderer.rect(0, 0, w, h, bottomL, bottomR, topR, topL);
-
-        // Subtle atmospheric mist band at lower third
-        shapeRenderer.setColor(0.10f, 0.08f, 0.06f, 0.12f);
-        shapeRenderer.rect(0, h * 0.15f, w, h * 0.15f);
-
-        // Subtle warm horizon glow
-        float glowPulse = 0.04f + 0.015f * MathUtils.sin(menuAnimTime * 0.8f);
-        shapeRenderer.setColor(0.25f, 0.18f, 0.08f, glowPulse);
-        shapeRenderer.rect(0, h * 0.35f, w, h * 0.12f);
-        shapeRenderer.end();
-
-        // --- Decorative Gold Elements ---
-        shapeRenderer.begin(ShapeType.Filled);
-        float titleBlockY = h * 0.62f;
-
-        // Gold diamond ornament above title
-        shapeRenderer.setColor(menuGoldAccent);
-        float diamondSize = 8f;
-        shapeRenderer.triangle(
-            centerX, titleBlockY + 70f + diamondSize,
-            centerX - diamondSize, titleBlockY + 70f,
-            centerX + diamondSize, titleBlockY + 70f
-        );
-        shapeRenderer.triangle(
-            centerX, titleBlockY + 70f - diamondSize,
-            centerX - diamondSize, titleBlockY + 70f,
-            centerX + diamondSize, titleBlockY + 70f
-        );
-
-        // Horizontal gold line below diamond
-        shapeRenderer.setColor(menuGoldBorder);
-        shapeRenderer.rect(centerX - 120f, titleBlockY + 55f, 240f, 1.5f);
-
-        // --- Menu Buttons ---
-        // 1. PLAY CAMPAIGN (Peaceful)
-        if (menuSelection == 0) {
-            shapeRenderer.setColor(menuSelectedBg);
-            shapeRenderer.rect(btnX - 4f, playBtnY - 4f, btnW + 8f, btnH + 8f);
-            shapeRenderer.setColor(menuGoldAccent.r, menuGoldAccent.g, menuGoldAccent.b, 0.08f);
-            shapeRenderer.rect(btnX, playBtnY, btnW, btnH);
-        } else {
-            shapeRenderer.setColor(menuGlassBg);
-            shapeRenderer.rect(btnX, playBtnY, btnW, btnH);
-        }
-
-        // 2. ARENA COMBAT MODE
-        if (menuSelection == 1) {
-            shapeRenderer.setColor(menuSelectedBg);
-            shapeRenderer.rect(btnX - 4f, arenaBtnY - 4f, btnW + 8f, btnH + 8f);
-            shapeRenderer.setColor(menuGoldAccent.r, menuGoldAccent.g, menuGoldAccent.b, 0.08f);
-            shapeRenderer.rect(btnX, arenaBtnY, btnW, btnH);
-        } else {
-            shapeRenderer.setColor(menuGlassBg);
-            shapeRenderer.rect(btnX, arenaBtnY, btnW, btnH);
-        }
-
-        // 3. EXIT button
-        if (menuSelection == 2) {
-            shapeRenderer.setColor(menuSelectedBg);
-            shapeRenderer.rect(btnX - 4f, exitBtnY - 4f, btnW + 8f, btnH + 8f);
-            shapeRenderer.setColor(menuGoldAccent.r, menuGoldAccent.g, menuGoldAccent.b, 0.08f);
-            shapeRenderer.rect(btnX, exitBtnY, btnW, btnH);
-        } else {
-            shapeRenderer.setColor(menuGlassBg);
-            shapeRenderer.rect(btnX, exitBtnY, btnW, btnH);
-        }
-        shapeRenderer.end();
-
-        // --- Button Borders ---
-        shapeRenderer.begin(ShapeType.Line);
-        shapeRenderer.setColor(menuSelection == 0 ? menuGoldAccent : menuGoldBorder);
-        shapeRenderer.rect(btnX, playBtnY, btnW, btnH);
-
-        shapeRenderer.setColor(menuSelection == 1 ? menuGoldAccent : menuGoldBorder);
-        shapeRenderer.rect(btnX, arenaBtnY, btnW, btnH);
-
-        shapeRenderer.setColor(menuSelection == 2 ? menuGoldAccent : menuGoldBorder);
-        shapeRenderer.rect(btnX, exitBtnY, btnW, btnH);
-
-        // Decorative corner brackets on selected button
-        float selY = (menuSelection == 0) ? playBtnY : ((menuSelection == 1) ? arenaBtnY : exitBtnY);
-        shapeRenderer.setColor(menuGoldAccent);
-        float cbLen = 14f;
-        shapeRenderer.line(btnX - 6f, selY + btnH + 6f, btnX - 6f, selY + btnH + 6f - cbLen);
-        shapeRenderer.line(btnX - 6f, selY + btnH + 6f, btnX - 6f + cbLen, selY + btnH + 6f);
-        shapeRenderer.line(btnX + btnW + 6f, selY + btnH + 6f, btnX + btnW + 6f, selY + btnH + 6f - cbLen);
-        shapeRenderer.line(btnX + btnW + 6f, selY + btnH + 6f, btnX + btnW + 6f - cbLen, selY + btnH + 6f);
-        shapeRenderer.line(btnX - 6f, selY - 6f, btnX - 6f, selY - 6f + cbLen);
-        shapeRenderer.line(btnX - 6f, selY - 6f, btnX - 6f + cbLen, selY - 6f);
-        shapeRenderer.line(btnX + btnW + 6f, selY - 6f, btnX + btnW + 6f, selY - 6f + cbLen);
-        shapeRenderer.line(btnX + btnW + 6f, selY - 6f, btnX + btnW + 6f - cbLen, selY - 6f);
-        shapeRenderer.end();
-
-        // --- Text Typography ---
-        menuBatch.begin();
-
-        // Title: "2x12: SPARK"
-        fontRenderer.titleFont.setColor(menuGoldAccent);
-        glyphLayout.setText(fontRenderer.titleFont, "2x12: SPARK");
-        fontRenderer.titleFont.draw(menuBatch, "2x12: SPARK",
-            centerX - glyphLayout.width / 2f, titleBlockY + 45f);
-
-        // Subtitle: "Birth of 36 July"
-        fontRenderer.headerFont.setColor(new Color(0.92f, 0.88f, 0.78f, 1f));
-        glyphLayout.setText(fontRenderer.headerFont, "Birth of 36 July");
-        fontRenderer.headerFont.draw(menuBatch, "Birth of 36 July",
-            centerX - glyphLayout.width / 2f, titleBlockY + 14f);
-
-        // Tagline
-        fontRenderer.smallFont.setColor(menuGoldMuted);
-        glyphLayout.setText(fontRenderer.smallFont, "July 2024  •  Dhaka University Campus");
-        fontRenderer.smallFont.draw(menuBatch, "July 2024  •  Dhaka University Campus",
-            centerX - glyphLayout.width / 2f, titleBlockY - 14f);
-
-        // Button 1: Campaign
-        boolean isUnlocked = bd.spark36.level.LevelConfig.isLevelUnlocked(selectedChapter);
-        String chapterName;
-        switch (selectedChapter) {
-            case 1: chapterName = "CH 1: CURZON SOLIDARITY (JUL 1-14)"; break;
-            case 2: chapterName = "CH 2: CONFRONTATION (JUL 15-16)"; break;
-            case 3: chapterName = "CH 3: POLICE ESCALATION (JUL 17-18)"; break;
-            case 4: chapterName = "CH 4: CURFEW BLACKOUT (JUL 19-22)"; break;
-            case 5: chapterName = "CH 5: MASS MOBILIZATION (AUG 3-4)"; break;
-            case 6: chapterName = "CH 6: VICTORY & 36 JULY (AUG 5)"; break;
-            default: chapterName = "START CAMPAIGN"; break;
-        }
-        if (!isUnlocked) {
-            chapterName += " [LOCKED]";
-        }
-        String playLabel = (menuSelection == 0) ? "<  " + chapterName + "  >" : chapterName;
-        glyphLayout.setText(fontRenderer.headerFont, playLabel);
-        if (menuSelection == 0) {
-            fontRenderer.headerFont.setColor(isUnlocked ? menuGoldAccent : new Color(0.85f, 0.45f, 0.45f, 0.95f));
-        } else {
-            fontRenderer.headerFont.setColor(isUnlocked ? new Color(0.85f, 0.82f, 0.75f, 1f) : new Color(0.55f, 0.50f, 0.50f, 0.7f));
-        }
-        fontRenderer.headerFont.draw(menuBatch, playLabel,
-            centerX - glyphLayout.width / 2f, playBtnY + btnH / 2f + 8f);
-
-        if (menuNoticeTimer > 0f && menuNotice != null) {
-            menuNoticeTimer -= delta;
-            fontRenderer.smallFont.setColor(new Color(1f, 0.40f, 0.35f, Math.min(1f, menuNoticeTimer)));
-            glyphLayout.setText(fontRenderer.smallFont, menuNotice);
-            fontRenderer.smallFont.draw(menuBatch, menuNotice,
-                centerX - glyphLayout.width / 2f, playBtnY - 14f);
-        }
-
-        // Button 2: Arena
-        fontRenderer.headerFont.setColor(menuSelection == 1 ? menuGoldAccent : new Color(0.85f, 0.82f, 0.75f, 1f));
-        glyphLayout.setText(fontRenderer.headerFont, "MARTIAL ARTS ARENA (COMBAT)");
-        fontRenderer.headerFont.draw(menuBatch, "MARTIAL ARTS ARENA (COMBAT)",
-            centerX - glyphLayout.width / 2f, arenaBtnY + btnH / 2f + 8f);
-
-        // Button 3: Exit
-        fontRenderer.headerFont.setColor(menuSelection == 2 ? new Color(0.95f, 0.40f, 0.35f, 1f) : new Color(0.70f, 0.65f, 0.60f, 1f));
-        glyphLayout.setText(fontRenderer.headerFont, "EXIT GAME");
-        fontRenderer.headerFont.draw(menuBatch, "EXIT GAME",
-            centerX - glyphLayout.width / 2f, exitBtnY + btnH / 2f + 8f);
-
-        // Navigation hint
-        fontRenderer.smallFont.setColor(new Color(0.55f, 0.52f, 0.48f, 0.8f));
-        String navHint = (menuSelection == 0) ?
-            "W/S: Navigate  •  A/D or Arrows: Chapter  •  ENTER: Start" :
-            "W/S or Arrow Keys: Navigate    •    ENTER or SPACE: Select";
-        glyphLayout.setText(fontRenderer.smallFont, navHint);
-        fontRenderer.smallFont.draw(menuBatch, navHint,
-            centerX - glyphLayout.width / 2f, exitBtnY - 30f);
-
-        // Credits at bottom
-        fontRenderer.smallFont.setColor(new Color(0.42f, 0.40f, 0.38f, 0.7f));
-        String credits = "Atia Sanjida  •  ICE, BAUET  •  Student Code: 2x12";
-        glyphLayout.setText(fontRenderer.smallFont, credits);
-        fontRenderer.smallFont.draw(menuBatch, credits,
-            centerX - glyphLayout.width / 2f, 45f);
-
-        menuBatch.end();
+        mainMenu.render();
 
         // Automated visual verification for Main Menu
         if (System.getProperty("bd.spark36.testMenuScreenshot") != null) {
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 1.0f) {
                 takeScreenshot("spark36_menu_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        } else if (bd.spark36.hud.screens.SettingsScreen.screenshotTestRequested()) {
+            testTimer += delta;
+            if (!mainMenu.isSettingsOpen() && !autoScreenshotTaken) {
+                mainMenu.openSettings();
+                bd.spark36.hud.screens.SettingsScreen.applyScriptedTestChangesIfRequested();
+            }
+            if (!autoScreenshotTaken && testTimer >= 1.0f) {
+                takeScreenshot("spark36_settings_verified");
                 autoScreenshotTaken = true;
                 if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
                     Gdx.app.exit();
@@ -580,6 +339,7 @@ public class SparkGame extends ApplicationAdapter {
     // GAMEPLAY RENDERING (all existing logic)
     // ==========================================
     private void renderGameplay() {
+        GlStats.beginFrame();
         float delta = Gdx.graphics.getDeltaTime();
         if (delta > 0.1f) delta = 0.1f;
         if (hitStopTimer > 0f) {
@@ -632,7 +392,8 @@ public class SparkGame extends ApplicationAdapter {
             player.clearCombatTarget();
         }
 
-        boolean isSimulationFrozen = (hud != null && (hud.isPauseMenuOpen() || hud.isExitConfirmOpen()));
+        photoFrame = capture.isPhotoModeActive(); // T7: photo mode freezes the simulation like the pause menu
+        boolean isSimulationFrozen = photoFrame || (hud != null && (hud.isPauseMenuOpen() || hud.isExitConfirmOpen()));
         float simDelta = isSimulationFrozen ? 0f : delta;
 
         // 1. Update Game Logic
@@ -680,10 +441,14 @@ public class SparkGame extends ApplicationAdapter {
         }
 
         // Enhanced camera: pass movement state for bob + FOV push + shake
-        camera.update(simDelta, player.getPosition(), canMove && !isSimulationFrozen,
-            player.isMoving() && !isSimulationFrozen, player.isSprinting() && !isSimulationFrozen, player.getHeadingDegrees());
+        if (photoFrame) {
+            capture.updatePhotoCamera(delta); // T7: orbit camera; the follow camera's state is left untouched
+        } else {
+            camera.update(simDelta, player.getPosition(), canMove && !isSimulationFrozen,
+                player.isMoving() && !isSimulationFrozen, player.isSprinting() && !isSimulationFrozen, player.getHeadingDegrees());
+        }
 
-        hud.update(delta, player, activeMemorials);
+        if (!photoFrame) hud.update(delta, player, activeMemorials); // T7: HUD keys (Esc, G, Tab) are photo-mode keys
 
         // Update particles (incorporating weather rain intensity & GraphicsTier)
         if (particleSystem != null) {
@@ -692,6 +457,7 @@ public class SparkGame extends ApplicationAdapter {
             particleSystem.update(delta, camera.getCamera(), rainInt, GraphicsTier.fromSystemProperty());
         }
 
+        GlStats.mark(GlStats.Phase.UPDATE);
         // 1b. SUN SHADOW PASS: depth-only render from the sun, centred a little ahead of the player
         if (activeWorld != null) {
             shadowForward.set(camera.getCamera().direction.x, 0f, camera.getCamera().direction.z).nor();
@@ -720,6 +486,7 @@ public class SparkGame extends ApplicationAdapter {
             activeWorld.endShadowPass();
             Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
         }
+        GlStats.mark(GlStats.Phase.SHADOW);
 
         // 2. POST-PROCESSING: Begin FBO capture (replaces direct sky render)
         boolean ppActive = postProcessor != null && postProcessor.isValid();
@@ -735,6 +502,7 @@ public class SparkGame extends ApplicationAdapter {
             Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
         }
 
+        GlStats.mark(GlStats.Phase.SKY);
         // 3. Render 3D World Pass (inside FBO if post-processing active)
         camera.resize(screenW, screenH);
         modelBatch.begin(camera.getCamera());
@@ -764,6 +532,7 @@ public class SparkGame extends ApplicationAdapter {
         }
         modelBatch.end();
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
+        GlStats.mark(GlStats.Phase.WORLD3D);
 
         if (activeWorld != null) {
             activeWorld.renderDebugOpeningNormals(shapeRenderer, camera.getCamera());
@@ -775,27 +544,41 @@ public class SparkGame extends ApplicationAdapter {
             currentLevel.renderOverlays(camera, delta, screenW, screenH);
         }
 
+        GlStats.mark(GlStats.Phase.OVERLAYS);
         // 5. End FBO capture and apply post-processing chain to screen
         if (ppActive) {
             postProcessor.endCapture();
             postProcessor.render(delta, wc);
         }
+        GlStats.mark(GlStats.Phase.POST);
 
         // 6. Particle System (leaves, dust, water ripples) — AFTER post-processing, BEFORE HUD
         if (particleSystem != null) {
             particleSystem.render();
         }
+        GlStats.mark(GlStats.Phase.PARTICLES);
 
         // 7. 2D HUD (always crisp, rendered AFTER post-processing)
-        hud.render(player, activeMemorials, camera.getYaw(), camera.getCamera());
+        capture.beforeHud(); // T7: pending F12 capture is taken here, without HUD
+        if (!capture.hidesHud()) hud.render(player, activeMemorials, camera.getYaw(), camera.getCamera());
+        capture.afterHud(delta); // T7: photo-mode hint and capture toast, never captured
+        GlStats.mark(GlStats.Phase.HUD);
 
         // Process inputs and automated test screenshot triggers AFTER the frame is fully drawn!
         handleGameplayInputs(delta);
+        GlStats.mark(GlStats.Phase.OTHER);
+        GlStats.endFrame();
     }
 
     private void handleGameplayInputs(float delta) {
-        // Toggle fullscreen with F11
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
+        // T7: F10 photo mode, F11 gallery, F12 capture; photo-mode frames skip all gameplay keys
+        if (capture.handleGameplayKeys(delta, camera, player.getPosition(), hud.isModalOpen(), photoFrame)) {
+            return;
+        }
+
+        // Toggle fullscreen with Alt+Enter (F11 now opens the gallery)
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
+                && (Gdx.input.isKeyPressed(Input.Keys.ALT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.ALT_RIGHT))) {
             if (Gdx.graphics.isFullscreen()) {
                 Gdx.graphics.setWindowedMode(1440, 900);
             } else {
@@ -816,18 +599,15 @@ public class SparkGame extends ApplicationAdapter {
             }
         }
 
-        // F12 Screenshot key
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F12)) {
-            takeScreenshot("spark36_" + System.currentTimeMillis());
-        }
-
+        // Developer-only shortcuts (F3, F4/O, F6) need -Dbd.spark36.devKeys=true, so players
+        // cannot hit the debug test card (O) or skip chapters (F6) by accident.
         // F4 or O: Toggle Orientation Test Card on facade elements
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F4) || Gdx.input.isKeyJustPressed(Input.Keys.O)) {
+        if (DEV_KEYS && (Gdx.input.isKeyJustPressed(Input.Keys.F4) || Gdx.input.isKeyJustPressed(Input.Keys.O))) {
             world.setTestCardActive(!world.isTestCardActive());
         }
 
         // F3: Toggle Opening Outlines and Normal Vectors
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
+        if (DEV_KEYS && Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
             DhakaCampusWorld.debugDrawNormals = !DhakaCampusWorld.debugDrawNormals;
             Gdx.app.log("SparkGame", "Debug Draw Normals toggled: " + DhakaCampusWorld.debugDrawNormals);
         }
@@ -839,7 +619,7 @@ public class SparkGame extends ApplicationAdapter {
                 syncLevelSubsystems();
             }
         }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F6)) {
+        if (DEV_KEYS && Gdx.input.isKeyJustPressed(Input.Keys.F6)) {
             if (levelManager != null) {
                 levelManager.nextLevel();
                 syncLevelSubsystems();
@@ -1217,6 +997,14 @@ public class SparkGame extends ApplicationAdapter {
                 camera.setFixedView(0f, 3.20f, -23.5f, 0f, 3.20f, -20.59f);
             } else if ("curzon_dome".equalsIgnoreCase(viewpoint)) {
                 camera.setFixedView(0f, 16.0f, -8.0f, 0f, 19.0f, -22.5f);
+            } else if ("gate_street".equalsIgnoreCase(viewpoint)) {
+                // T8: from inside the main gate, looking out at the Doel Chattar road and its street dressing
+                player.setPosition(0f, 0f, 70f);
+                camera.setFixedView(0f, 3.4f, 66f, 0f, 1.6f, 92f);
+            } else if ("street_road".equalsIgnoreCase(viewpoint)) {
+                // T8: on the road outside the gate, looking east along the shopfronts
+                player.setPosition(-16f, 0f, 84f);
+                camera.setFixedView(-24f, 1.8f, 83f, 6f, 1.6f, 89f);
             }
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
@@ -1233,34 +1021,13 @@ public class SparkGame extends ApplicationAdapter {
         }
     }
 
+    /**
+     * Automated-harness capture with a deterministic name, written to
+     * {@code <screenshot folder>/<name>.png} (see bd.spark36.capture.ScreenshotService).
+     * Player F12 captures go through CaptureController and never overwrite.
+     */
     public static void takeScreenshot(String name) {
-        try {
-            int w = Gdx.graphics.getBackBufferWidth();
-            int h = Gdx.graphics.getBackBufferHeight();
-            com.badlogic.gdx.graphics.Pixmap pixmap = com.badlogic.gdx.graphics.Pixmap.createFromFrameBuffer(0, 0, w, h);
-            com.badlogic.gdx.graphics.Pixmap flipped = new com.badlogic.gdx.graphics.Pixmap(w, h, pixmap.getFormat());
-            for (int x = 0; x < w; x++) {
-                for (int y = 0; y < h; y++) {
-                    flipped.drawPixel(x, y, pixmap.getPixel(x, h - y - 1));
-                }
-            }
-            String cleanName = name.endsWith(".png") ? name.substring(0, name.length() - 4) : name;
-            com.badlogic.gdx.files.FileHandle file;
-            if (cleanName.startsWith("assets/")) {
-                file = Gdx.files.local(cleanName + ".png");
-            } else {
-                file = Gdx.files.local("assets/screenshots/" + cleanName + ".png");
-            }
-            if (!file.parent().exists()) {
-                file.parent().mkdirs();
-            }
-            com.badlogic.gdx.graphics.PixmapIO.writePNG(file, flipped);
-            pixmap.dispose();
-            flipped.dispose();
-            Gdx.app.log("SparkGame", "Screenshot saved: " + file.path());
-        } catch (Exception e) {
-            Gdx.app.error("SparkGame", "Failed to take screenshot", e);
-        }
+        bd.spark36.capture.CaptureController.captureHarness(name);
     }
 
     @Override
@@ -1294,6 +1061,7 @@ public class SparkGame extends ApplicationAdapter {
         if (levelManager != null) levelManager.dispose();
         if (postProcessor != null) postProcessor.dispose();
         if (particleSystem != null) particleSystem.dispose();
+        if (capture != null) capture.dispose();
         bd.spark36.audio.SoundManager.get().dispose();
     }
 }

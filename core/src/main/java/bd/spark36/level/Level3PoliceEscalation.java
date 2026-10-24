@@ -36,6 +36,7 @@ import bd.spark36.world.landmarks.BarricadeBuilder;
 public class Level3PoliceEscalation implements CampaignLevel {
 
     private DhakaCampusWorld world;
+    private final StreetDressing street = new StreetDressing(3); // T8 street identity
     private CampusCrowd crowd;
     private Environment environment;
     private ShapeRenderer overlayRenderer;
@@ -118,8 +119,8 @@ public class Level3PoliceEscalation implements CampaignLevel {
     public String getMissionTarget() {
         int next = getNextObjectiveIndex();
         switch (next) {
-            case 0: return "Target: Water Supply Station ('Pani lagbe, pani?')";
-            case 1: return "Target: Choking students caught in CS gas";
+            case 0: return "Target: Water Supply Station";
+            case 1: return "Target: Choking students caught in tear gas";
             case 2: return "Target: Tear-gassed demonstrators at gate";
             case 3: return "Target: Injured peers on west road";
             case 4: return "Target: Liberated safe evacuation exit";
@@ -176,7 +177,7 @@ public class Level3PoliceEscalation implements CampaignLevel {
         }
         if (carryingWater) {
             if (!objectivesDone[1] && playerPos.dst(waypoints[1]) <= 3.8f) {
-                return "[E] DISTRIBUTE WATER — 'পানি লাগবে, পানি?'";
+                return "[E] DISTRIBUTE WATER TO TEAR-GASSED STUDENTS";
             }
             if (!objectivesDone[2] && playerPos.dst(waypoints[2]) <= 3.8f) {
                 return "[E] DISTRIBUTE WATER TO CHOKING STUDENTS";
@@ -204,7 +205,7 @@ public class Level3PoliceEscalation implements CampaignLevel {
         if (carryingWater) {
             if (!objectivesDone[1] && playerPos.dst(waypoints[1]) <= 3.8f) {
                 objectivesDone[1] = true;
-                hud.triggerMissionToast("AID DELIVERED ('PANI LAGBE, PANI?')", getCompletedObjectiveCount());
+                hud.triggerMissionToast("AID DELIVERED (TEAR GAS GROUP 1)", getCompletedObjectiveCount());
                 return true;
             }
             if (!objectivesDone[2] && playerPos.dst(waypoints[2]) <= 3.8f) {
@@ -292,8 +293,10 @@ public class Level3PoliceEscalation implements CampaignLevel {
             colliders.add(new float[] { p.x - 2f, 0f, p.z - 0.4f, p.x + 2f, 1.4f, p.z + 0.4f });
         }
 
+        street.build(colliders);
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
+        LevelPbrMaterials.adopt(instances); // T8: legacy Diffuse colours -> PBR base colour
         this.crowd = new CampusCrowd(16, player.getColliders());
         this.crowd.setLevelProfile(3);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
@@ -323,12 +326,14 @@ public class Level3PoliceEscalation implements CampaignLevel {
     @Override
     public void renderShadow(ModelBatch shadowBatch) {
         if (world != null) world.renderShadowCasters(shadowBatch);
+        street.renderShadow(shadowBatch);
     }
 
     @Override
     public void render3D(ModelBatch modelBatch, Environment env) {
         if (world != null) world.render(modelBatch);
-        for (ModelInstance mi : instances) modelBatch.render(mi, environment);
+        if (world != null) street.render(modelBatch, world.getEnvironment());
+        for (ModelInstance mi : instances) modelBatch.render(mi, getEnvironment());
     }
 
     @Override
@@ -361,16 +366,31 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
     @Override
     public Environment getEnvironment() {
-        return environment;
+        // T8: the campus world is lit by its daylight PBR environment (IBL, sun, fog, shadows) in every
+        // chapter; the old per-level environment had no IBL and rendered characters and props white.
+        return world != null ? world.getEnvironment() : environment;
     }
 
     @Override
     public boolean onPlayerAttack(PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
-        if (crowd != null && crowd.checkHitByPlayer(player.getPosition(), player.getHeadingDegrees(), 2.2f)) {
-            hud.setDisqualified(true, "VIOLATION: Striking civilians is strictly forbidden!");
+        // Backstop: combat is disabled in this level, but if a strike is ever resolved,
+        // hitting an unarmed civilian still disqualifies.
+        String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
+        if (violation != null) {
+            hud.setDisqualified(true, violation);
             return true;
         }
         return false;
+    }
+
+    /** Disqualification check for striking unarmed civilians (package-private for tests). */
+    String checkCivilianStrike(Vector3 pos, float headingDeg) {
+        return CivilianStrikeRule.check(crowd, pos, headingDeg, CivilianStrikeRule.CIVILIAN_VIOLATION);
+    }
+
+    /** Test hook: inject a headless crowd without building the 3D world. */
+    void setCrowdForTest(CampusCrowd crowd) {
+        this.crowd = crowd;
     }
 
     @Override
@@ -384,12 +404,21 @@ public class Level3PoliceEscalation implements CampaignLevel {
     }
 
     @Override
+    public void restoreObjectiveFlags(boolean[] flags) {
+        for (int i = 0; i < objectivesDone.length; i++) {
+            objectivesDone[i] = flags != null && i < flags.length && flags[i];
+        }
+        carryingWater = objectivesDone[0];
+    }
+
+    @Override
     public void completeAllObjectivesForTest() {
         java.util.Arrays.fill(objectivesDone, true);
     }
 
     @Override
     public void dispose() {
+        street.dispose();
         if (world != null) { world.dispose(); world = null; }
         for (Model m : models) m.dispose();
         models.clear();

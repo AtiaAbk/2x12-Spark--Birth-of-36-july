@@ -27,6 +27,11 @@ public class LevelManager implements Disposable {
     private CinematicCamera camera;
     private WhereWindsMeetHUD hud;
 
+    /** Objective flags already seen in the current run (for checkpoint saving). */
+    private boolean[] runFlags = new boolean[0];
+    /** True once the active level reported completion (checkpoint cleared, polling stops). */
+    private boolean completionHandled = false;
+
     public LevelManager(TextureFactory textures, PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
         this.textures = textures;
         this.player = player;
@@ -73,6 +78,8 @@ public class LevelManager implements Disposable {
 
         activeLevel.init(textures, player, camera);
         LevelConfig.setCombatEnabled(activeLevel.isCombatEnabled());
+        runFlags = activeLevel.getObjectiveFlags();
+        completionHandled = false;
 
         if (hud != null) {
             hud.setActiveLevel(activeLevel);
@@ -86,7 +93,15 @@ public class LevelManager implements Disposable {
     public void update(float delta, boolean canMove) {
         if (activeLevel != null) {
             activeLevel.update(delta, player, camera, canMove, hud);
+            trackCheckpoint();
         }
+    }
+
+    /** Saves a checkpoint when an objective newly completes; clears it once the level is complete. */
+    private void trackCheckpoint() {
+        if (activeLevel == null || completionHandled) return;
+        if (activeLevel.isLevelComplete()) completionHandled = true;
+        CheckpointStore.recordProgress(activeLevel, runFlags);
     }
 
     public void renderShadow(ModelBatch shadowBatch) {
@@ -109,14 +124,18 @@ public class LevelManager implements Disposable {
 
     public boolean handleInteraction(Vector3 playerPos) {
         if (activeLevel != null) {
-            return activeLevel.onInteract(playerPos, player, hud);
+            boolean consumed = activeLevel.onInteract(playerPos, player, hud);
+            trackCheckpoint();
+            return consumed;
         }
         return false;
     }
 
     public boolean handlePlayerAttack() {
         if (activeLevel != null && activeLevel.isCombatEnabled()) {
-            return activeLevel.onPlayerAttack(player, camera, hud);
+            boolean hit = activeLevel.onPlayerAttack(player, camera, hud);
+            trackCheckpoint();
+            return hit;
         }
         return false;
     }
@@ -130,8 +149,35 @@ public class LevelManager implements Disposable {
         }
     }
 
+    /**
+     * Restarts the active level. If "Restart from checkpoint" was requested
+     * ({@link CheckpointStore#requestRestore()}), the saved objective flags are re-applied;
+     * otherwise this is a full restart from the beginning.
+     */
     public void restartCurrentLevel() {
+        if (CheckpointStore.consumeRestoreRequest()) {
+            restartFromCheckpoint();
+        } else {
+            loadLevel(currentLevelIndex);
+        }
+    }
+
+    /**
+     * Reloads the active level and restores its last checkpoint (objective flags).
+     * Falls back to a full restart when no checkpoint exists.
+     * @return true if a checkpoint was restored.
+     */
+    public boolean restartFromCheckpoint() {
         loadLevel(currentLevelIndex);
+        boolean[] restored = CheckpointStore.restore(activeLevel);
+        if (restored == null) {
+            if (hud != null) hud.triggerMissionToast("NO CHECKPOINT YET — LEVEL RESTARTED", 0);
+            return false;
+        }
+        runFlags = activeLevel.getObjectiveFlags();
+        if (hud != null) hud.triggerMissionToast("RESUMED FROM CHECKPOINT", activeLevel.getCompletedObjectiveCount());
+        if (Gdx.app != null) Gdx.app.log("LevelManager", "Restored checkpoint for Level " + currentLevelIndex);
+        return true;
     }
 
     public CampaignLevel getActiveLevel() {

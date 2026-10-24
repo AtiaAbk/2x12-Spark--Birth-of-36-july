@@ -76,6 +76,8 @@ public class DhakaCampusWorld implements Disposable {
     private final DirectionalShadowLight sunLight;
     private final Array<Model> models = new Array<>();
     private final Array<ModelInstance> instances = new Array<>();
+    private final Array<ModelInstance> dynamicInstances = new Array<>(); // moving / re-textured: not baked
+    private StaticSceneBatch staticBatch; // every other instance, merged and frustum-culled
     private final Array<ModelInstance> boundarySparkles = new Array<>();
     private float animTime = 0f;
 
@@ -183,6 +185,10 @@ public class DhakaCampusWorld implements Disposable {
 
         buildCampus(textures);
         buildColliders();
+        java.util.Set<ModelInstance> nonCasters = new java.util.HashSet<>(shadowExclusions);
+        nonCasters.add(instances.get(0)); // the ground plane only receives shadows
+        staticBatch = StaticSceneBatch.split(instances, dynamicInstances, nonCasters, waterSurface, waterShimmer,
+            grandPortalInst, porticoTripleWinInst, boundarySparkles, wingDoors, wingWindows);
     }
 
     /**
@@ -2521,8 +2527,9 @@ public class DhakaCampusWorld implements Disposable {
             activeCam = cam;
         }
 
-        for (ModelInstance inst : instances) {
-            batch.render(inst, environment);
+        staticBatch.render(batch, environment);
+        for (int i = 0; i < dynamicInstances.size; i++) {
+            batch.render(dynamicInstances.get(i), environment);
         }
         for (ModelInstance fx : effects) {
             batch.render(fx, environment);
@@ -2566,9 +2573,9 @@ public class DhakaCampusWorld implements Disposable {
 
     /** Draws everything that should cast a shadow (all but the ground plane and the water). */
     public void renderShadowCasters(ModelBatch depthBatch) {
-        // instances[0] is the ground plane: it only receives shadows
-        for (int i = 1; i < instances.size; i++) {
-            ModelInstance inst = instances.get(i);
+        staticBatch.renderShadowCasters(depthBatch); // skips the ground plane and shadowExclusions
+        for (int i = 0; i < dynamicInstances.size; i++) {
+            ModelInstance inst = dynamicInstances.get(i);
             if (inst == waterSurface || inst == waterShimmer) continue;
             if (shadowExclusions.contains(inst)) continue;
             depthBatch.render(inst);
@@ -2628,6 +2635,8 @@ public class DhakaCampusWorld implements Disposable {
         }
         models.clear();
         instances.clear();
+        dynamicInstances.clear();
+        if (staticBatch != null) staticBatch.dispose();
         boundarySparkles.clear();
         sunLight.dispose();
         if (pbrEnvironment != null) {

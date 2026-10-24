@@ -87,7 +87,13 @@ public class WhereWindsMeetHUD implements Disposable {
     private boolean isPauseMenuOpen = false;
     private boolean isHelpControlsOpen = false;
     private boolean isExitConfirmOpen = false;
-    private int pauseMenuSelection = 0; // 0=Resume, 1=Codex, 2=Graphics, 3=ToneMap, 4=Restart, 5=MainMenu, 6=Quit
+    private int pauseMenuSelection = 0; // 0=Resume, 1=Codex, 2=Settings, 3=ToneMap, 4=Restart, 5=MainMenu, 6=Quit, 7=Checkpoint
+    private static final int PAUSE_ITEM_COUNT = 8;
+    private static final int PAUSE_ITEM_CHECKPOINT = 7; // T5: restart from mid-level checkpoint
+    // Settings screen opened from the pause menu (bd.spark36.hud.screens.SettingsScreen); pause stays open underneath.
+    private final bd.spark36.hud.screens.SettingsScreen settingsScreen = new bd.spark36.hud.screens.SettingsScreen();
+    private final bd.spark36.hud.screens.CreditsScreen creditsScreen = new bd.spark36.hud.screens.CreditsScreen(); // T4
+    private boolean pauseSettingsTestDone = false;
     private int exitConfirmSelection = 0; // 0=Cancel, 1=Quit Game
     private boolean isVictoryOpen = false;
     private boolean victoryShown = false;
@@ -111,7 +117,7 @@ public class WhereWindsMeetHUD implements Disposable {
         "HISTORIC DU BOUNDARY STONE (1921)",
         "Founding Era — July 1, 1921",
         "Curzon Hall Heritage Precinct",
-        "This weathered granite boundary marker demarcates the historic eastern perimeter of Dhaka University, established in 1921. For over a century, these grounds have witnessed generations of courageous students defending truth, freedom, and equal rights—culminating in the July 2024 Mass Uprising and the birth of 36 July.",
+        "Dhaka University opened on 1 July 1921. This weathered boundary marker is a game reconstruction, not a documented artefact. For over a century these grounds have seen generations of students stand up for truth, freedom and equal rights, up to the July 2024 Mass Uprising and the birth of 36 July.",
         bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS
     );
 
@@ -323,6 +329,13 @@ public class WhereWindsMeetHUD implements Disposable {
         bd.spark36.audio.SoundManager.get().playObjective();
     }
 
+    /** Pause menu "Restart from checkpoint": LevelManager restores on the restart action (3). */
+    private void requestCheckpointRestart() {
+        bd.spark36.level.CheckpointStore.requestRestore();
+        exitAction = 3;
+        isPauseMenuOpen = false;
+    }
+
     public void triggerVictory() {
         this.congratulationsPopupActive = true;
         this.congratulationsPopupTimer = 3.2f;
@@ -448,6 +461,20 @@ public class WhereWindsMeetHUD implements Disposable {
         float mouseX = vMouse[0];
         float mouseY = vMouse[1];
 
+        // Settings screen (from the pause menu) owns input while open; Esc returns to the pause menu.
+        if (isPauseMenuOpen && !pauseSettingsTestDone && System.getProperty("bd.spark36.testPauseSettings") != null) {
+            settingsScreen.open("Pause Menu");
+            pauseSettingsTestDone = true;
+        }
+        if (creditsScreen.isOpen()) { creditsScreen.update(virtW, virtH, mouseX, mouseY, delta); return; } // T4
+        if (settingsScreen.isOpen()) {
+            if (!isPauseMenuOpen) settingsScreen.close();
+            else {
+                settingsScreen.update(virtW, virtH, mouseX, mouseY);
+                return;
+            }
+        }
+
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             if (isVictoryOpen) {
                 float vw = 860f;
@@ -523,7 +550,7 @@ public class WhereWindsMeetHUD implements Disposable {
                 float btnX = px + 28f, btnW = dividerX - px - 46f, btnH = 38f;
                 float startY = py + ph - 105f;
                 float spacingY = 46f;
-                for (int i = 0; i < 7; i++) {
+                for (int i = 0; i < PAUSE_ITEM_COUNT; i++) {
                     float by = startY - i * spacingY;
                     if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= by && mouseY <= by + btnH) {
                         pauseMenuSelection = i;
@@ -534,9 +561,9 @@ public class WhereWindsMeetHUD implements Disposable {
                             isPauseMenuOpen = false;
                             isHelpControlsOpen = true;
                         } else if (i == 2) {
-                            RenderPipelineConfig.cycleGraphicsTier();
+                            settingsScreen.open("Pause Menu");
                         } else if (i == 3) {
-                            RenderPipelineConfig.toneMappingMode = (RenderPipelineConfig.toneMappingMode + 1) % 3;
+                            RenderPipelineConfig.cycleToneMapping();
                         } else if (i == 4) {
                             exitAction = 3; // Restart level
                             isPauseMenuOpen = false;
@@ -546,6 +573,8 @@ public class WhereWindsMeetHUD implements Disposable {
                         } else if (i == 6) {
                             isExitConfirmOpen = true;
                             exitConfirmSelection = 0;
+                        } else if (i == PAUSE_ITEM_CHECKPOINT) {
+                            requestCheckpointRestart();
                         }
                         break;
                     }
@@ -811,11 +840,11 @@ public class WhereWindsMeetHUD implements Disposable {
                 }
             } else {
                 if (Gdx.input.isKeyJustPressed(Input.Keys.UP) || Gdx.input.isKeyJustPressed(Input.Keys.W)) {
-                    pauseMenuSelection = (pauseMenuSelection - 1 + 7) % 7;
+                    pauseMenuSelection = (pauseMenuSelection - 1 + PAUSE_ITEM_COUNT) % PAUSE_ITEM_COUNT;
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
                 if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) || Gdx.input.isKeyJustPressed(Input.Keys.S)) {
-                    pauseMenuSelection = (pauseMenuSelection + 1) % 7;
+                    pauseMenuSelection = (pauseMenuSelection + 1) % PAUSE_ITEM_COUNT;
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
                 if (GameInput.isJustPressed(GameInput.GameAction.CONFIRM)) {
@@ -826,9 +855,9 @@ public class WhereWindsMeetHUD implements Disposable {
                         isPauseMenuOpen = false;
                         isHelpControlsOpen = true;
                     } else if (pauseMenuSelection == 2) {
-                        RenderPipelineConfig.cycleGraphicsTier();
+                        settingsScreen.open("Pause Menu");
                     } else if (pauseMenuSelection == 3) {
-                        RenderPipelineConfig.toneMappingMode = (RenderPipelineConfig.toneMappingMode + 1) % 3;
+                        RenderPipelineConfig.cycleToneMapping();
                     } else if (pauseMenuSelection == 4) {
                         exitAction = 3; // Restart level
                         isPauseMenuOpen = false;
@@ -838,6 +867,8 @@ public class WhereWindsMeetHUD implements Disposable {
                     } else if (pauseMenuSelection == 6) {
                         isExitConfirmOpen = true;
                         exitConfirmSelection = 0;
+                    } else if (pauseMenuSelection == PAUSE_ITEM_CHECKPOINT) {
+                        requestCheckpointRestart();
                     }
                 }
 
@@ -851,8 +882,8 @@ public class WhereWindsMeetHUD implements Disposable {
                     isPauseMenuOpen = false;
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
-                if (Gdx.input.isKeyJustPressed(Input.Keys.G)) {
-                    RenderPipelineConfig.cycleGraphicsTier();
+                if (Gdx.input.isKeyJustPressed(Input.Keys.F2)) {
+                    settingsScreen.open("Pause Menu");
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
                 if (GameInput.isJustPressed(GameInput.GameAction.RESTART)) {
@@ -861,7 +892,7 @@ public class WhereWindsMeetHUD implements Disposable {
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
                 if (GameInput.isJustPressed(GameInput.GameAction.CYCLE_TONEMAP)) {
-                    RenderPipelineConfig.toneMappingMode = (RenderPipelineConfig.toneMappingMode + 1) % 3;
+                    RenderPipelineConfig.cycleToneMapping();
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
                 if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
@@ -872,6 +903,10 @@ public class WhereWindsMeetHUD implements Disposable {
                 if (Gdx.input.isKeyJustPressed(Input.Keys.X)) {
                     isExitConfirmOpen = true;
                     exitConfirmSelection = 1;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.C)) {
+                    requestCheckpointRestart();
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
             }
@@ -1057,8 +1092,11 @@ public class WhereWindsMeetHUD implements Disposable {
         } else if (isMapOpen) {
             renderCampusMap(player, memorials, cameraYaw, w, h);
         } else if (isPauseMenuOpen) {
-            renderPauseMenu(w, h);
+            if (settingsScreen.isOpen()) settingsScreen.render(shapeRenderer, spriteBatch, fonts, w, h);
+            else renderPauseMenu(w, h);
         }
+
+        if (creditsScreen.isOpen()) creditsScreen.render(shapeRenderer, spriteBatch, fonts, w, h); // T4
 
         // 6. Debug Bounds & Overlap Check Overlay (Toggle via F3 / Grave `)
         if (debugOverlayEnabled) {
@@ -1282,7 +1320,7 @@ public class WhereWindsMeetHUD implements Disposable {
         } else if (allDone && goonKnockedOut) {
             drawOutlined(fonts.smallFont, "ALL ARCHIVES UNLOCKED: 05 / 05", cardX + 18f, cardY + cardH - 18f, Color.GREEN);
             drawOutlined(fonts.headerFont, "LEVEL 1 ACCOMPLISHED", cardX + 18f, cardY + cardH - 42f, goldAccent);
-            drawOutlined(fonts.bodyFont, "All 5 archives secured & Aggressor neutralized. Campus liberated!", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
+            drawOutlined(fonts.bodyFont, "All 5 archives secured & the attacker held back. Campus safe!", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
             drawOutlined(fonts.headerFont, "STATUS: COMPLETED", cardX + 18f, cardY + 24f, Color.GREEN);
         } else {
             // Standard archive progression
@@ -1933,6 +1971,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.promptFont.draw(spriteBatch, "[E] / [ESC] Close Archive", mx + mw - 240f, my + 28f);
 
         spriteBatch.end();
+        bd.spark36.hud.screens.HistoricalContextCard.render(shapeRenderer, spriteBatch, fonts, entry.id, mx, my + mh + 8f, mw); // T4
     }
 
     // ========================================================
@@ -2601,7 +2640,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float startY = py + ph - 105f;
         float spacingY = 46f;
 
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < PAUSE_ITEM_COUNT; i++) {
             float by = startY - i * spacingY;
             if (pauseMenuSelection == i && !isExitConfirmOpen) {
                 if (i == 6) {
@@ -2631,7 +2670,7 @@ public class WhereWindsMeetHUD implements Disposable {
         strokeGlassBorder(px, py, pw, ph);
 
         // Button borders and corner brackets
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < PAUSE_ITEM_COUNT; i++) {
             float by = startY - i * spacingY;
             if (pauseMenuSelection == i && !isExitConfirmOpen) {
                 if (i == 6) {
@@ -2688,20 +2727,19 @@ public class WhereWindsMeetHUD implements Disposable {
         else if (tmMode == 2) tmName = "REINHARD";
         else tmName = "LINEAR";
 
-        String tierName = bd.spark36.render.RenderPipelineConfig.activeGraphicsTier.name();
-
         String[] itemLabels = {
             "RESUME GAME",
             "CONTROLS & CODEX",
-            "GRAPHICS: " + tierName,
+            "SETTINGS",
             "TONE MAP: " + tmName,
             "RESTART LEVEL",
             "MAIN MENU",
-            "EXIT GAME"
+            "EXIT GAME",
+            "RESTART CHECKPOINT"
         };
-        String[] itemShortcuts = {"[ESC]", "[H]", "[G]", "[T]", "[R]", "[Q]", "[X]"};
+        String[] itemShortcuts = {"[ESC]", "[H]", "[F2]", "[T]", "[R]", "[Q]", "[X]", "[C]"};
 
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < PAUSE_ITEM_COUNT; i++) {
             float by = startY - i * spacingY;
             boolean sel = (pauseMenuSelection == i && !isExitConfirmOpen);
 
@@ -2716,14 +2754,14 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Hints underneath buttons
         fonts.smallFont.setColor(new Color(0.70f, 0.68f, 0.64f, 0.85f));
-        fonts.smallFont.draw(spriteBatch, "[M] Campus Map  •  [P] Parameters  •  [G] Switch Gender", btnX, py + 56f);
+        fonts.smallFont.draw(spriteBatch, "[M] Map  •  In game: [P] Parameters, [G] Gender", btnX, py + 56f);
 
         fonts.smallFont.setColor(new Color(0.55f, 0.52f, 0.50f, 0.80f));
         fonts.smallFont.draw(spriteBatch, "Dhaka University Campus • July 2024", btnX, py + 34f);
 
         // Right Column: Martial Arts & Controls Codex
         fonts.headerFont.setColor(goldAccent);
-        fonts.headerFont.draw(spriteBatch, "MARTIAL ARTS & CONTROLS CODEX", dividerX + 26f, py + ph - 24f);
+        fonts.headerFont.draw(spriteBatch, "SELF-DEFENSE & CONTROLS CODEX", dividerX + 26f, py + ph - 24f);
 
         fonts.smallFont.setColor(new Color(0.85f, 0.82f, 0.75f, 0.95f));
         fonts.smallFont.draw(spriteBatch, "NAVIGATION & ATHLETICS", dividerX + 26f, py + ph - 56f);
@@ -2737,15 +2775,17 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.bodyFont.draw(spriteBatch, "• Z / ALT : Tactical Combat Slip & Evasion (i-frames)", dividerX + 32f, py + ph - 200f);
 
         fonts.smallFont.setColor(new Color(0.85f, 0.82f, 0.75f, 0.95f));
-        fonts.smallFont.draw(spriteBatch, "TECHNICAL MARTIAL ARTS COMBAT", dividerX + 26f, py + ph - 228f);
+        fonts.smallFont.draw(spriteBatch, "DEFENSIVE SELF-PROTECTION (FICTIONAL GAMEPLAY)", dividerX + 26f, py + ph - 228f);
 
         fonts.bodyFont.setColor(Color.WHITE);
         fonts.bodyFont.draw(spriteBatch, "• Left-Click / F : Bare-Handed Punches (Jab -> Cross Combo)", dividerX + 32f, py + ph - 250f);
         fonts.bodyFont.draw(spriteBatch, "• Q / K : High Martial Arts Kick (Roundhouse Strike)", dividerX + 32f, py + ph - 272f);
         fonts.bodyFont.draw(spriteBatch, "• C + Attack : Low Dragon Leg Sweep (Tripping Counter Strike)", dividerX + 32f, py + ph - 294f);
         fonts.bodyFont.draw(spriteBatch, "• B (Hold) : Defensive Guard (Reduces Damage by 80%)", dividerX + 32f, py + ph - 316f);
-        fonts.bodyFont.draw(spriteBatch, "• B (Tap / Timed) : Flash Parry (Stuns Goon & breaks posture!)", dividerX + 32f, py + ph - 338f);
-        fonts.bodyFont.draw(spriteBatch, "• Counter-Hit : Strike during Goon wind-up for 1.5x interrupt damage!", dividerX + 32f, py + ph - 360f);
+        fonts.bodyFont.draw(spriteBatch, "• B (Tap / Timed) : Flash Parry (Stuns attacker & breaks posture!)", dividerX + 32f, py + ph - 338f);
+        fonts.bodyFont.draw(spriteBatch, "• Counter-Hit : Strike during attacker wind-up for 1.5x interrupt damage!", dividerX + 32f, py + ph - 360f);
+        fonts.smallFont.setColor(new Color(1.0f, 0.82f, 0.35f, 1f));
+        fonts.smallFont.draw(spriteBatch, "Defensive self-protection only. FICTIONAL GAMEPLAY. Knockouts optional.", dividerX + 26f, py + ph - 386f);
 
         // Rule of July Text
         fonts.smallFont.setColor(new Color(1.0f, 0.82f, 0.35f, 1f));
@@ -2951,7 +2991,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Right Column: Martial Arts Defense & Combat
         fonts.headerFont.setColor(goldAccent);
-        fonts.headerFont.draw(spriteBatch, "MARTIAL ARTS COMBAT & DEFENSE", midX + 24f, hy + hh - 86f);
+        fonts.headerFont.draw(spriteBatch, "DEFENSIVE SELF-PROTECTION", midX + 24f, hy + hh - 86f);
 
         float rightX = midX + 28f;
         float rLineY = hy + hh - 114f;
@@ -2962,14 +3002,16 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.bodyFont.draw(spriteBatch, "• C + Attack : Low Sweep Counter (Tripping leg sweep)", rightX, rLineY); rLineY -= stepY;
         fonts.bodyFont.draw(spriteBatch, "• B (Hold) / Right-Click : Defensive Guard (Reduces damage by 80%)", rightX, rLineY); rLineY -= stepY;
         fonts.bodyFont.draw(spriteBatch, "• B (Timed Tap) : Flash Parry (Stuns aggressor & breaks posture)", rightX, rLineY); rLineY -= stepY;
-        fonts.bodyFont.draw(spriteBatch, "• Counter-Hit : Strike during enemy wind-up for 1.5x interrupt damage", rightX, rLineY); rLineY -= stepY;
+        fonts.bodyFont.draw(spriteBatch, "• Counter-Hit : Strike during attacker wind-up for 1.5x interrupt damage", rightX, rLineY); rLineY -= stepY;
 
         fonts.smallFont.setColor(new Color(1.0f, 0.82f, 0.35f, 1f));
         fonts.smallFont.draw(spriteBatch, "HISTORICAL COMBAT RULES:", rightX, rLineY - 8f); rLineY -= (stepY + 6f);
         fonts.bodyFont.setColor(new Color(0.95f, 0.90f, 0.85f, 0.95f));
         fonts.bodyFont.draw(spriteBatch, "• Chapter 1: Students maintain peaceful solidarity. Attacks are disabled.", rightX, rLineY); rLineY -= stepY;
         fonts.bodyFont.draw(spriteBatch, "• Combat unlocks in Chapter 2 ('The Day the Streets Changed') & Arena.", rightX, rLineY); rLineY -= stepY;
-        fonts.bodyFont.draw(spriteBatch, "• Striking unarmed innocent students causes instant disqualification.", rightX, rLineY);
+        fonts.bodyFont.draw(spriteBatch, "• Striking unarmed innocent students causes instant disqualification.", rightX, rLineY); rLineY -= stepY;
+        fonts.bodyFont.draw(spriteBatch, "• Combat is defensive self-protection (FICTIONAL GAMEPLAY).", rightX, rLineY); rLineY -= stepY;
+        fonts.bodyFont.draw(spriteBatch, "• Knockouts are optional, never required to finish a chapter.", rightX, rLineY);
 
         // Bottom Bar info and Close Button
         fonts.smallFont.setColor(goldMuted);
@@ -3118,7 +3160,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.titleFont.draw(spriteBatch, titleStr, titleX, py + ph - 5f);
 
         // Subtitle
-        String subStr = "Campus Liberated: The Intimidation Enforcer Has Been Neutralized!";
+        String subStr = "Campus Safe: The Attacker Has Been Held Back!";
         glyphLayout.setText(fonts.headerFont, subStr);
         float subX = px + (pw - glyphLayout.width) / 2f;
         fonts.headerFont.setColor(0f, 0f, 0f, 0.90f * alpha);
@@ -3245,16 +3287,24 @@ public class WhereWindsMeetHUD implements Disposable {
 
         spriteBatch.begin();
         bd.spark36.level.DialogueRepository.DialogueLine diag = bd.spark36.level.DialogueRepository.AGGRESSOR_CHALLENGE;
+        com.badlogic.gdx.graphics.g2d.BitmapFont bFont = (fonts.bengaliFont != null) ? fonts.bengaliFont : fonts.headerFont;
+        bd.spark36.hud.screens.DialogueText.begin(fonts.headerFont, bFont, fonts.promptFont);
         fonts.headerFont.setColor(new Color(1.0f, 0.65f, 0.30f, 1f));
+        glyphLayout.setText(fonts.headerFont, diag.getSpeaker() + " :");
+        float bengaliX = Math.max(dx + 265f, dx + 34f + glyphLayout.width);
         fonts.headerFont.draw(spriteBatch, diag.getSpeaker() + " :", dx + 18f, dy + dh - 16f);
 
         // Authentic Bengali threat subtitle
-        com.badlogic.gdx.graphics.g2d.BitmapFont bFont = (fonts.bengaliFont != null) ? fonts.bengaliFont : fonts.headerFont;
-        bFont.setColor(Color.WHITE);
-        bFont.draw(spriteBatch, "\"" + diag.getTextBengali() + "\"", dx + 265f, dy + dh - 16f);
+        if (bd.spark36.app.DialoguePrefs.showBengaliLine()) {
+            bFont.setColor(Color.WHITE);
+            bFont.draw(spriteBatch, "\"" + diag.getTextBengali() + "\"", bengaliX, dy + dh - 16f);
+        }
 
+        String controls = "[F] ACCEPT CHALLENGE   [LMB/F] PUNCH   [Q/K] KICK   [C] DUCK";
         fonts.promptFont.setColor(goldAccent);
-        fonts.promptFont.draw(spriteBatch, "\"" + diag.getTextEnglish() + "\"  |  [F] ACCEPT CHALLENGE   [LMB/F] PUNCH   [Q/K] KICK   [C] DUCK", dx + 18f, dy + 22f);
+        fonts.promptFont.draw(spriteBatch, bd.spark36.app.DialoguePrefs.showEnglishLine()
+            ? "\"" + diag.getTextEnglish() + "\"  |  " + controls : controls, dx + 18f, dy + 22f);
+        bd.spark36.hud.screens.DialogueText.end();
         spriteBatch.end();
     }
 
@@ -3275,16 +3325,24 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.end();
 
         spriteBatch.begin();
+        com.badlogic.gdx.graphics.g2d.BitmapFont bFont = (fonts.bengaliFont != null) ? fonts.bengaliFont : fonts.headerFont;
+        bd.spark36.hud.screens.DialogueText.begin(fonts.headerFont, bFont, fonts.promptFont);
         fonts.headerFont.setColor(new Color(0.42f, 0.95f, 0.65f, 1f));
+        glyphLayout.setText(fonts.headerFont, diag.getSpeaker() + " :");
+        float bengaliX = Math.max(dx + 285f, dx + 34f + glyphLayout.width);
         fonts.headerFont.draw(spriteBatch, diag.getSpeaker() + " :", dx + 18f, dy + dh - 16f);
 
-        // Authentic Bengali student voice
-        com.badlogic.gdx.graphics.g2d.BitmapFont bFont = (fonts.bengaliFont != null) ? fonts.bengaliFont : fonts.headerFont;
-        bFont.setColor(Color.WHITE);
-        bFont.draw(spriteBatch, "\"" + diag.getTextBengali() + "\"", dx + 285f, dy + dh - 16f);
+        // Authentic Bengali student voice (language / subtitle settings pick which lines show)
+        if (bd.spark36.app.DialoguePrefs.showBengaliLine()) {
+            bFont.setColor(Color.WHITE);
+            bFont.draw(spriteBatch, "\"" + diag.getTextBengali() + "\"", bengaliX, dy + dh - 16f);
+        }
 
-        fonts.promptFont.setColor(goldAccent);
-        fonts.promptFont.draw(spriteBatch, "\"" + diag.getTextEnglish() + "\"", dx + 18f, dy + 22f);
+        if (bd.spark36.app.DialoguePrefs.showEnglishLine()) {
+            fonts.promptFont.setColor(goldAccent);
+            fonts.promptFont.draw(spriteBatch, "\"" + diag.getTextEnglish() + "\"", dx + 18f, dy + 22f);
+        }
+        bd.spark36.hud.screens.DialogueText.end();
 
         // Advance prompt if sequence is active (placed in bottom-right corner as a distinct key badge)
         if (dialogueManager.isDialogueActive()) {
@@ -3650,24 +3708,24 @@ public class WhereWindsMeetHUD implements Disposable {
         String narrativeSecondPara;
         switch (lvlNum) {
             case 2:
-                victoryNarrative = "You stood firm with fellow students on July 15, documenting police intimidation, securing medical aid for the wounded, and maintaining peaceful resolve despite violent provocation.";
-                narrativeSecondPara = "When armed enforcers attacked unarmed students, moral courage and united solidarity transformed a campus protest into an unstoppable national awakening.";
+                victoryNarrative = "You stood firm with fellow students on July 15, helping the wounded reach medical aid and keeping your resolve despite violent provocation as armed attackers stormed the campus.";
+                narrativeSecondPara = "Armed Chhatra League supporters attacked student protesters on campus and at Dhaka Medical College Hospital. Instead of ending the protests, the violence drew more people in.";
                 break;
             case 3:
-                victoryNarrative = "Across the streets of Rangpur and Dhaka, Abu Sayed stood with open arms for justice. You delivered critical eye wash and first aid under heavy tear gas, documenting historic unyielding courage.";
-                narrativeSecondPara = "'Stand firm, do not leave the fallen.' The sacrifice of brave youths ignited sparks in millions of hearts across Bangladesh.";
+                victoryNarrative = "On July 16 in Rangpur, student Abu Sayed stood with his arms spread wide before the police and was killed by police fire. Two days later, you carried water and first aid to people caught in tear gas in Dhaka.";
+                narrativeSecondPara = "Stand firm, leave no one behind. The loss of young lives drew many more people across Bangladesh into the movement.";
                 break;
             case 4:
                 victoryNarrative = "In total internet blackout and strict curfew, you navigated searchlight patrols, secured clandestine medical supplies, and safely delivered historical eyewitness documentation to community couriers.";
                 narrativeSecondPara = "When digital wires were severed, human couriers, medical volunteers, and unshakeable courage kept the truth alive across every neighborhood.";
                 break;
             case 5:
-                victoryNarrative = "Central Shaheed Minar roared with hundreds of thousands of voices. From students to rickshaw-pullers, the nation united behind the 1-Point Demand for systemic freedom and accountable governance.";
-                narrativeSecondPara = "Fear had completely dissolved. The entire populace stood shoulder to shoulder as the historic countdown to 36 July began.";
+                victoryNarrative = "On August 3 at the Central Shaheed Minar, a vast crowd of students and people from many walks of life heard the movement declare its One-Point Demand: the resignation of the government.";
+                narrativeSecondPara = "The next day non-cooperation began and a March to Dhaka was called. The countdown to 36 July had begun.";
                 break;
             case 6:
-                victoryNarrative = "Millions marched into Shahbagh and the National Parliament. The authoritarian regime collapsed. Bangladesh 2.0 was born through the sacrifice, grit, and unity of its youth and people.";
-                narrativeSecondPara = "'This freedom belongs to the martyrs and every ordinary citizen who refused to bow.' The spark became an eternal beacon of democratic renewal.";
+                victoryNarrative = "On August 5, hundreds of thousands defied the curfew and marched towards central Dhaka. That afternoon Sheikh Hasina resigned and left the country, and her government fell.";
+                narrativeSecondPara = "As many as 1,400 people may have been killed (UN estimate). This freedom belongs to them and to every ordinary citizen who refused to bow.";
                 break;
             case 1:
             default:
@@ -3693,7 +3751,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.draw(spriteBatch, "Historical Objectives Accomplished: " + ins + " / " + tot + " (" + pct + "% Complete)", sx + 20f, sy + 76f);
 
         String defenseStat = (activeLevel != null && activeLevel.isCombatEnabled()) ?
-            "Campus Defense: Aggressors Neutralized with Disciplined Martial Arts" :
+            "Campus Defense: Injured Students Sheltered (Knockouts Never Required)" :
             "Campus Peace Rule: Upheld (Zero Violations, Non-Violent Solidarity)";
         fonts.smallFont.draw(spriteBatch, defenseStat, sx + 20f, sy + 52f);
         fonts.smallFont.draw(spriteBatch, "Civic Ethics: Upheld (0 Innocent Students Harmed)", sx + 20f, sy + 28f);
@@ -3754,6 +3812,9 @@ public class WhereWindsMeetHUD implements Disposable {
         bd.spark36.level.LevelConfig.unlockNextLevel(currentLvl);
     }
 
+    /** T4: Credits & Sources overlay (Level 6 epilogue objective). */
+    public void openCredits(String fromLabel) { creditsScreen.open(fromLabel); }
+
     /** Open memorial modal directly (used for automated visual verification) */
     public void openMemorialModal(MemorialEntry entry) {
         this.activeModalEntry = entry;
@@ -3806,7 +3867,7 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     public boolean isModalOpen() {
-        return activeModalEntry != null || isMapOpen || isPauseMenuOpen || isExitConfirmOpen || isVictoryOpen || isDisqualified || isDefeated || isHelpControlsOpen;
+        return creditsScreen.isOpen() || activeModalEntry != null || isMapOpen || isPauseMenuOpen || isExitConfirmOpen || isVictoryOpen || isDisqualified || isDefeated || isHelpControlsOpen;
     }
 
     /** Reset HUD state (used when returning from main menu or replaying) */
@@ -3816,6 +3877,8 @@ public class WhereWindsMeetHUD implements Disposable {
         isPauseMenuOpen = false;
         isHelpControlsOpen = false;
         isExitConfirmOpen = false;
+        settingsScreen.close();
+        creditsScreen.close(); // T4
         pauseMenuSelection = 0;
         exitConfirmSelection = 0;
         isVictoryOpen = false;

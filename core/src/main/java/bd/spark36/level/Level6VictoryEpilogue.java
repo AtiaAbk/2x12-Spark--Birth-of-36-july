@@ -32,6 +32,7 @@ import bd.spark36.world.landmarks.ShaheedMinarBuilder;
 public class Level6VictoryEpilogue implements CampaignLevel {
 
     private DhakaCampusWorld world;
+    private final StreetDressing street = new StreetDressing(6); // T8 street identity
     private CampusCrowd crowd;
     private Environment goldenEnvironment;
 
@@ -55,7 +56,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     private static final String[] CHECKLIST = {
         "1. Lead Victory March Through Liberated Gates",
         "2. Lay Marigold Floral Wreath for Martyrs",
-        "3. Ring the Historic Bell of Freedom at TSC",
+        "3. Ring the Bell of Freedom at TSC",
         "4. Conclude the 36 July Epilogue & Documentary Credits"
     };
 
@@ -164,7 +165,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
             return "[E] LAY MARIGOLD FLORAL WREATH AT MEMORIAL";
         }
         if (objectivesDone[1] && !objectivesDone[2] && playerPos.dst(waypoints[2]) <= 4.5f) {
-            return "[E] RING THE HISTORIC BELL OF FREEDOM";
+            return "[E] RING THE BELL OF FREEDOM";
         }
         if (objectivesDone[2] && !objectivesDone[3] && playerPos.dst(waypoints[3]) <= 4.0f) {
             return "[E] VIEW 36 JULY DOCUMENTARY EPILOGUE & CREDITS";
@@ -193,6 +194,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
             objectivesDone[3] = true;
             hud.triggerMissionToast("36 JULY VICTORY ACCOMPLISHED!", getCompletedObjectiveCount());
             hud.triggerVictory();
+            hud.openCredits("36 July Epilogue"); // T4: credits & sources first; victory screen waits underneath
             return true;
         }
         return false;
@@ -270,8 +272,10 @@ public class Level6VictoryEpilogue implements CampaignLevel {
         bi.transform.setTranslation(waypoints[2]);
         instances.add(bi);
 
+        street.build(colliders);
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
+        LevelPbrMaterials.adopt(instances); // T8: legacy Diffuse colours -> PBR base colour
         this.crowd = new CampusCrowd(20, player.getColliders());
         this.crowd.setLevelProfile(6);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
@@ -286,18 +290,33 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     public void update(float delta, PlayerController player, CinematicCamera camera, boolean canMove, WhereWindsMeetHUD hud) {
         if (world != null) world.update(delta);
         if (crowd != null) crowd.update(delta, player.getPosition());
+        // T4 test switch -Dbd.spark36.testEpilogueCredits (with -Dbd.spark36.level=6): complete the
+        // first three objectives, then take the real final-objective interaction path.
+        if (!epilogueTestDone && bd.spark36.hud.screens.CreditsScreen.epilogueTestRequested()) {
+            epilogueTestTime += delta;
+            if (epilogueTestTime >= 1.5f) {
+                epilogueTestDone = true;
+                objectivesDone[0] = objectivesDone[1] = objectivesDone[2] = true;
+                onInteract(waypoints[3], player, hud);
+            }
+        }
     }
+
+    private boolean epilogueTestDone = false;
+    private float epilogueTestTime = 0f;
 
     @Override
     public void renderShadow(ModelBatch shadowBatch) {
         if (world != null) world.renderShadowCasters(shadowBatch);
+        street.renderShadow(shadowBatch);
         for (ModelInstance mi : instances) shadowBatch.render(mi);
     }
 
     @Override
     public void render3D(ModelBatch modelBatch, Environment env) {
         if (world != null) world.render(modelBatch);
-        for (ModelInstance mi : instances) modelBatch.render(mi, goldenEnvironment);
+        if (world != null) street.render(modelBatch, world.getEnvironment());
+        for (ModelInstance mi : instances) modelBatch.render(mi, getEnvironment());
     }
 
     @Override
@@ -311,7 +330,9 @@ public class Level6VictoryEpilogue implements CampaignLevel {
 
     @Override
     public Environment getEnvironment() {
-        return goldenEnvironment;
+        // T8: the campus world is lit by its daylight PBR environment (IBL, sun, fog, shadows) in every
+        // chapter; the old per-level environment had no IBL and rendered characters and props white.
+        return world != null ? world.getEnvironment() : goldenEnvironment;
     }
 
     @Override
@@ -330,12 +351,20 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     }
 
     @Override
+    public void restoreObjectiveFlags(boolean[] flags) {
+        for (int i = 0; i < objectivesDone.length; i++) {
+            objectivesDone[i] = flags != null && i < flags.length && flags[i];
+        }
+    }
+
+    @Override
     public void completeAllObjectivesForTest() {
         java.util.Arrays.fill(objectivesDone, true);
     }
 
     @Override
     public void dispose() {
+        street.dispose();
         if (world != null) { world.dispose(); world = null; }
         for (Model m : models) m.dispose();
         models.clear();

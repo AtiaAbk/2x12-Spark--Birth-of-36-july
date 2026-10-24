@@ -31,22 +31,26 @@ public final class RenderPipelineConfig {
 
     // ── Exposure & Color Grading ──────────────────────────────────────────
     /** Base photographic exposure multiplier (linear scale, 1.0 = baseline daylight). */
-    public static float exposure = getFloatProperty("bd.spark36.exposure", 1.02f);
+    public static float exposure = getFloatProperty("bd.spark36.exposure", 1.08f);
 
     /** Midpoint-anchored image contrast. */
-    public static float contrast = getFloatProperty("bd.spark36.contrast", 1.05f);
+    public static float contrast = getFloatProperty("bd.spark36.contrast", 1.02f);
 
-    /** Color saturation multiplier (1.0 = neutral, 1.18 = lush natural summer vibrance). */
-    public static float saturation = getFloatProperty("bd.spark36.saturation", 1.18f);
+    /**
+     * Color saturation multiplier (1.0 = neutral, 1.04 = mild vibrance). The per-channel ACES curve
+     * already adds saturation in the darks, so values above ~1.10 crush blue out of foliage
+     * (yellow-green) and push brick to pure red (T8 colour-cast fix).
+     */
+    public static float saturation = getFloatProperty("bd.spark36.saturation", 1.04f);
 
-    /** White balance temperature shift (-1.0 to 1.0, 0.14 = warm summer daylight). */
-    public static float colorTemperature = getFloatProperty("bd.spark36.colorTemperature", 0.14f);
+    /** White balance temperature shift (-1.0 to 1.0, 0.08 = slightly warm; the sun colour carries the warmth). */
+    public static float colorTemperature = getFloatProperty("bd.spark36.colorTemperature", 0.08f);
 
-    /** White balance tint shift (-1.0 to 1.0, 0.02 = subtle lush warm tint). */
-    public static float colorTint = getFloatProperty("bd.spark36.colorTint", 0.02f);
+    /** White balance tint shift (-1.0 to 1.0, positive = green; -0.01 = faint magenta offsetting lawn/canopy bounce). */
+    public static float colorTint = getFloatProperty("bd.spark36.colorTint", -0.01f);
 
     /** Shadow detail recovery / lift (prevents crushed blacks in verandas & foliage without blanching). */
-    public static float shadowLift = getFloatProperty("bd.spark36.shadowLift", 0.005f);
+    public static float shadowLift = getFloatProperty("bd.spark36.shadowLift", 0.006f);
 
     // ── Bloom Configuration ───────────────────────────────────────────────
     /** Minimum luminance threshold to trigger HDR bloom extraction (values in linear space). */
@@ -85,8 +89,67 @@ public final class RenderPipelineConfig {
 
     public static GraphicsTier activeGraphicsTier = GraphicsTier.fromSystemProperty();
 
+    /** True when the tier / tone map was forced on the command line; those switches beat saved settings. */
+    private static final boolean TIER_SWITCH_GIVEN = System.getProperty("bd.spark36.graphicsTier") != null;
+    private static final boolean TONEMAP_SWITCH_GIVEN = System.getProperty("bd.spark36.toneMapping") != null;
+
+    /** Values after the command line and assets/visuals.properties, before any saved user setting. */
+    private static GraphicsTier defaultGraphicsTier;
+    private static int defaultToneMappingMode;
+
+    private static Runnable toneMappingListener;
+
     static {
         loadVisualsProperties();
+        defaultGraphicsTier = activeGraphicsTier;
+        defaultToneMappingMode = toneMappingMode;
+    }
+
+    public static GraphicsTier getDefaultGraphicsTier() {
+        return defaultGraphicsTier;
+    }
+
+    public static int getDefaultToneMappingMode() {
+        return defaultToneMappingMode;
+    }
+
+    /**
+     * Makes {@code tier} the active tier. Most render systems read the tier through
+     * {@link GraphicsTier#fromSystemProperty()}, so the property is updated too; before this, the
+     * visuals.properties tier was shown in the pause menu but never reached those systems.
+     * Per-frame consumers (vegetation, water, particles, post) follow at once; the shadow-map size
+     * and terrain grid are fixed when a world is built, so they follow on the next level load / restart.
+     */
+    public static void setGraphicsTier(GraphicsTier tier) {
+        if (tier == null) return;
+        activeGraphicsTier = tier;
+        System.setProperty("bd.spark36.graphicsTier", tier.name());
+    }
+
+    /**
+     * Applies a saved user tier ("LOW"/"MEDIUM"/"HIGH"); null restores the default. A
+     * {@code -Dbd.spark36.graphicsTier} switch given at launch always wins.
+     */
+    public static void applyUserGraphicsTier(String tierName) {
+        if (TIER_SWITCH_GIVEN) return;
+        GraphicsTier tier = defaultGraphicsTier;
+        if (tierName != null) {
+            try {
+                tier = GraphicsTier.valueOf(tierName.trim().toUpperCase());
+            } catch (Exception ignored) {}
+        }
+        setGraphicsTier(tier);
+    }
+
+    /** Applies a saved tone map (0..2); -1 restores the default. A launch switch always wins. */
+    public static void applyUserToneMapping(int mode) {
+        if (TONEMAP_SWITCH_GIVEN) return;
+        toneMappingMode = (mode >= 0 && mode <= 2) ? mode : defaultToneMappingMode;
+    }
+
+    /** Called after {@link #cycleToneMapping()} so a hotkey change is persisted. */
+    public static void setToneMappingListener(Runnable listener) {
+        toneMappingListener = listener;
     }
 
     private static void loadVisualsProperties() {
@@ -117,8 +180,9 @@ public final class RenderPipelineConfig {
                 hdrEnabled = getBool(props, "hdrEnabled", hdrEnabled);
                 fxaaEnabled = getBool(props, "fxaaEnabled", fxaaEnabled);
 
+                // An explicit -Dbd.spark36.graphicsTier switch wins over the file default.
                 String tierStr = props.getProperty("graphicsTier");
-                if (tierStr != null) {
+                if (tierStr != null && System.getProperty("bd.spark36.graphicsTier") == null) {
                     try {
                         activeGraphicsTier = GraphicsTier.valueOf(tierStr.trim().toUpperCase());
                     } catch (Exception ignored) {}
@@ -157,11 +221,11 @@ public final class RenderPipelineConfig {
 
     public static String cycleGraphicsTier() {
         if (activeGraphicsTier == GraphicsTier.HIGH) {
-            activeGraphicsTier = GraphicsTier.LOW;
+            setGraphicsTier(GraphicsTier.LOW);
         } else if (activeGraphicsTier == GraphicsTier.LOW) {
-            activeGraphicsTier = GraphicsTier.MEDIUM;
+            setGraphicsTier(GraphicsTier.MEDIUM);
         } else {
-            activeGraphicsTier = GraphicsTier.HIGH;
+            setGraphicsTier(GraphicsTier.HIGH);
         }
         return activeGraphicsTier.displayName;
     }
@@ -180,6 +244,8 @@ public final class RenderPipelineConfig {
         } else {
             toneMappingMode = 1; // ACES Filmic
         }
+        Runnable l = toneMappingListener;
+        if (l != null) l.run();
         return getToneMappingName();
     }
 

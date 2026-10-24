@@ -30,6 +30,14 @@ Victory Credits & Epilogue
 
 ---
 
+## Checkpoints, Failure and Combat Framing (all chapters)
+
+- **Mid-level checkpoints**: every time an objective completes, progress is saved (in memory and in libGDX Preferences, key `checkpoint.L<n>`). From the Pause Menu choose **`[C] RESTART CHECKPOINT`** to reload the chapter with completed objectives restored, or **`[R] RESTART LEVEL`** for a full restart. The checkpoint is cleared when the chapter is completed.
+- **No chapter requires defeating people.** Chapters 3 to 6 are aid, evasion, courier and assembly objectives with combat disabled; Chapter 2 is won by sheltering the injured.
+- **Disqualification**: striking an unarmed student or civilian ends the attempt (tested for Chapters 2 and 3 in `CivilianStrikeDisqualificationTest`).
+
+---
+
 ## Chapter 1: "Where It All Began"
 - **Historical Timeframe**: July 1 – 14, 2024
 - **Location**: Dhaka University — Curzon Hall Heritage Precinct
@@ -53,18 +61,19 @@ Victory Credits & Epilogue
 - **Historical Timeframe**: July 15, 2024
 - **Location**: TSC Intersection & Raju Sculpture Perimeter
 - **Atmosphere**: Afternoon tension, hazy atmosphere, barricades, scattered student flyers.
-- **Combat Status**: **Enabled** (Self-defense against helmeted aggressors).
-- **Objectives**:
-  1. Confront and neutralize aggressors attempting to breach the assembly area.
-  2. Protect peaceful student clusters.
-  3. Provide first aid to injured students at Raju Sculpture.
-  4. Secure the medical shelter near the Central Library gate.
+- **Combat Status**: **Enabled**, defensive self-protection only (**FICTIONAL GAMEPLAY**). Helmeted aggressors are a hazard to evade, block or break away from. Knocking one out is possible but optional and never required.
+- **Objectives** (checklist shown in game):
+  1. Stabilize Injured Student at Raju Sculpture.
+  2. Escort Student to Medical Shelter (Evade Aggressors).
+  3. Reach Injured Student on Arts Faculty Road.
+  4. Escort Second Student to Medical Shelter.
+  5. Secure the Medical Shelter (Arts Faculty gate).
 - **Mechanics**:
-  - Full bare-handed martial arts combo strikes (`Left-Click` / `F`).
-  - High roundhouse kicks (`Q` / `K`).
-  - Flash parry (`B` / `Right-Click`).
-  - Dodge slips (`Z` / `Alt`).
-- **Victory Condition**: Neutralize all hostiles and secure both medical stations.
+  - Dodge slips (`Z` / `Alt`) and crouch (`C`) to evade swings; defensive guard and flash parry (`B` / `Right-Click`) to block and break away.
+  - Bare-handed strikes (`Left-Click` / `F`, `Q` / `K`) remain available for self-protection.
+  - Striking an unarmed student causes instant disqualification.
+- **Victory Condition**: Both injured students reach the medical shelter and the shelter is secured. Completable with zero knockouts (`Level2NonLethalCompletionTest`).
+- **Arena Mode note**: Arena reuses this map as a separate fictional folk-sport sparring mode; there, subduing all three sparring aggressors also ends the round. This does not apply to the campaign.
 
 ---
 

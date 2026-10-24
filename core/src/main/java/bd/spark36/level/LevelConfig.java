@@ -117,17 +117,19 @@ public class LevelConfig {
     // CAMPAIGN PROGRESSION & UNLOCK MANAGEMENT
     // ==========================================
     private static int unlockedLevel = 1;
-    private static final String PREF_NAME = "Spark36Preferences";
-    private static final String PREF_KEY_UNLOCKED = "unlockedChapter";
 
+    /**
+     * Progress lives in spark36_save.json via {@link bd.spark36.app.GameProfile}; the old
+     * Preferences key "unlockedChapter" is only read there as a migration fallback.
+     * Without a running libGDX app (unit tests) progress stays in memory.
+     */
     public static int getUnlockedLevel() {
         if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.unlockAll"))) {
             return 6; // Developer test bypass
         }
         if (Gdx.app != null) {
             try {
-                com.badlogic.gdx.Preferences prefs = Gdx.app.getPreferences(PREF_NAME);
-                int saved = prefs.getInteger(PREF_KEY_UNLOCKED, 1);
+                int saved = bd.spark36.app.GameProfile.get().unlockedLevel();
                 if (saved > unlockedLevel) unlockedLevel = saved;
             } catch (Exception ignored) {}
         }
@@ -140,9 +142,7 @@ public class LevelConfig {
             unlockedLevel = next;
             if (Gdx.app != null) {
                 try {
-                    com.badlogic.gdx.Preferences prefs = Gdx.app.getPreferences(PREF_NAME);
-                    prefs.putInteger(PREF_KEY_UNLOCKED, unlockedLevel);
-                    prefs.flush();
+                    bd.spark36.app.GameProfile.get().unlockLevel(unlockedLevel);
                     Gdx.app.log("LevelConfig", "Progress saved! Unlocked Chapter: " + unlockedLevel);
                 } catch (Exception ignored) {}
             }

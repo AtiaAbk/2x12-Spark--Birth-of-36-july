@@ -25,10 +25,12 @@ public class AtmosphereRenderer implements Disposable {
     private final FontRenderer fonts;
 
     // ── Sky Colors (Filmic Cinematic Summer Atmosphere - Where Winds Meet / Ghost of Tsushima style) ────
-    private final Color skyZenith    = new Color(0.24f, 0.42f, 0.66f, 1f); // Filmic slate-azure
-    private final Color skyMidBlue   = new Color(0.44f, 0.60f, 0.76f, 1f); // Soft atmospheric summer sky
-    private final Color skyHorizon   = new Color(0.68f, 0.78f, 0.86f, 1f); // Pearlescent sky horizon
-    private final Color skyLowHaze   = new Color(0.84f, 0.88f, 0.92f, 1f); // Soft atmospheric mist
+    // Fallback when no WeatherController is given; mirrors AtmosphereConfig.CLEAR_SUNNY.
+    // LINEAR values: the sky is drawn into the linear scene buffer and gamma-encoded once by the composite (T8).
+    private final Color skyZenith    = new Color(0.085f, 0.172f, 0.504f, 1f); // Clear July zenith blue
+    private final Color skyMidBlue   = new Color(0.141f, 0.254f, 0.652f, 1f); // Mid sky
+    private final Color skyHorizon   = new Color(0.242f, 0.375f, 0.658f, 1f); // Horizon
+    private final Color skyLowHaze   = new Color(0.350f, 0.473f, 0.661f, 1f); // Humid low haze
 
     // ── Cloud layers ──────────────────────────────────────────────────
     // 3 layers: high thin, mid fluffy, low haze strips

@@ -35,6 +35,32 @@ public class CinematicCamera {
 
     // Mouse & Trackpad
     private float mouseSensitivity = 0.22f;
+
+    // ─── Player comfort settings (Settings screen, applied live to every camera) ───
+    private static volatile float userSensitivity = 1.0f;
+    private static volatile boolean reduceMotion = false;
+
+    /** Multiplier on the base mouse sensitivity, clamped to 0.25..3. */
+    public static void setUserSensitivity(float multiplier) {
+        if (Float.isNaN(multiplier)) multiplier = 1f;
+        userSensitivity = MathUtils.clamp(multiplier, 0.25f, 3.0f);
+    }
+
+    public static float getUserSensitivity() { return userSensitivity; }
+
+    /** When on: no head-bob, no screen shake, no sprint FOV push. */
+    public static void setReduceMotion(boolean on) { reduceMotion = on; }
+
+    public static boolean isReduceMotion() { return reduceMotion; }
+
+    /** Degrees of yaw/pitch per pixel of mouse movement after the user multiplier. */
+    public float getEffectiveSensitivity() { return mouseSensitivity * userSensitivity; }
+
+    /** Current vertical head-bob offset (world units). */
+    public float getCurrentBob() { return currentBob; }
+
+    /** Current screen-shake offset (world units). */
+    public Vector3 getShakeOffset() { return shakeOffset; }
     private boolean mouseLookActive = true;
     private int initFrameSkip = 2;
 
@@ -162,10 +188,11 @@ public class CinematicCamera {
                 float deltaX = MathUtils.clamp(rawDeltaX, -100f, 100f);
                 float deltaY = MathUtils.clamp(rawDeltaY, -100f, 100f);
                 if (Math.abs(deltaX) > 0.001f || Math.abs(deltaY) > 0.001f) {
-                    yaw -= deltaX * mouseSensitivity;
+                    float sens = getEffectiveSensitivity();
+                    yaw -= deltaX * sens;
                     boolean invertPitch = "true".equalsIgnoreCase(System.getProperty("bd.spark36.invertPitch", "false"));
                     float pitchSign = invertPitch ? -1f : 1f;
-                    pitch += deltaY * mouseSensitivity * pitchSign;
+                    pitch += deltaY * sens * pitchSign;
                     yaw = (yaw % 360f + 360f) % 360f;
                     pitch = MathUtils.clamp(pitch, minPitch, maxPitch);
                 }
@@ -173,7 +200,7 @@ public class CinematicCamera {
         }
 
         // 2. Camera bob — only when moving, fades out when still
-        if (isMoving && inputEnabled) {
+        if (isMoving && inputEnabled && !reduceMotion) {
             float bobRate = isSprinting ? bobFrequency * 1.55f : bobFrequency;
             bobTime += delta * bobRate * MathUtils.PI2;
             float targetBob = MathUtils.sin(bobTime) * bobAmplitude * (isSprinting ? 1.5f : 1f);
@@ -184,7 +211,7 @@ public class CinematicCamera {
         }
 
         // 3. FOV push
-        targetFov = isSprinting && isMoving ? sprintFov : baseFov;
+        targetFov = isSprinting && isMoving && !reduceMotion ? sprintFov : baseFov;
         currentFov += (targetFov - currentFov) * Math.min(1f, 5f * delta);
         camera.fieldOfView = currentFov;
 
@@ -197,6 +224,7 @@ public class CinematicCamera {
         lookAheadOffset.set(currentHeadingX, 0f, currentHeadingZ);
 
         // 5. Screen shake decay
+        if (reduceMotion) shakeMagnitude = 0f;
         if (shakeMagnitude > 0.0001f) {
             shakeMagnitude -= shakeDecay * delta * shakeMagnitude;
             shakeTime += delta * 28f;
@@ -301,6 +329,7 @@ public class CinematicCamera {
 
     /** Trigger a screen shake impulse. magnitude in world units (0.05 = subtle, 0.2 = strong). */
     public void addShake(float magnitude) {
+        if (reduceMotion) return;
         shakeMagnitude = Math.min(shakeMagnitude + magnitude, 0.35f);
         shakeTime = 0f;
     }

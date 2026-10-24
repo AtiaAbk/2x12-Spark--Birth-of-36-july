@@ -336,6 +336,16 @@ public class Level1PeacefulCampus implements CampaignLevel {
     }
 
     @Override
+    public void restoreObjectiveFlags(boolean[] flags) {
+        missionTracker.restoreCompleted(flags);
+        if (memorials != null && memorials.getEntries() != null) {
+            for (JulyMemorials.MemorialEntry e : memorials.getEntries()) {
+                e.inspected = flags != null && e.id >= 0 && e.id < flags.length && flags[e.id];
+            }
+        }
+    }
+
+    @Override
     public void completeAllObjectivesForTest() {
         if (memorials != null && memorials.getEntries() != null) {
             for (JulyMemorials.MemorialEntry e : memorials.getEntries()) e.inspected = true;
