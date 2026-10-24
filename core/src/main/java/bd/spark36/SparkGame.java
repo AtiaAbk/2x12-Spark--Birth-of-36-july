@@ -824,9 +824,12 @@ public class SparkGame extends ApplicationAdapter {
             }
         }
 
-        // F12 Screenshot key
+        // F12 Screenshot key: unique name in the player's screenshot folder, never overwrites
         if (Gdx.input.isKeyJustPressed(Input.Keys.F12)) {
-            takeScreenshot("spark36_" + System.currentTimeMillis());
+            bd.spark36.capture.ScreenshotService.Result shot = bd.spark36.capture.ScreenshotService.get()
+                .saveUserCapture(bd.spark36.capture.FrameGrabber.currentFrameSink());
+            Gdx.app.log("SparkGame", shot.ok ? "Screenshot saved: " + shot.file.getAbsolutePath() : shot.message);
+            hud.triggerMissionToast(shot.ok ? "SCREENSHOT SAVED: " + shot.file.getName() : shot.message.toUpperCase(), 0);
         }
 
         // F4 or O: Toggle Orientation Test Card on facade elements
@@ -1241,34 +1244,15 @@ public class SparkGame extends ApplicationAdapter {
         }
     }
 
+    /**
+     * Automated-harness capture with a deterministic name, written to
+     * {@code <screenshot folder>/<name>.png} (see bd.spark36.capture.ScreenshotService).
+     */
     public static void takeScreenshot(String name) {
-        try {
-            int w = Gdx.graphics.getBackBufferWidth();
-            int h = Gdx.graphics.getBackBufferHeight();
-            com.badlogic.gdx.graphics.Pixmap pixmap = com.badlogic.gdx.graphics.Pixmap.createFromFrameBuffer(0, 0, w, h);
-            com.badlogic.gdx.graphics.Pixmap flipped = new com.badlogic.gdx.graphics.Pixmap(w, h, pixmap.getFormat());
-            for (int x = 0; x < w; x++) {
-                for (int y = 0; y < h; y++) {
-                    flipped.drawPixel(x, y, pixmap.getPixel(x, h - y - 1));
-                }
-            }
-            String cleanName = name.endsWith(".png") ? name.substring(0, name.length() - 4) : name;
-            com.badlogic.gdx.files.FileHandle file;
-            if (cleanName.startsWith("assets/")) {
-                file = Gdx.files.local(cleanName + ".png");
-            } else {
-                file = Gdx.files.local("assets/screenshots/" + cleanName + ".png");
-            }
-            if (!file.parent().exists()) {
-                file.parent().mkdirs();
-            }
-            com.badlogic.gdx.graphics.PixmapIO.writePNG(file, flipped);
-            pixmap.dispose();
-            flipped.dispose();
-            Gdx.app.log("SparkGame", "Screenshot saved: " + file.path());
-        } catch (Exception e) {
-            Gdx.app.error("SparkGame", "Failed to take screenshot", e);
-        }
+        bd.spark36.capture.ScreenshotService.Result r = bd.spark36.capture.ScreenshotService.get()
+            .saveHarnessCapture(name, bd.spark36.capture.FrameGrabber.currentFrameSink());
+        if (r.ok) Gdx.app.log("SparkGame", "Screenshot saved: " + r.file.getAbsolutePath());
+        else Gdx.app.error("SparkGame", r.message);
     }
 
     @Override
