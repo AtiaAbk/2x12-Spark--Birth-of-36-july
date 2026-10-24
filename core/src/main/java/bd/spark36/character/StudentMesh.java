@@ -221,6 +221,8 @@ public class StudentMesh implements Disposable {
         final Array<Part>[] thigh = pair();
         final Array<Part>[] shin = pair();
         final Array<Part>[] foot = pair();
+        /** Same body with same-material parts merged per segment (see RigMerger); built lazily. */
+        Rig baked;
 
         @SuppressWarnings("unchecked")
         private static Array<Part>[] pair() {
@@ -260,6 +262,10 @@ public class StudentMesh implements Disposable {
             variantRigs[v] = new Rig[]{
                 recolor(baseRigs[0], Appearance.preset(v, 0)),
                 recolor(baseRigs[1], Appearance.preset(v, 1))};
+        }
+        for (int v = 0; v < VARIANT_COUNT; v++) {
+            baked(variantRigs[v][0]);
+            baked(variantRigs[v][1]);
         }
     }
 
@@ -837,6 +843,26 @@ public class StudentMesh implements Disposable {
     // Rendering
     // =====================================================================
 
+    /** Draw-call-merged copy of {@code src}; built once per rig, then cached on it. */
+    private Rig baked(Rig src) {
+        if (src.baked != null) return src.baked;
+        Rig r = new Rig();
+        r.pelvis.addAll(RigMerger.merge(src.pelvis, models));
+        r.chest.addAll(RigMerger.merge(src.chest, models));
+        r.neck.addAll(RigMerger.merge(src.neck, models));
+        r.head.addAll(RigMerger.merge(src.head, models));
+        for (int s = 0; s < 2; s++) {
+            r.upperArm[s].addAll(RigMerger.merge(src.upperArm[s], models));
+            r.foreArm[s].addAll(RigMerger.merge(src.foreArm[s], models));
+            r.thigh[s].addAll(RigMerger.merge(src.thigh[s], models));
+            r.shin[s].addAll(RigMerger.merge(src.shin[s], models));
+            r.foot[s].addAll(RigMerger.merge(src.foot[s], models));
+        }
+        r.baked = r;
+        src.baked = r;
+        return r;
+    }
+
     private void drawParts(ModelBatch batch, Environment env, Array<Part> parts, Matrix4 base) {
         for (int i = 0; i < parts.size; i++) {
             Part p = parts.get(i);
@@ -1014,6 +1040,7 @@ public class StudentMesh implements Disposable {
 
     private void drawPose(ModelBatch batch, Environment env, Rig rig, int g, Vector3 pos, float headingDegrees,
                           CharacterPose pose, boolean isCrouching, boolean isSittingWater) {
+        rig = baked(rig);
 
         rootTransform.idt();
         rootTransform.translate(pos.x, pos.y + pose.bobOffset, pos.z);
@@ -1101,6 +1128,7 @@ public class StudentMesh implements Disposable {
                       boolean isCrouching, boolean isBlocking, boolean isAttacking, int attackCombo, float attackProgress,
                       boolean isDodging, float dodgeProgress, float staggerTimer,
                       boolean isSittingWater, float sitProgress, float idlePhase) {
+        rig = baked(rig);
 
         float idle = idleTime + idlePhase;
 
