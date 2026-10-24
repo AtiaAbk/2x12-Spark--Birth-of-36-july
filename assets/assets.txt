@@ -9,6 +9,7 @@ audio/splash.wav
 audio/ui_click.wav
 audio/whoosh.wav
 cinematic_finish_bg.png
+data/historical_sources.json
 fonts/LICENSE-LiberationSans.txt
 fonts/LICENSE-NotoSansBengali.txt
 fonts/LiberationSans-Bold.ttf
