@@ -59,7 +59,10 @@ run {
   //setIgnoreExitValue(true)
   jvmArgs += "--enable-native-access=ALL-UNNAMED"
   if (os.contains('mac')) jvmArgs += "-XstartOnFirstThread"
-  systemProperties = System.properties
+  // Forward only the game's own -Dbd.spark36.* switches. Copying all of Gradle's
+  // System.properties into the game JVM crashed the AMD OpenGL driver (atio6axx.dll)
+  // inside glfwCreateWindow on Windows; the same game launched directly with java runs fine.
+  systemProperties = System.properties.findAll { k, v -> k.toString().startsWith('bd.spark36.') }
 }
 
 jar {
