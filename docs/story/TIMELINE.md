@@ -1,97 +1,115 @@
 # HISTORICAL TIMELINE — JULY 2024 BANGLADESH STUDENT UPRISING
-**Project:** Spark: Birth of 36 July (Repository: `2x12`)  
-**Scope:** Research Dossier B1 (Historical Foundation)  
-**Standard:** Every entry marked **[VERIFIED]** (multi-sourced from primary reports) or **[ESTIMATED]** (reasonable reconstruction of timings). Zero fictionalized dates.
+**Project:** Spark: Birth of 36 July (Repository: `2x12`)
+**Scope:** Research Dossier B1 (Historical Foundation), story-team view.
+**Standard (relabelled 2026-10-24, DECISION-011):** each entry carries one of VERIFIED · CORROBORATED BUT INCOMPLETE · DISPUTED / UNCONFIRMED · FICTIONAL GAMEPLAY · RECONSTRUCTION. Claim IDs (L1-01 …) point to `docs/RESEARCH_SOURCES.md`, which holds the URLs. The old label `[ESTIMATED]` is now `[CORROBORATED BUT INCOMPLETE]`.
+**Note on level numbering:** this story timeline uses the Story Bible's 7-arc plan. The shipped game has 6 levels (`LevelManager`). The "Game Treatment" lines name the shipped level where one exists.
 
 ---
 
 ## 1. HISTORICAL CONTEXT & PRIMARY SOURCES
 
-- **UN OHCHR:** *Preliminary Analysis of Recent Protests and Unrest in Bangladesh*, Office of the United Nations High Commissioner for Human Rights (Geneva, August 16, 2024).
-- **Amnesty International:** *Bangladesh: End unlawful use of force against student protesters* (July 17–August 2024).
-- **Human Rights Watch (HRW):** Reports on police conduct and internet blackouts (July–August 2024).
-- **National Media Records:** *The Daily Star*, *Prothom Alo*, *Bangladesh Sangbad Sangstha (BSS)*, *Dhaka Tribune*.
+Sources actually read are listed in `docs/RESEARCH_SOURCES.md` §1. The main ones:
+- **UN OHCHR:** *Human Rights Violations and Abuses related to the Protests of July and August 2024 in Bangladesh* (fact-finding report, Geneva, 12 February 2025).
+- **EUAA:** *Bangladesh: Country Focus*, Annex 1 timeline (2025).
+- **The Daily Star** timeline (3 Aug 2024); **July Archive** timeline; **Prothom Alo**; **BSS**.
+
+Earlier versions of this file cited an OHCHR "Preliminary Analysis" (16 Aug 2024), Amnesty and HRW. Those documents were **not opened** in this pass, and no label below depends on them.
 
 ---
 
 ## 2. CHRONOLOGICAL TIMELINE (JUNE – AUGUST 2024)
 
-### Phase 1: The Spark & Peaceful Demonstrations (Mid-June – July 14, 2024)
-- **June 5, 2024 [VERIFIED]:**
-  - High Court declares the 2018 government circular abolishing civil service job quotas illegal, reinstating a 56% total quota (including 30% for descendants of 1971 freedom fighters).
-- **July 1, 2024 [VERIFIED]:**
-  - Students of the University of Dhaka (DU) and other major public universities gather peacefully, forming **Students Against Discrimination** (*Boishommo Birodhi Chhatra Andolon*). Protests call for merit-based reform, equal opportunity, and an end to discriminatory quotas.
+### Phase 1: The Spark & Peaceful Demonstrations (5 June – 14 July 2024)
+- **June 5, 2024 [VERIFIED] (L1-01):**
+  - The High Court ruled the 2018 abolition of the quota system unconstitutional, reinstating the 30% quota for descendants of independence fighters.
+  - The "56% total quota" figure in the earlier draft is not in any source read and was removed.
+- **July 1, 2024 [CORROBORATED BUT INCOMPLETE] (L1-02):**
+  - Protests resumed under the banner **Students Against Discrimination** (*Boishommo Birodhi Chhatra Andolon*), calling for quota reform.
+  - Sources place the protests at Dhaka University and Shahbagh. The specific campus spots in Level 1 are RECONSTRUCTION.
   - *Game Treatment:* **Level 1 ("Where It All Began") Playable Scene.**
-- **July 2–7, 2024 [VERIFIED]:**
-  - "Bangla Blockade" initiates: students hold peaceful sit-ins at critical Dhaka intersections (Shahbagh, Science Lab, Nilkhet, Chankharpul). Rail lines and inter-district highways peacefully halted for set hours with emergency lanes preserved for ambulances.
-  - *Game Treatment:* Level 1 mission objectives (social participation, distributing leaflets, dialogue, campus gathering).
-- **July 10, 2024 [VERIFIED]:**
-  - Supreme Court Appellate Division issues a 4-week status quo order on the High Court ruling, but students maintain that policy must come from the executive government.
-- **July 14, 2024 [VERIFIED]:**
-  - Afternoon press conference: Prime Minister makes derogatory remarks regarding the protesting students.
-  - 10:30 PM: Outraged students spontaneously pour out of DU residence halls (Rokeya Hall, Shamsun Nahar Hall, Surja Sen, Zia Hall) marching towards the Raju Memorial Sculpture and Curzon Hall, chanting: *"Tumi ke? Ami ke? Razakar, Razakar! Ke boleche? Ke boleche? Shwairachar, Shwairachar!"* (reclaiming the insult against the authoritarian state).
-  - *Game Treatment:* **Level 1 Climax & Ending Cinematic.** Protagonist stands in solidarity: *"আমিও থাকব।"* ("I will be there too.").
+- **July 2–7, 2024 [CORROBORATED BUT INCOMPLETE] (L1-03):**
+  - Shahbagh blockades on 2–3 July.
+  - The "Bangla Blockade" began on 6 July, and Dhaka was largely at a standstill on 7 July.
+  - The earlier detail "rail lines … halted for set hours with emergency lanes preserved for ambulances" is not sourced for these dates and was removed. (OHCHR para. 41 records the ambulance exemption for the later 18 July "complete shutdown".)
+  - *Game Treatment:* Level 1 mission objectives [FICTIONAL GAMEPLAY].
+- **July 10, 2024 [VERIFIED]:** the Appellate Division ordered a four-week status quo (SRC-JA).
+- **July 14, 2024 [VERIFIED] (L1-07):**
+  - At a press conference the Prime Minister asked whether "the grandchildren of razakars" should get the benefit (OHCHR para. 33).
+  - That evening students protested, chanting "Who are you? Who am I? Razakar, razakar." The clause "Says who? Says who? The dictator, the dictator!" was added **later** (OHCHR para. 34).
+  - Students from several halls gathered at the Raju Sculpture (SRC-TBS-15JUL).
+  - The earlier exact time "10:30 PM" and the hall list are [CORROBORATED BUT INCOMPLETE]. The romanised chant spelling is [CORROBORATED BUT INCOMPLETE].
+  - *Game Treatment:* **Level 1 climax.** The protagonist's line *"আমিও থাকব।"* ("I will be there too.") is [FICTIONAL GAMEPLAY].
 
 ---
 
-### Phase 2: The Crackdown & Escalation (July 15 – July 17, 2024)
-- **July 15, 2024 [VERIFIED]:**
-  - Armed counter-protesters (ruling party student wing and hired affiliates, many wearing motorcycle helmets and carrying bamboo/iron rods) attack peaceful student protesters across Dhaka University campus, near Curzon Hall, Shahidullah Hall, and Dhaka Medical College Hospital. Over 300 students injured.
-  - *Game Treatment:* **Level 2 ("The Day the Streets Changed") Opening & Tension Route.** Evasion, helping injured peers to medical shelters, navigating blockaded gates.
-- **July 16, 2024 [VERIFIED]:**
-  - Nationwide expansion. In Rangpur, Begum Rokeya University English department student **Abu Sayed** stands alone in the street with arms outstretched in peaceful resistance; police open fire from short range, killing him. The video triggers profound national outrage.
-  - At least 6 people killed nationwide on this day. Authorities shut down all universities and educational institutions indefinitely.
-  - *Game Treatment:* **Level 3 ("A City on Edge") Narrative Anchor.** Documenting events, assisting safe evacuation of student dormitories.
+### Phase 2: The Crackdown & Escalation (15 – 17 July 2024)
+- **July 15, 2024 [VERIFIED] (L1-08):**
+  - Chhatra League supporters armed with machetes, axes, sticks and some pistols, many in motorbike helmets, attacked student protesters at Dhaka University.
+  - In the evening they stormed emergency units at Dhaka Medical College Hospital.
+  - "More than 300 injured on both sides" (Daily Star). The earlier "Over 300 students injured" has been corrected.
+  - *Game Treatment:* **Level 2 ("The Day the Streets Changed").** Evasion, helping injured peers, escort to medical shelter [FICTIONAL GAMEPLAY].
+- **July 16, 2024 [VERIFIED] (L3-01, L3-03):**
+  - In Rangpur, Begum Rokeya University student **Abu Sayed** raised his arms as police began shooting, and was shot with pellet-loaded shotguns from about 14–15 m. OHCHR calls it a deliberate extrajudicial killing.
+  - Footage of his killing mobilised more protesters.
+  - At least 6 people were killed that day. Universities and schools were shut indefinitely (Daily Star).
+  - *Game Treatment:* **Chapter 3 victory text** (respectful, non-graphic). Also the **Level 6 floral memorial**.
 - **July 17, 2024 [VERIFIED]:**
-  - Police forcibly clear Dhaka University dormitories. Students hold symbolic absentee funeral prayers (*Ghaebana Janaza*) at Raju Memorial Sculpture; tear gas and stun grenades deployed.
+  - Police, RAB and BGB used force against a large protest at Dhaka University (OHCHR para. 39).
+  - The Daily Star reports police attacking students during an "absentee funeral".
+  - Students called a "complete shutdown".
 
 ---
 
-### Phase 3: The Complete Shutdown & Blackout (July 18 – July 23, 2024)
+### Phase 3: The Complete Shutdown & Blackout (18 – 23 July 2024)
 - **July 18, 2024 [VERIFIED]:**
-  - Students declare "Complete Shutdown". Clashes erupt across Uttara, Badda, Jatrabari, Rampura.
-  - Nightfall: Government orders a **nationwide internet and mobile data blackout**. All broadband, mobile 4G, and international communications severed, plunging 170 million people into total isolation.
-  - *Game Treatment:* **Level 4 ("Voices Across the City") & Level 5 ("The Cost of Courage").** Community survival, physical message passing in the dark, humanitarian aid, neighborhood watch.
-- **July 19–20, 2024 [VERIFIED]:**
-  - Nationwide curfew imposed; military deployed with "shoot-on-sight" orders. Heavy civilian casualties reported in dense working-class neighborhoods (Jatrabari, Mohammadpur).
-  - Hospitals overwhelmed; ordinary citizens and volunteer medical teams smuggle saline and bandages.
-  - *Game Treatment:* **Level 5 ("The Cost of Courage").** Rescuing stranded civilians, delivering medical kits; absolute audio/visual restraint (no sensationalized blood, no gore).
+  - The general population joined the protests, and security forces switched to lethal force (OHCHR para. 43).
+  - In Uttara, **Mir Mahfuzur Rahman Mugdho** was killed while handing out water to protesters (L3-04; OHCHR Case 3). His call "পানি লাগবে কারো, পানি, পানি?" is recorded by the Daily Star Bangla (L3-05).
+  - Evening: a complete internet shutdown that lasted until 23 July (L1-09). The earlier "plunging 170 million people into total isolation" and "international communications severed" are not sourced and were removed.
+  - *Game Treatment:* **Level 3 ("A City on Edge")** water and first aid, set at DU / Shahbagh, not Uttara, and **not** a Mugdho scene. **Level 4 ("Voices in the Dark")** curfew and blackout.
+- **July 19–20, 2024 [VERIFIED] (L4-01, L4-02):**
+  - A national curfew started from midnight on 19 July, and 27,000 Army soldiers were deployed.
+  - On 19 July, minister Obaidul Quader said publicly that forces had "shoot on sight" orders.
+  - OHCHR estimates deaths rose from about 100 on 18 July to close to 300 on 19 July [CORROBORATED BUT INCOMPLETE] (L4-05).
+  - "Heavy casualties in Jatrabari" is [VERIFIED] (OHCHR Case 5). "Mohammadpur" is [CORROBORATED BUT INCOMPLETE] (helicopter tear gas, OHCHR para. 139).
+  - "Ordinary citizens and volunteer medical teams smuggle saline and bandages" is [FICTIONAL GAMEPLAY] framing. OHCHR documents obstruction of medical care (Case 8), not this specific activity.
+  - Helicopter gunfire on 19–21 July is [DISPUTED / UNCONFIRMED] (L4-06) and must not be shown as fact.
+  - *Game Treatment:* **Level 4.** Rescuing stranded civilians, delivering medical kits; absolute audio and visual restraint.
 - **July 21, 2024 [VERIFIED]:**
-  - Supreme Court Appellate Division rules to reform quotas: 93% merit-based, 5% for freedom fighter descendants, 2% for minorities and disabled.
-  - However, due to the immense death toll and mass arbitrary arrests, the movement leadership declares that simple quota reform is no longer enough: justice for the martyred and accountability are required.
+  - The Supreme Court capped the freedom-fighter quota at 5% (7% total reserved), making 93% merit-based.
+  - The movement was by then demanding accountability for the killings (OHCHR para. 45).
 
 ---
 
-### Phase 4: Resistance & The 9-Point Demands (Late July 2024)
-- **July 26–28, 2024 [VERIFIED]:**
-  - Core student coordinators forcibly taken from hospital beds into Detective Branch (DB) custody. Coerced video statements demanding protest cessation are widely dismissed by the public.
-- **July 30 – August 2, 2024 [VERIFIED]:**
-  - Red profile picture campaign: millions of citizens change social media avatars to solid red in defiance.
-  - Street artists and students paint murals and revolutionary graffiti across DU walls, Central Shaheed Minar, and Nilkhet.
+### Phase 4: Resistance & Detentions (Late July 2024)
+- **July 26–28, 2024 [VERIFIED]:** coordinators were taken into Detective Branch custody, including from a hospital (SRC-JA, 26 Jul). A coerced video statement was published on 28 July (OHCHR para. 46).
+- **July 30 – August 2, 2024 [CORROBORATED BUT INCOMPLETE]:**
+  - Silent processions on 30 July; the government's mourning day was rejected on 31 July; marches for justice on 2 August (SRC-JA).
+  - The red profile-picture campaign and murals are widely remembered, but no source for them was read in this pass.
 
 ---
 
-### Phase 5: The Climax & "36 July" (August 3 – August 5, 2024)
-- **August 3, 2024 [VERIFIED]:**
-  - Massive crowd of hundreds of thousands converges at Central Shaheed Minar. Students announce the **One-Point Demand**: the unconditional resignation of the authoritarian government.
-- **August 4, 2024 [VERIFIED]:**
-  - Non-cooperation movement begins. Protesters call for the "Long March to Dhaka" scheduled for August 5.
-- **August 5, 2024 (Symbolically "36 July") [VERIFIED]:**
-  - Millions of citizens, students, and workers defy curfew and march into the heart of Dhaka from all four entry corridors (Uttara, Jatrabari, Gabtoli, Babubazar).
-  - Prime Minister resigns and flees the country.
-  - General public gathers peacefully at Shaheed Minar, Raju Memorial, and Sangsad Bhaban in celebration of democratic rebirth.
-  - *Game Treatment:* **Level 6 ("A Turning Point") & Level 7 ("After the Storm").** Culmination, historical reflection, tribute to martyrs, interactive archive.
+### Phase 5: The Climax & "36 July" (3 – 5 August 2024)
+- **August 3, 2024 [VERIFIED] (L5-01):**
+  - Coordinator Nahid Islam announced the **One-Point Demand** at the Central Shaheed Minar: the downfall of PM Sheikh Hasina and her government (Prothom Alo).
+  - Crowd size [CORROBORATED BUT INCOMPLETE] (L5-02): "thousands", with the crowd spreading.
+- **August 4, 2024 [VERIFIED] (L5-03):** non-cooperation began, about 93–97 people were killed, and the "March to Dhaka" was called for 5 August.
+- **August 5, 2024 (symbolically "36 July") [VERIFIED] (L6-01, L6-03, L6-05):**
+  - Hundreds of thousands marched towards central Dhaka (OHCHR para. 52). The earlier "Millions … from all four entry corridors (Uttara, Jatrabari, Gabtoli, Babubazar)" is [CORROBORATED BUT INCOMPLETE]: the EUAA cites a Daily Star estimate of at least a million, and the corridor list is not sourced.
+  - At around 2 pm, the Prime Minister was flown out of Dhaka by Armed Forces helicopter and then out of the country (OHCHR para. 53).
+  - Departure point and route: [DISPUTED / UNCONFIRMED] (L6-04).
+  - "General public gathers peacefully at Shaheed Minar, Raju Memorial, and Sangsad Bhaban in celebration" is [CORROBORATED BUT INCOMPLETE]. Celebrations are reported (EUAA cites Al Jazeera photo coverage). The EUAA and OHCHR also record revenge violence, including against the parliament building.
+  - *Game Treatment:* **Level 6 ("36 July: The Turning Point")**. Culmination, tribute to martyrs, archive. The ceremony is [FICTIONAL GAMEPLAY]. No in-game location is presented as the departure site.
 
 ---
 
 ## 3. GAMEPLAY & NARRATIVE CLASSIFICATION TABLE
 
-| Event Date | Real Location | Classification | In-Game Representation | Ethical Guardrail |
+| Event Date | Real Location | Evidence label | In-Game Representation (label) | Ethical Guardrail |
 |---|---|---|---|---|
-| **July 1–14, 2024** | Dhaka University (Curzon Hall, Arts Building, Raju) | **Playable Exploration (Level 1)** | Leaflets, student assemblies, conversations, trust building | Zero violence, no weapons, peaceful unity |
-| **July 14 Night** | Raju Memorial / Curzon Hall | **Playable / In-Engine Cutscene** | Midnight solidarity march, historic chants | Sourced chants only; no invented quotes |
-| **July 15, 2024** | Curzon Hall / Shahidullah Hall / DMCH | **Playable Evasion (Level 2)** | Evasion, guiding peers to safety, barricade routing | Defend and evade; non-lethal only |
-| **July 16, 2024** | Rangpur (Abu Sayed) | **Cinematic / Archive Only** | Solemn memorial segment, symbolic white pigeon wisp | No graphic reenactment; treated with dignity |
-| **July 18–20, 2024** | Residential Dhaka (Uttara, Rampura, Jatrabari) | **Playable Rescue / Aid (Levels 3–5)** | Escorting stranded peers, medicine delivery, courier | Focus on mutual aid and courage; zero gore |
-| **August 3–4, 2024** | Central Shaheed Minar | **Playable Assembly (Level 6)** | Massive non-violent assembly, wall mural creation | Highlight collective resolve and solidarity |
-| **August 5, 2024** | Dhaka University & City Corridors | **Playable Epilogue & Archive (Level 7)** | Peaceful reflection, historical archive review | Honor casualties; educational sources cited |
+| **July 1–14, 2024** | Dhaka University, Shahbagh | CORROBORATED BUT INCOMPLETE | Leaflets, assemblies, conversations (FICTIONAL GAMEPLAY); campus (RECONSTRUCTION) | Zero violence, no weapons, peaceful unity |
+| **July 14 Night** | Raju Sculpture / halls | VERIFIED | Midnight solidarity march (FICTIONAL GAMEPLAY) | OHCHR-sourced chant wording only; no invented quotes |
+| **July 15, 2024** | DU campus / DMCH | VERIFIED | Evasion, guiding peers to safety (FICTIONAL GAMEPLAY) | Defend and evade; non-lethal only |
+| **July 16, 2024** | Rangpur (Abu Sayed) | VERIFIED | Victory text and memorial only | No reenactment; never interactive; non-graphic |
+| **July 18–23, 2024** | Dhaka (DU perimeter in game; real events citywide) | VERIFIED / CORROBORATED BUT INCOMPLETE | Water, first aid, courier (FICTIONAL GAMEPLAY) | Mugdho never playable; his words not used as a prompt; zero gore |
+| **August 3–4, 2024** | Central Shaheed Minar | VERIFIED | Player stands with the assembly (FICTIONAL GAMEPLAY) | Player does not "announce" the real demand |
+| **August 5, 2024** | DU campus (game); march across Dhaka (real) | VERIFIED | Epilogue, memorial, archive (FICTIONAL GAMEPLAY) | Departure location not implied; honour the dead; sources cited |
