@@ -57,6 +57,12 @@ The 87 matches the figure in `CHANGES.md`.
 
 `assets/screenshots/` is gitignored, so evidence images live under `docs/screenshots/`.
 
+### Where screenshots go (T7)
+- Folder: `-Dbd.spark36.screenshotDir=<path>` if given, else `<user home>/Pictures/Spark36`, else `<user home>/Spark36Screenshots` when there is no Pictures folder. A relative `screenshotDir` resolves against the JVM working directory, which is `assets/` under `gradlew :lwjgl3:run`, so pass an absolute path. Nothing is written under `assets/` any more.
+- Player captures (F12, also inside F10 photo mode): `Spark36_yyyyMMdd-HHmmss-SSS.png`, `_2`, `_3`... on collision. HUD-free, never overwritten, never auto-deleted. Under 50 MB free space, or on an IO error, the game shows a toast and writes nothing.
+- Harness captures (`bd.spark36.baseline`, `bd.spark36.test*`): `<folder>/<name>.png` with their fixed names, e.g. `<folder>/00_baseline/spawn.png`; these overwrite the previous run. For repo evidence, run with `-Dbd.spark36.screenshotDir=<scratch dir>` and copy the images into `docs/screenshots/`.
+- Evidence: `docs/screenshots/t7/photo_mode_f12_capture_*.png` (F12 capture in photo mode, no HUD), `photo_mode_overlay.png` (photo mode with its hint line, harness capture), `gallery_grid.png`, `gallery_viewer.png`.
+
 ---
 
 ## 4. Measured performance (this machine)
@@ -93,7 +99,7 @@ Earlier sessions reported "60 FPS locked @ 1080p" on an Apple Silicon MacBook Ai
 
 | Defect | Evidence | Planned task |
 |---|---|---|
-| Runtime files are written relative to the working directory. `gradlew run` uses `assets/` as working directory, so screenshots go to `assets/assets/screenshots/` and synthesised sounds to `assets/assets/audio/`. Fixed screenshot names overwrite earlier captures. | `SparkGame.takeScreenshot`, run logs | T7 |
+| Runtime files are written relative to the working directory. `gradlew run` uses `assets/` as working directory, so screenshots go to `assets/assets/screenshots/` and synthesised sounds to `assets/assets/audio/`. Fixed screenshot names overwrite earlier captures. **Screenshots fixed in T7** (user folder, unique names; see "Where screenshots go"); the audio half is a separate task. | `SparkGame.takeScreenshot`, run logs | T7 (screenshots done) |
 | The asset-list task scanned that nested folder and `*.log` crash dumps, so they would have been packed into the game JAR. **Mitigated in T0** by excluding `assets/**` and `*.log` from `generateAssetList`. | `build.gradle` | done (mitigation) |
 | `-Dbd.spark36.graphicsTier` was ignored because `assets/visuals.properties` overrode it. **Fixed in T0**: the explicit switch now wins. | `RenderPipelineConfig` | done |
 | Shipped default tier is HIGH, while repo DECISION-007 names MEDIUM as the target default. Left unchanged: the measurements show no tier gains anything here. | `assets/visuals.properties` | T6 settings |
@@ -114,3 +120,5 @@ Earlier sessions reported "60 FPS locked @ 1080p" on an Apple Silicon MacBook Ai
 | `-Dbd.spark36.baseline=<viewpoint> -Dbd.spark36.autoExit=true` | Capture a baseline screenshot and exit |
 | `-Dbd.spark36.benchmarkSeconds=N` | Measure N seconds after 3 s warm-up, log `[FrameStats]`, exit |
 | `-Dbd.spark36.testMenuScreenshot=true` / `testPauseMenu=true` | Capture menu / pause screenshots |
+| `-Dbd.spark36.screenshotDir=<absolute path>` | Screenshot folder (default `<home>/Pictures/Spark36`) |
+| `-Dbd.spark36.autoStartGame=true -Dbd.spark36.testPhotoMode=true -Dbd.spark36.testGallery=true -Dbd.spark36.autoExit=true` | Enter photo mode, capture its overlay (`t7/photo_mode_overlay`) and a real F12-path capture, leave photo mode, open the gallery, capture grid and viewer (`t7/gallery_grid`, `t7/gallery_viewer`), exit |
