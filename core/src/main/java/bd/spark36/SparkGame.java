@@ -246,6 +246,8 @@ public class SparkGame extends ApplicationAdapter {
     // ==========================================
     // MAIN RENDER DISPATCH
     // ==========================================
+    private static final boolean DEV_KEYS = Boolean.getBoolean("bd.spark36.devKeys");
+
     private final bd.spark36.diagnostics.FrameStats frameStats =
         bd.spark36.diagnostics.FrameStats.fromSystemProperties();
 
@@ -597,13 +599,15 @@ public class SparkGame extends ApplicationAdapter {
             }
         }
 
+        // Developer-only shortcuts (F3, F4/O, F6) need -Dbd.spark36.devKeys=true, so players
+        // cannot hit the debug test card (O) or skip chapters (F6) by accident.
         // F4 or O: Toggle Orientation Test Card on facade elements
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F4) || Gdx.input.isKeyJustPressed(Input.Keys.O)) {
+        if (DEV_KEYS && (Gdx.input.isKeyJustPressed(Input.Keys.F4) || Gdx.input.isKeyJustPressed(Input.Keys.O))) {
             world.setTestCardActive(!world.isTestCardActive());
         }
 
         // F3: Toggle Opening Outlines and Normal Vectors
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
+        if (DEV_KEYS && Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
             DhakaCampusWorld.debugDrawNormals = !DhakaCampusWorld.debugDrawNormals;
             Gdx.app.log("SparkGame", "Debug Draw Normals toggled: " + DhakaCampusWorld.debugDrawNormals);
         }
@@ -615,7 +619,7 @@ public class SparkGame extends ApplicationAdapter {
                 syncLevelSubsystems();
             }
         }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F6)) {
+        if (DEV_KEYS && Gdx.input.isKeyJustPressed(Input.Keys.F6)) {
             if (levelManager != null) {
                 levelManager.nextLevel();
                 syncLevelSubsystems();

@@ -202,6 +202,7 @@ The difference is inside the noise; re-measure on an idle machine. Not measured 
 | `-Dbd.spark36.graphicsTier=LOW\|MEDIUM\|HIGH` | Force tier (now honoured) |
 | `-Dbd.spark36.baseline=<viewpoint> -Dbd.spark36.autoExit=true` | Capture a baseline screenshot and exit |
 | `-Dbd.spark36.level=N -Dbd.spark36.baseline=gate_street` or `street_road` | T8 views of the Doel Chattar road outside the main gate (Levels 3-6 street dressing) |
+| `-Dbd.spark36.devKeys=true` | Enable developer shortcuts: F3 debug normals, F4/O facade test card, F6 skip to next chapter (off for players) |
 | `-Dbd.spark36.streetDressing=false` | Turn the Level 3-6 street dressing off (A/B measurements) |
 | `-Dbd.spark36.dumpSignAtlas=<absolute .png path>` | Write the Bengali signboard atlas as rendered |
 | `-Dbd.spark36.benchmarkSeconds=N` | Measure N seconds after 3 s warm-up, log `[FrameStats]`, exit |
