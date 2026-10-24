@@ -366,11 +366,24 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
     @Override
     public boolean onPlayerAttack(PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
-        if (crowd != null && crowd.checkHitByPlayer(player.getPosition(), player.getHeadingDegrees(), 2.2f)) {
-            hud.setDisqualified(true, "VIOLATION: Striking civilians is strictly forbidden!");
+        // Backstop: combat is disabled in this level, but if a strike is ever resolved,
+        // hitting an unarmed civilian still disqualifies.
+        String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
+        if (violation != null) {
+            hud.setDisqualified(true, violation);
             return true;
         }
         return false;
+    }
+
+    /** Disqualification check for striking unarmed civilians (package-private for tests). */
+    String checkCivilianStrike(Vector3 pos, float headingDeg) {
+        return CivilianStrikeRule.check(crowd, pos, headingDeg, CivilianStrikeRule.CIVILIAN_VIOLATION);
+    }
+
+    /** Test hook: inject a headless crowd without building the 3D world. */
+    void setCrowdForTest(CampusCrowd crowd) {
+        this.crowd = crowd;
     }
 
     @Override
@@ -381,6 +394,14 @@ public class Level3PoliceEscalation implements CampaignLevel {
     @Override
     public CampusCrowd getCrowd() {
         return crowd;
+    }
+
+    @Override
+    public void restoreObjectiveFlags(boolean[] flags) {
+        for (int i = 0; i < objectivesDone.length; i++) {
+            objectivesDone[i] = flags != null && i < flags.length && flags[i];
+        }
+        carryingWater = objectivesDone[0];
     }
 
     @Override

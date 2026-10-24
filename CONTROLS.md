@@ -23,11 +23,11 @@ You can access the in-game **Controls & Historical Field Codex** at any time by 
 
 ---
 
-## 2. Technical Martial Arts Combat & Defense
+## 2. Defensive Self-Protection (FICTIONAL GAMEPLAY)
 
-> **Historical Context Note**:  
-> In **Chapter 1 ("Where It All Began")**, students maintain strict peaceful solidarity. Combat strikes are disabled.  
-> Combat unlocks in **Chapter 2 ("The Day the Streets Changed")**, **Chapter 3**, **Chapter 4**, **Chapter 5**, and **Arena Mode**.
+> **Framing**: Combat is defensive self-protection only and is **FICTIONAL GAMEPLAY**, not a historical record. Prefer evading, blocking, breaking away and escorting the injured. Knocking out an attacker is optional and never required to finish a chapter.
+>
+> **Where it is active**: In **Chapter 1 ("Where It All Began")** students maintain strict peaceful solidarity and strikes are disabled. Strikes are enabled only in **Chapter 2 ("The Day the Streets Changed")** and in the separate **Arena Mode** (fictional folk-sport sparring). Chapters 3 to 6 are aid, evasion and assembly chapters with strikes disabled.
 
 | Combat Technique | Primary Input | Secondary Input | Mechanics & Effects |
 |---|---|---|---|
@@ -35,8 +35,8 @@ You can access the in-game **Controls & Historical Field Codex** at any time by 
 | **High Martial Arts Kick** | `Q` | `K` | High-impact roundhouse kick that staggers armored opponents. |
 | **Low Dragon Leg Sweep** | `C` + `Left-Click` / `F` | `C` + `Q` / `K` | Low tripping kick that disrupts opponent balance and sweeps legs. |
 | **Defensive Guard** | `B` (Hold) | `Right-Click` (Hold) | Raises arms in defensive posture; absorbs and mitigates 80% damage. |
-| **Flash Parry** | `B` (Timed Tap) | `Right-Click` (Timed Tap) | Timed block (0.25s window) before impact; stuns attacker and breaks posture. |
-| **Counter-Strike** | Attack during wind-up | Attack during wind-up | Striking while the aggressor winds up deals **1.5× interrupt damage**. |
+| **Flash Parry** | `B` (Timed Tap) | `Right-Click` (Timed Tap) | Timed block (0.25s window) before impact; stuns the attacker and breaks posture. |
+| **Counter-Strike** | Attack during wind-up | Attack during wind-up | Striking while the attacker winds up deals **1.5× interrupt damage**. |
 
 > **Campus Rule of July**:  
 > Unprovoked attacks against unarmed, peaceful students result in immediate mission disqualification.
@@ -64,7 +64,8 @@ You can access the in-game **Controls & Historical Field Codex** at any time by 
 | **Controls & Codex** | `H` or `F1` | In gameplay or selected from Pause Menu. |
 | **Cycle Graphics Tier** | `G` (in Pause Menu) | Cycles `LOW` -> `MEDIUM` -> `HIGH` rendering quality. |
 | **Cycle Tone Mapping** | `T` (in Pause Menu) | Cycles `ACES Filmic (Cinematic)` -> `Extended Reinhard` -> `Linear`. |
-| **Restart Current Level** | `R` (in Pause Menu) | Re-initializes and restarts the active chapter. |
+| **Restart Current Level** | `R` (in Pause Menu) | Re-initializes and restarts the active chapter from the beginning. |
+| **Restart from Checkpoint** | `C` (in Pause Menu) | Reloads the chapter with all objectives completed so far restored. Falls back to a full restart if no checkpoint exists yet. |
 | **Return to Main Menu** | `Q` (in Pause Menu) | Returns to the chapter selection screen. |
 | **Quit Game** | `X` (in Pause Menu) | Opens the exit confirmation dialog (`[Enter]` confirms quit). |
 | **Take Screenshot** | `F12` | Saves a PNG without HUD to `Pictures/Spark36/` (override with `-Dbd.spark36.screenshotDir`), unique timestamped name, never overwrites. |
