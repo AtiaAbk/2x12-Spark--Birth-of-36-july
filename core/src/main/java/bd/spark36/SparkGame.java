@@ -15,6 +15,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import bd.spark36.camera.CinematicCamera;
 import bd.spark36.input.GameInput;
+import bd.spark36.diagnostics.GlStats;
 import bd.spark36.render.GraphicsTier;
 import bd.spark36.render.RenderPipelineConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
@@ -336,6 +337,7 @@ public class SparkGame extends ApplicationAdapter {
     // GAMEPLAY RENDERING (all existing logic)
     // ==========================================
     private void renderGameplay() {
+        GlStats.beginFrame();
         float delta = Gdx.graphics.getDeltaTime();
         if (delta > 0.1f) delta = 0.1f;
         if (hitStopTimer > 0f) {
@@ -453,6 +455,7 @@ public class SparkGame extends ApplicationAdapter {
             particleSystem.update(delta, camera.getCamera(), rainInt, GraphicsTier.fromSystemProperty());
         }
 
+        GlStats.mark(GlStats.Phase.UPDATE);
         // 1b. SUN SHADOW PASS: depth-only render from the sun, centred a little ahead of the player
         if (activeWorld != null) {
             shadowForward.set(camera.getCamera().direction.x, 0f, camera.getCamera().direction.z).nor();
@@ -481,6 +484,7 @@ public class SparkGame extends ApplicationAdapter {
             activeWorld.endShadowPass();
             Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
         }
+        GlStats.mark(GlStats.Phase.SHADOW);
 
         // 2. POST-PROCESSING: Begin FBO capture (replaces direct sky render)
         boolean ppActive = postProcessor != null && postProcessor.isValid();
@@ -496,6 +500,7 @@ public class SparkGame extends ApplicationAdapter {
             Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
         }
 
+        GlStats.mark(GlStats.Phase.SKY);
         // 3. Render 3D World Pass (inside FBO if post-processing active)
         camera.resize(screenW, screenH);
         modelBatch.begin(camera.getCamera());
@@ -525,6 +530,7 @@ public class SparkGame extends ApplicationAdapter {
         }
         modelBatch.end();
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
+        GlStats.mark(GlStats.Phase.WORLD3D);
 
         if (activeWorld != null) {
             activeWorld.renderDebugOpeningNormals(shapeRenderer, camera.getCamera());
@@ -536,24 +542,30 @@ public class SparkGame extends ApplicationAdapter {
             currentLevel.renderOverlays(camera, delta, screenW, screenH);
         }
 
+        GlStats.mark(GlStats.Phase.OVERLAYS);
         // 5. End FBO capture and apply post-processing chain to screen
         if (ppActive) {
             postProcessor.endCapture();
             postProcessor.render(delta, wc);
         }
+        GlStats.mark(GlStats.Phase.POST);
 
         // 6. Particle System (leaves, dust, water ripples) — AFTER post-processing, BEFORE HUD
         if (particleSystem != null) {
             particleSystem.render();
         }
+        GlStats.mark(GlStats.Phase.PARTICLES);
 
         // 7. 2D HUD (always crisp, rendered AFTER post-processing)
         capture.beforeHud(); // T7: pending F12 capture is taken here, without HUD
         if (!capture.hidesHud()) hud.render(player, activeMemorials, camera.getYaw(), camera.getCamera());
         capture.afterHud(delta); // T7: photo-mode hint and capture toast, never captured
+        GlStats.mark(GlStats.Phase.HUD);
 
         // Process inputs and automated test screenshot triggers AFTER the frame is fully drawn!
         handleGameplayInputs(delta);
+        GlStats.mark(GlStats.Phase.OTHER);
+        GlStats.endFrame();
     }
 
     private void handleGameplayInputs(float delta) {
