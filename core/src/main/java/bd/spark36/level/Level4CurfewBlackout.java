@@ -35,6 +35,7 @@ import bd.spark36.world.landmarks.MilitaryVehicleBuilder;
 public class Level4CurfewBlackout implements CampaignLevel {
 
     private DhakaCampusWorld world;
+    private final StreetDressing street = new StreetDressing(4); // T8 street identity
     private Environment nightEnvironment;
 
     private final Array<Model> models = new Array<>();
@@ -285,8 +286,10 @@ public class Level4CurfewBlackout implements CampaignLevel {
             colliders.add(new float[] { p.x - 2.8f, 0f, p.z - 0.4f, p.x + 2.8f, 1.3f, p.z + 0.4f });
         }
 
+        street.build(colliders);
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
+        LevelPbrMaterials.adopt(instances); // T8: legacy Diffuse colours -> PBR base colour
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 
@@ -313,13 +316,15 @@ public class Level4CurfewBlackout implements CampaignLevel {
     @Override
     public void renderShadow(ModelBatch shadowBatch) {
         if (world != null) world.renderShadowCasters(shadowBatch);
+        street.renderShadow(shadowBatch);
         if (apcInstance != null) shadowBatch.render(apcInstance);
     }
 
     @Override
     public void render3D(ModelBatch modelBatch, Environment env) {
         if (world != null) world.render(modelBatch);
-        for (ModelInstance mi : instances) modelBatch.render(mi, nightEnvironment);
+        if (world != null) street.render(modelBatch, world.getEnvironment());
+        for (ModelInstance mi : instances) modelBatch.render(mi, getEnvironment());
     }
 
     @Override
@@ -333,7 +338,9 @@ public class Level4CurfewBlackout implements CampaignLevel {
 
     @Override
     public Environment getEnvironment() {
-        return nightEnvironment;
+        // T8: the campus world is lit by its daylight PBR environment (IBL, sun, fog, shadows) in every
+        // chapter; the old per-level environment had no IBL and rendered characters and props white.
+        return world != null ? world.getEnvironment() : nightEnvironment;
     }
 
     @Override
@@ -361,6 +368,7 @@ public class Level4CurfewBlackout implements CampaignLevel {
 
     @Override
     public void dispose() {
+        street.dispose();
         if (world != null) { world.dispose(); world = null; }
         for (Model m : models) m.dispose();
         models.clear();

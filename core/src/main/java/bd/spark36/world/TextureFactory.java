@@ -247,7 +247,7 @@ public class TextureFactory implements Disposable {
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
         // Aged deep terracotta lime-sand mortar base (warm dark joint, eliminating stark white lines)
-        pix.setColor(0.24f, 0.13f, 0.09f, 1f);
+        pix.setColor(0.30f, 0.21f, 0.16f, 1f); // T8: less saturated joint (was 0.24/0.13/0.09)
         pix.fill();
 
         // Authentic fine-scale Dhaka University Curzon Hall brick courses (96 rows x 48 columns)
@@ -264,10 +264,11 @@ public class TextureFactory implements Disposable {
                 float v = (MathUtils.sin(r * 3.7f + b * 5.3f) + 1f) * 0.5f;
                 float v2 = (MathUtils.cos(r * 7.1f - b * 4.1f) + 1f) * 0.5f;
 
-                // Rich, deep authentic Mughal terracotta burnt-red variation
+                // Terracotta burnt-red variation. T8: green/blue raised (was 0.20/0.13) so the brick
+                // reads as fired clay rather than pure red after tone mapping.
                 float rCol = MathUtils.clamp(0.58f + v * 0.14f - v2 * 0.08f, 0.44f, 0.74f);
-                float gCol = MathUtils.clamp(0.20f + v * 0.05f - v2 * 0.03f, 0.12f, 0.27f);
-                float bCol = MathUtils.clamp(0.13f + v * 0.04f - v2 * 0.03f, 0.08f, 0.18f);
+                float gCol = MathUtils.clamp(0.25f + v * 0.05f - v2 * 0.03f, 0.17f, 0.32f);
+                float bCol = MathUtils.clamp(0.17f + v * 0.04f - v2 * 0.03f, 0.12f, 0.22f);
 
                 pix.setColor(rCol, gCol, bCol, 1f);
                 pix.fillRectangle(x + 1, y + 1, brickW - 1, rowH - 1);
@@ -278,8 +279,8 @@ public class TextureFactory implements Disposable {
                     int sy = y + 1 + MathUtils.random(Math.max(1, rowH - 3));
                     float stipple = MathUtils.random(-0.04f, 0.04f);
                     pix.setColor(MathUtils.clamp(rCol + stipple, 0.40f, 0.78f),
-                                 MathUtils.clamp(gCol + stipple * 0.5f, 0.10f, 0.30f),
-                                 MathUtils.clamp(bCol + stipple * 0.3f, 0.07f, 0.20f), 1f);
+                                 MathUtils.clamp(gCol + stipple * 0.5f, 0.15f, 0.35f),
+                                 MathUtils.clamp(bCol + stipple * 0.3f, 0.11f, 0.24f), 1f);
                     pix.drawPixel(sx, sy);
                 }
             }

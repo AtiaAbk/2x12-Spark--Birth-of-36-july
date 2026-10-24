@@ -176,8 +176,8 @@ public class HdrPostProcessor implements Disposable {
     public void beginCapture() {
         if (!valid) return;
         sceneFBO.begin();
-        // Clear to filmic slate-azure sky base
-        Gdx.gl.glClearColor(0.24f, 0.42f, 0.66f, 1f);
+        // Clear to the linear clear-sky zenith (matches AtmosphereConfig.CLEAR_SUNNY, T8)
+        Gdx.gl.glClearColor(0.085f, 0.172f, 0.504f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
     }
 

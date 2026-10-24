@@ -36,6 +36,7 @@ import bd.spark36.world.landmarks.BarricadeBuilder;
 public class Level3PoliceEscalation implements CampaignLevel {
 
     private DhakaCampusWorld world;
+    private final StreetDressing street = new StreetDressing(3); // T8 street identity
     private CampusCrowd crowd;
     private Environment environment;
     private ShapeRenderer overlayRenderer;
@@ -292,8 +293,10 @@ public class Level3PoliceEscalation implements CampaignLevel {
             colliders.add(new float[] { p.x - 2f, 0f, p.z - 0.4f, p.x + 2f, 1.4f, p.z + 0.4f });
         }
 
+        street.build(colliders);
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
+        LevelPbrMaterials.adopt(instances); // T8: legacy Diffuse colours -> PBR base colour
         this.crowd = new CampusCrowd(16, player.getColliders());
         this.crowd.setLevelProfile(3);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
@@ -323,12 +326,14 @@ public class Level3PoliceEscalation implements CampaignLevel {
     @Override
     public void renderShadow(ModelBatch shadowBatch) {
         if (world != null) world.renderShadowCasters(shadowBatch);
+        street.renderShadow(shadowBatch);
     }
 
     @Override
     public void render3D(ModelBatch modelBatch, Environment env) {
         if (world != null) world.render(modelBatch);
-        for (ModelInstance mi : instances) modelBatch.render(mi, environment);
+        if (world != null) street.render(modelBatch, world.getEnvironment());
+        for (ModelInstance mi : instances) modelBatch.render(mi, getEnvironment());
     }
 
     @Override
@@ -361,7 +366,9 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
     @Override
     public Environment getEnvironment() {
-        return environment;
+        // T8: the campus world is lit by its daylight PBR environment (IBL, sun, fog, shadows) in every
+        // chapter; the old per-level environment had no IBL and rendered characters and props white.
+        return world != null ? world.getEnvironment() : environment;
     }
 
     @Override
@@ -411,6 +418,7 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
     @Override
     public void dispose() {
+        street.dispose();
         if (world != null) { world.dispose(); world = null; }
         for (Model m : models) m.dispose();
         models.clear();

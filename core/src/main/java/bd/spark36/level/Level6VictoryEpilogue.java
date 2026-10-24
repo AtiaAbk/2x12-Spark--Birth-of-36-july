@@ -32,6 +32,7 @@ import bd.spark36.world.landmarks.ShaheedMinarBuilder;
 public class Level6VictoryEpilogue implements CampaignLevel {
 
     private DhakaCampusWorld world;
+    private final StreetDressing street = new StreetDressing(6); // T8 street identity
     private CampusCrowd crowd;
     private Environment goldenEnvironment;
 
@@ -271,8 +272,10 @@ public class Level6VictoryEpilogue implements CampaignLevel {
         bi.transform.setTranslation(waypoints[2]);
         instances.add(bi);
 
+        street.build(colliders);
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
+        LevelPbrMaterials.adopt(instances); // T8: legacy Diffuse colours -> PBR base colour
         this.crowd = new CampusCrowd(20, player.getColliders());
         this.crowd.setLevelProfile(6);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
@@ -305,13 +308,15 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     @Override
     public void renderShadow(ModelBatch shadowBatch) {
         if (world != null) world.renderShadowCasters(shadowBatch);
+        street.renderShadow(shadowBatch);
         for (ModelInstance mi : instances) shadowBatch.render(mi);
     }
 
     @Override
     public void render3D(ModelBatch modelBatch, Environment env) {
         if (world != null) world.render(modelBatch);
-        for (ModelInstance mi : instances) modelBatch.render(mi, goldenEnvironment);
+        if (world != null) street.render(modelBatch, world.getEnvironment());
+        for (ModelInstance mi : instances) modelBatch.render(mi, getEnvironment());
     }
 
     @Override
@@ -325,7 +330,9 @@ public class Level6VictoryEpilogue implements CampaignLevel {
 
     @Override
     public Environment getEnvironment() {
-        return goldenEnvironment;
+        // T8: the campus world is lit by its daylight PBR environment (IBL, sun, fog, shadows) in every
+        // chapter; the old per-level environment had no IBL and rendered characters and props white.
+        return world != null ? world.getEnvironment() : goldenEnvironment;
     }
 
     @Override
@@ -357,6 +364,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
 
     @Override
     public void dispose() {
+        street.dispose();
         if (world != null) { world.dispose(); world = null; }
         for (Model m : models) m.dispose();
         models.clear();

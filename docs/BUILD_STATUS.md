@@ -104,10 +104,25 @@ Earlier sessions reported "60 FPS locked @ 1080p" on an Apple Silicon MacBook Ai
 | `-Dbd.spark36.graphicsTier` was ignored because `assets/visuals.properties` overrode it. **Fixed in T0**: the explicit switch now wins. | `RenderPipelineConfig` | done |
 | Shipped default tier is HIGH, while repo DECISION-007 names MEDIUM as the target default. Left unchanged: the measurements show no tier gains anything here. | `assets/visuals.properties` | T6 settings |
 | Pause menu lists `[G] GRAPHICS` while its footer lists `[G] Switch Gender`. | `pause_menu.png` | T6 |
-| Level 1 frame has a strong green-yellow cast, including the sky, against the reference's natural-colour rule. | `spawn_level1.png` | T8 |
+| Level 1 frame has a strong green-yellow cast, including the sky, against the reference's natural-colour rule. **Fixed in T8**: sky/fog colours were display-space values drawn into the linear buffer (gamma-encoded twice: pale cyan sky, white fog), plus saturation 1.18 / temperature 0.14 / green tint, an olive ambient and a cyan IBL sky. See section 8. | `spawn_level1.png`, `t8_visual/` | done |
+| Levels 3-6 rendered the player, crowd and level props white or flat grey (legacy per-level Environment without IBL; Diffuse-only prop materials ignored by the PBR shader). **Fixed in T8** (world PBR environment, `LevelPbrMaterials`). Per-chapter night/sunset mood is still not implemented. | `t8_visual/before_level5_start.png` | T8 (mood: follow-up) |
 | Main menu has no Continue, Settings or Credits. | `main_menu.png` | T4, T6 |
 
 ---
+
+## 8. T8 visual pass (colour and street dressing)
+
+Grade now: exposure 1.08, contrast 1.02, saturation 1.04, temperature 0.08, tint -0.01, shadow lift 0.006 (`visuals.properties` and `RenderPipelineConfig` defaults). Sky, fog and post-process clear colours are linear values (`AtmosphereConfig`, `AtmosphereRenderer`, `HdrPostProcessor`); IBL sky bluer and ground bounce less yellow (`PbrEnvironment`); Curzon brick texture less saturated (`TextureFactory`). Evidence: `docs/screenshots/t8_visual/` (before/after spawn, curzon_front, Level 5 start; street views for Levels 4, 5, 6).
+
+Street dressing (Levels 3-6, `level/StreetDressing` + `world/landmarks/*Builder`): about 20 props per level in one `ModelCache`, logged at load as about **22 draw calls and 23k triangles per pass** (colour and shadow). Measured FPS, fullscreen 1080p, HIGH tier, 30 s, **while other agents ran the game on the same machine** (run-to-run noise about +-3 FPS, some runs interrupted by user input):
+
+| View | Without street (0f68242) | With street |
+|---|---|---|
+| Level 4 `gate_street` | 21.6 | 18.8, 20.0, 19.7, 17.4 |
+| Level 6 `street_road` | 20.8 | 17.5, 21.3 |
+| Same-session A/B with `-Dbd.spark36.streetDressing=false` (L6) | 18.9, 16.9 | 17.5, 21.3 |
+
+The difference is inside the noise; re-measure on an idle machine. Not measured on an idle machine.
 
 ## 7. Useful run switches
 
@@ -118,6 +133,9 @@ Earlier sessions reported "60 FPS locked @ 1080p" on an Apple Silicon MacBook Ai
 | `-Dbd.spark36.msaa=N` | MSAA samples (default 8) |
 | `-Dbd.spark36.graphicsTier=LOW\|MEDIUM\|HIGH` | Force tier (now honoured) |
 | `-Dbd.spark36.baseline=<viewpoint> -Dbd.spark36.autoExit=true` | Capture a baseline screenshot and exit |
+| `-Dbd.spark36.level=N -Dbd.spark36.baseline=gate_street` or `street_road` | T8 views of the Doel Chattar road outside the main gate (Levels 3-6 street dressing) |
+| `-Dbd.spark36.streetDressing=false` | Turn the Level 3-6 street dressing off (A/B measurements) |
+| `-Dbd.spark36.dumpSignAtlas=<absolute .png path>` | Write the Bengali signboard atlas as rendered |
 | `-Dbd.spark36.benchmarkSeconds=N` | Measure N seconds after 3 s warm-up, log `[FrameStats]`, exit |
 | `-Dbd.spark36.testMenuScreenshot=true` / `testPauseMenu=true` | Capture menu / pause screenshots |
 | `-Dbd.spark36.screenshotDir=<absolute path>` | Screenshot folder (default `<home>/Pictures/Spark36`) |
