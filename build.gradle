@@ -44,7 +44,9 @@ configure(subprojects) {
     // iterate through all files inside that folder
     // convert it to a relative path
     // and append it to the file assets.txt
-    fileTree(dir: assetsFolder, exclude: ['screenshots/**', 'assets.txt', '.DS_Store']).collect { assetsFolder.relativePath(it) }.sort().each {
+    // 'assets/**' is runtime output written relative to the run working directory
+    // (screenshots, synthesised audio); '*.log' are JVM crash dumps. Neither ships.
+    fileTree(dir: assetsFolder, exclude: ['screenshots/**', 'assets/**', '*.log', 'assets.txt', '.DS_Store']).collect { assetsFolder.relativePath(it) }.sort().each {
       assetsFile.append(it + "\n")
     }
   }
