@@ -223,6 +223,8 @@ public class StudentMesh implements Disposable {
         final Array<Part>[] foot = pair();
         /** Same body with same-material parts merged per segment (see RigMerger); built lazily. */
         Rig baked;
+        /** Same body and colours built with coarser tessellation (shadow pass, far bodies). */
+        Rig lod;
 
         @SuppressWarnings("unchecked")
         private static Array<Part>[] pair() {
@@ -235,6 +237,9 @@ public class StudentMesh implements Disposable {
     private final IdentityMap<Material, float[]> slotInfo = new IdentityMap<>();
     private final long attr = Usage.Position | Usage.Normal | Usage.TextureCoordinates;
     private Appearance cur; // look used while building materials
+    private boolean lowDetail; // true while building the coarse LOD rigs
+    /** Beyond this camera distance (m) a body is drawn from its coarse rig. */
+    private static final float LOD_DISTANCE = 20f;
     private int curGroup = GROUP_BODY;
 
     private final Rig[] baseRigs = new Rig[]{new Rig(), new Rig()};
@@ -263,9 +268,24 @@ public class StudentMesh implements Disposable {
                 recolor(baseRigs[0], Appearance.preset(v, 0)),
                 recolor(baseRigs[1], Appearance.preset(v, 1))};
         }
+        // Coarse-tessellation twins, used where the extra facets cannot be seen: the sun's shadow
+        // map (~3 cm texels on HIGH) and bodies beyond LOD_DISTANCE (under ~80 px tall at 1080p).
+        lowDetail = true;
+        for (int g = 0; g < 2; g++) {
+            cur = Appearance.defaultLook(g);
+            Rig lod = new Rig();
+            if (g == 0) buildMale(lod); else buildFemale(lod);
+            baseRigs[g].lod = lod;
+            for (int v = 1; v < VARIANT_COUNT; v++) {
+                variantRigs[v][g].lod = recolor(lod, Appearance.preset(v, g));
+            }
+        }
+        lowDetail = false;
         for (int v = 0; v < VARIANT_COUNT; v++) {
-            baked(variantRigs[v][0]);
-            baked(variantRigs[v][1]);
+            for (int g = 0; g < 2; g++) {
+                baked(variantRigs[v][g]);
+                baked(variantRigs[v][g].lod);
+            }
         }
     }
 
@@ -278,26 +298,27 @@ public class StudentMesh implements Disposable {
     // Primitive helpers
     // =====================================================================
 
-    private static int divFor(float maxDim) {
+    private int divFor(float maxDim) {
+        if (lowDetail) return maxDim > 0.12f ? 12 : (maxDim > 0.05f ? 10 : 8);
         return maxDim > 0.12f ? 24 : (maxDim > 0.05f ? 16 : 10);
     }
 
     private Model ell(float w, float h, float d, Material mat) {
         int div = divFor(Math.max(w, Math.max(h, d)));
-        Model m = modelBuilder.createSphere(w, h, d, div, Math.max(8, div * 3 / 4), mat, attr);
+        Model m = modelBuilder.createSphere(w, h, d, div, Math.max(lowDetail ? 6 : 8, div * 3 / 4), mat, attr);
         models.add(m);
         return m;
     }
 
     private Model cap(float radius, float length, Material mat) {
         Model m = modelBuilder.createCapsule(radius, Math.max(length, radius * 2.001f),
-            radius > 0.03f ? 20 : 12, mat, attr);
+            radius > 0.03f ? (lowDetail ? 10 : 20) : (lowDetail ? 8 : 12), mat, attr);
         models.add(m);
         return m;
     }
 
     private Model cyl(float w, float h, float d, Material mat) {
-        Model m = modelBuilder.createCylinder(w, h, d, divFor(Math.max(w, d)) + 4, mat, attr);
+        Model m = modelBuilder.createCylinder(w, h, d, divFor(Math.max(w, d)) + (lowDetail ? 2 : 4), mat, attr);
         models.add(m);
         return m;
     }
@@ -835,13 +856,28 @@ public class StudentMesh implements Disposable {
             arr = new Rig[2];
             lookRigs.put(look, arr);
         }
-        if (arr[g] == null) arr[g] = recolor(baseRigs[g], look);
+        if (arr[g] == null) {
+            arr[g] = recolor(baseRigs[g], look);
+            arr[g].lod = recolor(baseRigs[g].lod, look);
+        }
         return arr[g];
     }
 
     // =====================================================================
     // Rendering
     // =====================================================================
+
+    /**
+     * Picks the rig to draw: the coarse twin in the shadow pass (orthographic sun camera) and for
+     * bodies farther than {@link #LOD_DISTANCE} from the camera; otherwise the full rig.
+     */
+    private Rig detailFor(ModelBatch batch, Rig rig, Vector3 pos) {
+        com.badlogic.gdx.graphics.Camera cam = batch.getCamera();
+        boolean coarse = rig.lod != null && cam != null
+            && (cam instanceof com.badlogic.gdx.graphics.OrthographicCamera
+                || cam.position.dst2(pos) > LOD_DISTANCE * LOD_DISTANCE);
+        return baked(coarse ? rig.lod : rig);
+    }
 
     /** True when a body at {@code pos} cannot touch the batch camera's view (or the sun's shadow map). */
     private static boolean outsideView(ModelBatch batch, Vector3 pos) {
@@ -1047,7 +1083,7 @@ public class StudentMesh implements Disposable {
     private void drawPose(ModelBatch batch, Environment env, Rig rig, int g, Vector3 pos, float headingDegrees,
                           CharacterPose pose, boolean isCrouching, boolean isSittingWater) {
         if (outsideView(batch, pos)) return;
-        rig = baked(rig);
+        rig = detailFor(batch, rig, pos);
 
         rootTransform.idt();
         rootTransform.translate(pos.x, pos.y + pose.bobOffset, pos.z);
@@ -1136,7 +1172,7 @@ public class StudentMesh implements Disposable {
                       boolean isDodging, float dodgeProgress, float staggerTimer,
                       boolean isSittingWater, float sitProgress, float idlePhase) {
         if (outsideView(batch, pos)) return;
-        rig = baked(rig);
+        rig = detailFor(batch, rig, pos);
 
         float idle = idleTime + idlePhase;
 
