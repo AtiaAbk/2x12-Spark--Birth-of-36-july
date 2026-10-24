@@ -111,7 +111,7 @@ public class WhereWindsMeetHUD implements Disposable {
         "HISTORIC DU BOUNDARY STONE (1921)",
         "Founding Era — July 1, 1921",
         "Curzon Hall Heritage Precinct",
-        "This weathered granite boundary marker demarcates the historic eastern perimeter of Dhaka University, established in 1921. For over a century, these grounds have witnessed generations of courageous students defending truth, freedom, and equal rights—culminating in the July 2024 Mass Uprising and the birth of 36 July.",
+        "Dhaka University opened on 1 July 1921. This weathered boundary marker is a game reconstruction, not a documented artefact. For over a century these grounds have seen generations of students stand up for truth, freedom and equal rights, up to the July 2024 Mass Uprising and the birth of 36 July.",
         bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS
     );
 
@@ -3650,24 +3650,24 @@ public class WhereWindsMeetHUD implements Disposable {
         String narrativeSecondPara;
         switch (lvlNum) {
             case 2:
-                victoryNarrative = "You stood firm with fellow students on July 15, documenting police intimidation, securing medical aid for the wounded, and maintaining peaceful resolve despite violent provocation.";
-                narrativeSecondPara = "When armed enforcers attacked unarmed students, moral courage and united solidarity transformed a campus protest into an unstoppable national awakening.";
+                victoryNarrative = "You stood firm with fellow students on July 15, helping the wounded reach medical aid and keeping your resolve despite violent provocation as armed attackers stormed the campus.";
+                narrativeSecondPara = "Armed Chhatra League supporters attacked student protesters on campus and at Dhaka Medical College Hospital. Instead of ending the protests, the violence drew more people in.";
                 break;
             case 3:
-                victoryNarrative = "Across the streets of Rangpur and Dhaka, Abu Sayed stood with open arms for justice. You delivered critical eye wash and first aid under heavy tear gas, documenting historic unyielding courage.";
-                narrativeSecondPara = "'Stand firm, do not leave the fallen.' The sacrifice of brave youths ignited sparks in millions of hearts across Bangladesh.";
+                victoryNarrative = "On July 16 in Rangpur, student Abu Sayed stood with his arms spread wide before the police and was killed by police fire. Two days later, you carried water and first aid to people caught in tear gas in Dhaka.";
+                narrativeSecondPara = "Stand firm, leave no one behind. The loss of young lives drew many more people across Bangladesh into the movement.";
                 break;
             case 4:
                 victoryNarrative = "In total internet blackout and strict curfew, you navigated searchlight patrols, secured clandestine medical supplies, and safely delivered historical eyewitness documentation to community couriers.";
                 narrativeSecondPara = "When digital wires were severed, human couriers, medical volunteers, and unshakeable courage kept the truth alive across every neighborhood.";
                 break;
             case 5:
-                victoryNarrative = "Central Shaheed Minar roared with hundreds of thousands of voices. From students to rickshaw-pullers, the nation united behind the 1-Point Demand for systemic freedom and accountable governance.";
-                narrativeSecondPara = "Fear had completely dissolved. The entire populace stood shoulder to shoulder as the historic countdown to 36 July began.";
+                victoryNarrative = "On August 3 at the Central Shaheed Minar, a vast crowd of students and people from many walks of life heard the movement declare its One-Point Demand: the resignation of the government.";
+                narrativeSecondPara = "The next day non-cooperation began and a March to Dhaka was called. The countdown to 36 July had begun.";
                 break;
             case 6:
-                victoryNarrative = "Millions marched into Shahbagh and the National Parliament. The authoritarian regime collapsed. Bangladesh 2.0 was born through the sacrifice, grit, and unity of its youth and people.";
-                narrativeSecondPara = "'This freedom belongs to the martyrs and every ordinary citizen who refused to bow.' The spark became an eternal beacon of democratic renewal.";
+                victoryNarrative = "On August 5, hundreds of thousands defied the curfew and marched towards central Dhaka. That afternoon Sheikh Hasina resigned and left the country, and her government fell.";
+                narrativeSecondPara = "As many as 1,400 people may have been killed (UN estimate). This freedom belongs to them and to every ordinary citizen who refused to bow.";
                 break;
             case 1:
             default:

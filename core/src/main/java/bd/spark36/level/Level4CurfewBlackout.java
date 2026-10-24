@@ -60,7 +60,7 @@ public class Level4CurfewBlackout implements CampaignLevel {
     private static final String[] CHECKLIST = {
         "1. Infiltrate Past Outer Checkpoint Sandbags",
         "2. Retrieve Secret Casualty Dossier from Courier",
-        "3. Bypass BTR-80 Armored Vehicle Searchlight Zone",
+        "3. Bypass Armoured Vehicle Searchlight Zone",
         "4. Hand-Deliver Evidence to Press Contact"
     };
 
@@ -115,7 +115,7 @@ public class Level4CurfewBlackout implements CampaignLevel {
         switch (next) {
             case 0: return "Target: Sandbag checkpoint breach point";
             case 1: return "Target: Student courier with casualty records";
-            case 2: return "Target: Avoid sweeping BTR-80 searchlight";
+            case 2: return "Target: Avoid sweeping armoured-vehicle searchlight";
             case 3: return "Target: Foreign correspondent at Library gate";
             default: return "Evidence secured for independent press";
         }

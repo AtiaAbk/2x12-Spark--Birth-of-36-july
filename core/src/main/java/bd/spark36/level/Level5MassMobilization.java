@@ -60,7 +60,7 @@ public class Level5MassMobilization implements CampaignLevel {
         "1. Ascend to Central Shaheed Minar Dais",
         "2. Form Defensive Human Chain on East Flank",
         "3. Deliver Medical Supplies to Volunteer Clinic",
-        "4. Announce Historic One-Point Demand with Assembly"
+        "4. Stand With the Assembly for the One-Point Demand"
     };
 
     @Override
@@ -100,7 +100,7 @@ public class Level5MassMobilization implements CampaignLevel {
             case 0: return "ASCEND TO CENTRAL DAIS";
             case 1: return "REINFORCE DEFENSIVE HUMAN CHAIN";
             case 2: return "DELIVER VOLUNTEER MEDICAL AID";
-            case 3: return "DECLARE THE ONE-POINT DEMAND";
+            case 3: return "JOIN THE ONE-POINT DEMAND";
             default: return "ONE-POINT DEMAND PROCLAIMED";
         }
     }
@@ -112,7 +112,7 @@ public class Level5MassMobilization implements CampaignLevel {
             case 0: return "Target: Stepped marble plinth of Shaheed Minar";
             case 1: return "Target: Defensive perimeter line holding off agitators";
             case 2: return "Target: Volunteer field medical booth";
-            case 3: return "Target: Central podium facing hundreds of thousands";
+            case 3: return "Target: Central podium facing the assembled crowd";
             default: return "Historic assembly concluded in unity";
         }
     }
@@ -171,7 +171,7 @@ public class Level5MassMobilization implements CampaignLevel {
             return "[E] DELIVER FIRST-AID SUPPLIES TO CLINIC";
         }
         if (objectivesDone[2] && !objectivesDone[3] && playerPos.dst(waypoints[3]) <= 3.8f) {
-            return "[E] STAND TOGETHER — PROCLAIM ONE-POINT DEMAND";
+            return "[E] STAND TOGETHER — JOIN THE ONE-POINT DEMAND";
         }
         return null;
     }
