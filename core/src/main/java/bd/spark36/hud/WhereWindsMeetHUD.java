@@ -87,7 +87,9 @@ public class WhereWindsMeetHUD implements Disposable {
     private boolean isPauseMenuOpen = false;
     private boolean isHelpControlsOpen = false;
     private boolean isExitConfirmOpen = false;
-    private int pauseMenuSelection = 0; // 0=Resume, 1=Codex, 2=Graphics, 3=ToneMap, 4=Restart, 5=MainMenu, 6=Quit
+    private int pauseMenuSelection = 0; // 0=Resume, 1=Codex, 2=Graphics, 3=ToneMap, 4=Restart, 5=MainMenu, 6=Quit, 7=Checkpoint
+    private static final int PAUSE_ITEM_COUNT = 8;
+    private static final int PAUSE_ITEM_CHECKPOINT = 7; // T5: restart from mid-level checkpoint
     private int exitConfirmSelection = 0; // 0=Cancel, 1=Quit Game
     private boolean isVictoryOpen = false;
     private boolean victoryShown = false;
@@ -323,6 +325,13 @@ public class WhereWindsMeetHUD implements Disposable {
         bd.spark36.audio.SoundManager.get().playObjective();
     }
 
+    /** Pause menu "Restart from checkpoint": LevelManager restores on the restart action (3). */
+    private void requestCheckpointRestart() {
+        bd.spark36.level.CheckpointStore.requestRestore();
+        exitAction = 3;
+        isPauseMenuOpen = false;
+    }
+
     public void triggerVictory() {
         this.congratulationsPopupActive = true;
         this.congratulationsPopupTimer = 3.2f;
@@ -523,7 +532,7 @@ public class WhereWindsMeetHUD implements Disposable {
                 float btnX = px + 28f, btnW = dividerX - px - 46f, btnH = 38f;
                 float startY = py + ph - 105f;
                 float spacingY = 46f;
-                for (int i = 0; i < 7; i++) {
+                for (int i = 0; i < PAUSE_ITEM_COUNT; i++) {
                     float by = startY - i * spacingY;
                     if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= by && mouseY <= by + btnH) {
                         pauseMenuSelection = i;
@@ -546,6 +555,8 @@ public class WhereWindsMeetHUD implements Disposable {
                         } else if (i == 6) {
                             isExitConfirmOpen = true;
                             exitConfirmSelection = 0;
+                        } else if (i == PAUSE_ITEM_CHECKPOINT) {
+                            requestCheckpointRestart();
                         }
                         break;
                     }
@@ -811,11 +822,11 @@ public class WhereWindsMeetHUD implements Disposable {
                 }
             } else {
                 if (Gdx.input.isKeyJustPressed(Input.Keys.UP) || Gdx.input.isKeyJustPressed(Input.Keys.W)) {
-                    pauseMenuSelection = (pauseMenuSelection - 1 + 7) % 7;
+                    pauseMenuSelection = (pauseMenuSelection - 1 + PAUSE_ITEM_COUNT) % PAUSE_ITEM_COUNT;
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
                 if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) || Gdx.input.isKeyJustPressed(Input.Keys.S)) {
-                    pauseMenuSelection = (pauseMenuSelection + 1) % 7;
+                    pauseMenuSelection = (pauseMenuSelection + 1) % PAUSE_ITEM_COUNT;
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
                 if (GameInput.isJustPressed(GameInput.GameAction.CONFIRM)) {
@@ -838,6 +849,8 @@ public class WhereWindsMeetHUD implements Disposable {
                     } else if (pauseMenuSelection == 6) {
                         isExitConfirmOpen = true;
                         exitConfirmSelection = 0;
+                    } else if (pauseMenuSelection == PAUSE_ITEM_CHECKPOINT) {
+                        requestCheckpointRestart();
                     }
                 }
 
@@ -872,6 +885,10 @@ public class WhereWindsMeetHUD implements Disposable {
                 if (Gdx.input.isKeyJustPressed(Input.Keys.X)) {
                     isExitConfirmOpen = true;
                     exitConfirmSelection = 1;
+                    bd.spark36.audio.SoundManager.get().playClick();
+                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.C)) {
+                    requestCheckpointRestart();
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
             }
@@ -1282,7 +1299,7 @@ public class WhereWindsMeetHUD implements Disposable {
         } else if (allDone && goonKnockedOut) {
             drawOutlined(fonts.smallFont, "ALL ARCHIVES UNLOCKED: 05 / 05", cardX + 18f, cardY + cardH - 18f, Color.GREEN);
             drawOutlined(fonts.headerFont, "LEVEL 1 ACCOMPLISHED", cardX + 18f, cardY + cardH - 42f, goldAccent);
-            drawOutlined(fonts.bodyFont, "All 5 archives secured & Aggressor neutralized. Campus liberated!", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
+            drawOutlined(fonts.bodyFont, "All 5 archives secured & the attacker held back. Campus safe!", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
             drawOutlined(fonts.headerFont, "STATUS: COMPLETED", cardX + 18f, cardY + 24f, Color.GREEN);
         } else {
             // Standard archive progression
@@ -2601,7 +2618,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float startY = py + ph - 105f;
         float spacingY = 46f;
 
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < PAUSE_ITEM_COUNT; i++) {
             float by = startY - i * spacingY;
             if (pauseMenuSelection == i && !isExitConfirmOpen) {
                 if (i == 6) {
@@ -2631,7 +2648,7 @@ public class WhereWindsMeetHUD implements Disposable {
         strokeGlassBorder(px, py, pw, ph);
 
         // Button borders and corner brackets
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < PAUSE_ITEM_COUNT; i++) {
             float by = startY - i * spacingY;
             if (pauseMenuSelection == i && !isExitConfirmOpen) {
                 if (i == 6) {
@@ -2697,11 +2714,12 @@ public class WhereWindsMeetHUD implements Disposable {
             "TONE MAP: " + tmName,
             "RESTART LEVEL",
             "MAIN MENU",
-            "EXIT GAME"
+            "EXIT GAME",
+            "RESTART CHECKPOINT"
         };
-        String[] itemShortcuts = {"[ESC]", "[H]", "[G]", "[T]", "[R]", "[Q]", "[X]"};
+        String[] itemShortcuts = {"[ESC]", "[H]", "[G]", "[T]", "[R]", "[Q]", "[X]", "[C]"};
 
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < PAUSE_ITEM_COUNT; i++) {
             float by = startY - i * spacingY;
             boolean sel = (pauseMenuSelection == i && !isExitConfirmOpen);
 
@@ -2723,7 +2741,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Right Column: Martial Arts & Controls Codex
         fonts.headerFont.setColor(goldAccent);
-        fonts.headerFont.draw(spriteBatch, "MARTIAL ARTS & CONTROLS CODEX", dividerX + 26f, py + ph - 24f);
+        fonts.headerFont.draw(spriteBatch, "SELF-DEFENSE & CONTROLS CODEX", dividerX + 26f, py + ph - 24f);
 
         fonts.smallFont.setColor(new Color(0.85f, 0.82f, 0.75f, 0.95f));
         fonts.smallFont.draw(spriteBatch, "NAVIGATION & ATHLETICS", dividerX + 26f, py + ph - 56f);
@@ -2737,15 +2755,17 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.bodyFont.draw(spriteBatch, "• Z / ALT : Tactical Combat Slip & Evasion (i-frames)", dividerX + 32f, py + ph - 200f);
 
         fonts.smallFont.setColor(new Color(0.85f, 0.82f, 0.75f, 0.95f));
-        fonts.smallFont.draw(spriteBatch, "TECHNICAL MARTIAL ARTS COMBAT", dividerX + 26f, py + ph - 228f);
+        fonts.smallFont.draw(spriteBatch, "DEFENSIVE SELF-PROTECTION (FICTIONAL GAMEPLAY)", dividerX + 26f, py + ph - 228f);
 
         fonts.bodyFont.setColor(Color.WHITE);
         fonts.bodyFont.draw(spriteBatch, "• Left-Click / F : Bare-Handed Punches (Jab -> Cross Combo)", dividerX + 32f, py + ph - 250f);
         fonts.bodyFont.draw(spriteBatch, "• Q / K : High Martial Arts Kick (Roundhouse Strike)", dividerX + 32f, py + ph - 272f);
         fonts.bodyFont.draw(spriteBatch, "• C + Attack : Low Dragon Leg Sweep (Tripping Counter Strike)", dividerX + 32f, py + ph - 294f);
         fonts.bodyFont.draw(spriteBatch, "• B (Hold) : Defensive Guard (Reduces Damage by 80%)", dividerX + 32f, py + ph - 316f);
-        fonts.bodyFont.draw(spriteBatch, "• B (Tap / Timed) : Flash Parry (Stuns Goon & breaks posture!)", dividerX + 32f, py + ph - 338f);
-        fonts.bodyFont.draw(spriteBatch, "• Counter-Hit : Strike during Goon wind-up for 1.5x interrupt damage!", dividerX + 32f, py + ph - 360f);
+        fonts.bodyFont.draw(spriteBatch, "• B (Tap / Timed) : Flash Parry (Stuns attacker & breaks posture!)", dividerX + 32f, py + ph - 338f);
+        fonts.bodyFont.draw(spriteBatch, "• Counter-Hit : Strike during attacker wind-up for 1.5x interrupt damage!", dividerX + 32f, py + ph - 360f);
+        fonts.smallFont.setColor(new Color(1.0f, 0.82f, 0.35f, 1f));
+        fonts.smallFont.draw(spriteBatch, "Defensive self-protection only. FICTIONAL GAMEPLAY. Knockouts optional.", dividerX + 26f, py + ph - 386f);
 
         // Rule of July Text
         fonts.smallFont.setColor(new Color(1.0f, 0.82f, 0.35f, 1f));
@@ -2951,7 +2971,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Right Column: Martial Arts Defense & Combat
         fonts.headerFont.setColor(goldAccent);
-        fonts.headerFont.draw(spriteBatch, "MARTIAL ARTS COMBAT & DEFENSE", midX + 24f, hy + hh - 86f);
+        fonts.headerFont.draw(spriteBatch, "DEFENSIVE SELF-PROTECTION", midX + 24f, hy + hh - 86f);
 
         float rightX = midX + 28f;
         float rLineY = hy + hh - 114f;
@@ -2962,14 +2982,16 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.bodyFont.draw(spriteBatch, "• C + Attack : Low Sweep Counter (Tripping leg sweep)", rightX, rLineY); rLineY -= stepY;
         fonts.bodyFont.draw(spriteBatch, "• B (Hold) / Right-Click : Defensive Guard (Reduces damage by 80%)", rightX, rLineY); rLineY -= stepY;
         fonts.bodyFont.draw(spriteBatch, "• B (Timed Tap) : Flash Parry (Stuns aggressor & breaks posture)", rightX, rLineY); rLineY -= stepY;
-        fonts.bodyFont.draw(spriteBatch, "• Counter-Hit : Strike during enemy wind-up for 1.5x interrupt damage", rightX, rLineY); rLineY -= stepY;
+        fonts.bodyFont.draw(spriteBatch, "• Counter-Hit : Strike during attacker wind-up for 1.5x interrupt damage", rightX, rLineY); rLineY -= stepY;
 
         fonts.smallFont.setColor(new Color(1.0f, 0.82f, 0.35f, 1f));
         fonts.smallFont.draw(spriteBatch, "HISTORICAL COMBAT RULES:", rightX, rLineY - 8f); rLineY -= (stepY + 6f);
         fonts.bodyFont.setColor(new Color(0.95f, 0.90f, 0.85f, 0.95f));
         fonts.bodyFont.draw(spriteBatch, "• Chapter 1: Students maintain peaceful solidarity. Attacks are disabled.", rightX, rLineY); rLineY -= stepY;
         fonts.bodyFont.draw(spriteBatch, "• Combat unlocks in Chapter 2 ('The Day the Streets Changed') & Arena.", rightX, rLineY); rLineY -= stepY;
-        fonts.bodyFont.draw(spriteBatch, "• Striking unarmed innocent students causes instant disqualification.", rightX, rLineY);
+        fonts.bodyFont.draw(spriteBatch, "• Striking unarmed innocent students causes instant disqualification.", rightX, rLineY); rLineY -= stepY;
+        fonts.bodyFont.draw(spriteBatch, "• Combat is defensive self-protection (FICTIONAL GAMEPLAY).", rightX, rLineY); rLineY -= stepY;
+        fonts.bodyFont.draw(spriteBatch, "• Knockouts are optional, never required to finish a chapter.", rightX, rLineY);
 
         // Bottom Bar info and Close Button
         fonts.smallFont.setColor(goldMuted);
@@ -3118,7 +3140,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.titleFont.draw(spriteBatch, titleStr, titleX, py + ph - 5f);
 
         // Subtitle
-        String subStr = "Campus Liberated: The Intimidation Enforcer Has Been Neutralized!";
+        String subStr = "Campus Safe: The Attacker Has Been Held Back!";
         glyphLayout.setText(fonts.headerFont, subStr);
         float subX = px + (pw - glyphLayout.width) / 2f;
         fonts.headerFont.setColor(0f, 0f, 0f, 0.90f * alpha);
@@ -3693,7 +3715,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.draw(spriteBatch, "Historical Objectives Accomplished: " + ins + " / " + tot + " (" + pct + "% Complete)", sx + 20f, sy + 76f);
 
         String defenseStat = (activeLevel != null && activeLevel.isCombatEnabled()) ?
-            "Campus Defense: Aggressors Neutralized with Disciplined Martial Arts" :
+            "Campus Defense: Injured Students Sheltered (Knockouts Never Required)" :
             "Campus Peace Rule: Upheld (Zero Violations, Non-Violent Solidarity)";
         fonts.smallFont.draw(spriteBatch, defenseStat, sx + 20f, sy + 52f);
         fonts.smallFont.draw(spriteBatch, "Civic Ethics: Upheld (0 Innocent Students Harmed)", sx + 20f, sy + 28f);
