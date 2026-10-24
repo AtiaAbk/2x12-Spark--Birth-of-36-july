@@ -49,11 +49,11 @@ public final class Level2ShelterObjectives {
     };
 
     public static final String[] TARGETS = {
-        "Target: Fallen student at Raju Sculpture (evade, block or break away from aggressors)",
-        "Target: Medical shelter at Arts Faculty gate (knockouts optional)",
+        "Target: Injured student at Raju Sculpture",
+        "Target: Medical shelter (evade or block attackers)",
         "Target: Injured student on Arts Faculty road",
-        "Target: Medical shelter at Arts Faculty gate (knockouts optional)",
-        "Target: Medical shelter (both students safe inside)"
+        "Target: Medical shelter (knockouts optional)",
+        "Target: Medical shelter, both students inside"
     };
 
     private static final Vector3[] WAYPOINTS = {
