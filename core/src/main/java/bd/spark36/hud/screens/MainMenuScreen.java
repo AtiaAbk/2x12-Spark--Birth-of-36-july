@@ -22,20 +22,21 @@ import java.util.List;
  * growing the frozen game class.
  *
  * <p>Entries: CONTINUE (only when a save exists), the chapter selector, the martial arts arena,
- * SETTINGS and EXIT. W/S or arrows move, A/D or arrows pick the chapter, Enter/Space/J select;
+ * SETTINGS, CREDITS (credits and historical sources) and EXIT. W/S or arrows move, A/D or arrows pick the chapter, Enter/Space/J select;
  * the mouse hovers and clicks as before. SparkGame acts on the returned {@link Action}.</p>
  */
 public final class MainMenuScreen {
 
     public enum Action { NONE, CONTINUE, START_CHAPTER, ARENA, EXIT }
 
-    private enum Item { CONTINUE, CHAPTER, ARENA, SETTINGS, EXIT }
+    private enum Item { CONTINUE, CHAPTER, ARENA, SETTINGS, CREDITS, EXIT }
 
     private final ShapeRenderer shapeRenderer;
     private final SpriteBatch batch;
     private final FontRenderer fonts;
     private final GlyphLayout glyphLayout = new GlyphLayout();
     private final SettingsScreen settings = new SettingsScreen();
+    private final CreditsScreen credits = new CreditsScreen();
 
     private final Color glassBg = new Color(0.05f, 0.07f, 0.10f, 0.88f);
     private final Color goldAccent = new Color(1.0f, 0.85f, 0.40f, 1f);
@@ -48,6 +49,7 @@ public final class MainMenuScreen {
     private int selectedChapter = 1;
     private float animTime = 0f;
     private String notice = null;
+    private boolean creditsTestStarted = false;
     private float noticeTimer = 0f;
 
     private static final float BTN_W = 480f;
@@ -74,6 +76,7 @@ public final class MainMenuScreen {
         rebuildItems();
         selection = 0;
         settings.close();
+        credits.close();
     }
 
     public void openSettings() {
@@ -84,12 +87,21 @@ public final class MainMenuScreen {
         return settings.isOpen();
     }
 
+    public void openCredits() {
+        credits.open("Main Menu");
+    }
+
+    public boolean isCreditsOpen() {
+        return credits.isOpen();
+    }
+
     private void rebuildItems() {
         items.clear();
         if (GameProfile.get().hasContinue()) items.add(Item.CONTINUE);
         items.add(Item.CHAPTER);
         items.add(Item.ARENA);
         items.add(Item.SETTINGS);
+        items.add(Item.CREDITS);
         items.add(Item.EXIT);
         if (selection >= items.size()) selection = 0;
     }
@@ -106,6 +118,8 @@ public final class MainMenuScreen {
     }
 
     private float btnY(int i, float h) {
+        // Seven entries (with CONTINUE) start a little higher and pack closer so the list clears the footer.
+        if (items.size() > 6) return h * 0.47f - i * (BTN_STEP - 6f);
         return h * 0.44f - i * BTN_STEP;
     }
 
@@ -120,6 +134,14 @@ public final class MainMenuScreen {
         if (settings.isOpen()) {
             settings.update(w, h, mouseX, mouseY);
             if (!settings.isOpen()) rebuildItems();
+            return Action.NONE;
+        }
+        if (CreditsScreen.screenshotTestRequested() && !creditsTestStarted) {
+            creditsTestStarted = true;
+            openCredits();
+        }
+        if (credits.isOpen()) {
+            credits.update(w, h, mouseX, mouseY, delta);
             return Action.NONE;
         }
 
@@ -185,6 +207,10 @@ public final class MainMenuScreen {
                 click();
                 openSettings();
                 return Action.NONE;
+            case CREDITS:
+                click();
+                openCredits();
+                return Action.NONE;
             case EXIT:
             default:
                 click();
@@ -244,7 +270,7 @@ public final class MainMenuScreen {
         shapeRenderer.end();
 
         float titleBlockY = h * 0.62f;
-        boolean menuActive = !settings.isOpen();
+        boolean menuActive = !settings.isOpen() && !credits.isOpen();
 
         shapeRenderer.begin(ShapeType.Filled);
         shapeRenderer.setColor(goldAccent);
@@ -324,6 +350,10 @@ public final class MainMenuScreen {
                     label = "SETTINGS";
                     col = sel ? goldAccent : normal;
                     break;
+                case CREDITS:
+                    label = "CREDITS & SOURCES";
+                    col = sel ? goldAccent : normal;
+                    break;
                 case EXIT:
                 default:
                     label = "EXIT GAME";
@@ -352,6 +382,9 @@ public final class MainMenuScreen {
 
         if (settings.isOpen()) {
             settings.render(shapeRenderer, batch, fonts, w, h);
+        }
+        if (credits.isOpen()) {
+            credits.render(shapeRenderer, batch, fonts, w, h);
         }
     }
 

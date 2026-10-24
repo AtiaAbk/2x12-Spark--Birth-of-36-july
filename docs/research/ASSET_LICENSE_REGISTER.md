@@ -1,59 +1,84 @@
 # ASSET LICENSE AND ATTRIBUTION REGISTER
-**Project:** Spark: Birth of 36 July (Repository: `2x12`)  
-**Strict Policy:** 100% Free, Open-Source, Permissive, Commercial-Ready (CC0, SIL OFL 1.1, Apache 2.0, MIT, BSD). Zero pirated or proprietary copyrighted assets.
+
+**Project:** Spark: Birth of 36 July (Repository: `2x12`)
+**Last audited:** 2026-10-24 (work order task T4), against `assets/assets.txt`, `lwjgl3/src/main/resources/`, the Gradle build files and the code that loads each file.
+**Rule:** this register lists what actually ships, not what is planned. Every file in `assets/` and every bundled library has a row. If provenance is not documented it says **unknown**; nothing here is guessed. Reference §11.1 / work order §5: no ripped, unlicensed or "fair use" audio or models.
+
+The in-game **Credits & Sources** screen (main menu > CREDITS & SOURCES, and the Level 6 epilogue objective) shows the fonts, libraries and procedural-content statement below. Keep the two in step (`core/src/main/java/bd/spark36/hud/screens/CreditsContent.java`).
 
 ---
 
-## 1. TYPOGRAPHY & FONTS
+## 1. Fonts (`assets/fonts/`)
 
-| Asset Name | Source / Provider | License | Intended Usage | Integration Method |
+| File | Upstream | Licence | Licence text in repo | Used by |
 |---|---|---|---|---|
-| **Noto Sans Bengali** | Google Fonts | **SIL Open Font License 1.1 (OFL-1.1)** | Bengali UI typography, dialogue, subtitles, memorial inscriptions, placards | TTF loaded via `FreeTypeFontGenerator` |
-| **Liberation Sans** | Red Hat / Fedora Project | **SIL Open Font License 1.1 (OFL-1.1)** | English Latin UI, numeric readouts, debug overlay, HUD labels | TTF loaded via `FreeTypeFontGenerator` |
-| **Cinzel Decorative / EB Garamond** | Google Fonts | **SIL Open Font License 1.1 (OFL-1.1)** | Stylized historical chapter headers, "Where Winds Meet" victory card | TTF loaded via `FreeTypeFontGenerator` |
+| `NotoSansBengali-Variable.ttf` | The Noto Project Authors, https://github.com/notofonts/bengali (Copyright 2022) | SIL Open Font License 1.1 | `assets/fonts/LICENSE-NotoSansBengali.txt` | `hud/FontRenderer` (Bengali dialogue, subtitles, Bengali titles) |
+| `LiberationSans-Regular.ttf`, `LiberationSans-Bold.ttf` | Liberation Fonts, https://github.com/liberationfonts (Copyright (c) 2012 Red Hat, Inc.; digitized data (c) 2010 Google Corporation) | SIL Open Font License 1.1 | `assets/fonts/LICENSE-LiberationSans.txt` | `hud/FontRenderer` (all Latin UI text) |
+
+No other fonts ship. (Earlier versions of this file listed Cinzel Decorative / EB Garamond; they are **not in the repository** and have been removed from this register.)
 
 ---
 
-## 2. PBR MATERIAL TEXTURES
+## 2. Images
 
-| Material | Resolution | Source / Provider | License | Maps Included |
+| File | Size | Provenance | Licence | Used by |
 |---|---|---|---|---|
-| **Historic Red Terracotta Brick** | 1024×1024 / 2048×2048 | AmbientCG / Poly Haven (`brick_wall_001`) | **Creative Commons Zero (CC0)** | Albedo, Normal (GL), Roughness, Ambient Occlusion |
-| **Colonial Lime Plaster / Chunam** | 1024×1024 | AmbientCG (`plaster_rough_001`) | **Creative Commons Zero (CC0)** | Albedo, Normal (GL), Roughness |
-| **Weathered Flagstone Paving** | 1024×1024 | AmbientCG (`cobblestone_large_01`) | **Creative Commons Zero (CC0)** | Albedo, Normal (GL), Roughness, AO |
-| **Lush Tropical Grass / Lawn** | 1024×1024 | Poly Haven (`mossy_ground`) | **Creative Commons Zero (CC0)** | Albedo, Normal (GL), Roughness |
-| **Dark Teak Architectural Wood** | 1024×1024 | AmbientCG (`wood_floor_002`) | **Creative Commons Zero (CC0)** | Albedo, Normal (GL), Roughness |
-| **Curzon Pond Water Surface** | 512×512 | Procedural / CC0 Normal Waves | **Creative Commons Zero (CC0)** | Animated DuDv Flow Normal Map |
-| **Wrought Iron Heritage Railing** | 512×512 | Procedural Alpha-Mask | **Creative Commons Zero (CC0)** | Albedo with Alpha cutout, Roughness |
+| `assets/maps/campus_map.png` | 1264 × 795 | **Unknown.** First committed in `f0fba93` (2026-09-24) with no source note. It is an illustrated map with blurred labels (see `LOCATION_CurzonHall.md`); who made it and how is not documented. | **Unknown** | `WhereWindsMeetHUD` tactical map overlay (M key) |
+| `assets/cinematic_finish_bg.png` | 1024 × 558 | **Unknown.** No source note in the commit history. | **Unknown** | `WhereWindsMeetHUD` cinematic finish / victory background |
+| `assets/libgdx.png` | 378 × 63 | libGDX logo from the project template (gdx-liftoff). | libGDX project material | **Not used at run time** (template leftover; kept in repo) |
+| `lwjgl3/src/main/resources/libgdx16/32/64/128.png` | 16–128 px | libGDX logo icons from the project template (gdx-liftoff). | libGDX project material | `DesktopLauncher` window icon |
+
+**Action needed (owner):** confirm who created `campus_map.png` and `cinematic_finish_bg.png` and under what terms. Until then they must not be described as licensed or CC0 anywhere.
 
 ---
 
-## 3. AUDIO & SOUND EFFECTS (STAGE 9 TARGET)
+## 3. Shaders and configuration (project-original)
 
-| Sound Category | Description | Source / Collection | License |
-|---|---|---|---|
-| **Footsteps (Lawn Grass, Stone Pavers, Mud, Water)** | Physical walking & running steps | Sonniss GDC Community Archive / Freesound CC0 | **Creative Commons Zero (CC0)** |
-| **Lathi / Bamboo Staff Swishes & Impact** | Aerodynamic whoosh, blunt wood clack, body thuds | Sonniss GDC Foley Archive / Freesound CC0 | **Creative Commons Zero (CC0)** |
-| **Defensive Parry & Guard Deflection** | Resonant wood-on-wood and wood-on-metal clang | Freesound.org CC0 | **Creative Commons Zero (CC0)** |
-| **Pukur Water Ambience & Splash** | Gentle pond ripples, wading slosh, lotus splashes | Freesound.org CC0 | **Creative Commons Zero (CC0)** |
-| **Campus Birdsong & Wind Ambience** | Doel (Magpie Robin), Asian koel, soft breeze in banyan trees | Bangladesh Wildlife Sound Archive / CC0 Field Rec | **Creative Commons Zero (CC0)** |
-| **Distant Mass Chants ("We Want Justice")** | Ambient reverbed crowd murmur (subtle background) | July 2024 Archival recordings (Fair Use / Creative Commons) | **Attribution / Cultural Archive** |
+| File | Origin | Used by |
+|---|---|---|
+| `assets/shaders/postprocess.vert`, `postprocess.frag`, `bloom_extract.frag`, `bloom_blur.frag` | Written for this project | `render/HdrPostProcessor` |
+| `assets/shaders/water.vert`, `water.frag` | Written for this project | `render/WaterRenderer` |
+| `assets/visuals.properties` | Project configuration | `render/RenderPipelineConfig` |
+| `assets/data/historical_sources.json` | Project research data (mirror of `docs/RESEARCH_SOURCES.md`) | `history/SourceCatalog` (credits screen, memorial context cards) |
 
 ---
 
-## 4. SOFTWARE LIBRARIES & ENGINE DEPENDENCIES
+## 4. Audio
 
-| Library | Version | Repository / Group | License | Description |
+All sound the player hears is **synthesised in memory at run time** by `audio/SoundManager` and `audio/AmbienceSynth` (effects, bell, footsteps, tear-gas hiss, campus and crowd ambience beds). No recordings are used.
+
+| File | Status | Origin |
+|---|---|---|
+| `assets/audio/bell.wav`, `block.wav`, `footstep.wav`, `gas_hiss.wav`, `kick.wav`, `objective.wav`, `punch.wav`, `splash.wav`, `ui_click.wav`, `whoosh.wav` (10 files) | **Unused at run time, kept in repo.** `SoundManager` now builds the same sounds in memory and never reads these files. | Output of earlier builds of this project's own synthesiser (which wrote .wav files to disk, see the `SoundManager` class comment). Not third-party material. |
+
+Removed from this register because they **were never in the repository**: the CC0 audio packs (Sonniss GDC, Freesound, "Bangladesh Wildlife Sound Archive") and the row **"Distant Mass Chants — July 2024 archival recordings (Fair Use)" — NOT USED**. No archival or protest recording ships, and none may be added unless it is legally cleared and registered here (reference §11.1).
+
+---
+
+## 5. Textures and 3D geometry (procedural)
+
+All textures are generated as pixmaps in code (`world/TextureFactory`), and all meshes are built in code with libGDX `ModelBuilder` (buildings, trees, characters, props). No texture image or 3D model file ships.
+
+Removed from this register because they **were never in the repository**: the AmbientCG / Poly Haven CC0 PBR texture rows (brick, plaster, flagstone, grass, teak, water normal, iron railing) — **NOT USED**.
+
+---
+
+## 6. Software libraries (from `build.gradle`, `core/build.gradle`, `lwjgl3/build.gradle`, `gradle.properties`)
+
+| Library | Version | Group / artifact | Licence | Purpose |
 |---|---|---|---|---|
-| **libGDX** | 1.14.2 | `com.badlogicgames.gdx` | **Apache License 2.0** | Core 3D engine, math, scene graph, input, sound |
-| **LWJGL 3** | 3.3.3+ | `org.lwjgl` | **BSD-3-Clause** | Desktop cross-platform OpenGL, windowing, OpenAL |
-| **gdx-freetype** | 1.14.2 | `com.badlogicgames.gdx` | **Apache License 2.0** | FreeType font rasterization for dynamic unicode rendering |
-| **gdx-gltf** (Optional) | 2.2.1 | `net.mgsx.gltf` | **Apache License 2.0** | PBR shader pipeline, GLTF/GLB runtime mesh loading |
+| libGDX (`gdx`, `gdx-backend-lwjgl3`, `gdx-platform` natives) | 1.14.2 | `com.badlogicgames.gdx` | Apache License 2.0 | Engine core, desktop backend |
+| gdx-freetype (+ `gdx-freetype-platform` natives) | 1.14.2 | `com.badlogicgames.gdx` | Apache License 2.0; bundled FreeType library under the FreeType License (FTL), credit shown in game | Runtime TTF rasterisation |
+| gdx-lwjgl3-angle | 1.14.2 | `com.badlogicgames.gdx` | Apache License 2.0 (wraps ANGLE, BSD-3-Clause) | Optional ANGLE backend (`-Dbd.spark36.angle=true`) |
+| LWJGL 3 (`lwjgl`, `-glfw`, `-jemalloc`, `-openal`, `-opengl`, `-stb`) | 3.4.1 | `org.lwjgl` | BSD-3-Clause | Windowing, OpenGL, OpenAL |
+| gdx-gltf | 2.2.1 | `com.github.mgsx-dev.gdx-gltf:gltf` | Apache License 2.0 | PBR shaders and material attributes |
+| JUnit Jupiter | 5.10.0 | `org.junit.jupiter` | EPL 2.0 | Tests only, not shipped |
 
 ---
 
-## 5. AUDIT AND COMPLIANCE RULES
+## 7. Audit rules
 
-1. **Clean Room Verification:** Every binary asset (texture image, sound WAV/OGG, font TTF) added to `assets/` must have an entry in this register with its upstream URL and license text.
-2. **No Generative AI Watermarks or Artifacts:** Textures must be tileable seamless power-of-two (256, 512, 1024, 2048) without burned-in watermarks.
-3. **No Commercial Royalties or NDAs:** All components are permissible for public distribution on GitHub, itch.io, or Steam.
+1. Every binary file added to `assets/` or `lwjgl3/src/main/resources/` needs a row here with upstream URL and licence before it is committed. Unknown provenance is written as **unknown**, never guessed.
+2. No "fair use" or unlicensed media. No recordings of real protests or real people.
+3. When a file stops being used, mark it "unused, kept in repo" or delete it; do not leave it described as in use.
+4. Re-check this file against `assets/assets.txt` whenever assets change.

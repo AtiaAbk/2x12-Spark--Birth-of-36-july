@@ -92,6 +92,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private static final int PAUSE_ITEM_CHECKPOINT = 7; // T5: restart from mid-level checkpoint
     // Settings screen opened from the pause menu (bd.spark36.hud.screens.SettingsScreen); pause stays open underneath.
     private final bd.spark36.hud.screens.SettingsScreen settingsScreen = new bd.spark36.hud.screens.SettingsScreen();
+    private final bd.spark36.hud.screens.CreditsScreen creditsScreen = new bd.spark36.hud.screens.CreditsScreen(); // T4
     private boolean pauseSettingsTestDone = false;
     private int exitConfirmSelection = 0; // 0=Cancel, 1=Quit Game
     private boolean isVictoryOpen = false;
@@ -465,6 +466,7 @@ public class WhereWindsMeetHUD implements Disposable {
             settingsScreen.open("Pause Menu");
             pauseSettingsTestDone = true;
         }
+        if (creditsScreen.isOpen()) { creditsScreen.update(virtW, virtH, mouseX, mouseY, delta); return; } // T4
         if (settingsScreen.isOpen()) {
             if (!isPauseMenuOpen) settingsScreen.close();
             else {
@@ -1093,6 +1095,8 @@ public class WhereWindsMeetHUD implements Disposable {
             if (settingsScreen.isOpen()) settingsScreen.render(shapeRenderer, spriteBatch, fonts, w, h);
             else renderPauseMenu(w, h);
         }
+
+        if (creditsScreen.isOpen()) creditsScreen.render(shapeRenderer, spriteBatch, fonts, w, h); // T4
 
         // 6. Debug Bounds & Overlap Check Overlay (Toggle via F3 / Grave `)
         if (debugOverlayEnabled) {
@@ -1967,6 +1971,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.promptFont.draw(spriteBatch, "[E] / [ESC] Close Archive", mx + mw - 240f, my + 28f);
 
         spriteBatch.end();
+        bd.spark36.hud.screens.HistoricalContextCard.render(shapeRenderer, spriteBatch, fonts, entry.id, mx, my + mh + 8f, mw); // T4
     }
 
     // ========================================================
@@ -3807,6 +3812,9 @@ public class WhereWindsMeetHUD implements Disposable {
         bd.spark36.level.LevelConfig.unlockNextLevel(currentLvl);
     }
 
+    /** T4: Credits & Sources overlay (Level 6 epilogue objective). */
+    public void openCredits(String fromLabel) { creditsScreen.open(fromLabel); }
+
     /** Open memorial modal directly (used for automated visual verification) */
     public void openMemorialModal(MemorialEntry entry) {
         this.activeModalEntry = entry;
@@ -3859,7 +3867,7 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     public boolean isModalOpen() {
-        return activeModalEntry != null || isMapOpen || isPauseMenuOpen || isExitConfirmOpen || isVictoryOpen || isDisqualified || isDefeated || isHelpControlsOpen;
+        return creditsScreen.isOpen() || activeModalEntry != null || isMapOpen || isPauseMenuOpen || isExitConfirmOpen || isVictoryOpen || isDisqualified || isDefeated || isHelpControlsOpen;
     }
 
     /** Reset HUD state (used when returning from main menu or replaying) */
@@ -3870,6 +3878,7 @@ public class WhereWindsMeetHUD implements Disposable {
         isHelpControlsOpen = false;
         isExitConfirmOpen = false;
         settingsScreen.close();
+        creditsScreen.close(); // T4
         pauseMenuSelection = 0;
         exitConfirmSelection = 0;
         isVictoryOpen = false;
