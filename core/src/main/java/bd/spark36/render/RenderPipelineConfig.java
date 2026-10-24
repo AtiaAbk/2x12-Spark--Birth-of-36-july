@@ -31,22 +31,26 @@ public final class RenderPipelineConfig {
 
     // ── Exposure & Color Grading ──────────────────────────────────────────
     /** Base photographic exposure multiplier (linear scale, 1.0 = baseline daylight). */
-    public static float exposure = getFloatProperty("bd.spark36.exposure", 1.02f);
+    public static float exposure = getFloatProperty("bd.spark36.exposure", 1.08f);
 
     /** Midpoint-anchored image contrast. */
-    public static float contrast = getFloatProperty("bd.spark36.contrast", 1.05f);
+    public static float contrast = getFloatProperty("bd.spark36.contrast", 1.02f);
 
-    /** Color saturation multiplier (1.0 = neutral, 1.18 = lush natural summer vibrance). */
-    public static float saturation = getFloatProperty("bd.spark36.saturation", 1.18f);
+    /**
+     * Color saturation multiplier (1.0 = neutral, 1.04 = mild vibrance). The per-channel ACES curve
+     * already adds saturation in the darks, so values above ~1.10 crush blue out of foliage
+     * (yellow-green) and push brick to pure red (T8 colour-cast fix).
+     */
+    public static float saturation = getFloatProperty("bd.spark36.saturation", 1.04f);
 
-    /** White balance temperature shift (-1.0 to 1.0, 0.14 = warm summer daylight). */
-    public static float colorTemperature = getFloatProperty("bd.spark36.colorTemperature", 0.14f);
+    /** White balance temperature shift (-1.0 to 1.0, 0.08 = slightly warm; the sun colour carries the warmth). */
+    public static float colorTemperature = getFloatProperty("bd.spark36.colorTemperature", 0.08f);
 
-    /** White balance tint shift (-1.0 to 1.0, 0.02 = subtle lush warm tint). */
-    public static float colorTint = getFloatProperty("bd.spark36.colorTint", 0.02f);
+    /** White balance tint shift (-1.0 to 1.0, positive = green; -0.01 = faint magenta offsetting lawn/canopy bounce). */
+    public static float colorTint = getFloatProperty("bd.spark36.colorTint", -0.01f);
 
     /** Shadow detail recovery / lift (prevents crushed blacks in verandas & foliage without blanching). */
-    public static float shadowLift = getFloatProperty("bd.spark36.shadowLift", 0.005f);
+    public static float shadowLift = getFloatProperty("bd.spark36.shadowLift", 0.006f);
 
     // ── Bloom Configuration ───────────────────────────────────────────────
     /** Minimum luminance threshold to trigger HDR bloom extraction (values in linear space). */

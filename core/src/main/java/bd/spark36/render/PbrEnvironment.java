@@ -53,14 +53,17 @@ public class PbrEnvironment implements Disposable {
             Gdx.app.log(TAG, "Generating outdoor IBL environment maps...");
             IBLBuilder ibl = IBLBuilder.createOutdoor(sunLight);
 
-            // Calibrated summer Dhaka campus atmosphere
-            // Sky zenith: filmic slate-azure
-            ibl.nearSkyColor.set(0.24f, 0.42f, 0.66f, 1f);
-            // Sky horizon: soft pearlescent mist
-            ibl.farSkyColor.set(0.68f, 0.78f, 0.86f, 1f);
-            // Ground bounce: warm terracotta brick / lush monsoon grass reflection
-            ibl.nearGroundColor.set(0.38f, 0.32f, 0.25f, 1f);
-            ibl.farGroundColor.set(0.44f, 0.40f, 0.35f, 1f);
+            // Calibrated summer Dhaka campus atmosphere (linear radiance).
+            // T8: the old sky (0.24/0.42/0.66 zenith, 0.68/0.78/0.86 horizon) was cyan-green and fed a
+            // green cast into every shaded surface; these keep about the same brightness with a bluer,
+            // less green sky and a less yellow ground bounce.
+            // Sky zenith: clear July blue
+            ibl.nearSkyColor.set(0.20f, 0.36f, 0.78f, 1f);
+            // Sky horizon: humid pale blue haze
+            ibl.farSkyColor.set(0.56f, 0.66f, 0.84f, 1f);
+            // Ground bounce: brick paving and lawn, near neutral warm
+            ibl.nearGroundColor.set(0.34f, 0.30f, 0.25f, 1f);
+            ibl.farGroundColor.set(0.42f, 0.40f, 0.36f, 1f);
 
             // Build 32x32 diffuse irradiance cubemap
             diffuseIrradianceMap = ibl.buildIrradianceMap(RenderPipelineConfig.IRRADIANCE_MAP_SIZE);
