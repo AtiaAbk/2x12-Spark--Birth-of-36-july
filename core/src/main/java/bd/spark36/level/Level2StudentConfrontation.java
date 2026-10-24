@@ -32,8 +32,9 @@ import bd.spark36.mission.ObjectiveType;
  * LEVEL 2: "The Day the Streets Changed" (যেদিন পথ বদলে গেল)
  * Period: July 15, 2024 (Armed counter-protesters attack peaceful students at DU).
  * Environment: Barricaded Raju Anti-Terrorism Sculpture & Arts Faculty Crossroads.
- * Focus: Non-lethal martial arts self-defense, dodging attacks, rescuing wounded students to medical triage.
- * Combat: Active martial arts self-defense against Helmeted Aggressors. Hitting innocents = instant failure.
+ * Focus: Get injured students to the medical shelter. Aggressors are a hazard to evade, block or break away from.
+ * Combat: Defensive self-protection only (FICTIONAL GAMEPLAY). Knockouts are optional and never required.
+ * Hitting unarmed students = instant disqualification.
  */
 public class Level2StudentConfrontation implements CampaignLevel {
 
@@ -47,28 +48,25 @@ public class Level2StudentConfrontation implements CampaignLevel {
     private final Array<ModelInstance> barricadeInstances = new Array<>();
     private final java.util.List<float[]> colliders = new java.util.ArrayList<>();
 
-    // Objectives:
-    // 1. Disarm Aggressor 1 (Raju Sculpture East)
-    // 2. Disarm Aggressor 2 (Raju Sculpture West)
-    // 3. Disarm Aggressor 3 (Arts Roadway)
-    // 4. Rescue Injured Student 1 (Near Raju Base)
-    // 5. Rescue Injured Student 2 (Arts Faculty Gate)
-    private final boolean[] objectivesDone = new boolean[5];
-    private final Vector3[] objectiveWaypoints = {
-        new Vector3(44f, 0f, 38f),  // Aggressor 1
-        new Vector3(38f, 0f, 44f),  // Aggressor 2
-        new Vector3(22f, 0f, 32f),  // Aggressor 3
-        new Vector3(44f, 0f, 42f),  // Injured Student 1
-        new Vector3(-20f, 0f, 28f)  // Injured Student 2
-    };
+    // Objectives (defensive, non-lethal; reference section 8.3):
+    // 1. Stabilize injured student at Raju Sculpture
+    // 2. Escort that student to the medical shelter
+    // 3. Reach the second injured student on the Arts Faculty road
+    // 4. Escort the second student to the medical shelter
+    // 5. Secure the medical shelter
+    // Aggressors are a hazard to evade / block / break away from. Knockouts are optional
+    // and never complete an objective in story mode.
+    private final Level2ShelterObjectives objectives = new Level2ShelterObjectives();
 
-    private static final String[] CHECKLIST = {
-        "1. Disarm Aggressors at Raju Roundabout",
-        "2. Neutralize Flanking Attacker",
-        "3. Clear Arts Faculty Approach Road",
-        "4. Triage Injured Student at Raju Sculpture",
-        "5. Secure Emergency Medical Triage Station"
+    /** Aggressor spawn points (hazards around the injured students and the approach road). */
+    private final Vector3[] aggressorSpawns = {
+        new Vector3(44f, 0f, 38f),  // Raju Sculpture east
+        new Vector3(38f, 0f, 44f),  // Raju Sculpture west
+        new Vector3(22f, 0f, 36f)   // Arts Faculty approach road
     };
+    private final boolean[] aggressorKnockoutCounted = new boolean[3];
+
+    private static final String[] CHECKLIST = Level2ShelterObjectives.CHECKLIST;
 
     public Level2StudentConfrontation() {
         initDefaultObjectives();
@@ -76,11 +74,18 @@ public class Level2StudentConfrontation implements CampaignLevel {
 
     private void initDefaultObjectives() {
         missionTracker.reset();
-        missionTracker.addObjective(new MissionObjective("l2_1", "DEFEND RAJU ROUNDABOUT", "Target: Helmeted Aggressor near Raju Sculpture", CHECKLIST[0], ObjectiveType.TRIGGER_EVENT, objectiveWaypoints[0], 4.5f, true));
-        missionTracker.addObjective(new MissionObjective("l2_2", "INTERCEPT FLANKING AGGRESSOR", "Target: Secondary Aggressor on west roadway", CHECKLIST[1], ObjectiveType.TRIGGER_EVENT, objectiveWaypoints[1], 4.5f, false));
-        missionTracker.addObjective(new MissionObjective("l2_3", "SECURE ARTS FACULTY APPROACH", "Target: Roadway barricade enforcer", CHECKLIST[2], ObjectiveType.TRIGGER_EVENT, objectiveWaypoints[2], 4.5f, false));
-        missionTracker.addObjective(new MissionObjective("l2_4", "TRIAGE INJURED STUDENT", "Target: Fallen student requiring first aid", CHECKLIST[3], ObjectiveType.INTERACT, objectiveWaypoints[3], 3.5f, false));
-        missionTracker.addObjective(new MissionObjective("l2_5", "EVACUATE TO MEDICAL TENT", "Target: Emergency Medical Triage Tent", CHECKLIST[4], ObjectiveType.INTERACT, objectiveWaypoints[4], 4.0f, false));
+        for (int i = 0; i < Level2ShelterObjectives.COUNT; i++) {
+            boolean shelter = (i == Level2ShelterObjectives.ESCORT_FIRST || i == Level2ShelterObjectives.ESCORT_SECOND
+                || i == Level2ShelterObjectives.SECURE_SHELTER);
+            missionTracker.addObjective(new MissionObjective("l2_" + (i + 1), Level2ShelterObjectives.TITLES[i],
+                Level2ShelterObjectives.TARGETS[i], CHECKLIST[i], ObjectiveType.INTERACT, objectives.getWaypoint(i),
+                shelter ? Level2ShelterObjectives.SHELTER_RADIUS : Level2ShelterObjectives.STUDENT_RADIUS, i == 0));
+        }
+    }
+
+    /** Pure objective logic (package-private for headless tests). */
+    Level2ShelterObjectives getShelterObjectives() {
+        return objectives;
     }
 
     private float hitStopTimer = 0f;
@@ -119,41 +124,19 @@ public class Level2StudentConfrontation implements CampaignLevel {
 
     @Override
     public String getMissionTitle() {
-        int next = getNextObjectiveIndex();
-        switch (next) {
-            case 0: return "DEFEND RAJU ROUNDABOUT";
-            case 1: return "INTERCEPT FLANKING AGGRESSOR";
-            case 2: return "SECURE ARTS FACULTY APPROACH";
-            case 3: return "TRIAGE INJURED STUDENT";
-            case 4: return "EVACUATE TO MEDICAL TENT";
-            default: return "CAMPUS DEFENDED";
-        }
+        if (objectives.isComplete()) return "STUDENTS SHELTERED";
+        return Level2ShelterObjectives.TITLES[objectives.nextIndex()];
     }
 
     @Override
     public String getMissionTarget() {
-        int next = getNextObjectiveIndex();
-        switch (next) {
-            case 0: return "Target: Helmeted Aggressor near Raju Sculpture";
-            case 1: return "Target: Secondary Aggressor on west roadway";
-            case 2: return "Target: Roadway barricade enforcer";
-            case 3: return "Target: Fallen student requiring first aid";
-            case 4: return "Target: Emergency Medical Triage Tent";
-            default: return "All objectives secured";
-        }
-    }
-
-    private int getNextObjectiveIndex() {
-        for (int i = 0; i < objectivesDone.length; i++) {
-            if (!objectivesDone[i]) return i;
-        }
-        return objectivesDone.length - 1;
+        if (objectives.isComplete()) return "Injured students safe in the medical shelter";
+        return Level2ShelterObjectives.TARGETS[objectives.nextIndex()];
     }
 
     @Override
     public Vector3 getActiveWaypoint() {
-        int idx = getNextObjectiveIndex();
-        return objectiveWaypoints[idx];
+        return objectives.getActiveWaypoint();
     }
 
     @Override
@@ -168,17 +151,12 @@ public class Level2StudentConfrontation implements CampaignLevel {
 
     @Override
     public boolean isChecklistItemDone(int index) {
-        if (index >= 0 && index < objectivesDone.length) {
-            return objectivesDone[index];
-        }
-        return false;
+        return objectives.isDone(index);
     }
 
     @Override
     public int getCompletedObjectiveCount() {
-        int count = 0;
-        for (boolean b : objectivesDone) if (b) count++;
-        return count;
+        return objectives.getCompletedCount();
     }
 
     @Override
@@ -188,14 +166,8 @@ public class Level2StudentConfrontation implements CampaignLevel {
 
     @Override
     public String getContextPrompt(Vector3 playerPos) {
-        // Injured student 1 near Raju base
-        if (!objectivesDone[3] && playerPos.dst(objectiveWaypoints[3]) <= 3.5f) {
-            return "[E] APPLY FIRST AID & STABILIZE INJURED STUDENT";
-        }
-        // Medical tent near Arts Gate
-        if (!objectivesDone[4] && playerPos.dst(objectiveWaypoints[4]) <= 4.0f) {
-            return "[E] COORDINATE EMERGENCY MEDICAL SHELTER";
-        }
+        String prompt = objectives.contextPrompt(playerPos);
+        if (prompt != null) return prompt;
         if (crowd != null && crowd.getClosestInteractable(playerPos, 2.6f) != null) {
             return "[E] TALK TO DU STUDENT";
         }
@@ -204,39 +176,64 @@ public class Level2StudentConfrontation implements CampaignLevel {
 
     @Override
     public boolean onInteract(Vector3 playerPos, PlayerController player, WhereWindsMeetHUD hud) {
-        // Injured student 1
-        if (!objectivesDone[3] && playerPos.dst(objectiveWaypoints[3]) <= 3.5f) {
-            objectivesDone[3] = true;
-            missionTracker.completeObjective(3);
-            hud.triggerMissionToast("FIRST AID ADMINISTERED", getCompletedObjectiveCount());
-            checkCompletion(hud);
-            return true;
-        }
-        // Medical tent
-        if (!objectivesDone[4] && playerPos.dst(objectiveWaypoints[4]) <= 4.0f) {
-            objectivesDone[4] = true;
-            missionTracker.completeObjective(4);
-            hud.triggerMissionToast("MEDICAL SHELTER SECURED", getCompletedObjectiveCount());
+        int completed = objectives.interact(playerPos);
+        if (completed >= 0) {
+            missionTracker.completeObjective(completed);
+            if (hud != null) {
+                String toast;
+                switch (completed) {
+                    case Level2ShelterObjectives.STABILIZE_FIRST:
+                    case Level2ShelterObjectives.STABILIZE_SECOND:
+                        toast = "FIRST AID GIVEN — ESCORT TO SHELTER"; break;
+                    case Level2ShelterObjectives.ESCORT_FIRST:
+                    case Level2ShelterObjectives.ESCORT_SECOND:
+                        toast = "STUDENT SAFE IN MEDICAL SHELTER"; break;
+                    default:
+                        toast = "MEDICAL SHELTER SECURED"; break;
+                }
+                hud.triggerMissionToast(toast, getCompletedObjectiveCount());
+            }
             checkCompletion(hud);
             return true;
         }
         // Student crowd interaction
-        if (crowd != null && crowd.interactWithClosest(playerPos, 2.6f, getLevelNumber(), hud)) {
+        if (crowd != null && hud != null && crowd.interactWithClosest(playerPos, 2.6f, getLevelNumber(), hud)) {
             return true;
         }
         return false;
     }
 
     private void checkCompletion(WhereWindsMeetHUD hud) {
-        if (isLevelComplete()) {
+        if (isLevelComplete() && hud != null) {
             hud.triggerVictory();
         }
     }
 
+    /**
+     * Story mode: complete only when the injured students are sheltered (zero knockouts allowed).
+     * Arena mode (fictional folk-sport sparring, separate from the campaign) additionally
+     * accepts subduing all three sparring aggressors, preserving the original Arena loop.
+     */
     @Override
     public boolean isLevelComplete() {
-        for (boolean b : objectivesDone) if (!b) return false;
+        if (objectives.isComplete()) return true;
+        return LevelConfig.getGameMode() == LevelConfig.GameMode.ARENA && allAggressorsSubdued();
+    }
+
+    private boolean allAggressorsSubdued() {
+        if (aggressors.size == 0) return false;
+        for (HelmetGoon g : aggressors) if (!g.isKnockedOut()) return false;
         return true;
+    }
+
+    /** Disqualification check for striking unarmed students (package-private for tests). */
+    String checkCivilianStrike(Vector3 pos, float headingDeg) {
+        return CivilianStrikeRule.check(crowd, pos, headingDeg, CivilianStrikeRule.STUDENT_VIOLATION);
+    }
+
+    /** Test hook: inject a headless crowd without building the 3D world. */
+    void setCrowdForTest(CampusCrowd crowd) {
+        this.crowd = crowd;
     }
 
     @Override
@@ -273,17 +270,17 @@ public class Level2StudentConfrontation implements CampaignLevel {
         // Spawn 3 Helmeted Aggressors
         HelmetGoon g1 = new HelmetGoon(textures);
         g1.setRole(HelmetGoon.Role.HELMETED_AGGRESSOR);
-        g1.reset(objectiveWaypoints[0].x, objectiveWaypoints[0].z);
+        g1.reset(aggressorSpawns[0].x, aggressorSpawns[0].z);
         aggressors.add(g1);
 
         HelmetGoon g2 = new HelmetGoon(textures);
         g2.setRole(HelmetGoon.Role.HELMETED_AGGRESSOR);
-        g2.reset(objectiveWaypoints[1].x, objectiveWaypoints[1].z);
+        g2.reset(aggressorSpawns[1].x, aggressorSpawns[1].z);
         aggressors.add(g2);
 
         HelmetGoon g3 = new HelmetGoon(textures);
         g3.setRole(HelmetGoon.Role.HELMETED_AGGRESSOR);
-        g3.reset(objectiveWaypoints[2].x, objectiveWaypoints[2].z);
+        g3.reset(aggressorSpawns[2].x, aggressorSpawns[2].z);
         aggressors.add(g3);
 
         // Build Barricades and Medical Triage Tent
@@ -314,10 +311,10 @@ public class Level2StudentConfrontation implements CampaignLevel {
 
         // Place Medical Triage Tent near Arts Gate
         ModelInstance ti = new ModelInstance(tentModel);
-        ti.transform.setTranslation(objectiveWaypoints[4]);
+        ti.transform.setTranslation(Level2ShelterObjectives.SHELTER_POS);
         barricadeInstances.add(ti);
-        colliders.add(new float[] { objectiveWaypoints[4].x - 2.5f, 0f, objectiveWaypoints[4].z - 2.5f,
-                                    objectiveWaypoints[4].x + 2.5f, 3.5f, objectiveWaypoints[4].z + 2.5f });
+        colliders.add(new float[] { Level2ShelterObjectives.SHELTER_POS.x - 2.5f, 0f, Level2ShelterObjectives.SHELTER_POS.z - 2.5f,
+                                    Level2ShelterObjectives.SHELTER_POS.x + 2.5f, 3.5f, Level2ShelterObjectives.SHELTER_POS.z + 2.5f });
 
         // Combine colliders
         for (float[] b : world.getColliders()) {
@@ -359,10 +356,8 @@ public class Level2StudentConfrontation implements CampaignLevel {
                     closestDst = d;
                     closestAggressor = g;
                 }
-            } else if (!objectivesDone[i]) {
-                objectivesDone[i] = true;
-                hud.triggerMissionToast("AGGRESSOR NEUTRALIZED", getCompletedObjectiveCount());
-                checkCompletion(hud);
+            } else {
+                recordOptionalKnockout(i, hud);
             }
         }
 
@@ -419,8 +414,9 @@ public class Level2StudentConfrontation implements CampaignLevel {
             attackHitProcessed = true;
 
             // Campus Peace Rule: Hitting unarmed peers is strictly forbidden
-            if (crowd != null && crowd.checkHitByPlayer(player.getPosition(), player.getHeadingDegrees(), 2.2f)) {
-                hud.setDisqualified(true, "VIOLATION: You struck an innocent campus student! Unprovoked violence against unarmed peers is strictly forbidden.");
+            String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
+            if (violation != null) {
+                hud.setDisqualified(true, violation);
                 return true;
             }
 
@@ -446,16 +442,27 @@ public class Level2StudentConfrontation implements CampaignLevel {
                     boolean ko = g.takeHitFromPlayer(dmg, isKick, isSweep, player.getHeadingDegrees());
                     if (ko) {
                         camera.addShake(0.24f);
-                        objectivesDone[i] = true;
-                        missionTracker.completeObjective(i);
-                        hud.triggerMissionToast("AGGRESSOR DISARMED", getCompletedObjectiveCount());
-                        checkCompletion(hud);
+                        recordOptionalKnockout(i, hud);
                     }
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * An aggressor was knocked out in self-defence. Optional: it is counted once, shown as a
+     * neutral notice, and never completes a story objective (no reward for knockouts).
+     */
+    private void recordOptionalKnockout(int i, WhereWindsMeetHUD hud) {
+        if (i < 0 || i >= aggressorKnockoutCounted.length || aggressorKnockoutCounted[i]) return;
+        aggressorKnockoutCounted[i] = true;
+        objectives.recordOptionalKnockout();
+        if (hud != null) {
+            hud.triggerMissionToast("ATTACKER DOWN — GET THE STUDENTS TO SAFETY", getCompletedObjectiveCount());
+        }
+        checkCompletion(hud);
     }
 
     @Override
@@ -475,7 +482,7 @@ public class Level2StudentConfrontation implements CampaignLevel {
 
     @Override
     public void completeAllObjectivesForTest() {
-        java.util.Arrays.fill(objectivesDone, true);
+        objectives.completeAllForTest();
         if (missionTracker != null) missionTracker.completeAllForTest();
     }
 
