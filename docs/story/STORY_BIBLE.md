@@ -11,11 +11,13 @@
    The July 2024 uprising was a momentous and painful chapter in modern Bangladeshi history. It must never be trivialized as a generic combat playground. Suffering, martyrdom, and injury are depicted with solemn respect and artistic restraint.
 2. **Fictional Lens for Historical Truth:**
    The player experiences the world through a fictional protagonist—a quiet, principled student among hundreds of thousands of real peers. Real historic leaders, martyrs, and participants are never given invented dialogue. Any quote attributed to a real person must come verbatim from documented public recordings.
-3. **Labels for Historical Transparency:**
-   Every scene, journal entry, and memorial is explicitly classified:
-   - **`[VERIFIED]`**: Documented fact corroborated by primary reports (UN OHCHR, human rights dossiers, public archives).
-   - **`[DRAMATIZED]`**: Narrative scenes constructed to illustrate verified conditions and experiences.
-   - **`[COMPOSITE]`**: Fictional character or dialogue representing the collective voice of thousands of students and citizens.
+3. **Labels for Historical Transparency (5-label scheme, DECISION-011, relabelled 2026-10-24):**
+   Every scene, journal entry and memorial is classified. The evidence for each label is in `docs/RESEARCH_SOURCES.md`.
+   - **`[VERIFIED]`**: supported by reliable sources recorded in the register, such as the UN OHCHR fact-finding report (12 Feb 2025), credible reporting, official records, or several corroborating sources.
+   - **`[CORROBORATED BUT INCOMPLETE]`**: the broad event is supported, but exact time, place or detail is uncertain.
+   - **`[DISPUTED / UNCONFIRMED]`**: sources conflict or do not settle the claim. Such claims are never shown in game as fact, e.g. helicopter gunfire on 19–21 July, the departure route on 5 August, and Abu Sayed's age.
+   - **`[FICTIONAL GAMEPLAY]`**: invented characters, dialogue, mission objectives and combined scenes. This was formerly `[COMPOSITE]`, plus the invented-action half of `[DRAMATIZED]`.
+   - **`[RECONSTRUCTION]`**: visual or spatial recreation of real places and conditions from photos, videos and maps; not surveyed. This was formerly the place/condition half of `[DRAMATIZED]`.
 4. **Strict Prohibition of Violence Against Civilians:**
    The movement was founded upon peaceful democratic reform. Hitting, threatening, or harming innocent bystanders, fellow students, or unarmed citizens results in immediate mission failure.
 
@@ -23,20 +25,24 @@
 
 ## 2. CHARACTER BIBLE
 
-### Protagonist: Rafi (রাফি) — [COMPOSITE]
+### Protagonist: Rafi (রাফি) — [FICTIONAL GAMEPLAY]
+*(The reference document names the protagonist "Arif". Rafi is kept pending user confirmation; see DECISION-009.)*
 - **Role:** Second-year Physics student at Dhaka University (Curzon Hall).
 - **Appearance:** Simple navy-blue panjabi or polo, rolled sleeves, canvas messenger bag with notebooks, dark denim trousers, sandals/sneakers.
 - **Personality:** Observant, gentle, deliberate, unyielding when injustice threatens those he cares for. He does not seek conflict; he seeks truth and equality.
 - **Evolution:** From a passive observer studying for exams in the quiet verandas of Curzon Hall to an active participant standing shoulder-to-shoulder with his generation.
 - **Key Phrase:** *"আমিও থাকব।"* ("I will be there too.")
 
-### Supporting Characters (Campus Community) — [COMPOSITE]
+### Supporting Characters (Campus Community) — [FICTIONAL GAMEPLAY]
 1. **Amina (আমিনা):** Third-year Biochemistry student. Prone to action, organizing first-aid supplies, water distribution, and bandage kits. Fiercely protective of her peers.
 2. **Tanvir (তানভীর):** Arts student from Kala Bhaban. Cultural organizer, writing wall slogans and managing the distribution of printed leaflets and demand sheets.
 3. **Mofiz Chacha (মফিজ চাচা):** Veteran tea-stall owner near Curzon Pukur. Has witnessed student movements across decades (1971, 1990, 2024). Offers quiet wisdom, warm tea, and shelter when storms gather.
 
 ### Historical Figures & Martyrs — [VERIFIED]
-- **Treated with Utmost Reverence:** Abu Sayed, Mir Mugdho, and the hundreds of fallen are commemorated through quiet monuments, historical journal entries, and archival exhibits. They are never portrayed as interactive game pawns. Their documented last acts (distributing water bottles, standing unarmed) are honored through solemn thematic motifs.
+- **Treated with Utmost Reverence:** Abu Sayed, Mir Mugdho and the hundreds of others killed (OHCHR estimates "as many as 1,400") are commemorated through quiet monuments, historical journal entries and archival exhibits.
+  - They are never portrayed as interactive game pawns, prompts or rewards.
+  - Their documented acts are honoured through solemn thematic motifs, never reenacted: Abu Sayed standing with his arms spread before police (register L3-01) and Mugdho handing out water (L3-04).
+  - Mugdho's recorded call ("পানি লাগবে কারো, পানি, পানি?", L3-05) is not used as a gameplay prompt.
 
 ---
 

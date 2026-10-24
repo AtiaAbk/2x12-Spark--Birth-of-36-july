@@ -118,8 +118,8 @@ public class Level3PoliceEscalation implements CampaignLevel {
     public String getMissionTarget() {
         int next = getNextObjectiveIndex();
         switch (next) {
-            case 0: return "Target: Water Supply Station ('Pani lagbe, pani?')";
-            case 1: return "Target: Choking students caught in CS gas";
+            case 0: return "Target: Water Supply Station";
+            case 1: return "Target: Choking students caught in tear gas";
             case 2: return "Target: Tear-gassed demonstrators at gate";
             case 3: return "Target: Injured peers on west road";
             case 4: return "Target: Liberated safe evacuation exit";
@@ -176,7 +176,7 @@ public class Level3PoliceEscalation implements CampaignLevel {
         }
         if (carryingWater) {
             if (!objectivesDone[1] && playerPos.dst(waypoints[1]) <= 3.8f) {
-                return "[E] DISTRIBUTE WATER — 'পানি লাগবে, পানি?'";
+                return "[E] DISTRIBUTE WATER TO TEAR-GASSED STUDENTS";
             }
             if (!objectivesDone[2] && playerPos.dst(waypoints[2]) <= 3.8f) {
                 return "[E] DISTRIBUTE WATER TO CHOKING STUDENTS";
@@ -204,7 +204,7 @@ public class Level3PoliceEscalation implements CampaignLevel {
         if (carryingWater) {
             if (!objectivesDone[1] && playerPos.dst(waypoints[1]) <= 3.8f) {
                 objectivesDone[1] = true;
-                hud.triggerMissionToast("AID DELIVERED ('PANI LAGBE, PANI?')", getCompletedObjectiveCount());
+                hud.triggerMissionToast("AID DELIVERED (TEAR GAS GROUP 1)", getCompletedObjectiveCount());
                 return true;
             }
             if (!objectivesDone[2] && playerPos.dst(waypoints[2]) <= 3.8f) {

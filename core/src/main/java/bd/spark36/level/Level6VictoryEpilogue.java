@@ -55,7 +55,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     private static final String[] CHECKLIST = {
         "1. Lead Victory March Through Liberated Gates",
         "2. Lay Marigold Floral Wreath for Martyrs",
-        "3. Ring the Historic Bell of Freedom at TSC",
+        "3. Ring the Bell of Freedom at TSC",
         "4. Conclude the 36 July Epilogue & Documentary Credits"
     };
 
@@ -164,7 +164,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
             return "[E] LAY MARIGOLD FLORAL WREATH AT MEMORIAL";
         }
         if (objectivesDone[1] && !objectivesDone[2] && playerPos.dst(waypoints[2]) <= 4.5f) {
-            return "[E] RING THE HISTORIC BELL OF FREEDOM";
+            return "[E] RING THE BELL OF FREEDOM";
         }
         if (objectivesDone[2] && !objectivesDone[3] && playerPos.dst(waypoints[3]) <= 4.0f) {
             return "[E] VIEW 36 JULY DOCUMENTARY EPILOGUE & CREDITS";
