@@ -1,9 +1,11 @@
 # AGENT & DEVELOPER RESUMPTION HANDOFF
 **Project:** 2x12 / Spark: Birth of 36 July  
-**Repository:** `/Users/atiaoishi/Downloads/2x12-Spark--Birth-of-36-july`  
+**Repository:** clone of `github.com/monirsaikat/2x12-Spark--Birth-of-36-july` (current working copy: `D:\2x12-Spark--Birth-of-36-july`, Windows 11)  
 **Engine:** Java 17 + libGDX 1.14.2 (LWJGL3 Desktop)  
-**Primary Branch:** `main` (Backup tag: `backup/before-antigravity-full-game`)  
-**Hardware Profile:** Apple Silicon M4, 16 GB Unified Memory (Fanless, thermal budget strict)
+**Primary Branch:** `main`. Work from 2026-10-24 (tasks T0–T8) is on the local branch `work`; backup of the starting point: `backup/before-reference-reconciliation`.  
+**Hardware Profiles:** Windows 11, Ryzen 7 5700G iGPU (measured, see `docs/BUILD_STATUS.md`); Apple Silicon M4, 16 GB (earlier sessions, not re-verified)
+
+> **Start here (2026-10-24):** read `docs/BUILD_STATUS.md` section 9 for what is verified and what is open, and `docs/qa_checklist.md` for the honest QA state. Sections below are from earlier sessions; the "What to work on next" list is superseded by the open items in BUILD_STATUS section 9.
 
 ---
 

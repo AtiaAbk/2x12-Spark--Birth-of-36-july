@@ -31,6 +31,7 @@
 | `:core:build` + `:lwjgl3:compileJava` | **PASS** (deprecation notes only) |
 | Unit tests at start of T0 (HEAD `75ee36a`) | **87 / 87 pass**, 10 suites, 0 skipped |
 | Unit tests after T0 | **91 / 91 pass** (adds `FrameStatsTest`, 4 tests) |
+| Unit tests after T1–T8 integration (2026-10-24) | **163 / 163 pass**, 0 failures, 0 errors |
 
 The 87 matches the figure in `CHANGES.md`.
 
@@ -143,14 +144,37 @@ Earlier sessions reported "60 FPS locked @ 1080p" on an Apple Silicon MacBook Ai
 
 | Defect | Evidence | Planned task |
 |---|---|---|
-| Runtime files are written relative to the working directory. `gradlew run` uses `assets/` as working directory, so screenshots go to `assets/assets/screenshots/` and synthesised sounds to `assets/assets/audio/`. Fixed screenshot names overwrite earlier captures. **Screenshots fixed in T7** (user folder, unique names; see "Where screenshots go"); the audio half is a separate task. | `SparkGame.takeScreenshot`, run logs | T7 (screenshots done) |
+| Runtime files are written relative to the working directory. `gradlew run` uses `assets/` as working directory, so screenshots go to `assets/assets/screenshots/` and synthesised sounds to `assets/assets/audio/`. Fixed screenshot names overwrite earlier captures. **Screenshots fixed in T7** (user folder, unique names; see "Where screenshots go"). **Audio fixed in T6**: `SoundManager` now synthesises in memory and writes nothing. | `SparkGame.takeScreenshot`, run logs | done |
 | The asset-list task scanned that nested folder and `*.log` crash dumps, so they would have been packed into the game JAR. **Mitigated in T0** by excluding `assets/**` and `*.log` from `generateAssetList`. | `build.gradle` | done (mitigation) |
 | `-Dbd.spark36.graphicsTier` was ignored because `assets/visuals.properties` overrode it. **Fixed in T0**: the explicit switch now wins. | `RenderPipelineConfig` | done |
-| Shipped default tier is HIGH, while repo DECISION-007 names MEDIUM as the target default. Left unchanged: the measurements show no tier gains anything here. | `assets/visuals.properties` | T6 settings |
-| Pause menu lists `[G] GRAPHICS` while its footer lists `[G] Switch Gender`. | `pause_menu.png` | T6 |
+| Shipped default tier was HIGH in the file while every render system actually read MEDIUM. **Resolved in T6**: the saved tier now really applies, and the file default is MEDIUM (DECISION-007, DECISION-T6). | `assets/visuals.properties` | done |
+| Pause menu listed `[G] GRAPHICS` while its footer listed `[G] Switch Gender`. **Fixed in T6**: Settings is `[F2]`; G only switches gender. | `pause_menu.png` | done |
 | Level 1 frame has a strong green-yellow cast, including the sky, against the reference's natural-colour rule. **Fixed in T8**: sky/fog colours were display-space values drawn into the linear buffer (gamma-encoded twice: pale cyan sky, white fog), plus saturation 1.18 / temperature 0.14 / green tint, an olive ambient and a cyan IBL sky. See section 8. | `spawn_level1.png`, `t8_visual/` | done |
 | Levels 3-6 rendered the player, crowd and level props white or flat grey (legacy per-level Environment without IBL; Diffuse-only prop materials ignored by the PBR shader). **Fixed in T8** (world PBR environment, `LevelPbrMaterials`). Per-chapter night/sunset mood is still not implemented. | `t8_visual/before_level5_start.png` | T8 (mood: follow-up) |
-| Main menu has no Continue, Settings or Credits. | `main_menu.png` | T4, T6 |
+| Main menu had no Continue, Settings or Credits. **Fixed in T4 and T6.** | `t6/main_menu_with_continue.png`, `t4/main_menu_credits_item.png` | done |
+
+---
+
+## 9. Final integrated build (branch `work`, 2026-10-24)
+
+All eight task branches (T1+T2, T3, T4, T5, T6, T7, T8 performance, T8 visual) are merged. Build passes and **163 / 163 tests pass**.
+
+**Verified on screen in the merged build:** main menu (Settings shown, Continue correctly hidden without a save), pause menu with 8 items (`[F2] SETTINGS`, `[C] RESTART CHECKPOINT`, defensive-play framing).
+
+**Verified only on each task's own branch, not in the fully merged build:** credits screen, context cards, photo mode and gallery, settings screen, Level 2 shelter objectives, street dressing, colour grade, performance changes. The game was not launched after the last two merges (T8 visual, T8 performance) because the user was working on this PC.
+
+**Not verified at all, or open:**
+- Levels 3–6 characters: T8 visual reports the white-character bug fixed, but its own `t8_visual/street_level5_gate_view.png` still shows white students. Needs one look in game.
+- Restart-from-checkpoint and the H controls overlay: unit-tested, never exercised in the running game.
+- Real mouse/keyboard input in the settings screen.
+- Final FPS on an idle machine. Best measured run after T8 performance: about 31.6 FPS avg, 1%-low 26 at spawn (was 20–25). Draw calls 6293 → 2142 per frame (exact). Commit `876dfd2` (coarse shadow twins) rests on one noisy run pair.
+- Bengali text shaping: libGDX FreeType does no complex-script shaping, so Bengali vowel signs are misplaced everywhere (visible in `t4/credits_sources.png`).
+
+**Re-check commands (opens the game window):**
+```bash
+./gradlew.bat :lwjgl3:run -Dbd.spark36.baseline=spawn -Dbd.spark36.benchmarkSeconds=30
+./gradlew.bat :lwjgl3:run -Dbd.spark36.level=5 -Dbd.spark36.baseline=gate_street -Dbd.spark36.autoExit=true
+```
 
 ---
 
