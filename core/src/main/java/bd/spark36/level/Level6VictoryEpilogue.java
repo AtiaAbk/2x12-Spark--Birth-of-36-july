@@ -193,6 +193,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
             objectivesDone[3] = true;
             hud.triggerMissionToast("36 JULY VICTORY ACCOMPLISHED!", getCompletedObjectiveCount());
             hud.triggerVictory();
+            hud.openCredits("36 July Epilogue"); // T4: credits & sources first; victory screen waits underneath
             return true;
         }
         return false;
@@ -286,7 +287,20 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     public void update(float delta, PlayerController player, CinematicCamera camera, boolean canMove, WhereWindsMeetHUD hud) {
         if (world != null) world.update(delta);
         if (crowd != null) crowd.update(delta, player.getPosition());
+        // T4 test switch -Dbd.spark36.testEpilogueCredits (with -Dbd.spark36.level=6): complete the
+        // first three objectives, then take the real final-objective interaction path.
+        if (!epilogueTestDone && bd.spark36.hud.screens.CreditsScreen.epilogueTestRequested()) {
+            epilogueTestTime += delta;
+            if (epilogueTestTime >= 1.5f) {
+                epilogueTestDone = true;
+                objectivesDone[0] = objectivesDone[1] = objectivesDone[2] = true;
+                onInteract(waypoints[3], player, hud);
+            }
+        }
     }
+
+    private boolean epilogueTestDone = false;
+    private float epilogueTestTime = 0f;
 
     @Override
     public void renderShadow(ModelBatch shadowBatch) {
