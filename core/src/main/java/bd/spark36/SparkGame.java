@@ -89,6 +89,10 @@ public class SparkGame extends ApplicationAdapter {
     private float testTimer = 0f;
     private boolean autoScreenshotTaken = false;
 
+    // T7: screenshots, F10 photo mode, F11 gallery (logic lives in bd.spark36.capture)
+    private bd.spark36.capture.CaptureController capture;
+    private boolean photoFrame = false;
+
     @Override
     public void create() {
         // Initialize lightweight shared renderers for both menu and gameplay
@@ -164,6 +168,7 @@ public class SparkGame extends ApplicationAdapter {
         atmosphere = new AtmosphereRenderer(fontRenderer);
         hud = new WhereWindsMeetHUD(fontRenderer);
         hud.setTextures(textures);
+        capture = new bd.spark36.capture.CaptureController(fontRenderer);
 
         levelManager = new bd.spark36.level.LevelManager(textures, player, camera, hud);
         levelManager.loadLevel(selectedChapter);
@@ -252,6 +257,10 @@ public class SparkGame extends ApplicationAdapter {
                 && frameStats.record(Gdx.graphics.getDeltaTime())) {
             Gdx.app.log("FrameStats", frameStats.summary());
             Gdx.app.exit();
+        }
+        if (capture != null && capture.isGalleryOpen()) {
+            capture.renderGallery(Math.min(0.1f, Gdx.graphics.getDeltaTime())); // T7: gallery replaces the frame
+            return;
         }
         if (gameState == GameState.MAIN_MENU) {
             renderMainMenu();
@@ -640,7 +649,8 @@ public class SparkGame extends ApplicationAdapter {
             player.clearCombatTarget();
         }
 
-        boolean isSimulationFrozen = (hud != null && (hud.isPauseMenuOpen() || hud.isExitConfirmOpen()));
+        photoFrame = capture.isPhotoModeActive(); // T7: photo mode freezes the simulation like the pause menu
+        boolean isSimulationFrozen = photoFrame || (hud != null && (hud.isPauseMenuOpen() || hud.isExitConfirmOpen()));
         float simDelta = isSimulationFrozen ? 0f : delta;
 
         // 1. Update Game Logic
@@ -688,10 +698,14 @@ public class SparkGame extends ApplicationAdapter {
         }
 
         // Enhanced camera: pass movement state for bob + FOV push + shake
-        camera.update(simDelta, player.getPosition(), canMove && !isSimulationFrozen,
-            player.isMoving() && !isSimulationFrozen, player.isSprinting() && !isSimulationFrozen, player.getHeadingDegrees());
+        if (photoFrame) {
+            capture.updatePhotoCamera(delta); // T7: orbit camera; the follow camera's state is left untouched
+        } else {
+            camera.update(simDelta, player.getPosition(), canMove && !isSimulationFrozen,
+                player.isMoving() && !isSimulationFrozen, player.isSprinting() && !isSimulationFrozen, player.getHeadingDegrees());
+        }
 
-        hud.update(delta, player, activeMemorials);
+        if (!photoFrame) hud.update(delta, player, activeMemorials); // T7: HUD keys (Esc, G, Tab) are photo-mode keys
 
         // Update particles (incorporating weather rain intensity & GraphicsTier)
         if (particleSystem != null) {
@@ -795,15 +809,23 @@ public class SparkGame extends ApplicationAdapter {
         }
 
         // 7. 2D HUD (always crisp, rendered AFTER post-processing)
-        hud.render(player, activeMemorials, camera.getYaw(), camera.getCamera());
+        capture.beforeHud(); // T7: pending F12 capture is taken here, without HUD
+        if (!capture.hidesHud()) hud.render(player, activeMemorials, camera.getYaw(), camera.getCamera());
+        capture.afterHud(delta); // T7: photo-mode hint and capture toast, never captured
 
         // Process inputs and automated test screenshot triggers AFTER the frame is fully drawn!
         handleGameplayInputs(delta);
     }
 
     private void handleGameplayInputs(float delta) {
-        // Toggle fullscreen with F11
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
+        // T7: F10 photo mode, F11 gallery, F12 capture; photo-mode frames skip all gameplay keys
+        if (capture.handleGameplayKeys(delta, camera, player.getPosition(), hud.isModalOpen(), photoFrame)) {
+            return;
+        }
+
+        // Toggle fullscreen with Alt+Enter (F11 now opens the gallery)
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
+                && (Gdx.input.isKeyPressed(Input.Keys.ALT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.ALT_RIGHT))) {
             if (Gdx.graphics.isFullscreen()) {
                 Gdx.graphics.setWindowedMode(1440, 900);
             } else {
@@ -822,11 +844,6 @@ public class SparkGame extends ApplicationAdapter {
             if (Gdx.input.isCursorCatched()) {
                 Gdx.input.setCursorCatched(false);
             }
-        }
-
-        // F12 Screenshot key
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F12)) {
-            takeScreenshot("spark36_" + System.currentTimeMillis());
         }
 
         // F4 or O: Toggle Orientation Test Card on facade elements
@@ -1241,34 +1258,13 @@ public class SparkGame extends ApplicationAdapter {
         }
     }
 
+    /**
+     * Automated-harness capture with a deterministic name, written to
+     * {@code <screenshot folder>/<name>.png} (see bd.spark36.capture.ScreenshotService).
+     * Player F12 captures go through CaptureController and never overwrite.
+     */
     public static void takeScreenshot(String name) {
-        try {
-            int w = Gdx.graphics.getBackBufferWidth();
-            int h = Gdx.graphics.getBackBufferHeight();
-            com.badlogic.gdx.graphics.Pixmap pixmap = com.badlogic.gdx.graphics.Pixmap.createFromFrameBuffer(0, 0, w, h);
-            com.badlogic.gdx.graphics.Pixmap flipped = new com.badlogic.gdx.graphics.Pixmap(w, h, pixmap.getFormat());
-            for (int x = 0; x < w; x++) {
-                for (int y = 0; y < h; y++) {
-                    flipped.drawPixel(x, y, pixmap.getPixel(x, h - y - 1));
-                }
-            }
-            String cleanName = name.endsWith(".png") ? name.substring(0, name.length() - 4) : name;
-            com.badlogic.gdx.files.FileHandle file;
-            if (cleanName.startsWith("assets/")) {
-                file = Gdx.files.local(cleanName + ".png");
-            } else {
-                file = Gdx.files.local("assets/screenshots/" + cleanName + ".png");
-            }
-            if (!file.parent().exists()) {
-                file.parent().mkdirs();
-            }
-            com.badlogic.gdx.graphics.PixmapIO.writePNG(file, flipped);
-            pixmap.dispose();
-            flipped.dispose();
-            Gdx.app.log("SparkGame", "Screenshot saved: " + file.path());
-        } catch (Exception e) {
-            Gdx.app.error("SparkGame", "Failed to take screenshot", e);
-        }
+        bd.spark36.capture.CaptureController.captureHarness(name);
     }
 
     @Override
@@ -1302,6 +1298,7 @@ public class SparkGame extends ApplicationAdapter {
         if (levelManager != null) levelManager.dispose();
         if (postProcessor != null) postProcessor.dispose();
         if (particleSystem != null) particleSystem.dispose();
+        if (capture != null) capture.dispose();
         bd.spark36.audio.SoundManager.get().dispose();
     }
 }

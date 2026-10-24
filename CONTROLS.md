@@ -67,4 +67,7 @@ You can access the in-game **Controls & Historical Field Codex** at any time by 
 | **Restart Current Level** | `R` (in Pause Menu) | Re-initializes and restarts the active chapter. |
 | **Return to Main Menu** | `Q` (in Pause Menu) | Returns to the chapter selection screen. |
 | **Quit Game** | `X` (in Pause Menu) | Opens the exit confirmation dialog (`[Enter]` confirms quit). |
-| **Take Screenshot** | `F12` | Captures high-res uncompressed PNG to `assets/screenshots/`. |
+| **Take Screenshot** | `F12` | Saves a PNG without HUD to `Pictures/Spark36/` (override with `-Dbd.spark36.screenshotDir`), unique timestamped name, never overwrites. |
+| **Photo Mode** | `F10` | Freezes the game and hides the HUD. Mouse / `WASD` orbit around the player, wheel or `+` / `-` zoom, `Q` / `E` roll, `R` level horizon, `H` hide hints, `F12` capture, `G` / `Tab` gallery, `Escape` / `F10` exit. |
+| **Gallery** | `F11` (gameplay), `G` / `Tab` (photo mode) | Newest-first thumbnails; arrows / mouse select, `Enter` view, wheel or `+` / `-` zoom, `O` open folder, `Escape` back. |
+| **Toggle Fullscreen** | `Alt` + `Enter` | Switches between fullscreen and a 1440x900 window (was `F11`). |
