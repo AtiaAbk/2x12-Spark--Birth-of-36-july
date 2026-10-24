@@ -1967,6 +1967,7 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.promptFont.draw(spriteBatch, "[E] / [ESC] Close Archive", mx + mw - 240f, my + 28f);
 
         spriteBatch.end();
+        bd.spark36.hud.screens.HistoricalContextCard.render(shapeRenderer, spriteBatch, fonts, entry.id, mx, my + mh + 8f, mw); // T4
     }
 
     // ========================================================
