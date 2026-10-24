@@ -270,6 +270,7 @@ public class Level5MassMobilization implements CampaignLevel {
         street.build(colliders);
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
+        LevelPbrMaterials.adopt(instances); // T8: legacy Diffuse colours -> PBR base colour
         this.crowd = new CampusCrowd(24, player.getColliders());
         this.crowd.setLevelProfile(5);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
@@ -297,7 +298,7 @@ public class Level5MassMobilization implements CampaignLevel {
     public void render3D(ModelBatch modelBatch, Environment env) {
         if (world != null) world.render(modelBatch);
         if (world != null) street.render(modelBatch, world.getEnvironment());
-        for (ModelInstance mi : instances) modelBatch.render(mi, sunsetEnvironment);
+        for (ModelInstance mi : instances) modelBatch.render(mi, getEnvironment());
     }
 
     @Override
@@ -311,7 +312,9 @@ public class Level5MassMobilization implements CampaignLevel {
 
     @Override
     public Environment getEnvironment() {
-        return sunsetEnvironment;
+        // T8: the campus world is lit by its daylight PBR environment (IBL, sun, fog, shadows) in every
+        // chapter; the old per-level environment had no IBL and rendered characters and props white.
+        return world != null ? world.getEnvironment() : sunsetEnvironment;
     }
 
     @Override
