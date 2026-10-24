@@ -117,8 +117,9 @@ public final class RenderPipelineConfig {
                 hdrEnabled = getBool(props, "hdrEnabled", hdrEnabled);
                 fxaaEnabled = getBool(props, "fxaaEnabled", fxaaEnabled);
 
+                // An explicit -Dbd.spark36.graphicsTier switch wins over the file default.
                 String tierStr = props.getProperty("graphicsTier");
-                if (tierStr != null) {
+                if (tierStr != null && System.getProperty("bd.spark36.graphicsTier") == null) {
                     try {
                         activeGraphicsTier = GraphicsTier.valueOf(tierStr.trim().toUpperCase());
                     } catch (Exception ignored) {}
