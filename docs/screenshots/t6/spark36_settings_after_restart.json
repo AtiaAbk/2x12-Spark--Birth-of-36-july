@@ -1,0 +1,13 @@
+{
+"version": 1,
+"mouseSensitivity": 1.25,
+"masterVolume": 0.7,
+"sfxVolume": 1.0,
+"ambienceVolume": 0.6,
+"subtitles": false,
+"textSize": 2,
+"reduceCameraMotion": true,
+"graphicsTier": null,
+"toneMapping": -1,
+"language": "EN"
+}

@@ -1,24 +1,46 @@
 package bd.spark36.audio;
 
+import com.badlogic.gdx.Files;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Disposable;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Procedural Audio Synthesizer and Sound Manager for Spark: Birth of 36 July.
  * Synthesizes 100% legally compliant, royalty-free 16-bit PCM sound effects
  * for footsteps, UI chimes, martial arts combat impacts, tear gas hiss,
- * water splashes, and the historic Freedom Bell toll.
+ * water splashes, and the historic Freedom Bell toll, plus looping ambience beds
+ * ({@link AmbienceSynth}).
+ *
+ * <p>All audio is generated in memory and handed to OpenAL through an in-memory file handle;
+ * nothing is written to disk (earlier builds wrote .wav files relative to the working directory,
+ * which put them in assets/assets/audio/).</p>
+ *
+ * <p>Mixer: every effect plays at {@code base * master * sfx}; the ambience bed at
+ * {@code base * master * ambience}.</p>
  */
 public class SoundManager implements Disposable {
 
+    /** Looping background beds. */
+    public enum Ambience { NONE, CAMPUS, CROWD }
+
     private static SoundManager instance;
+
+    // Volumes set before the manager exists (startup settings) are picked up by the constructor.
+    private static float initialMaster = 0.85f;
+    private static float initialSfx = 1.0f;
+    private static float initialAmbience = 0.6f;
+
+    private static final float AMBIENCE_BASE_GAIN = 0.55f;
 
     private Sound sndClick;
     private Sound sndWhoosh;
@@ -31,8 +53,16 @@ public class SoundManager implements Disposable {
     private Sound sndFootstep;
     private Sound sndGasHiss;
 
+    private Sound ambCampus;
+    private Sound ambCrowd;
+    private Ambience currentAmbience = Ambience.NONE;
+    private Sound ambSound;
+    private long ambId = -1;
+
     private boolean enabled = true;
     private float masterVolume = 0.85f;
+    private float sfxVolume = 1.0f;
+    private float ambienceVolume = 0.6f;
     private float footstepTimer = 0f;
 
     public static SoundManager get() {
@@ -42,100 +72,106 @@ public class SoundManager implements Disposable {
         return instance;
     }
 
+    /** The manager if something already created it, else null (never starts audio). */
+    public static SoundManager getIfCreated() {
+        return instance;
+    }
+
+    /** Volumes to use when the manager is created later. */
+    public static void setInitialVolumes(float master, float sfx, float ambience) {
+        initialMaster = clamp01(master);
+        initialSfx = clamp01(sfx);
+        initialAmbience = clamp01(ambience);
+    }
+
+    /** Which bed a level uses: campus birds/wind for 1-2, distant crowd for 5-6, none otherwise. */
+    public static Ambience ambienceForLevel(int level) {
+        if (level == 1 || level == 2) return Ambience.CAMPUS;
+        if (level == 5 || level == 6) return Ambience.CROWD;
+        return Ambience.NONE;
+    }
+
+    /** Effective playback gain for a sound with the given base level. */
+    public static float mix(float base, float master, float channel) {
+        return clamp01(base) * clamp01(master) * clamp01(channel);
+    }
+
     public SoundManager() {
+        masterVolume = initialMaster;
+        sfxVolume = initialSfx;
+        ambienceVolume = initialAmbience;
         init();
     }
 
     private void init() {
         try {
-            FileHandle audioDir = Gdx.files.local("assets/audio/");
-            if (!audioDir.exists()) {
-                audioDir.mkdirs();
-            }
+            sndClick = fromMemory("ui_click.wav", generateClick());
+            sndWhoosh = fromMemory("whoosh.wav", generateWhoosh());
+            sndPunch = fromMemory("punch.wav", generatePunch());
+            sndKick = fromMemory("kick.wav", generateKick());
+            sndBlock = fromMemory("block.wav", generateBlock());
+            sndObjective = fromMemory("objective.wav", generateObjective());
+            sndBell = fromMemory("bell.wav", generateBell());
+            sndSplash = fromMemory("splash.wav", generateSplash());
+            sndFootstep = fromMemory("footstep.wav", generateFootstep());
+            sndGasHiss = fromMemory("gas_hiss.wav", generateGasHiss());
 
-            sndClick = loadOrGenerate(audioDir, "ui_click.wav", generateClick());
-            sndWhoosh = loadOrGenerate(audioDir, "whoosh.wav", generateWhoosh());
-            sndPunch = loadOrGenerate(audioDir, "punch.wav", generatePunch());
-            sndKick = loadOrGenerate(audioDir, "kick.wav", generateKick());
-            sndBlock = loadOrGenerate(audioDir, "block.wav", generateBlock());
-            sndObjective = loadOrGenerate(audioDir, "objective.wav", generateObjective());
-            sndBell = loadOrGenerate(audioDir, "bell.wav", generateBell());
-            sndSplash = loadOrGenerate(audioDir, "splash.wav", generateSplash());
-            sndFootstep = loadOrGenerate(audioDir, "footstep.wav", generateFootstep());
-            sndGasHiss = loadOrGenerate(audioDir, "gas_hiss.wav", generateGasHiss());
-
-            Gdx.app.log("SoundManager", "Procedural Audio Synthesizer initialized successfully (10 sound effects loaded).");
+            log("Procedural Audio Synthesizer initialized in memory (10 sound effects, ambience on demand).");
         } catch (Throwable t) {
             enabled = false;
-            Gdx.app.log("SoundManager", "Audio system disabled: " + t.getMessage());
+            log("Audio system disabled: " + t.getMessage());
         }
     }
 
-    private Sound loadOrGenerate(FileHandle dir, String name, byte[] wavData) {
+    private Sound fromMemory(String name, byte[] wavData) {
         try {
-            FileHandle file = dir.child(name);
-            if (!file.exists() || file.length() < 100) {
-                file.writeBytes(wavData, false);
-            }
-            return Gdx.audio.newSound(file);
+            return Gdx.audio.newSound(new MemoryFileHandle(name, wavData));
         } catch (Throwable t) {
-            Gdx.app.log("SoundManager", "Could not load sound " + name + ": " + t.getMessage());
+            log("Could not load sound " + name + ": " + t.getMessage());
             return null;
         }
     }
 
-    public void playClick() {
-        if (enabled && sndClick != null) {
-            sndClick.play(masterVolume * 0.75f, MathUtils.random(0.96f, 1.04f), 0f);
+    private void sfx(Sound s, float base, float pitch) {
+        if (enabled && s != null) {
+            s.play(mix(base, masterVolume, sfxVolume), pitch, 0f);
         }
+    }
+
+    public void playClick() {
+        sfx(sndClick, 0.75f, MathUtils.random(0.96f, 1.04f));
     }
 
     public void playWhoosh() {
-        if (enabled && sndWhoosh != null) {
-            sndWhoosh.play(masterVolume * 0.85f, MathUtils.random(0.92f, 1.08f), 0f);
-        }
+        sfx(sndWhoosh, 0.85f, MathUtils.random(0.92f, 1.08f));
     }
 
     public void playPunch() {
-        if (enabled && sndPunch != null) {
-            sndPunch.play(masterVolume * 0.95f, MathUtils.random(0.94f, 1.06f), 0f);
-        }
+        sfx(sndPunch, 0.95f, MathUtils.random(0.94f, 1.06f));
     }
 
     public void playKick() {
-        if (enabled && sndKick != null) {
-            sndKick.play(masterVolume * 1.0f, MathUtils.random(0.90f, 1.04f), 0f);
-        }
+        sfx(sndKick, 1.0f, MathUtils.random(0.90f, 1.04f));
     }
 
     public void playBlock() {
-        if (enabled && sndBlock != null) {
-            sndBlock.play(masterVolume * 0.90f, MathUtils.random(0.95f, 1.05f), 0f);
-        }
+        sfx(sndBlock, 0.90f, MathUtils.random(0.95f, 1.05f));
     }
 
     public void playObjective() {
-        if (enabled && sndObjective != null) {
-            sndObjective.play(masterVolume * 0.90f, 1.0f, 0f);
-        }
+        sfx(sndObjective, 0.90f, 1.0f);
     }
 
     public void playBell() {
-        if (enabled && sndBell != null) {
-            sndBell.play(masterVolume * 1.0f, 1.0f, 0f);
-        }
+        sfx(sndBell, 1.0f, 1.0f);
     }
 
     public void playSplash() {
-        if (enabled && sndSplash != null) {
-            sndSplash.play(masterVolume * 0.80f, MathUtils.random(0.95f, 1.10f), 0f);
-        }
+        sfx(sndSplash, 0.80f, MathUtils.random(0.95f, 1.10f));
     }
 
     public void playGasHiss() {
-        if (enabled && sndGasHiss != null) {
-            sndGasHiss.play(masterVolume * 0.65f, MathUtils.random(0.95f, 1.05f), 0f);
-        }
+        sfx(sndGasHiss, 0.65f, MathUtils.random(0.95f, 1.05f));
     }
 
     public void updateFootsteps(float delta, boolean moving, boolean sprinting) {
@@ -148,11 +184,57 @@ public class SoundManager implements Disposable {
         float interval = sprinting ? 0.32f : 0.48f;
         if (footstepTimer >= interval) {
             footstepTimer = 0f;
-            if (sndFootstep != null) {
-                float vol = (sprinting ? 0.45f : 0.30f) * masterVolume;
-                float pitch = MathUtils.random(0.92f, 1.08f);
-                sndFootstep.play(vol, pitch, 0f);
-            }
+            sfx(sndFootstep, sprinting ? 0.45f : 0.30f, MathUtils.random(0.92f, 1.08f));
+        }
+    }
+
+    // ==========================================
+    // AMBIENCE BEDS
+    // ==========================================
+
+    /** Switches to the given looping bed (no-op when it is already playing). */
+    public void setAmbience(Ambience which) {
+        if (which == null) which = Ambience.NONE;
+        if (which == currentAmbience && (which == Ambience.NONE || ambId != -1)) return;
+        stopAmbience();
+        currentAmbience = which;
+        if (!enabled || which == Ambience.NONE) return;
+        Sound s = bedFor(which);
+        if (s == null) return;
+        ambSound = s;
+        ambId = s.loop(mix(AMBIENCE_BASE_GAIN, masterVolume, ambienceVolume));
+        log("Ambience: " + which + (ambId == -1 ? " (no free voice)" : ""));
+    }
+
+    public Ambience getAmbience() {
+        return currentAmbience;
+    }
+
+    private void stopAmbience() {
+        if (ambSound != null && ambId != -1) {
+            ambSound.stop(ambId);
+        }
+        ambSound = null;
+        ambId = -1;
+    }
+
+    private Sound bedFor(Ambience which) {
+        if (which == Ambience.CAMPUS) {
+            if (ambCampus == null) ambCampus = fromMemory("amb_campus.wav",
+                buildWav(AmbienceSynth.campusBirdsAndWind(1921L), AmbienceSynth.SAMPLE_RATE));
+            return ambCampus;
+        }
+        if (which == Ambience.CROWD) {
+            if (ambCrowd == null) ambCrowd = fromMemory("amb_crowd.wav",
+                buildWav(AmbienceSynth.distantCrowdMurmur(2024L), AmbienceSynth.SAMPLE_RATE));
+            return ambCrowd;
+        }
+        return null;
+    }
+
+    private void refreshAmbienceVolume() {
+        if (ambSound != null && ambId != -1) {
+            ambSound.setVolume(ambId, mix(AMBIENCE_BASE_GAIN, masterVolume, ambienceVolume));
         }
     }
 
@@ -162,6 +244,7 @@ public class SoundManager implements Disposable {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+        if (!enabled) stopAmbience();
     }
 
     public float getMasterVolume() {
@@ -169,14 +252,74 @@ public class SoundManager implements Disposable {
     }
 
     public void setMasterVolume(float masterVolume) {
-        this.masterVolume = Math.max(0f, Math.min(1f, masterVolume));
+        this.masterVolume = clamp01(masterVolume);
+        refreshAmbienceVolume();
+    }
+
+    public float getSfxVolume() {
+        return sfxVolume;
+    }
+
+    public void setSfxVolume(float sfxVolume) {
+        this.sfxVolume = clamp01(sfxVolume);
+    }
+
+    public float getAmbienceVolume() {
+        return ambienceVolume;
+    }
+
+    public void setAmbienceVolume(float ambienceVolume) {
+        this.ambienceVolume = clamp01(ambienceVolume);
+        refreshAmbienceVolume();
+    }
+
+    private static float clamp01(float v) {
+        if (Float.isNaN(v)) return 0f;
+        return v < 0f ? 0f : (v > 1f ? 1f : v);
+    }
+
+    private static void log(String msg) {
+        if (Gdx.app != null) Gdx.app.log("SoundManager", msg);
+    }
+
+    /**
+     * A read-only file handle over a byte array, so OpenAL can decode generated WAV data without
+     * a file on disk.
+     */
+    static final class MemoryFileHandle extends FileHandle {
+        private final byte[] data;
+
+        MemoryFileHandle(String name, byte[] data) {
+            super(new File(name), Files.FileType.Classpath);
+            this.data = data;
+        }
+
+        @Override
+        public InputStream read() {
+            return new ByteArrayInputStream(data);
+        }
+
+        @Override
+        public byte[] readBytes() {
+            return data.clone();
+        }
+
+        @Override
+        public long length() {
+            return data.length;
+        }
+
+        @Override
+        public boolean exists() {
+            return true;
+        }
     }
 
     // ==========================================
     // PROCEDURAL 16-BIT PCM WAV SYNTHESIS
     // ==========================================
 
-    private static byte[] buildWav(short[] samples, int sampleRate) {
+    static byte[] buildWav(short[] samples, int sampleRate) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         try {
@@ -380,5 +523,8 @@ public class SoundManager implements Disposable {
         if (sndSplash != null) sndSplash.dispose();
         if (sndFootstep != null) sndFootstep.dispose();
         if (sndGasHiss != null) sndGasHiss.dispose();
+        stopAmbience();
+        if (ambCampus != null) ambCampus.dispose();
+        if (ambCrowd != null) ambCrowd.dispose();
     }
 }

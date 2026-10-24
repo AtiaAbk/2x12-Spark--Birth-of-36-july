@@ -87,9 +87,12 @@ public class WhereWindsMeetHUD implements Disposable {
     private boolean isPauseMenuOpen = false;
     private boolean isHelpControlsOpen = false;
     private boolean isExitConfirmOpen = false;
-    private int pauseMenuSelection = 0; // 0=Resume, 1=Codex, 2=Graphics, 3=ToneMap, 4=Restart, 5=MainMenu, 6=Quit, 7=Checkpoint
+    private int pauseMenuSelection = 0; // 0=Resume, 1=Codex, 2=Settings, 3=ToneMap, 4=Restart, 5=MainMenu, 6=Quit, 7=Checkpoint
     private static final int PAUSE_ITEM_COUNT = 8;
     private static final int PAUSE_ITEM_CHECKPOINT = 7; // T5: restart from mid-level checkpoint
+    // Settings screen opened from the pause menu (bd.spark36.hud.screens.SettingsScreen); pause stays open underneath.
+    private final bd.spark36.hud.screens.SettingsScreen settingsScreen = new bd.spark36.hud.screens.SettingsScreen();
+    private boolean pauseSettingsTestDone = false;
     private int exitConfirmSelection = 0; // 0=Cancel, 1=Quit Game
     private boolean isVictoryOpen = false;
     private boolean victoryShown = false;
@@ -457,6 +460,19 @@ public class WhereWindsMeetHUD implements Disposable {
         float mouseX = vMouse[0];
         float mouseY = vMouse[1];
 
+        // Settings screen (from the pause menu) owns input while open; Esc returns to the pause menu.
+        if (isPauseMenuOpen && !pauseSettingsTestDone && System.getProperty("bd.spark36.testPauseSettings") != null) {
+            settingsScreen.open("Pause Menu");
+            pauseSettingsTestDone = true;
+        }
+        if (settingsScreen.isOpen()) {
+            if (!isPauseMenuOpen) settingsScreen.close();
+            else {
+                settingsScreen.update(virtW, virtH, mouseX, mouseY);
+                return;
+            }
+        }
+
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             if (isVictoryOpen) {
                 float vw = 860f;
@@ -543,9 +559,9 @@ public class WhereWindsMeetHUD implements Disposable {
                             isPauseMenuOpen = false;
                             isHelpControlsOpen = true;
                         } else if (i == 2) {
-                            RenderPipelineConfig.cycleGraphicsTier();
+                            settingsScreen.open("Pause Menu");
                         } else if (i == 3) {
-                            RenderPipelineConfig.toneMappingMode = (RenderPipelineConfig.toneMappingMode + 1) % 3;
+                            RenderPipelineConfig.cycleToneMapping();
                         } else if (i == 4) {
                             exitAction = 3; // Restart level
                             isPauseMenuOpen = false;
@@ -837,9 +853,9 @@ public class WhereWindsMeetHUD implements Disposable {
                         isPauseMenuOpen = false;
                         isHelpControlsOpen = true;
                     } else if (pauseMenuSelection == 2) {
-                        RenderPipelineConfig.cycleGraphicsTier();
+                        settingsScreen.open("Pause Menu");
                     } else if (pauseMenuSelection == 3) {
-                        RenderPipelineConfig.toneMappingMode = (RenderPipelineConfig.toneMappingMode + 1) % 3;
+                        RenderPipelineConfig.cycleToneMapping();
                     } else if (pauseMenuSelection == 4) {
                         exitAction = 3; // Restart level
                         isPauseMenuOpen = false;
@@ -864,8 +880,8 @@ public class WhereWindsMeetHUD implements Disposable {
                     isPauseMenuOpen = false;
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
-                if (Gdx.input.isKeyJustPressed(Input.Keys.G)) {
-                    RenderPipelineConfig.cycleGraphicsTier();
+                if (Gdx.input.isKeyJustPressed(Input.Keys.F2)) {
+                    settingsScreen.open("Pause Menu");
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
                 if (GameInput.isJustPressed(GameInput.GameAction.RESTART)) {
@@ -874,7 +890,7 @@ public class WhereWindsMeetHUD implements Disposable {
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
                 if (GameInput.isJustPressed(GameInput.GameAction.CYCLE_TONEMAP)) {
-                    RenderPipelineConfig.toneMappingMode = (RenderPipelineConfig.toneMappingMode + 1) % 3;
+                    RenderPipelineConfig.cycleToneMapping();
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
                 if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
@@ -1074,7 +1090,8 @@ public class WhereWindsMeetHUD implements Disposable {
         } else if (isMapOpen) {
             renderCampusMap(player, memorials, cameraYaw, w, h);
         } else if (isPauseMenuOpen) {
-            renderPauseMenu(w, h);
+            if (settingsScreen.isOpen()) settingsScreen.render(shapeRenderer, spriteBatch, fonts, w, h);
+            else renderPauseMenu(w, h);
         }
 
         // 6. Debug Bounds & Overlap Check Overlay (Toggle via F3 / Grave `)
@@ -2705,19 +2722,17 @@ public class WhereWindsMeetHUD implements Disposable {
         else if (tmMode == 2) tmName = "REINHARD";
         else tmName = "LINEAR";
 
-        String tierName = bd.spark36.render.RenderPipelineConfig.activeGraphicsTier.name();
-
         String[] itemLabels = {
             "RESUME GAME",
             "CONTROLS & CODEX",
-            "GRAPHICS: " + tierName,
+            "SETTINGS",
             "TONE MAP: " + tmName,
             "RESTART LEVEL",
             "MAIN MENU",
             "EXIT GAME",
             "RESTART CHECKPOINT"
         };
-        String[] itemShortcuts = {"[ESC]", "[H]", "[G]", "[T]", "[R]", "[Q]", "[X]", "[C]"};
+        String[] itemShortcuts = {"[ESC]", "[H]", "[F2]", "[T]", "[R]", "[Q]", "[X]", "[C]"};
 
         for (int i = 0; i < PAUSE_ITEM_COUNT; i++) {
             float by = startY - i * spacingY;
@@ -2734,7 +2749,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // Hints underneath buttons
         fonts.smallFont.setColor(new Color(0.70f, 0.68f, 0.64f, 0.85f));
-        fonts.smallFont.draw(spriteBatch, "[M] Campus Map  •  [P] Parameters  •  [G] Switch Gender", btnX, py + 56f);
+        fonts.smallFont.draw(spriteBatch, "[M] Map  •  In game: [P] Parameters, [G] Gender", btnX, py + 56f);
 
         fonts.smallFont.setColor(new Color(0.55f, 0.52f, 0.50f, 0.80f));
         fonts.smallFont.draw(spriteBatch, "Dhaka University Campus • July 2024", btnX, py + 34f);
@@ -3267,16 +3282,24 @@ public class WhereWindsMeetHUD implements Disposable {
 
         spriteBatch.begin();
         bd.spark36.level.DialogueRepository.DialogueLine diag = bd.spark36.level.DialogueRepository.AGGRESSOR_CHALLENGE;
+        com.badlogic.gdx.graphics.g2d.BitmapFont bFont = (fonts.bengaliFont != null) ? fonts.bengaliFont : fonts.headerFont;
+        bd.spark36.hud.screens.DialogueText.begin(fonts.headerFont, bFont, fonts.promptFont);
         fonts.headerFont.setColor(new Color(1.0f, 0.65f, 0.30f, 1f));
+        glyphLayout.setText(fonts.headerFont, diag.getSpeaker() + " :");
+        float bengaliX = Math.max(dx + 265f, dx + 34f + glyphLayout.width);
         fonts.headerFont.draw(spriteBatch, diag.getSpeaker() + " :", dx + 18f, dy + dh - 16f);
 
         // Authentic Bengali threat subtitle
-        com.badlogic.gdx.graphics.g2d.BitmapFont bFont = (fonts.bengaliFont != null) ? fonts.bengaliFont : fonts.headerFont;
-        bFont.setColor(Color.WHITE);
-        bFont.draw(spriteBatch, "\"" + diag.getTextBengali() + "\"", dx + 265f, dy + dh - 16f);
+        if (bd.spark36.app.DialoguePrefs.showBengaliLine()) {
+            bFont.setColor(Color.WHITE);
+            bFont.draw(spriteBatch, "\"" + diag.getTextBengali() + "\"", bengaliX, dy + dh - 16f);
+        }
 
+        String controls = "[F] ACCEPT CHALLENGE   [LMB/F] PUNCH   [Q/K] KICK   [C] DUCK";
         fonts.promptFont.setColor(goldAccent);
-        fonts.promptFont.draw(spriteBatch, "\"" + diag.getTextEnglish() + "\"  |  [F] ACCEPT CHALLENGE   [LMB/F] PUNCH   [Q/K] KICK   [C] DUCK", dx + 18f, dy + 22f);
+        fonts.promptFont.draw(spriteBatch, bd.spark36.app.DialoguePrefs.showEnglishLine()
+            ? "\"" + diag.getTextEnglish() + "\"  |  " + controls : controls, dx + 18f, dy + 22f);
+        bd.spark36.hud.screens.DialogueText.end();
         spriteBatch.end();
     }
 
@@ -3297,16 +3320,24 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.end();
 
         spriteBatch.begin();
+        com.badlogic.gdx.graphics.g2d.BitmapFont bFont = (fonts.bengaliFont != null) ? fonts.bengaliFont : fonts.headerFont;
+        bd.spark36.hud.screens.DialogueText.begin(fonts.headerFont, bFont, fonts.promptFont);
         fonts.headerFont.setColor(new Color(0.42f, 0.95f, 0.65f, 1f));
+        glyphLayout.setText(fonts.headerFont, diag.getSpeaker() + " :");
+        float bengaliX = Math.max(dx + 285f, dx + 34f + glyphLayout.width);
         fonts.headerFont.draw(spriteBatch, diag.getSpeaker() + " :", dx + 18f, dy + dh - 16f);
 
-        // Authentic Bengali student voice
-        com.badlogic.gdx.graphics.g2d.BitmapFont bFont = (fonts.bengaliFont != null) ? fonts.bengaliFont : fonts.headerFont;
-        bFont.setColor(Color.WHITE);
-        bFont.draw(spriteBatch, "\"" + diag.getTextBengali() + "\"", dx + 285f, dy + dh - 16f);
+        // Authentic Bengali student voice (language / subtitle settings pick which lines show)
+        if (bd.spark36.app.DialoguePrefs.showBengaliLine()) {
+            bFont.setColor(Color.WHITE);
+            bFont.draw(spriteBatch, "\"" + diag.getTextBengali() + "\"", bengaliX, dy + dh - 16f);
+        }
 
-        fonts.promptFont.setColor(goldAccent);
-        fonts.promptFont.draw(spriteBatch, "\"" + diag.getTextEnglish() + "\"", dx + 18f, dy + 22f);
+        if (bd.spark36.app.DialoguePrefs.showEnglishLine()) {
+            fonts.promptFont.setColor(goldAccent);
+            fonts.promptFont.draw(spriteBatch, "\"" + diag.getTextEnglish() + "\"", dx + 18f, dy + 22f);
+        }
+        bd.spark36.hud.screens.DialogueText.end();
 
         // Advance prompt if sequence is active (placed in bottom-right corner as a distinct key badge)
         if (dialogueManager.isDialogueActive()) {
@@ -3838,6 +3869,7 @@ public class WhereWindsMeetHUD implements Disposable {
         isPauseMenuOpen = false;
         isHelpControlsOpen = false;
         isExitConfirmOpen = false;
+        settingsScreen.close();
         pauseMenuSelection = 0;
         exitConfirmSelection = 0;
         isVictoryOpen = false;
