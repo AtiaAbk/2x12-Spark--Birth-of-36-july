@@ -87,6 +87,50 @@ Measured with the new opt-in recorder: `-Dbd.spark36.benchmarkSeconds=30` (3 s w
 - Quartering the pixel count raises FPS only from about 20 to 25. The limit is mostly **CPU-side or draw-call work**, not GPU fill-rate. Optimisation should start with profiling draw calls and per-frame CPU work, not with lowering visual quality (reference rule: profile first).
 - Not measured yet: moving camera, crowds in Levels 2–6, long-run thermal behaviour.
 
+### 4.1 T8 profile and optimisations (spawn, 1080p, HIGH)
+
+New opt-in profiler: `-Dbd.spark36.glProfile=true` (class `bd.spark36.diagnostics.GlStats`) logs once per second the per-frame averages of draw calls, texture binds, shader switches, GL calls, vertices, and CPU ms plus draw calls per frame phase. Add `-Dbd.spark36.glProfileSync=true` to call `glFinish` at every phase end, so each phase time includes its GPU work.
+
+**Profile before T8** (commit 3f07545):
+
+| Metric per frame | Value |
+|---|---|
+| Draw calls | **6293** (shadow pass 3046, main 3D pass 3226, post 4, HUD 14) |
+| Shader switches / GL calls | 520 / 140 700 |
+| Vertices submitted | 11.8 M (about 5.9 M per pass) |
+| CPU time, update / shadow / world3d / post / HUD | 0.5 / 6.8 / 14–16 / 0.1 / 0.7 ms (about 23 ms of a 43 ms frame) |
+
+Where the draws came from: about 18 characters × about 110 primitives per character, in each pass (about 2000 draws per pass), plus about 1000 un-culled static campus instances in each pass. Characters were also about half the vertices: 145 k indices per body.
+
+| Step (commit) | Draws/frame | Vertices | Avg FPS (best run) | Notes |
+|---|---|---|---|---|
+| Before (3f07545) | 6293 | 11.8 M | 25.0 (10 s) | CPU 23–25 ms per frame |
+| Merge same-material character parts per segment (e92eea7) | 3777 | 11.9 M | 27.5 (10 s) | CPU 24.6 → 11.0 ms; GPU-bound after this |
+| Bake static instances into culled per-material chunks (5b8e25c) | 2313 | 10.3 M | 30.9 (best of 2 × 20 s) | 903 instances → 222 chunks; shader switches 519 → 273 |
+| Frustum-cull characters per pass (3361370) | 2142 | 9.5 M | 31.6, 1%-low 26.2 (best of 2 × 20 s) | |
+| Coarse character rigs in the shadow pass and beyond 20 m (876dfd2) | not measured | not measured | 24.6 vs. 17.4 for the base build in the same contended window | single run pair, see caveat |
+
+After the first fix, `glProfileSync` attribution (GPU-inclusive, contended run): shadow pass about 13 ms, main 3D pass about 19 ms, post-processing about 1.6 ms, HUD about 1.7 ms. The frame is now **GPU vertex-bound** (shadow and main pass), not draw-call-bound.
+
+**Caveat on numbers:** the machine was shared with two other agents that ran the game at the same time. Single runs of the same build ranged from 16 to 31 FPS. The "best run" column is the least-disturbed run. Draw-call and vertex counts are deterministic and are the reliable signal. Game launches were then stopped on the user's request. As a result, there are no clean 30 s runs of the final build at spawn or curzon_front, and Level 5 was not measured. Re-measure on an idle machine:
+
+```bash
+./gradlew.bat :lwjgl3:run -Dbd.spark36.baseline=spawn -Dbd.spark36.benchmarkSeconds=30
+./gradlew.bat :lwjgl3:run -Dbd.spark36.baseline=curzon_front -Dbd.spark36.benchmarkSeconds=30
+./gradlew.bat :lwjgl3:run -Dbd.spark36.level=5 -Dbd.spark36.baseline=curzon_front -Dbd.spark36.benchmarkSeconds=30
+```
+
+**Visual check:** none of the optimisations lowers quality. Screenshot diffs at spawn between builds stay within run-to-run noise: a mean of about 2 grey levels, caused by wind, NPC motion and grain. Static geometry and the player are pixel-identical. See `docs/screenshots/t8_perf/spawn_before.png` and `spawn_after.png`. The coarse rigs are used only where they are below the shadow-map texel size (about 3 cm) or below one pixel (bodies more than 20 m away).
+
+**Remaining bottleneck and next step:** GPU vertex throughput on the integrated Radeon, at about 9.5 M vertices per frame before the LOD change. The largest remaining items are:
+- the static campus and foliage chunks in the 4096² sun shadow pass;
+- the main pass.
+
+Next recommended fixes, in order:
+1. Cache the sun shadow map. The sun barely moves, so re-render static casters only when the shadow camera moves by more than one texel, and draw only dynamic casters on top.
+2. Add distance LOD or impostors for tree canopies and glade foliage.
+3. Re-measure Level 5 crowds (24 NPCs).
+
 ---
 
 ## 5. Other machines (not re-verified)
