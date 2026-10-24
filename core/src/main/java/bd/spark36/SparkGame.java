@@ -243,8 +243,16 @@ public class SparkGame extends ApplicationAdapter {
     // ==========================================
     // MAIN RENDER DISPATCH
     // ==========================================
+    private final bd.spark36.diagnostics.FrameStats frameStats =
+        bd.spark36.diagnostics.FrameStats.fromSystemProperties();
+
     @Override
     public void render() {
+        if (frameStats != null && gameState != GameState.MAIN_MENU
+                && frameStats.record(Gdx.graphics.getDeltaTime())) {
+            Gdx.app.log("FrameStats", frameStats.summary());
+            Gdx.app.exit();
+        }
         if (gameState == GameState.MAIN_MENU) {
             renderMainMenu();
         } else {
