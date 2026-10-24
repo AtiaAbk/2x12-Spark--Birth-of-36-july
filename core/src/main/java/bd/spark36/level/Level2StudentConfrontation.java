@@ -237,6 +237,12 @@ public class Level2StudentConfrontation implements CampaignLevel {
     }
 
     @Override
+    public void restoreObjectiveFlags(boolean[] flags) {
+        objectives.restore(flags);
+        missionTracker.restoreCompleted(objectives.snapshot());
+    }
+
+    @Override
     public boolean isCombatEnabled() {
         return true;
     }

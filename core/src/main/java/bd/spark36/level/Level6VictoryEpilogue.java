@@ -330,6 +330,13 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     }
 
     @Override
+    public void restoreObjectiveFlags(boolean[] flags) {
+        for (int i = 0; i < objectivesDone.length; i++) {
+            objectivesDone[i] = flags != null && i < flags.length && flags[i];
+        }
+    }
+
+    @Override
     public void completeAllObjectivesForTest() {
         java.util.Arrays.fill(objectivesDone, true);
     }

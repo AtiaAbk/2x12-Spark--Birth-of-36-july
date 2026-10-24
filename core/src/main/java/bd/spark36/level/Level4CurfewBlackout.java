@@ -347,6 +347,14 @@ public class Level4CurfewBlackout implements CampaignLevel {
     }
 
     @Override
+    public void restoreObjectiveFlags(boolean[] flags) {
+        for (int i = 0; i < objectivesDone.length; i++) {
+            objectivesDone[i] = flags != null && i < flags.length && flags[i];
+        }
+        carryingDossier = objectivesDone[1];
+    }
+
+    @Override
     public void completeAllObjectivesForTest() {
         java.util.Arrays.fill(objectivesDone, true);
     }

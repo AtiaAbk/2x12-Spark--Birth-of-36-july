@@ -114,4 +114,17 @@ public interface CampaignLevel extends Disposable {
 
     /** Marks all level objectives complete (used for automated visual verification) */
     default void completeAllObjectivesForTest() {}
+
+    /** Current objective-done flags, one per checklist item (used for mid-level checkpoints). */
+    default boolean[] getObjectiveFlags() {
+        boolean[] flags = new boolean[Math.max(0, getTotalObjectiveCount())];
+        for (int i = 0; i < flags.length; i++) flags[i] = isChecklistItemDone(i);
+        return flags;
+    }
+
+    /**
+     * Restores objective-done flags from a checkpoint, including any state derived from them
+     * (e.g. carried items). Called after {@link #init}; must not fire toasts or victory.
+     */
+    default void restoreObjectiveFlags(boolean[] flags) {}
 }

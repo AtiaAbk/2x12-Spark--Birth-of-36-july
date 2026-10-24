@@ -397,6 +397,14 @@ public class Level3PoliceEscalation implements CampaignLevel {
     }
 
     @Override
+    public void restoreObjectiveFlags(boolean[] flags) {
+        for (int i = 0; i < objectivesDone.length; i++) {
+            objectivesDone[i] = flags != null && i < flags.length && flags[i];
+        }
+        carryingWater = objectivesDone[0];
+    }
+
+    @Override
     public void completeAllObjectivesForTest() {
         java.util.Arrays.fill(objectivesDone, true);
     }
