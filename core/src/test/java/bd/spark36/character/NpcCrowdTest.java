@@ -234,16 +234,17 @@ public class NpcCrowdTest {
     }
 
     @Test
-    @DisplayName("Diagnostics: test crowd with PlayerController colliders")
+    @DisplayName("CampusCrowd: Full waypoint graph connectivity with real environment colliders")
     public void testCrowdWithRealPlayerColliders() {
         PlayerController pc = new PlayerController();
         CampusCrowd realCrowd = new CampusCrowd(16, pc.getColliders());
-        System.out.println("Usable edge count with player colliders: " + realCrowd.usableEdgeCount() + " / " + CampusWaypointGraph.EDGES.length);
-        System.out.println("Blocked edges: " + realCrowd.blockedEdges());
+        assertEquals(CampusWaypointGraph.EDGES.length, realCrowd.usableEdgeCount(),
+            "All campus waypoint network edges must be completely traversable and clear of obstacles");
+        assertEquals("", realCrowd.blockedEdges(), "No waypoint edges should be blocked by colliders");
     }
 
     @Test
-    @DisplayName("Diagnostics: test student movement over 60 seconds")
+    @DisplayName("CampusCrowd: Continuous natural roaming and displacement over 30 seconds")
     public void testStudentLongTermMovement() {
         StudentNPC[] students = crowd.getStudents();
         Vector3[] initialPositions = new Vector3[students.length];
@@ -253,14 +254,17 @@ public class NpcCrowdTest {
 
         Vector3 dummyPlayer = new Vector3(0, 0, 0);
         float delta = 0.016f;
-        for (int frame = 0; frame < 3600; frame++) {
+        for (int frame = 0; frame < 1800; frame++) {
             crowd.update(delta, dummyPlayer);
         }
 
+        int movingCount = 0;
         for (int i = 0; i < students.length; i++) {
             float dst = initialPositions[i].dst(students[i].getPosition());
-            System.out.printf("Student %d: State=%s, Speed=%.2f, DistMoved=%.2f, Pos=(%.2f, %.2f)%n",
-                i, students[i].getState(), students[i].getSpeed(), dst, students[i].getPosition().x, students[i].getPosition().z);
+            if (dst > 2.0f) {
+                movingCount++;
+            }
         }
+        assertTrue(movingCount >= 12, "Overwhelming majority of students must actively traverse campus (moved: " + movingCount + " / " + students.length + ")");
     }
 }

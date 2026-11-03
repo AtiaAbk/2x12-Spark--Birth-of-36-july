@@ -293,13 +293,15 @@ public class SparkGame extends ApplicationAdapter {
         // Automated visual verification for Loading Screen
         if (System.getProperty("bd.spark36.testLoadingScreenshot") != null) {
             testTimer += delta;
-            if (!autoScreenshotTaken && testTimer >= 0.8f) {
+            if (!autoScreenshotTaken && testTimer >= 0.4f) {
                 takeScreenshot("spark36_loading_verified");
                 autoScreenshotTaken = true;
                 if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
                     Gdx.app.exit();
+                    return;
                 }
             }
+            return;
         }
 
         if (loadingScreen.isFinished()) {

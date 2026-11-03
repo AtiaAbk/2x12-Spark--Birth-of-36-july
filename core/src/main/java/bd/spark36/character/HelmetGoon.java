@@ -60,6 +60,19 @@ public class HelmetGoon implements Disposable {
     private boolean isGuardBroken = false;
     private float guardBreakTimer = 0f;
 
+    // Campus Security Patrol AI
+    private final Vector3 patrolTarget = new Vector3(0f, 0f, 50.0f);
+    private float patrolPauseTimer = 0f;
+    private static final float[][] SECURITY_PATROL_WAYPOINTS = {
+        {0f, 65f},     // Near Main Promenade Gate
+        {0f, 50f},     // Promenade
+        {0f, 35f},     // Promenade Middle
+        {0f, 22f},     // South Pond Link
+        {-6f, 29f},    // West Crosswalk
+        {6f, 29f},     // East Crosswalk
+        {0f, 42f}      // Promenade Center
+    };
+
     // Animation & Combat Timers
     private float animTime = 0f;
     private float stateTimer = 0f;
@@ -223,21 +236,54 @@ public class HelmetGoon implements Disposable {
     public void update(float delta, PlayerController player) {
         animTime += delta;
         if (role == Role.CAMPUS_SECURITY) {
-            // Peaceful Campus Security / Proctor AI: stands watch calmly, zero combat aggression
+            animTime += delta;
             state = State.STANDOFF;
             isAttacking = false;
             Vector3 pPos = player.getPosition();
             float distToPlayer = position.dst(pPos);
-            // Smoothly turn to face player when player is nearby
-            if (distToPlayer <= 12f && distToPlayer >= 1.2f) {
+
+            // If player is close (within 2.6m), stop and turn to face player for dialogue
+            if (distToPlayer <= 2.6f) {
                 float dx = pPos.x - position.x;
                 float dz = pPos.z - position.z;
                 float targetHeading = MathUtils.atan2(dx, dz) * MathUtils.radiansToDegrees;
                 float diff = (targetHeading - heading) % 360f;
                 if (diff > 180f) diff -= 360f;
                 if (diff < -180f) diff += 360f;
-                heading += diff * Math.min(1f, delta * 3.5f);
+                heading += diff * Math.min(1f, delta * 4.5f);
+                return;
             }
+
+            // Patrol movement
+            if (patrolPauseTimer > 0f) {
+                patrolPauseTimer -= delta;
+                return;
+            }
+
+            float dx = patrolTarget.x - position.x;
+            float dz = patrolTarget.z - position.z;
+            float dist = (float) Math.sqrt(dx * dx + dz * dz);
+
+            if (dist < 0.8f) {
+                patrolPauseTimer = MathUtils.random(2.0f, 4.0f);
+                int nextIdx = MathUtils.random(SECURITY_PATROL_WAYPOINTS.length - 1);
+                patrolTarget.set(SECURITY_PATROL_WAYPOINTS[nextIdx][0], 0f, SECURITY_PATROL_WAYPOINTS[nextIdx][1]);
+                return;
+            }
+
+            float speed = 1.35f;
+            float vx = (dx / dist) * speed;
+            float vz = (dz / dist) * speed;
+            position.x += vx * delta;
+            position.z += vz * delta;
+
+            float targetHeading = MathUtils.atan2(vx, vz) * MathUtils.radiansToDegrees;
+            float diff = (targetHeading - heading) % 360f;
+            if (diff > 180f) diff -= 360f;
+            if (diff < -180f) diff += 360f;
+            heading += diff * Math.min(1f, delta * 5.0f);
+
+            walkCycle += delta * 4.2f;
             return;
         }
 
@@ -555,7 +601,9 @@ public class HelmetGoon implements Disposable {
         }
 
         // 3. Legs
-        float legSwing = (state == State.APPROACHING) ? MathUtils.sin(walkCycle) * 32f : 0f;
+        boolean isWalking = (state == State.APPROACHING) ||
+            (role == Role.CAMPUS_SECURITY && patrolPauseTimer <= 0f);
+        float legSwing = isWalking ? MathUtils.sin(walkCycle) * 30f : 0f;
         legLTransform.set(rootTransform).translate(-0.14f, 0.45f, 0f).rotate(Vector3.X, legSwing);
         legRTransform.set(rootTransform).translate(0.14f, 0.45f, 0f).rotate(Vector3.X, -legSwing);
         legLInst.transform.set(legLTransform);
@@ -570,16 +618,17 @@ public class HelmetGoon implements Disposable {
 
         // 4. Arms & Equipment
         if (role == Role.CAMPUS_SECURITY) {
-            // Peaceful relaxed posture: arms hanging naturally at sides with gentle breathing swing
+            // Peaceful relaxed posture: arms swinging gently while patrolling, subtle breathing when paused
+            float armSwing = (patrolPauseTimer <= 0f) ? MathUtils.sin(walkCycle) * 20f : 0f;
             float breath = MathUtils.sin(animTime * 1.8f) * 2f;
-            leftUpperArmTransform.set(torsoTransform).translate(-0.30f, 0.18f, 0.04f).rotate(Vector3.X, 8f + breath).rotate(Vector3.Z, 6f);
+            leftUpperArmTransform.set(torsoTransform).translate(-0.30f, 0.18f, 0.04f).rotate(Vector3.X, 8f + breath - armSwing).rotate(Vector3.Z, 6f);
             leftForeArmTransform.set(leftUpperArmTransform).translate(0f, -0.28f, 0.04f).rotate(Vector3.X, -10f);
             armUpperLInst.transform.set(leftUpperArmTransform);
             armForeLInst.transform.set(leftForeArmTransform);
             renderWithTint(batch, env, armUpperLInst, flashTint);
             renderWithTint(batch, env, armForeLInst, flashTint);
 
-            rightUpperArmTransform.set(torsoTransform).translate(0.30f, 0.18f, 0.04f).rotate(Vector3.X, 8f + breath).rotate(Vector3.Z, -6f);
+            rightUpperArmTransform.set(torsoTransform).translate(0.30f, 0.18f, 0.04f).rotate(Vector3.X, 8f + breath + armSwing).rotate(Vector3.Z, -6f);
             rightForeArmTransform.set(rightUpperArmTransform).translate(0f, -0.28f, 0.04f).rotate(Vector3.X, -10f);
             armUpperRInst.transform.set(rightUpperArmTransform);
             armForeRInst.transform.set(rightForeArmTransform);
@@ -696,6 +745,8 @@ public class HelmetGoon implements Disposable {
         isAttacking = false;
         currentAttackType = 0;
         combatPopupTimer = 0f;
+        patrolPauseTimer = 0f;
+        patrolTarget.set(x, 0f, z + 14f);
     }
 
     @Override
