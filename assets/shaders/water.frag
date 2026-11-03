@@ -58,9 +58,9 @@ void main() {
     vec3 H = normalize(u_sunDir + V);
     float NdotH = clamp(dot(N, H), 0.0, 1.0);
     // Pinpoint micro sun glints
-    float specSharp = pow(NdotH, 384.0) * 3.4;
-    // Broad sun surface sheen
-    float specBroad = pow(NdotH, 48.0) * 0.65;
+    float specSharp = pow(NdotH, 384.0) * 3.2;
+    // Focused sun surface sheen
+    float specBroad = pow(NdotH, 128.0) * 0.40;
     vec3 sunGlint = u_sunColor * (specSharp + specBroad);
 
     // ── Subsurface Scattering (Sunlight penetrating wave crests) ────────────

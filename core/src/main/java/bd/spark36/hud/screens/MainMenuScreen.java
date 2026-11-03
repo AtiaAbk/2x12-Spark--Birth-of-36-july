@@ -61,10 +61,10 @@ public final class MainMenuScreen {
     private float noticeTimer = 0f;
     private boolean creditsTestStarted = false;
 
-    // Button geometry: wide hexagonal/chamfered pills
+    // Button geometry: wide hexagonal/chamfered pills with spacious breathing room
     private static final float BTN_W = 560f;
-    private static final float BTN_H = 58f;
-    private static final float BTN_STEP = 78f;
+    private static final float BTN_H = 56f;
+    private static final float BTN_STEP = 92f;
 
     public MainMenuScreen(ShapeRenderer shapeRenderer, SpriteBatch batch, FontRenderer fonts) {
         this.shapeRenderer = shapeRenderer;
@@ -281,28 +281,34 @@ public final class MainMenuScreen {
         shapeRenderer.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
         batch.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
 
-        // 1. BACKGROUND GRADIENTS & NEON MIST REFLECTIONS
+        // 1. BACKGROUND GRADIENTS & SMOOTH NEON MIST DIFFUSION
         shapeRenderer.begin(ShapeType.Filled);
         // Base dark blue-black gradient
         shapeRenderer.rect(0, 0, w, h,
             new Color(0.010f, 0.020f, 0.035f, 1f), new Color(0.015f, 0.025f, 0.040f, 1f),
             new Color(0.035f, 0.015f, 0.025f, 1f), new Color(0.025f, 0.010f, 0.020f, 1f));
 
-        // Left Cyan Atmospheric Light (Curzon / Aparajeyo)
-        float leftPulse = 0.12f + 0.04f * MathUtils.sin(animTime * 1.2f);
-        shapeRenderer.setColor(0.00f, 0.50f, 0.85f, leftPulse);
-        shapeRenderer.circle(w * 0.16f, h * 0.46f, w * 0.28f, 32);
+        // Smooth Multi-Layer Radial Glow (Left Cyan)
+        float leftBase = 0.025f + 0.010f * MathUtils.sin(animTime * 1.2f);
+        for (int step = 0; step < 8; step++) {
+            float frac = (8 - step) / 8.0f;
+            shapeRenderer.setColor(0.00f, 0.55f, 0.85f, leftBase * frac);
+            shapeRenderer.circle(w * 0.16f, h * 0.46f, w * 0.35f * (step + 1) / 8f, 36);
+        }
 
-        // Right Crimson Atmospheric Light (Shaheed Minar)
-        float rightPulse = 0.12f + 0.04f * MathUtils.cos(animTime * 1.2f);
-        shapeRenderer.setColor(0.85f, 0.10f, 0.18f, rightPulse);
-        shapeRenderer.circle(w * 0.84f, h * 0.46f, w * 0.28f, 32);
+        // Smooth Multi-Layer Radial Glow (Right Crimson)
+        float rightBase = 0.025f + 0.010f * MathUtils.cos(animTime * 1.2f);
+        for (int step = 0; step < 8; step++) {
+            float frac = (8 - step) / 8.0f;
+            shapeRenderer.setColor(0.85f, 0.10f, 0.18f, rightBase * frac);
+            shapeRenderer.circle(w * 0.84f, h * 0.46f, w * 0.35f * (step + 1) / 8f, 36);
+        }
 
-        // Wet Ground Surface Reflection Band (Bottom 28%)
-        shapeRenderer.setColor(0.00f, 0.35f, 0.60f, 0.14f);
-        shapeRenderer.rect(0, 0, w * 0.5f, h * 0.28f);
-        shapeRenderer.setColor(0.60f, 0.05f, 0.12f, 0.14f);
-        shapeRenderer.rect(w * 0.5f, 0, w * 0.5f, h * 0.28f);
+        // Wet Ground Surface Reflection Band (Bottom 26%)
+        shapeRenderer.setColor(0.00f, 0.35f, 0.60f, 0.08f);
+        shapeRenderer.rect(0, 0, w * 0.5f, h * 0.26f);
+        shapeRenderer.setColor(0.60f, 0.05f, 0.12f, 0.08f);
+        shapeRenderer.rect(w * 0.5f, 0, w * 0.5f, h * 0.26f);
         shapeRenderer.end();
 
         // 2. MONUMENT LANDMARKS (Aparajeyo Bangla & Shaheed Minar)
@@ -596,7 +602,7 @@ public final class MainMenuScreen {
                 String chName = chapterName(selectedChapter) + (unlocked ? "" : " [LOCKED]");
                 fonts.smallFont.setColor(sel ? (unlocked ? cyanGlow : new Color(1f, 0.4f, 0.4f, 1f)) : new Color(0.6f, 0.7f, 0.8f, 0.75f));
                 String sub = sel ? "<  " + chName + "  >" : chName;
-                drawCentered(fonts.smallFont, sub, cx, by - 14f);
+                drawCentered(fonts.smallFont, sub, cx, by - 16f);
             }
         }
 

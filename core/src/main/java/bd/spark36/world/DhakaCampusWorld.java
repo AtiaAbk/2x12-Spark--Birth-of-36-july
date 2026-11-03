@@ -52,20 +52,20 @@ public class DhakaCampusWorld implements Disposable {
         {-19.5f, -2f, 1},  // Flame tree flank
         {19.5f, -2f, 1},   // Flame tree flank
         {19.5f, 14f, 3},   // Feathery "jira-jira" bipinnate tree
-        {-13.5f, 32f, 3},  // Majestic feathery "jira-jira" compound tree
-        {13.5f, 32f, 1},   // Heritage Red Krishnachura tree
+        {-13.5f, 35.5f, 3},  // Majestic feathery "jira-jira" compound tree (clear of cross avenue)
+        {13.5f, 35.5f, 1},   // Heritage Red Krishnachura tree (clear of cross avenue)
         {-14.5f, 50f, 3},  // Feathery "jira-jira" compound tree
         {14.5f, 50f, 1},   // Red Krishnachura tree
         {-28.0f, 16f, 0}, {28.0f, 16f, 1}, // Rain tree, Krishnachura
         {-48.0f, 6f, 1},  {48.0f, 6f, 3},
-        {-62.0f, 30f, 0}, {62.0f, 30f, 0},
+        {-62.0f, 36.0f, 0}, {62.0f, 36.0f, 0}, // Lawn placement clear of crosswalk
         {-32.0f, -12f, 1}, {32.0f, -12f, 3},
         {-22.0f, 68f, 3}, {22.0f, 68f, 1},
         {-11.5f, 71f, 0}, // beside (not inside) the main gate
 
-        // Royal Palms along perimeter
+        // Royal Palms along perimeter (clear of glade path)
         {-18f, 2f, 2}, {18f, 2f, 2},
-        {-20f, 40f, 2}, {20f, 40f, 2}
+        {-20f, 45.0f, 2}, {20f, 45.0f, 2}
     };
 
     public static final Vector3 BOUNDARY_STONE_POS = new Vector3(7.8f, 0f, 36.5f);
@@ -371,6 +371,47 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         return mb.end();
+    }
+
+
+    /**
+     * Determines whether a given (x, z) world position encroaches upon any campus road,
+     * paved promenade, pukur ring walkway, or glade dirt path.
+     * Used to ensure all roads and paths remain 100% unobstructed by trees or bamboo.
+     */
+    public static boolean isRoadOrWalkway(float x, float z, float buffer) {
+        // 1. Central Promenade: x in [-3.6, +3.6], z from -20 to 78
+        if (Math.abs(x) < 4.2f + buffer && z >= -22f && z <= 78f) return true;
+        // 2. Cross Avenue (East-West at Z=30): width 4.8m
+        if (Math.abs(z - 30f) < 3.2f + buffer && Math.abs(x) <= 76f) return true;
+        // 3. Pond Ring Walkway (North-South at X=+-14): width 4.8m
+        if (Math.abs(Math.abs(x) - 14f) < 3.2f + buffer && z >= -12f && z <= 26f) return true;
+        // 4. Pond Ring Walkway links (East-West connectors at Z=-10.8 and Z=24)
+        if ((Math.abs(z - (-10.8f)) < 3.2f + buffer || Math.abs(z - 24f) < 3.2f + buffer)
+            && Math.abs(x) >= 4.5f && Math.abs(x) <= 15.5f) return true;
+        // 5. West North Branch (to Madhur Canteen)
+        if (Math.abs(x - (-56f)) < 3.2f + buffer && z >= -18f && z <= 30f) return true;
+        // 6. West South Branch (to Hakim Chattar)
+        if (Math.abs(x - (-58f)) < 3.2f + buffer && z >= 30f && z <= 56f) return true;
+        // 7. East North Branch
+        if (Math.abs(x - 56f) < 3.2f + buffer && z >= -18f && z <= 30f) return true;
+        // 8. East South Branch (to Raju Memorial)
+        if (Math.abs(x - 44f) < 3.2f + buffer && z >= 30f && z <= 44f) return true;
+        // 9. Front Verandah Walkway
+        if (Math.abs(x) <= 50f && Math.abs(z - (-17f)) < 3.8f + buffer) return true;
+        // 10. Glade Worn Dirt Paths (East and West)
+        float ax = Math.abs(x);
+        if (ax >= 6.0f && ax <= 36f) {
+            float pathZ = 40.5f + 0.7f * MathUtils.sin(ax * 0.35f);
+            if (Math.abs(z - pathZ) < 1.8f + buffer) return true;
+        }
+        // 11. Dirt path spur to 1921 Boundary Stone
+        if (x >= 6.0f && x <= 10.5f && z >= 37.0f && z <= 41.5f) return true;
+        // 12. South Road (Doel Chattar)
+        if (z >= 78.0f - buffer) return true;
+        // 13. North Road (Fuller Road)
+        if (z <= -44.0f + buffer) return true;
+        return false;
     }
 
     private void buildCampus(TextureFactory textures) {
@@ -1306,25 +1347,34 @@ public class DhakaCampusWorld implements Disposable {
             for (int c = 0; c < canes; c++) {
                 float cx = band[0] + gladeRng.nextFloat() * (band[1] - band[0]);
                 float cz = band[2] + gladeRng.nextFloat() * (band[3] - band[2]);
+                // Guarantee no bamboo culm spawns on or near any road or walkway
+                if (isRoadOrWalkway(cx, cz, 1.8f)) continue;
+
                 // Botanical spec: 4.5m to 10.0m (mostly 6.0m to 8.5m), radii 0.018m to 0.045m
                 float height = 6.2f + gladeRng.nextFloat() * 2.8f;
                 float lean = 0.35f + gladeRng.nextFloat() * 1.2f;
                 float leanAngle = gladeRng.nextFloat() * MathUtils.PI2;
+                float tipX = cx + MathUtils.cos(leanAngle) * lean;
+                float tipZ = cz + MathUtils.sin(leanAngle) * lean;
+                if (isRoadOrWalkway(tipX, tipZ, 1.0f)) {
+                    leanAngle += MathUtils.PI; // point away from road/path
+                }
                 float radius = 0.020f + gladeRng.nextFloat() * 0.022f;
                 GladeGeometry.bambooCane(caneBatch.part(1800), sprayBatch.part(1800),
                     cx, cz, height, lean, leanAngle, radius, caneSeed++);
             }
-            colliders.add(new float[]{band[0], 0f, band[2], band[1], 12f, band[3]});
         }
 
         // Dedicated Dense_Realistic_Bamboo_Clump groves (5x5m footprint, 32 culms each, spec-compliant)
+        // Positioned safely in glades and lawns away from all avenues and walkways
         float[][] clumpCenters = {
             {18f, 36f}, {26f, 36f}, {18f, 44f}, {26f, 44f},
             {-18f, 36f}, {-26f, 36f}, {-18f, 44f}, {-26f, 44f},
-            {13.5f, 15f}, {-13.5f, 15f} // Curzon pondside garden groves
+            {21.5f, 14f}, {-21.5f, 14f} // Curzon pondside garden groves (in lawn clear of walkway)
         };
         long clumpSeed = 9200L;
         for (float[] cc : clumpCenters) {
+            if (isRoadOrWalkway(cc[0], cc[1], 2.2f)) continue;
             GladeGeometry.denseBambooClump(caneBatch, sprayBatch,
                 cc[0], cc[1], clumpSeed += 120L);
             colliders.add(new float[]{cc[0] - 1.6f, 0f, cc[1] - 1.6f, cc[0] + 1.6f, 10f, cc[1] + 1.6f});

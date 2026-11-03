@@ -159,7 +159,7 @@ public class WaterRenderer implements Disposable {
         Color deep = WaterConfig.DEEP_COLOR;
         shader.setUniformf("u_shallowColor", shallow.r, shallow.g, shallow.b, shallow.a);
         shader.setUniformf("u_deepColor", deep.r, deep.g, deep.b, deep.a);
-        float waterDepth = WaterConfig.BASE_WATER_HEIGHT - WaterConfig.POND_BED_HEIGHT;
+        float waterDepth = 1.6f; // Effective optical water depth in meters
         shader.setUniformf("u_waterDepth", waterDepth);
 
         // Sun Direction & Color

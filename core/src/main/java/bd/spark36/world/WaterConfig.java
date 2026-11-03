@@ -57,11 +57,11 @@ public final class WaterConfig {
     public static final float MAX_WAVE_DISPLACEMENT = WAVE1_AMP + WAVE2_AMP + WAVE3_AMP; // 0.030f
 
     // ── Optical & Shading Parameters ─────────────────────────────────────────
-    /** Characteristic Dhaka University pond shallow water tint (clean sunlit teal). */
-    public static final Color SHALLOW_COLOR = new Color(0.18f, 0.60f, 0.66f, 0.74f);
+    /** Characteristic Dhaka University pond shallow water tint (rich tropical sunlit teal). */
+    public static final Color SHALLOW_COLOR = new Color(0.08f, 0.42f, 0.48f, 0.86f);
 
-    /** Deep water body color (algae-tinted emerald teal). */
-    public static final Color DEEP_COLOR = new Color(0.04f, 0.20f, 0.26f, 0.94f);
+    /** Deep water body color (algae-tinted emerald jade). */
+    public static final Color DEEP_COLOR = new Color(0.02f, 0.15f, 0.20f, 0.98f);
 
     /** Light extinction / depth absorption coefficient. */
     public static final float ABSORPTION_COEFF = 2.8f;

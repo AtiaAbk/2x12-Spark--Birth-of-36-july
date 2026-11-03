@@ -13,6 +13,7 @@ import bd.spark36.camera.CinematicCamera;
 import bd.spark36.character.CampusCrowd;
 import bd.spark36.character.HelmetGoon;
 import bd.spark36.character.PlayerController;
+import bd.spark36.character.StudentNPC;
 import bd.spark36.hud.WhereWindsMeetHUD;
 import bd.spark36.world.DhakaCampusWorld;
 import bd.spark36.world.JulyMemorials;
@@ -48,6 +49,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
     private boolean combatPhase = false;
     private boolean victoryTriggered = false;
     private float hitStopTimer = 0f;
+    private float diagTimer = 0f;
     private boolean attackHitProcessed = false;
 
     private static final String[] CHECKLIST = {
@@ -361,7 +363,18 @@ public class Level1PeacefulCampus implements CampaignLevel {
     public void update(float delta, PlayerController player, CinematicCamera camera, boolean canMove, WhereWindsMeetHUD hud) {
         if (world != null) world.update(delta);
         if (memorials != null) memorials.update(delta);
-        if (crowd != null) crowd.update(delta, player.getPosition());
+        if (crowd != null) {
+            crowd.update(delta, player.getPosition());
+            diagTimer += delta;
+            if (diagTimer >= 1.0f) {
+                diagTimer = 0f;
+                for (int i = 0; i < crowd.getStudentCount(); i++) {
+                    StudentNPC s = crowd.getStudents()[i];
+                    System.out.printf("[CrowdLive] S%02d: State=%s, Spd=%.2f, Pos=(%.1f, %.1f), Hdg=%.1f%n",
+                        i, s.getState(), s.getSpeed(), s.getPosition().x, s.getPosition().z, s.getHeading());
+                }
+            }
+        }
 
         if (campusSecurity != null && !combatPhase && canMove) {
             campusSecurity.update(delta, player);

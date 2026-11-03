@@ -70,6 +70,7 @@ public class CampusCrowd {
                 float[] edgeLanes = lanes[e];
                 float chosenLane = (edgeLanes != null && edgeLanes.length > 0) ?
                     edgeLanes[MathUtils.random(edgeLanes.length - 1)] : 0f;
+                s.setLane(chosenLane);
 
                 s.setPosition(
                     MathUtils.lerp(a[0], b[0], t) + nx * chosenLane,
@@ -96,30 +97,30 @@ public class CampusCrowd {
             s.setLevelNumber(levelNumber);
             switch (levelNumber) {
                 case 2: // July 15–16: Student Confrontation & Resistance
-                    if (i % 3 == 0) {
-                        s.transitionTo(NpcBehaviorState.GROUPING, MathUtils.random(10f, 25f));
+                    if (i % 4 == 0) {
+                        s.transitionTo(NpcBehaviorState.GROUPING, MathUtils.random(10f, 20f));
                         s.routeToNode(graph, CampusWaypointGraph.NODE_ARTS_PLAZA);
-                    } else if (i % 3 == 1) {
-                        s.transitionTo(NpcBehaviorState.SOCIALIZING, MathUtils.random(8f, 20f));
+                    } else if (i % 4 == 1) {
+                        s.transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(2f, 4f));
                     } else {
-                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(6f, 15f));
+                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(8f, 20f));
                     }
                     break;
 
                 case 3: // July 18: Police Escalation & Tear Gas
                     if (i % 4 == 0) {
-                        s.transitionTo(NpcBehaviorState.FLEEING, MathUtils.random(12f, 25f));
+                        s.transitionTo(NpcBehaviorState.FLEEING, MathUtils.random(10f, 20f));
                         s.routeToNode(graph, CampusWaypointGraph.NODE_MAIN_GATE);
                     } else if (i % 4 == 1) {
-                        s.transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(4f, 10f));
+                        s.transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(2f, 4f));
                     } else {
-                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(8f, 18f));
+                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(8f, 20f));
                     }
                     break;
 
                 case 4: // July 19–20: Curfew & Internet Blackout
                     if (i % 2 == 0) {
-                        s.transitionTo(NpcBehaviorState.IDLE, MathUtils.random(6f, 14f));
+                        s.transitionTo(NpcBehaviorState.IDLE, MathUtils.random(3f, 6f));
                     } else {
                         s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(10f, 22f));
                     }
@@ -127,31 +128,33 @@ public class CampusCrowd {
 
                 case 5: // August 3–4: Mass Mobilization — 1-Point Demand
                     if (i % 3 == 0) {
-                        s.transitionTo(NpcBehaviorState.CHANTING, MathUtils.random(15f, 35f));
+                        s.transitionTo(NpcBehaviorState.CHANTING, MathUtils.random(8f, 16f));
                     } else if (i % 3 == 1) {
-                        s.transitionTo(NpcBehaviorState.GROUPING, MathUtils.random(12f, 28f));
+                        s.transitionTo(NpcBehaviorState.GROUPING, MathUtils.random(10f, 20f));
                         s.routeToNode(graph, CampusWaypointGraph.NODE_RAJU_SCULPTURE);
                     } else {
-                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(6f, 16f));
+                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(8f, 20f));
                     }
                     break;
 
                 case 6: // August 5: Victory Epilogue — 36 July
-                    if (i % 2 == 0) {
-                        s.transitionTo(NpcBehaviorState.CHANTING, MathUtils.random(20f, 40f));
+                    if (i % 4 == 0) {
+                        s.transitionTo(NpcBehaviorState.CHANTING, MathUtils.random(6f, 12f));
+                    } else if (i % 4 == 1) {
+                        s.transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(2f, 4f));
                     } else {
-                        s.transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(8f, 20f));
+                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(12f, 28f));
                     }
                     break;
 
                 case 1: // July 1–14: Peaceful Academic Life & Early Quota Awareness
                 default:
                     if (i % 4 == 0) {
-                        s.transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(4f, 9f));
+                        s.transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(2f, 4f));
                     } else if (i % 4 == 1) {
-                        s.transitionTo(NpcBehaviorState.IDLE, MathUtils.random(3f, 8f));
+                        s.transitionTo(NpcBehaviorState.IDLE, MathUtils.random(1.5f, 3.5f));
                     } else {
-                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(8f, 20f));
+                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(10f, 25f));
                     }
                     break;
             }
@@ -172,7 +175,7 @@ public class CampusCrowd {
             if (playerPos != null) {
                 float[] push = avoid(s.getPosition().x, s.getPosition().z, playerPos.x, playerPos.z, PLAYER_SPACE, 1.8f);
                 if (push[0] != 0f || push[1] != 0f) {
-                    s.applyAvoidanceForce(push[0], push[1], delta);
+                    s.applyAvoidanceForce(push[0], push[1], delta, graph);
                 }
             }
 
@@ -185,13 +188,13 @@ public class CampusCrowd {
 
                 if (d2 < (2f * NPC_SPACE) * (2f * NPC_SPACE) && d2 > 0.0001f) {
                     float[] push = avoid(s.getPosition().x, s.getPosition().z, o.getPosition().x, o.getPosition().z, NPC_SPACE, 0.95f);
-                    s.applyAvoidanceForce(push[0], push[1], delta);
-                    o.applyAvoidanceForce(-push[0], -push[1], delta);
+                    s.applyAvoidanceForce(push[0], push[1], delta, graph);
+                    o.applyAvoidanceForce(-push[0], -push[1], delta, graph);
 
                     // Organic peer conversation initiation
                     if (s.getState() == NpcBehaviorState.WALKING && o.getState() == NpcBehaviorState.WALKING &&
                         s.getChatCooldown() <= 0f && o.getChatCooldown() <= 0f && d2 < 2.0f * 2.0f) {
-                        float chatDuration = MathUtils.random(4.0f, 8.5f);
+                        float chatDuration = MathUtils.random(2.5f, 4.5f);
                         s.startSocializing(o, chatDuration);
                         o.startSocializing(s, chatDuration);
                     }

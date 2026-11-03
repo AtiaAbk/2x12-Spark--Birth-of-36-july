@@ -46,6 +46,11 @@ final class GladeGeometry {
             float theta = RNG.nextFloat() * MathUtils.PI2;
             float x = cx + MathUtils.cos(theta) * r;
             float z = cz + MathUtils.sin(theta) * r;
+            if (DhakaCampusWorld.isRoadOrWalkway(x, z, 1.2f)) {
+                x = cx - MathUtils.cos(theta) * (r * 0.5f);
+                z = cz - MathUtils.sin(theta) * (r * 0.5f);
+                if (DhakaCampusWorld.isRoadOrWalkway(x, z, 1.0f)) continue;
+            }
 
             // Heights: mostly 6.0m - 8.5m, range 4.5m - 10.0m
             float distNorm = r / 2.35f;
@@ -58,6 +63,11 @@ final class GladeGeometry {
             // Natural lean: inner culms erect (lean 0.2 - 0.5m), outer culms lean outward (lean 0.8 - 1.6m)
             float leanAngle = theta + (RNG.nextFloat() - 0.5f) * 0.4f; // radiating outward
             float lean = MathUtils.lerp(0.30f, 1.45f, distNorm) + RNG.nextFloat() * 0.30f;
+            float tipX = x + MathUtils.cos(leanAngle) * lean;
+            float tipZ = z + MathUtils.sin(leanAngle) * lean;
+            if (DhakaCampusWorld.isRoadOrWalkway(tipX, tipZ, 0.8f)) {
+                leanAngle += MathUtils.PI;
+            }
 
             MeshPartBuilder culm = (culmSupplier != null) ? culmSupplier.getPart(1600) : null;
             MeshPartBuilder leaves = (leafSupplier != null) ? leafSupplier.getPart(600) : null;

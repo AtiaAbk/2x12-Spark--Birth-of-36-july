@@ -38,22 +38,28 @@ Victory Credits & Epilogue
 
 ---
 
-## Chapter 1: "Where It All Began"
+## Chapter 1: "Where It All Began" (যেখান থেকে সব শুরু)
 - **Historical Timeframe**: July 1 – 14, 2024
 - **Location**: Dhaka University — Curzon Hall Heritage Precinct
 - **Atmosphere & Visuals**: Summer natural daylight, warm sun (color temp 0.14), lush green mango trees, rain trees, bamboo groves, and Curzon Hall pond reflections.
-- **Combat Status**: **Disabled** (Strictly peaceful student demonstration).
-- **Core Mission**: Recover 5 Historical Archives and inspect the 1921 Boundary Stone:
-  1. *Curzon Hall Central Arcade* (Position: `[3.6, 0.0, -16.8]`) — Historical founding and architectural archives.
-  2. *Aparajeyo Bangla (Arts Plaza)* (Position: `[-36.0, 0.0, 26.0]`) — 1952 Language Movement & 1971 legacy.
-  3. *TSC Raju Anti-Terrorism Sculpture* (Position: `[44.0, 0.0, 42.0]`) — Anti-repression student unity.
-  4. *Central Library & Hakim Chattar* (Position: `[-58.0, 0.0, 36.0]`) — Student reform assembly archives.
-  5. *Teacher-Student Centre (TSC)* (Position: `[68.0, 0.0, 20.0]`) — Solidarity declaration.
+- **Combat Status**: **Enabled for Self-Defense & Peace Rule Enforcement**.
+- **Campus Peace Rule**: Striking any unarmed student / civilian (সাধারণ শিক্ষার্থী) is strictly forbidden and results in **INSTANT DISQUALIFICATION** with a Retry prompt.
+- **Story & Mission Flow**:
+  1. **Phase 1: Explore 5 Campus Locations & Archives**:
+     - *Curzon Hall Central Arcade* (Position: `[3.6, 0.0, -16.8]`) — Historical founding and architectural archives.
+     - *Aparajeyo Bangla (Arts Plaza)* (Position: `[-32.0, 0.0, 26.0]`) — 1952 Language Movement & 1971 legacy.
+     - *TSC Raju Anti-Terrorism Sculpture* (Position: `[44.0, 0.0, 42.0]`) — Anti-repression student unity.
+     - *Central Library & Hakim Chattar* (Position: `[-58.0, 0.0, 36.0]`) — Student reform assembly archives.
+     - *Teacher-Student Centre (TSC)* (Position: `[66.0, 0.0, 20.0]`) — Solidarity declaration.
+  2. **Phase 2: Confrontation with Helmeted Attackers**:
+     - After all 5 locations are inspected, a group of helmet-wearing counter-protesters armed with bamboo/hardwood lathis (sticks) arrive to attack the student gathering.
+     - The player must fight back using martial arts strikes (punches, kicks, sweeps), blocks, flash parries, and evasive dodges.
+     - **Defeat Condition**: If the player is knocked out (HP drops to 0) -> **MISSION FAILED** with instant Retry button.
+     - **Victory Condition**: Subduing all helmeted attackers completes the mission -> **VICTORY / MISSION SUCCESS** and unlocks Chapter 2.
 - **Interactive Features**:
   - Talk to student NPCs in the courtyard.
   - Sit on the ghat steps of Curzon pond (`[E] SIT / RELAX`).
   - View the 1921 Boundary Stone on the eastern perimeter.
-- **Victory Condition**: Inspect all 5 archives. Automatically displays victory screen and unlocks Chapter 2.
 
 ---
 

@@ -234,6 +234,15 @@ public class NpcCrowdTest {
     }
 
     @Test
+    @DisplayName("Diagnostics: test crowd with PlayerController colliders")
+    public void testCrowdWithRealPlayerColliders() {
+        PlayerController pc = new PlayerController();
+        CampusCrowd realCrowd = new CampusCrowd(16, pc.getColliders());
+        System.out.println("Usable edge count with player colliders: " + realCrowd.usableEdgeCount() + " / " + CampusWaypointGraph.EDGES.length);
+        System.out.println("Blocked edges: " + realCrowd.blockedEdges());
+    }
+
+    @Test
     @DisplayName("Diagnostics: test student movement over 60 seconds")
     public void testStudentLongTermMovement() {
         StudentNPC[] students = crowd.getStudents();

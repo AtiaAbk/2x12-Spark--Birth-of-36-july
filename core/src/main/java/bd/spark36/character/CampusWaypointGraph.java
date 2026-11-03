@@ -47,7 +47,7 @@ public class CampusWaypointGraph {
         {14f, 24f},     // 6  east pond ring, south
         {14f, -10.8f},  // 7  east pond ring, north
         {0f, -12f},     // 8  pond-ring link, north
-        {0f, -19f},     // 9  Curzon Hall steps, centre (behind the statue)
+        {0f, -14.2f},   // 9  Curzon Hall steps & front verandah promenade
         {-30f, -16.5f}, // 10 verandah walk, west
         {30f, -16.5f},  // 11 verandah walk, east
         {-30f, 31f},    // 12 Arts Plaza (Aparajeyo Bangla)
@@ -70,7 +70,7 @@ public class CampusWaypointGraph {
     public static final float BODY_RADIUS = 0.35f;
     public static final float MAX_LANE = 1.4f;
     public static final float LANE_STEP = 0.35f;
-    public static final float STEP_UP = 0.66f; // stairs, plinths, terraces
+    public static final float STEP_UP = 0.75f; // stairs, plinths, terraces
 
     private final float[][] colliders;
     private final float[][] edgeLanes = new float[EDGES.length][];

@@ -40,8 +40,11 @@ public class SparkGame extends ApplicationAdapter {
     // ==========================================
     // GAME STATE MACHINE
     // ==========================================
-    private enum GameState { MAIN_MENU, PLAYING }
-    private GameState gameState = GameState.MAIN_MENU;
+    private enum GameState { LOADING, MAIN_MENU, PLAYING }
+    private GameState gameState = GameState.LOADING;
+
+    // Loading Screen (high-tech 2x12 SPARK UI)
+    private bd.spark36.hud.screens.LoadingScreen loadingScreen;
 
     // Main Menu (rendering and input live in bd.spark36.hud.screens.MainMenuScreen)
     private bd.spark36.hud.screens.MainMenuScreen mainMenu;
@@ -91,7 +94,9 @@ public class SparkGame extends ApplicationAdapter {
         menuBatch = new SpriteBatch();
         fontRenderer = new FontRenderer();
         glyphLayout = new GlyphLayout();
-        gameState = GameState.MAIN_MENU;
+        boolean skipLoading = System.getProperty("bd.spark36.skipLoading") != null
+            || System.getProperty("bd.spark36.testMenuScreenshot") != null;
+        gameState = skipLoading ? GameState.MAIN_MENU : GameState.LOADING;
         bd.spark36.app.GameProfile.get().applyStartupSettings();
 
         String levelProp = System.getProperty("bd.spark36.level");
@@ -262,10 +267,48 @@ public class SparkGame extends ApplicationAdapter {
             capture.renderGallery(Math.min(0.1f, Gdx.graphics.getDeltaTime())); // T7: gallery replaces the frame
             return;
         }
-        if (gameState == GameState.MAIN_MENU) {
+        if (gameState == GameState.LOADING) {
+            renderLoading();
+        } else if (gameState == GameState.MAIN_MENU) {
             renderMainMenu();
         } else {
             renderGameplay();
+        }
+    }
+
+    // ==========================================
+    // LOADING SCREEN (High-Tech 2x12 SPARK UI)
+    // ==========================================
+    private void renderLoading() {
+        float delta = Gdx.graphics.getDeltaTime();
+        if (delta > 0.1f) delta = 0.1f;
+
+        if (loadingScreen == null) {
+            loadingScreen = new bd.spark36.hud.screens.LoadingScreen(shapeRenderer, menuBatch, fontRenderer);
+        }
+
+        loadingScreen.update(delta);
+        loadingScreen.render();
+
+        // Automated visual verification for Loading Screen
+        if (System.getProperty("bd.spark36.testLoadingScreenshot") != null) {
+            testTimer += delta;
+            if (!autoScreenshotTaken && testTimer >= 0.8f) {
+                takeScreenshot("spark36_loading_verified");
+                autoScreenshotTaken = true;
+                if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoExit"))) {
+                    Gdx.app.exit();
+                }
+            }
+        }
+
+        if (loadingScreen.isFinished()) {
+            gameState = GameState.MAIN_MENU;
+            if (mainMenu == null) {
+                mainMenu = new bd.spark36.hud.screens.MainMenuScreen(shapeRenderer, menuBatch, fontRenderer);
+                mainMenu.setSelectedChapter(selectedChapter);
+            }
+            mainMenu.onShow();
         }
     }
 

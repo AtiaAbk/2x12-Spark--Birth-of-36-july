@@ -87,14 +87,16 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
             case IDLE:
                 currentSpeed = Math.max(0f, currentSpeed - 4f * delta);
                 if (stateTimer >= stateDuration) {
-                    transitionTo(NpcBehaviorState.WALKING, MathUtils.random(8f, 18f));
+                    pickRandomNextEdge(graph);
+                    transitionTo(NpcBehaviorState.WALKING, MathUtils.random(10f, 25f));
                 }
                 break;
 
             case LOOKING_AROUND:
                 currentSpeed = Math.max(0f, currentSpeed - 4f * delta);
                 if (stateTimer >= stateDuration) {
-                    transitionTo(NpcBehaviorState.WALKING, MathUtils.random(10f, 22f));
+                    pickRandomNextEdge(graph);
+                    transitionTo(NpcBehaviorState.WALKING, MathUtils.random(10f, 25f));
                 }
                 break;
 
@@ -104,7 +106,7 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
                     turnTowards(socialPartner.position.x - position.x, socialPartner.position.z - position.z, delta, 5f);
                 }
                 if (stateTimer >= stateDuration) {
-                    endSocializing();
+                    endSocializing(graph);
                 }
                 break;
 
@@ -114,6 +116,10 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
                 if (hasGroupFocalPoint) {
                     turnTowards(groupFocalPoint.x - position.x, groupFocalPoint.z - position.z, delta, 4f);
                 }
+                if (stateTimer >= stateDuration) {
+                    pickRandomNextEdge(graph);
+                    transitionTo(NpcBehaviorState.WALKING, MathUtils.random(10f, 25f));
+                }
                 break;
 
             case INTERACTING_PLAYER:
@@ -122,7 +128,7 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
                     turnTowards(playerPos.x - position.x, playerPos.z - position.z, delta, 7f);
                 }
                 if (stateTimer >= stateDuration) {
-                    endInteraction();
+                    endInteraction(graph);
                 }
                 break;
 
@@ -130,6 +136,9 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
             case GROUPING:
             case FLEEING:
                 updateWalkingMovement(delta, graph, playerPos);
+                if (stateTimer >= stateDuration && state == NpcBehaviorState.WALKING) {
+                    advanceToNextWaypoint(graph);
+                }
                 break;
         }
 
@@ -170,12 +179,11 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
         moveWithCollision(graph, vx * delta, vz * delta);
 
         // Stuck detection
-        if (position.dst2(lastPosition) < (currentSpeed * delta * 0.2f) * (currentSpeed * delta * 0.2f)) {
+        if (position.dst2(lastPosition) < (currentSpeed * delta * 0.15f) * (currentSpeed * delta * 0.15f)) {
             stuckTime += delta;
-            if (stuckTime > 2.2f) {
+            if (stuckTime > 1.2f) {
                 stuckTime = 0f;
-                // Reverse edge
-                enterEdge(graph, currentEdge, toNode);
+                pickRandomNextEdge(graph);
             }
         } else {
             stuckTime = 0f;
@@ -192,10 +200,11 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
     }
 
     private void advanceToNextWaypoint(CampusWaypointGraph graph) {
+        if (graph == null) return;
         if (pathIndex < pathLength) {
             // Follow planned Dijkstra path
             int nextNode = plannedPath[pathIndex++];
-            int edge = findEdgeBetween(fromNode, nextNode);
+            int edge = findEdgeBetween(toNode, nextNode);
             if (edge != -1) {
                 enterEdge(graph, edge, toNode);
             } else {
@@ -203,35 +212,41 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
             }
         } else {
             // Destination reached or roaming freely
+            pickRandomNextEdge(graph);
             if (state == NpcBehaviorState.GROUPING) {
-                transitionTo(NpcBehaviorState.LISTENING, MathUtils.random(15f, 40f));
+                transitionTo(NpcBehaviorState.LISTENING, MathUtils.random(6f, 14f));
             } else if (state == NpcBehaviorState.FLEEING) {
-                transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(6f, 12f));
+                transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(2f, 4f));
             } else {
-                // Chance to pause and observe or socialize
                 float roll = MathUtils.random();
-                if (roll < 0.22f) {
-                    transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(2.5f, 6.0f));
-                } else if (roll < 0.35f) {
-                    transitionTo(NpcBehaviorState.IDLE, MathUtils.random(2.0f, 5.0f));
+                if (roll < 0.10f) {
+                    transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(1.5f, 3.5f));
+                } else if (roll < 0.18f) {
+                    transitionTo(NpcBehaviorState.IDLE, MathUtils.random(1.5f, 3.0f));
                 } else {
-                    pickRandomNextEdge(graph);
+                    transitionTo(NpcBehaviorState.WALKING, MathUtils.random(12f, 28f));
                 }
             }
         }
     }
 
-    private void pickRandomNextEdge(CampusWaypointGraph graph) {
+    public void pickRandomNextEdge(CampusWaypointGraph graph) {
+        if (graph == null) return;
         int[][] nodeEdges = graph.getNodeEdges();
-        if (toNode >= nodeEdges.length) return;
+        if (toNode < 0 || toNode >= nodeEdges.length) toNode = 0;
         int[] options = nodeEdges[toNode];
-        if (options == null || options.length == 0) return;
+        if (options == null || options.length == 0) {
+            enterEdge(graph, currentEdge, toNode);
+            return;
+        }
 
-        int next = currentEdge;
+        int next = options[0];
         if (options.length > 1) {
+            int tries = 0;
             do {
                 next = options[MathUtils.random(options.length - 1)];
-            } while (next == currentEdge);
+                tries++;
+            } while (next == currentEdge && tries < 10);
         }
         enterEdge(graph, next, toNode);
     }
@@ -290,8 +305,16 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
     }
 
     public void applyAvoidanceForce(float fx, float fz, float delta) {
-        position.x += fx * baseSpeed * delta;
-        position.z += fz * baseSpeed * delta;
+        applyAvoidanceForce(fx, fz, delta, null);
+    }
+
+    public void applyAvoidanceForce(float fx, float fz, float delta, CampusWaypointGraph graph) {
+        if (graph != null) {
+            moveWithCollision(graph, fx * baseSpeed * delta, fz * baseSpeed * delta);
+        } else {
+            position.x += fx * baseSpeed * delta;
+            position.z += fz * baseSpeed * delta;
+        }
     }
 
     private void turnTowards(float dx, float dz, float delta, float rate) {
@@ -399,8 +422,15 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
     }
 
     public void endSocializing() {
+        endSocializing(null);
+    }
+
+    public void endSocializing(CampusWaypointGraph graph) {
         this.socialPartner = null;
-        transitionTo(NpcBehaviorState.WALKING, MathUtils.random(8f, 20f));
+        if (graph != null) {
+            pickRandomNextEdge(graph);
+        }
+        transitionTo(NpcBehaviorState.WALKING, MathUtils.random(10f, 25f));
     }
 
     public void startPlayerInteraction(int activeLevel) {
@@ -410,8 +440,15 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
     }
 
     public void endInteraction() {
+        endInteraction(null);
+    }
+
+    public void endInteraction(CampusWaypointGraph graph) {
         this.activeDialogue = null;
-        transitionTo(previousState != NpcBehaviorState.INTERACTING_PLAYER ? previousState : NpcBehaviorState.IDLE, 3.0f);
+        if (graph != null) {
+            pickRandomNextEdge(graph);
+        }
+        transitionTo(NpcBehaviorState.WALKING, MathUtils.random(10f, 25f));
     }
 
     public void setGroupFocalPoint(Vector3 focalPoint) {
@@ -428,6 +465,9 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
     }
 
     // Getters
+    public float getLane() { return lane; }
+    public void setLane(float lane) { this.lane = lane; }
+
     public int getId() { return id; }
     public String getRoleTitle() { return roleTitle; }
     public int getGender() { return gender; }
