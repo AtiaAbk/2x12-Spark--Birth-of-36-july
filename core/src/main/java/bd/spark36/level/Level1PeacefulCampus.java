@@ -328,7 +328,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
         }
 
         player.setExtraColliders(world.getColliders());
-        this.crowd = new CampusCrowd(24, player.getColliders());
+        this.crowd = new CampusCrowd(32, player.getColliders());
         this.crowd.setLevelProfile(1);
 
         this.campusSecurity = new HelmetGoon(textures);
@@ -487,14 +487,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
         if (prog >= 0.40f && prog <= 0.68f && !attackHitProcessed) {
             attackHitProcessed = true;
 
-            String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
-            if (violation != null) {
-                if (hud != null) {
-                    hud.setDisqualified(true, violation);
-                }
-                return true;
-            }
-
+            // Combat Phase: Prioritize subduing armed Chhatra League aggressors
             if (combatPhase) {
                 for (int i = 0; i < aggressors.size; i++) {
                     HelmetGoon g = aggressors.get(i);
@@ -528,6 +521,12 @@ public class Level1PeacefulCampus implements CampaignLevel {
                         return true;
                     }
                 }
+            }
+
+            // Innocent student proximity: show peaceful solidarity reminder without aborting mission
+            String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
+            if (violation != null && hud != null) {
+                hud.triggerMissionToast("CAMPUS SOLIDARITY: Protect peers! Aim attacks at armed helmeted aggressors.", 0);
             }
         }
         return false;

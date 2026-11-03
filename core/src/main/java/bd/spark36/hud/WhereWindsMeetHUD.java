@@ -885,15 +885,10 @@ public class WhereWindsMeetHUD implements Disposable {
         MemorialEntry nearest = memorials.getNextObjective(player.getPosition());
         float dstToNearest = nearest != null ? player.getPosition().dst(nearest.position) : 65.4f;
 
+        // 3D objective pin above Curzon Hall / world landmarks disabled per user request
+        // Keeping HUD cards, checklist, and minimap clean and distraction-free
         if (camera != null && !isModalOpen()) {
-            if (activeLevel != null && !activeLevel.isLevelComplete()) {
-                Vector3 wp = activeLevel.getActiveWaypoint();
-                String title = activeLevel.getMissionTitle();
-                float dst = activeLevel.getWaypointDistance(player.getPosition());
-                draw3DObjectivePinDirect(wp, title, dst, camera, w, h);
-            } else if (nearest != null && memorials != null && !memorials.isAllInspected()) {
-                draw3DObjectivePin(nearest, player, camera, w, h);
-            }
+            // Disabled in world view
         }
 
         beginShapes(ShapeType.Filled);

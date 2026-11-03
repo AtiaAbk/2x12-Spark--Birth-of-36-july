@@ -387,12 +387,6 @@ public class Level2StudentConfrontation implements CampaignLevel {
         if (prog >= 0.40f && prog <= 0.68f && !attackHitProcessed) {
             attackHitProcessed = true;
 
-            String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
-            if (violation != null) {
-                hud.setDisqualified(true, violation);
-                return true;
-            }
-
             for (int i = 0; i < aggressors.size; i++) {
                 HelmetGoon g = aggressors.get(i);
                 if (g.isKnockedOut()) continue;
@@ -418,6 +412,11 @@ public class Level2StudentConfrontation implements CampaignLevel {
                     }
                     return true;
                 }
+            }
+
+            String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
+            if (violation != null && hud != null) {
+                hud.triggerMissionToast("CAMPUS SOLIDARITY: Protect fellow students! Aim attacks at aggressors.", 0);
             }
         }
         return false;

@@ -354,11 +354,9 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
     @Override
     public boolean onPlayerAttack(PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
-
         String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
-        if (violation != null) {
-            hud.setDisqualified(true, violation);
-            return true;
+        if (violation != null && hud != null) {
+            hud.triggerMissionToast("HUMANITARIAN ZONE: Strictly peaceful aid! Do not strike civilians.", 0);
         }
         return false;
     }
