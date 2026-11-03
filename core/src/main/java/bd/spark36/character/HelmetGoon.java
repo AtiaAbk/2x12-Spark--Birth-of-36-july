@@ -692,7 +692,12 @@ public class HelmetGoon implements Disposable {
         currentAttackType = 0;
         combatPopupTimer = 0f;
         patrolPauseTimer = 0f;
-        patrolTarget.set(x, 0f, z + 14f);
+        if (role == Role.CAMPUS_SECURITY) {
+            patrolWaypointIndex = 1;
+            patrolTarget.set(SECURITY_PATROL_WAYPOINTS[patrolWaypointIndex][0], 0f, SECURITY_PATROL_WAYPOINTS[patrolWaypointIndex][1]);
+        } else {
+            patrolTarget.set(x, 0f, z + 14f);
+        }
     }
 
     @Override
