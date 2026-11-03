@@ -51,16 +51,19 @@ public class HelmetGoon implements Disposable {
     private boolean isGuardBroken = false;
     private float guardBreakTimer = 0f;
 
-    private final Vector3 patrolTarget = new Vector3(0f, 0f, 50.0f);
+    private final Vector3 patrolTarget = new Vector3(0f, 0f, 40.0f);
     private float patrolPauseTimer = 0f;
+    private int patrolWaypointIndex = 0;
     private static final float[][] SECURITY_PATROL_WAYPOINTS = {
-        {0f, 65f},
-        {0f, 50f},
-        {0f, 35f},
-        {0f, 22f},
-        {-6f, 29f},
-        {6f, 29f},
-        {0f, 42f}
+        {0f, 62f},     // Promenade North
+        {0f, 45f},     // Promenade Mid
+        {0f, 30f},     // Cross Avenue Center
+        {0f, 22f},     // South Pond Link
+        {-10f, 24f},   // West Pond Walk
+        {0f, -10f},    // Curzon Forecourt
+        {3.6f, -15f},  // Curzon Arcade Entry
+        {10f, 24f},    // East Pond Walk
+        {0f, 40f}      // Promenade Return
     };
 
     private float animTime = 0f;
@@ -216,19 +219,6 @@ public class HelmetGoon implements Disposable {
             animTime += delta;
             state = State.STANDOFF;
             isAttacking = false;
-            Vector3 pPos = player.getPosition();
-            float distToPlayer = position.dst(pPos);
-
-            if (distToPlayer <= 2.6f) {
-                float dx = pPos.x - position.x;
-                float dz = pPos.z - position.z;
-                float targetHeading = MathUtils.atan2(dx, dz) * MathUtils.radiansToDegrees;
-                float diff = (targetHeading - heading) % 360f;
-                if (diff > 180f) diff -= 360f;
-                if (diff < -180f) diff += 360f;
-                heading += diff * Math.min(1f, delta * 4.5f);
-                return;
-            }
 
             if (patrolPauseTimer > 0f) {
                 patrolPauseTimer -= delta;
@@ -239,10 +229,10 @@ public class HelmetGoon implements Disposable {
             float dz = patrolTarget.z - position.z;
             float dist = (float) Math.sqrt(dx * dx + dz * dz);
 
-            if (dist < 0.8f) {
-                patrolPauseTimer = MathUtils.random(2.0f, 4.0f);
-                int nextIdx = MathUtils.random(SECURITY_PATROL_WAYPOINTS.length - 1);
-                patrolTarget.set(SECURITY_PATROL_WAYPOINTS[nextIdx][0], 0f, SECURITY_PATROL_WAYPOINTS[nextIdx][1]);
+            if (dist < 1.0f) {
+                patrolPauseTimer = MathUtils.random(0.6f, 1.4f);
+                patrolWaypointIndex = (patrolWaypointIndex + 1) % SECURITY_PATROL_WAYPOINTS.length;
+                patrolTarget.set(SECURITY_PATROL_WAYPOINTS[patrolWaypointIndex][0], 0f, SECURITY_PATROL_WAYPOINTS[patrolWaypointIndex][1]);
                 return;
             }
 
