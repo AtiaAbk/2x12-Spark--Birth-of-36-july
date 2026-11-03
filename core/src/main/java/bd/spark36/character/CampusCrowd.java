@@ -74,26 +74,61 @@ public class CampusCrowd {
     }
 
     public void seedPromenadeWalkers() {
+        seedCampusWalkers();
+    }
+
+    public void seedCampusWalkers() {
         if (students == null || students.length == 0) return;
-        float[][] promenadeSpawns = {
+        float[][] campusSpawns = {
+            // Main Promenade avenue
             {  1.8f, 66.0f, 0, 1, 180f },
             { -1.8f, 61.0f, 1, 0,   0f },
             {  2.0f, 54.0f, 1, 2, 180f },
             { -2.2f, 47.0f, 2, 1,   0f },
             {  1.6f, 40.0f, 1, 2, 180f },
-            { -1.5f, 34.0f, 2, 1,   0f }
+            { -1.5f, 34.0f, 2, 1,   0f },
+            // Curzon Hall Courtyard & Verandahs
+            {  0.0f, -13.0f, 8, 9, 180f },
+            {  3.6f, -16.0f, 9, 11, 90f },
+            { -15.0f, -16.5f, 9, 10, -90f },
+            {  15.0f, -16.5f, 9, 11, 90f },
+            // Lotus Pond Perimeter Walkways
+            { -14.0f,  10.0f, 4, 5, 180f },
+            {  14.0f,  10.0f, 6, 7, 180f },
+            { -14.0f,  -2.0f, 5, 4,   0f },
+            {  14.0f,  -2.0f, 7, 6,   0f },
+            {  -7.0f,  22.5f, 3, 20, -90f },
+            {   7.0f,  24.0f, 3, 6,  90f },
+            // Arts Plaza & Central Library
+            { -20.0f,  31.0f, 2, 12, -90f },
+            { -32.0f,  28.0f, 12, 13, -90f },
+            { -46.0f,  35.0f, 13, 15,   0f },
+            { -50.0f,  46.0f, 15, 16, -90f },
+            // Raju Sculpture & TSC
+            {  20.0f,  31.0f, 2, 17, 90f },
+            {  35.0f,  31.0f, 17, 18, 90f },
+            {  42.0f,  20.0f, 18, 19, 180f },
+            {  42.0f,   5.0f, 19, 18,   0f }
         };
-        int count = Math.min(promenadeSpawns.length, students.length);
+        int count = Math.min(campusSpawns.length, students.length);
         for (int i = 0; i < count; i++) {
-            float[] sp = promenadeSpawns[i];
+            float[] sp = campusSpawns[i];
             StudentNPC s = students[i];
             int fromNode = (int) sp[2];
             int toNode = (int) sp[3];
-            int edge = (fromNode == 0 || toNode == 0) ? 0 : 1;
+            int edge = -1;
+            for (int e = 0; e < EDGES.length; e++) {
+                if ((EDGES[e][0] == fromNode && EDGES[e][1] == toNode) ||
+                    (EDGES[e][0] == toNode && EDGES[e][1] == fromNode)) {
+                    edge = e;
+                    break;
+                }
+            }
+            if (edge == -1) edge = 0;
             s.enterEdge(graph, edge, fromNode);
             s.setPosition(sp[0], graph.supportHeight(sp[0], sp[1]), sp[1]);
             s.setHeading(sp[4]);
-            s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(20f, 40f));
+            s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(25f, 55f));
         }
     }
 
@@ -157,15 +192,18 @@ public class CampusCrowd {
 
                 case 1:
                 default:
-                    if (i % 4 == 0) {
-                        s.transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(2f, 4f));
-                    } else if (i % 4 == 1) {
-                        s.transitionTo(NpcBehaviorState.IDLE, MathUtils.random(1.5f, 3.5f));
+                    if (i % 8 == 0) {
+                        s.transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(1.2f, 2.4f));
+                    } else if (i % 8 == 1) {
+                        s.transitionTo(NpcBehaviorState.IDLE, MathUtils.random(1.0f, 2.0f));
                     } else {
-                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(10f, 25f));
+                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(20f, 45f));
                     }
                     break;
             }
+        }
+        if (levelNumber == 1) {
+            seedCampusWalkers();
         }
     }
 
@@ -195,8 +233,8 @@ public class CampusCrowd {
                     o.applyAvoidanceForce(-push[0], -push[1], delta, graph);
 
                     if (s.getState() == NpcBehaviorState.WALKING && o.getState() == NpcBehaviorState.WALKING &&
-                        s.getChatCooldown() <= 0f && o.getChatCooldown() <= 0f && d2 < 2.0f * 2.0f) {
-                        float chatDuration = MathUtils.random(2.5f, 4.5f);
+                        s.getChatCooldown() <= 0f && o.getChatCooldown() <= 0f && d2 < 1.15f * 1.15f && MathUtils.randomBoolean(0.30f)) {
+                        float chatDuration = MathUtils.random(1.8f, 3.0f);
                         s.startSocializing(o, chatDuration);
                         o.startSocializing(s, chatDuration);
                     }

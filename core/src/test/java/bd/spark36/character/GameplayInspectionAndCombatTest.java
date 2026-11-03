@@ -184,4 +184,115 @@ public class GameplayInspectionAndCombatTest {
         assertNotNull(wp);
         assertEquals("ACTIVE MISSION: 01 / 05", level2.getMissionTag());
     }
+
+    @Test
+    @DisplayName("7. Attack Mechanics: Pressing F attack near students does NOT abort or disqualify mission")
+    public void testAttackPunchDoesNotAbortMission() {
+        Level1PeacefulCampus level1 = new Level1PeacefulCampus();
+        CampusCrowd testCrowd = new CampusCrowd(3, player.getColliders());
+        StudentNPC[] students = testCrowd.getStudents();
+        // Place a student directly 1m in front of player
+        player.setPosition(0f, 0f, 60f);
+        player.setHeadingDegrees(0f); // facing north
+        students[0].setPosition(0f, 0f, 61.2f);
+        level1.setCrowdForTest(testCrowd);
+
+        // Player attacks with F
+        player.setAttackingForTest(true, 0.50f);
+
+        boolean attackHandled = level1.onPlayerAttack(player, null, null);
+        // Must NOT return true for disqualification and level must NOT be completed or aborted
+        assertFalse(attackHandled, "Attacking near an innocent student must NOT abort or terminate the level");
+        assertFalse(level1.isLevelComplete());
+    }
+
+    @Test
+    @DisplayName("8. Campus Security AI: Continuous patrol movement across waypoints without freezing at spawn")
+    public void testCampusSecurityContinuousPatrolMovement() {
+        HelmetGoon security = new HelmetGoon();
+        security.setRole(HelmetGoon.Role.CAMPUS_SECURITY);
+        security.reset(0f, 60f);
+
+        Vector3 startPos = security.getPosition().cpy();
+        player.setPosition(0f, 0f, 72f); // Player at promenade gate
+
+        // Update 5 seconds
+        for (int frame = 0; frame < 300; frame++) {
+            security.update(0.0166f, player);
+        }
+
+        float dstMoved = startPos.dst(security.getPosition());
+        assertTrue(dstMoved > 3.0f, "Campus security guard must actively patrol along promenade (moved: " + dstMoved + "m)");
+    }
+
+    @Test
+    @DisplayName("9. Campus Crowd Roaming: Overwhelming majority of 32 students actively traverse campus")
+    public void testFullCrowdDynamicWanderingAcrossCampus() {
+        CampusCrowd crowd = new CampusCrowd(32, player.getColliders());
+        crowd.setLevelProfile(1);
+        StudentNPC[] students = crowd.getStudents();
+        assertEquals(32, students.length);
+
+        Vector3[] startPos = new Vector3[students.length];
+        for (int i = 0; i < students.length; i++) {
+            startPos[i] = students[i].getPosition().cpy();
+        }
+
+        Vector3 dummyPlayer = new Vector3(0f, 0f, 72f);
+        for (int frame = 0; frame < 1800; frame++) { // 30 seconds
+            crowd.update(0.0166f, dummyPlayer);
+        }
+
+        int roamingCount = 0;
+        for (int i = 0; i < students.length; i++) {
+            float dist = startPos[i].dst(students[i].getPosition());
+            if (dist > 1.5f) {
+                roamingCount++;
+            }
+        }
+        assertTrue(roamingCount >= 24, "At least 75% of campus students must be actively roaming across the campus network (actual: " + roamingCount + " / 32)");
+    }
+
+    @Test
+    @DisplayName("10. Full Level 1 Playthrough: 5 Archives exploration -> Chhatra League encounter -> Victory")
+    public void testCompleteLevel1PlaythroughFlow() {
+        Level1PeacefulCampus level1 = new Level1PeacefulCampus();
+        JulyMemorials memorials = level1.getMemorials();
+        assertNotNull(memorials);
+
+        // Sequence of 5 archives
+        for (int i = 0; i < 5; i++) {
+            JulyMemorials.MemorialEntry entry = memorials.getEntries().get(i);
+            assertEquals(i, level1.getCompletedObjectiveCount());
+            // Move player to archive location
+            player.setPosition(entry.position.x, 0f, entry.position.z);
+            level1.onInteract(entry.position.cpy(), player, null);
+            assertTrue(entry.inspected);
+        }
+
+        assertEquals(5, level1.getCompletedObjectiveCount());
+        assertTrue(level1.allExplorationsComplete());
+        assertTrue(level1.isCombatPhase(), "Chhatra League combat encounter must activate after 5th archive");
+
+        // Verify Chhatra League enemies are present
+        assertEquals(3, level1.getRemainingAggressorsCount());
+        assertFalse(level1.allAggressorsSubdued());
+        assertFalse(level1.isLevelComplete());
+
+        // Player engages each aggressor with attacks
+        for (HelmetGoon goon : level1.getAggressors()) {
+            player.setPosition(goon.getPosition().x, 0f, goon.getPosition().z + 1.2f);
+            player.setHeadingDegrees(180f);
+            player.setAttackingForTest(true, 0.50f);
+
+            // Deal lethal hits
+            goon.takeHitFromPlayer(120f, false, true, 180f);
+            assertTrue(goon.isKnockedOut());
+        }
+
+        // All Chhatra League subdued
+        assertTrue(level1.allAggressorsSubdued());
+        level1.getMissionTracker().completeObjective("m6");
+        assertTrue(level1.isLevelComplete(), "Level 1 must be fully complete upon subduing all Chhatra League attackers!");
+    }
 }

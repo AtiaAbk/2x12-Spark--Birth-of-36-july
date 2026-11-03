@@ -197,12 +197,12 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
                 transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(2f, 4f));
             } else {
                 float roll = MathUtils.random();
-                if (roll < 0.10f) {
-                    transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(1.5f, 3.5f));
-                } else if (roll < 0.18f) {
-                    transitionTo(NpcBehaviorState.IDLE, MathUtils.random(1.5f, 3.0f));
+                if (roll < 0.05f) {
+                    transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(1.2f, 2.2f));
+                } else if (roll < 0.08f) {
+                    transitionTo(NpcBehaviorState.IDLE, MathUtils.random(1.0f, 1.8f));
                 } else {
-                    transitionTo(NpcBehaviorState.WALKING, MathUtils.random(12f, 28f));
+                    transitionTo(NpcBehaviorState.WALKING, MathUtils.random(18f, 40f));
                 }
             }
         }

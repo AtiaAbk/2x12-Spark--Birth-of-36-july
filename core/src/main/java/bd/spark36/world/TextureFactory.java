@@ -450,20 +450,35 @@ public class TextureFactory implements Disposable {
         int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(pix.getWidth() - 1, (int) (bx + reach));
         int minY = Math.max(0, (int) (by - reach)), maxY = Math.min(pix.getHeight() - 1, (int) (by + reach));
 
+        float petioleLen = 0.08f;
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
                 float rx = x + 0.5f - bx, ry = y + 0.5f - by;
                 float along = rx * dx + ry * dy;
                 float t = along / length;
                 if (t < 0f || t > 1f) continue;
-                float across = Math.abs(rx * px + ry * py);
-                float w = halfWidth * (float) Math.sin(Math.PI * Math.pow(t, 0.68));
+                float sideDist = rx * px + ry * py;
+                float across = Math.abs(sideDist);
+
+                float w;
+                if (t < petioleLen) {
+                    w = 1.2f + 0.5f * (t / petioleLen);
+                } else {
+                    float tbBlade = (t - petioleLen) / (1.0f - petioleLen);
+                    float envelope = (float) (Math.sin(Math.PI * Math.pow(tbBlade, 0.68)) * Math.pow(1.0 - tbBlade, 0.45) * 1.38);
+                    float tooth = 0.035f * MathUtils.sin(tbBlade * 14.0f * MathUtils.PI);
+                    w = halfWidth * envelope * (1.0f + tooth);
+                }
                 if (across > w) continue;
 
-                float r = MathUtils.lerp(br, tr, t);
-                float g = MathUtils.lerp(bg, tg, t);
-                float b = MathUtils.lerp(bb, tb, t);
-                pix.setColor(r, g, b, 1f);
+                float tbCol = Math.max(0f, (t - petioleLen) / (1.0f - petioleLen));
+                float r = MathUtils.lerp(br, tr, tbCol);
+                float g = MathUtils.lerp(bg, tg, tbCol);
+                float b = MathUtils.lerp(bb, tb, tbCol);
+                float foldGain = (sideDist > 0f) ? 1.07f : 0.93f;
+                pix.setColor(MathUtils.clamp(r * foldGain, 0f, 1f),
+                             MathUtils.clamp(g * foldGain, 0f, 1f),
+                             MathUtils.clamp(b * foldGain, 0f, 1f), 1f);
                 pix.drawPixel(x, y);
             }
         }
@@ -1813,10 +1828,11 @@ public class TextureFactory implements Disposable {
         float dx = MathUtils.cos(angle), dy = MathUtils.sin(angle);
         float px = -dy, py = dx;
 
-        float reach = length + halfWidth + 2f;
+        float reach = length + halfWidth + 3f;
 
-        int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(255, (int) (bx + reach));
-        int minY = Math.max(0, (int) (by - reach)), maxY = Math.min(255, (int) (by + reach));
+        int maxBound = pix.getWidth() - 1;
+        int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(maxBound, (int) (bx + reach));
+        int minY = Math.max(0, (int) (by - reach)), maxY = Math.min(maxBound, (int) (by + reach));
 
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
@@ -1824,31 +1840,80 @@ public class TextureFactory implements Disposable {
                 float along = rx * dx + ry * dy;
                 float t = along / length;
                 if (t < 0f || t > 1f) continue;
-                float across = Math.abs(rx * px + ry * py);
-                float w = halfWidth * (float) Math.pow(Math.sin(Math.PI * Math.pow(t, 0.72)), 0.8);
+                float sideDist = rx * px + ry * py;
+                float across = Math.abs(sideDist);
+
+                // Authentic botanical leaflet profile with petiole and acuminate apex
+                float petioleLen = 0.08f;
+                float w;
+                if (t < petioleLen) {
+                    w = 1.6f + 0.8f * (t / petioleLen);
+                } else {
+                    float tbBlade = (t - petioleLen) / (1.0f - petioleLen);
+                    float envelope = (float) (Math.sin(Math.PI * Math.pow(tbBlade, 0.68)) * Math.pow(1.0 - tbBlade, 0.45) * 1.38);
+                    float toothPhase = (tbBlade * 14.0f) % 1.0f;
+                    float toothShape = (toothPhase < 0.78f) ? (toothPhase / 0.78f) : (1.0f - (toothPhase - 0.78f) / 0.22f * 1.5f);
+                    float toothAmp = 0.040f * (float) Math.sin(tbBlade * MathUtils.PI);
+                    float undulate = 0.025f * MathUtils.sin(tbBlade * 7.5f);
+                    float asym = (sideDist > 0f) ? 1.02f : 0.98f;
+                    w = halfWidth * envelope * (1.0f + undulate + toothAmp * (toothShape - 0.5f)) * asym;
+                }
+
                 if (across > w + 0.5f) continue;
 
                 float alpha = MathUtils.clamp(w - across + 0.5f, 0f, 1f);
-                float edge = w > 0.5f ? across / w : 1f;
+                float edge = w > 0.5f ? Math.min(1f, across / w) : 1f;
 
-                float gain = 1.0f;
-                float r = MathUtils.lerp(br, tr, t) * gain;
-                float g = MathUtils.lerp(bg, tg, t) * gain;
-                float b = MathUtils.lerp(bb, tb, t) * gain;
+                float tbCol = Math.max(0f, (t - petioleLen) / (1.0f - petioleLen));
+                float r = MathUtils.lerp(br, tr, tbCol);
+                float g = MathUtils.lerp(bg, tg, tbCol);
+                float b = MathUtils.lerp(bb, tb, tbCol);
 
-                float vein = 0f;
-                if (across < 1.6f) vein = 0.03f;
-                else {
-                    float phase = (t * 9f - edge * 1.6f) % 1f;
-                    if (phase < 0f) phase += 1f;
-                    if (phase < 0.10f) vein = 0.015f;
+                float foldGain = (sideDist > 0f) ? 1.08f : 0.92f;
+
+                float midribW = MathUtils.lerp(1.8f, 0.6f, t);
+                if (across < midribW) {
+                    r = MathUtils.lerp(r, 0.84f, 0.6f);
+                    g = MathUtils.lerp(g, 0.98f, 0.6f);
+                    b = MathUtils.lerp(b, 0.44f, 0.6f);
+                    foldGain = 1.0f;
+                } else if (t >= petioleLen) {
+                    float veinPhase = (tbCol * 7.5f - (float) Math.pow(edge, 1.25) * 0.75f) % 1.0f;
+                    if (veinPhase < 0f) veinPhase += 1.0f;
+                    if (veinPhase < 0.09f && tbCol > 0.08f && tbCol < 0.92f) {
+                        r = MathUtils.clamp(r * 1.18f + 0.03f, 0f, 1f);
+                        g = MathUtils.clamp(g * 1.15f + 0.04f, 0f, 1f);
+                        b = MathUtils.clamp(b * 1.08f + 0.02f, 0f, 1f);
+                    }
                 }
-                float rim = 1f - 0.30f * MathUtils.clamp((edge - 0.72f) / 0.28f, 0f, 1f);
 
-                pix.setColor(MathUtils.clamp((r + vein) * rim, 0f, 1f),
-                             MathUtils.clamp((g + vein) * rim, 0f, 1f),
-                             MathUtils.clamp((b + vein * 0.5f) * rim, 0f, 1f), alpha);
-                pix.drawPixel(ox + x, oy + y);
+                float rim = 1f - 0.20f * MathUtils.clamp((edge - 0.75f) / 0.25f, 0f, 1f);
+                float finalR = MathUtils.clamp(r * foldGain * rim, 0f, 1f);
+                float finalG = MathUtils.clamp(g * foldGain * rim, 0f, 1f);
+                float finalB = MathUtils.clamp(b * foldGain * rim, 0f, 1f);
+
+                int targetX = ox + x, targetY = oy + y;
+                int curPixel = pix.getPixel(targetX, targetY);
+                int curA = curPixel & 0xFF;
+                if (curA == 0) {
+                    pix.setColor(finalR, finalG, finalB, alpha);
+                    pix.drawPixel(targetX, targetY);
+                } else {
+                    float curAf = curA / 255f;
+                    float outA = alpha + curAf * (1f - alpha);
+                    if (outA > 0.001f) {
+                        float curR = ((curPixel >>> 24) & 0xFF) / 255f;
+                        float curG = ((curPixel >>> 16) & 0xFF) / 255f;
+                        float curB = ((curPixel >>> 8) & 0xFF) / 255f;
+                        float outR = (finalR * alpha + curR * curAf * (1f - alpha)) / outA;
+                        float outG = (finalG * alpha + curG * curAf * (1f - alpha)) / outA;
+                        float outB = (finalB * alpha + curB * curAf * (1f - alpha)) / outA;
+                        pix.setColor(MathUtils.clamp(outR, 0f, 1f),
+                                     MathUtils.clamp(outG, 0f, 1f),
+                                     MathUtils.clamp(outB, 0f, 1f), outA);
+                        pix.drawPixel(targetX, targetY);
+                    }
+                }
             }
         }
     }
@@ -2573,27 +2638,68 @@ public class TextureFactory implements Disposable {
         float normX = -dirY;
         float normY = dirX;
 
-        int steps = (int)(length * 1.5f);
+        int steps = (int)(length * 2.0f);
+        float petioleLen = 0.06f;
+
         for (int s = 0; s <= steps; s++) {
             float t = (float) s / (float) steps;
             float px = startX + dirX * length * t;
             float py = startY + dirY * length * t;
 
-            float w = maxHalfWidth * MathUtils.sin(t * MathUtils.PI) * (1.1f - 0.35f * t);
+            float w;
+            if (t < petioleLen) {
+                w = 1.4f + 0.6f * (t / petioleLen);
+            } else {
+                float tbBlade = (t - petioleLen) / (1.0f - petioleLen);
+                float envelope = (float) (Math.sin(Math.PI * Math.pow(tbBlade, 0.65)) * Math.pow(1.0 - tbBlade, 0.40) * 1.35);
+                float toothPhase = (tbBlade * 12.0f) % 1.0f;
+                float toothShape = (toothPhase < 0.78f) ? (toothPhase / 0.78f) : (1.0f - (toothPhase - 0.78f) / 0.22f * 1.4f);
+                float toothAmp = 0.035f * (float) Math.sin(tbBlade * MathUtils.PI);
+                float undulate = 0.025f * MathUtils.sin(tbBlade * 7.0f);
+                w = maxHalfWidth * envelope * (1.0f + undulate + toothAmp * (toothShape - 0.5f));
+            }
 
-            int span = (int) Math.ceil(w);
+            int span = (int) Math.ceil(w + 1.0f);
             for (int d = -span; d <= span; d++) {
-                if (Math.abs(d) <= w) {
+                float dist = Math.abs(d);
+                if (dist <= w + 0.5f) {
                     int ix = Math.round(px + normX * d);
                     int iy = Math.round(py + normY * d);
                     if (ix >= 0 && ix < pix.getWidth() && iy >= 0 && iy < pix.getHeight()) {
-                        if (Math.abs(d) < 1.0f) {
-                            pix.setColor(veinCol);
+                        float alpha = MathUtils.clamp(w - dist + 0.5f, 0f, 1f);
+                        float edge = dist / Math.max(w, 0.01f);
+                        float r, g, b;
+                        if (dist < 1.2f) {
+                            r = veinCol.r; g = veinCol.g; b = veinCol.b;
                         } else {
-                            float edgeDarken = 1.0f - 0.22f * (Math.abs(d) / (w + 0.01f));
-                            pix.setColor(bladeCol.r * edgeDarken, bladeCol.g * edgeDarken, bladeCol.b * edgeDarken, 1f);
+                            float edgeDarken = 1.0f - 0.20f * MathUtils.clamp((edge - 0.70f) / 0.30f, 0f, 1f);
+                            float foldGain = (d > 0) ? 1.08f : 0.92f;
+                            r = MathUtils.clamp(bladeCol.r * edgeDarken * foldGain, 0f, 1f);
+                            g = MathUtils.clamp(bladeCol.g * edgeDarken * foldGain, 0f, 1f);
+                            b = MathUtils.clamp(bladeCol.b * edgeDarken * foldGain, 0f, 1f);
                         }
-                        pix.drawPixel(ix, iy);
+
+                        int curPixel = pix.getPixel(ix, iy);
+                        int curA = curPixel & 0xFF;
+                        if (curA == 0) {
+                            pix.setColor(r, g, b, alpha);
+                            pix.drawPixel(ix, iy);
+                        } else {
+                            float curAf = curA / 255f;
+                            float outA = alpha + curAf * (1f - alpha);
+                            if (outA > 0.001f) {
+                                float curR = ((curPixel >>> 24) & 0xFF) / 255f;
+                                float curG = ((curPixel >>> 16) & 0xFF) / 255f;
+                                float curB = ((curPixel >>> 8) & 0xFF) / 255f;
+                                float outR = (r * alpha + curR * curAf * (1f - alpha)) / outA;
+                                float outG = (g * alpha + curG * curAf * (1f - alpha)) / outA;
+                                float outB = (b * alpha + curB * curAf * (1f - alpha)) / outA;
+                                pix.setColor(MathUtils.clamp(outR, 0f, 1f),
+                                             MathUtils.clamp(outG, 0f, 1f),
+                                             MathUtils.clamp(outB, 0f, 1f), outA);
+                                pix.drawPixel(ix, iy);
+                            }
+                        }
                     }
                 }
             }

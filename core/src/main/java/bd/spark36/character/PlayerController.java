@@ -833,6 +833,12 @@ public class PlayerController {
         return attackProgress;
     }
 
+    public void setAttackingForTest(boolean attacking, float progress) {
+        this.isAttacking = attacking;
+        this.attackProgress = progress;
+        this.attackCombo = 1;
+    }
+
     public boolean isSittingWater() {
         return isSittingWater;
     }
