@@ -169,21 +169,26 @@ public class Level5MassMobilization implements CampaignLevel {
     public boolean onInteract(Vector3 playerPos, PlayerController player, WhereWindsMeetHUD hud) {
         if (!objectivesDone[0] && playerPos.dst(waypoints[0]) <= 3.8f) {
             objectivesDone[0] = true;
+            bd.spark36.mission.MissionManager.get().advanceProgress(1);
             hud.triggerMissionToast("SHAHEED MINAR DAIS REACHED", getCompletedObjectiveCount());
             return true;
         }
         if (objectivesDone[0] && !objectivesDone[1] && playerPos.dst(waypoints[1]) <= 4.0f) {
             objectivesDone[1] = true;
+            bd.spark36.mission.MissionManager.get().advanceProgress(1);
             hud.triggerMissionToast("HUMAN CHAIN REINFORCED", getCompletedObjectiveCount());
             return true;
         }
         if (objectivesDone[1] && !objectivesDone[2] && playerPos.dst(waypoints[2]) <= 4.2f) {
             objectivesDone[2] = true;
+            bd.spark36.mission.MissionManager.get().advanceProgress(1);
             hud.triggerMissionToast("MEDICAL AID DELIVERED", getCompletedObjectiveCount());
             return true;
         }
         if (objectivesDone[2] && !objectivesDone[3] && playerPos.dst(waypoints[3]) <= 3.8f) {
             objectivesDone[3] = true;
+            bd.spark36.mission.MissionManager.get().advanceProgress(1);
+            bd.spark36.mission.MissionManager.get().completeMission();
             hud.triggerMissionToast("ONE-POINT DEMAND PROCLAIMED!", getCompletedObjectiveCount());
             hud.triggerVictory();
             return true;
@@ -302,6 +307,15 @@ public class Level5MassMobilization implements CampaignLevel {
 
     @Override
     public boolean onPlayerAttack(PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
+        if (player == null || !player.isAttacking()) return false;
+        String violation = CivilianStrikeRule.check(crowd, player.getPosition(), player.getHeadingDegrees(), CivilianStrikeRule.CIVILIAN_VIOLATION);
+        if (violation != null) {
+            if (hud != null) {
+                hud.disqualify("You attacked a protected campus member.");
+            }
+            bd.spark36.mission.MissionManager.get().abortMission("You attacked a protected campus member.");
+            return false;
+        }
         return false;
     }
 

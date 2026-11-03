@@ -82,6 +82,7 @@ public class LevelConfig {
         currentLevel = level;
         currentMode = mode;
         combatEnabled = true;
+        unlockedLevel = 1;
     }
 
     private static int unlockedLevel = 1;

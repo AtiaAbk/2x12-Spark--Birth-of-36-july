@@ -56,6 +56,9 @@ public class Level3PoliceEscalation implements CampaignLevel {
         "5. Lead Evacuated Group to Safety Corridor"
     };
 
+    private final Array<bd.spark36.character.HelmetGoon> aggressors = new Array<>();
+    private boolean attackHitProcessed = false;
+    private float hitStopTimer = 0f;
     private boolean carryingWater = false;
     private float gasShakeTimer = 0f;
     private float smokeAnimTime = 0f;
@@ -218,8 +221,17 @@ public class Level3PoliceEscalation implements CampaignLevel {
         return false;
     }
 
+    public boolean allAggressorsSubdued() {
+        if (aggressors.size == 0) return false;
+        for (bd.spark36.character.HelmetGoon g : aggressors) {
+            if (!g.isKnockedOut()) return false;
+        }
+        return true;
+    }
+
     @Override
     public boolean isLevelComplete() {
+        if (allAggressorsSubdued()) return true;
         for (boolean b : objectivesDone) if (!b) return false;
         return true;
     }
@@ -286,6 +298,17 @@ public class Level3PoliceEscalation implements CampaignLevel {
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 
+        aggressors.clear();
+        for (int i = 0; i < 3; i++) {
+            bd.spark36.character.HelmetGoon g = (textures != null) ? new bd.spark36.character.HelmetGoon(textures) : new bd.spark36.character.HelmetGoon();
+            g.setRole(bd.spark36.character.HelmetGoon.Role.HELMETED_AGGRESSOR);
+            float sx = (i == 0) ? 0f : (i == 1 ? -6f : 6f);
+            float sz = 46f + (i * 3f);
+            g.reset(sx, sz);
+            g.startFightDirectly();
+            aggressors.add(g);
+        }
+
         camera.setColliders(player.getColliders());
         camera.setAngles(0f, -4f);
         camera.setDistance(4.5f);
@@ -293,6 +316,11 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
     @Override
     public void update(float delta, PlayerController player, CinematicCamera camera, boolean canMove, WhereWindsMeetHUD hud) {
+        if (hitStopTimer > 0f) {
+            hitStopTimer -= delta;
+            delta *= 0.15f;
+        }
+
         smokeAnimTime += delta;
         gasShakeTimer += delta;
 
@@ -304,18 +332,52 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
         if (world != null) world.update(delta);
         if (crowd != null) crowd.update(delta, player.getPosition());
+
+        for (bd.spark36.character.HelmetGoon g : aggressors) {
+            g.update(delta, player);
+        }
+
+        bd.spark36.character.HelmetGoon closestAggressor = null;
+        float closestDst = Float.MAX_VALUE;
+        for (bd.spark36.character.HelmetGoon g : aggressors) {
+            if (!g.isKnockedOut()) {
+                float d = player.getPosition().dst(g.getPosition());
+                if (d < closestDst) {
+                    closestDst = d;
+                    closestAggressor = g;
+                }
+            }
+        }
+
+        if (closestAggressor != null && closestDst <= 18f && hud != null) {
+            hud.setHelmetGoon(closestAggressor);
+            player.setCombatTarget(closestAggressor.getPosition());
+        } else if (hud != null) {
+            hud.setHelmetGoon(null);
+            player.clearCombatTarget();
+        }
+
+        if (player.isKnockedOut() && hud != null && !hud.isDefeated()) {
+            hud.setDefeated(true);
+        }
     }
 
     @Override
     public void renderShadow(ModelBatch shadowBatch) {
         if (world != null) world.renderShadowCasters(shadowBatch);
         street.renderShadow(shadowBatch);
+        for (bd.spark36.character.HelmetGoon g : aggressors) {
+            g.render(shadowBatch, null);
+        }
     }
 
     @Override
     public void render3D(ModelBatch modelBatch, Environment env) {
         if (world != null) world.render(modelBatch);
         if (world != null) street.render(modelBatch, world.getEnvironment());
+        for (bd.spark36.character.HelmetGoon g : aggressors) {
+            g.render(modelBatch, getEnvironment());
+        }
         for (ModelInstance mi : instances) modelBatch.render(mi, getEnvironment());
     }
 
@@ -354,9 +416,54 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
     @Override
     public boolean onPlayerAttack(PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
-        String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
-        if (violation != null && hud != null) {
-            hud.triggerMissionToast("HUMANITARIAN ZONE: Strictly peaceful aid! Do not strike civilians.", 0);
+        if (player == null || !player.isAttacking()) {
+            attackHitProcessed = false;
+            return false;
+        }
+
+        float prog = player.getAttackProgress();
+        if (prog >= 0.40f && prog <= 0.68f && !attackHitProcessed) {
+            attackHitProcessed = true;
+
+            for (int i = 0; i < aggressors.size; i++) {
+                bd.spark36.character.HelmetGoon g = aggressors.get(i);
+                if (g.isKnockedOut()) continue;
+
+                float dst = player.getPosition().dst(g.getPosition());
+                if (dst <= 2.8f) {
+                    boolean isSweep = (player.getAttackCombo() == 5);
+                    boolean isKick = (player.getAttackCombo() == 3 || player.getAttackCombo() == 4);
+                    float dmg = isSweep ? 34f : (isKick ? 38f : 24f);
+                    hitStopTimer = isSweep ? 0.065f : (isKick ? 0.052f : 0.038f);
+                    if (camera != null) camera.addShake(isSweep ? 0.10f : (isKick ? 0.07f : 0.04f));
+
+                    if (isKick || isSweep) {
+                        bd.spark36.audio.SoundManager.get().playKick();
+                    } else {
+                        bd.spark36.audio.SoundManager.get().playPunch();
+                    }
+
+                    boolean ko = g.takeHitFromPlayer(dmg, isKick, isSweep, player.getHeadingDegrees());
+                    if (ko) {
+                        if (camera != null) camera.addShake(0.24f);
+                        bd.spark36.mission.MissionManager.get().advanceProgress(1);
+                        if (allAggressorsSubdued()) {
+                            bd.spark36.mission.MissionManager.get().completeMission();
+                            if (hud != null) hud.triggerVictory();
+                        }
+                    }
+                    return true;
+                }
+            }
+
+            String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
+            if (violation != null) {
+                if (hud != null) {
+                    hud.disqualify("You attacked a protected campus member.");
+                }
+                bd.spark36.mission.MissionManager.get().abortMission("You attacked a protected campus member.");
+                return false;
+            }
         }
         return false;
     }
@@ -394,6 +501,8 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
     @Override
     public void dispose() {
+        for (bd.spark36.character.HelmetGoon g : aggressors) g.dispose();
+        aggressors.clear();
         street.dispose();
         if (world != null) { world.dispose(); world = null; }
         for (Model m : models) m.dispose();

@@ -54,6 +54,9 @@ public class Level4CurfewBlackout implements CampaignLevel {
         "4. Hand-Deliver Evidence to Press Contact"
     };
 
+    private final Array<bd.spark36.character.HelmetGoon> aggressors = new Array<>();
+    private boolean attackHitProcessed = false;
+    private float hitStopTimer = 0f;
     private boolean carryingDossier = false;
     private float searchlightAngle = 0f;
 
@@ -197,15 +200,24 @@ public class Level4CurfewBlackout implements CampaignLevel {
         return false;
     }
 
+    public boolean allAggressorsSubdued() {
+        if (aggressors.size == 0) return false;
+        for (bd.spark36.character.HelmetGoon g : aggressors) {
+            if (!g.isKnockedOut()) return false;
+        }
+        return true;
+    }
+
     @Override
     public boolean isLevelComplete() {
+        if (allAggressorsSubdued()) return true;
         for (boolean b : objectivesDone) if (!b) return false;
         return true;
     }
 
     @Override
     public boolean isCombatEnabled() {
-        return false;
+        return true;
     }
 
     @Override
@@ -277,6 +289,18 @@ public class Level4CurfewBlackout implements CampaignLevel {
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 
+        aggressors.clear();
+        for (int i = 0; i < 4; i++) {
+            bd.spark36.character.HelmetGoon g = (textures != null) ? new bd.spark36.character.HelmetGoon(textures) : new bd.spark36.character.HelmetGoon();
+            g.setRole(bd.spark36.character.HelmetGoon.Role.HELMETED_AGGRESSOR);
+            g.setCombatStats(120f, 130f, 3.0f, 0.4f, 0.8f);
+            float sx = (i % 2 == 0 ? -1 : 1) * (4f + i * 2f);
+            float sz = 40f + (i * 3.5f);
+            g.reset(sx, sz);
+            g.startFightDirectly();
+            aggressors.add(g);
+        }
+
         camera.setColliders(player.getColliders());
         camera.setAngles(0f, -4f);
         camera.setDistance(4.5f);
@@ -284,6 +308,11 @@ public class Level4CurfewBlackout implements CampaignLevel {
 
     @Override
     public void update(float delta, PlayerController player, CinematicCamera camera, boolean canMove, WhereWindsMeetHUD hud) {
+        if (hitStopTimer > 0f) {
+            hitStopTimer -= delta;
+            delta *= 0.15f;
+        }
+
         if (world != null) world.update(delta);
 
         searchlightAngle += delta * 0.8f;
@@ -294,6 +323,34 @@ public class Level4CurfewBlackout implements CampaignLevel {
                 .rotate(Vector3.Y, sweepDeg)
                 .rotate(Vector3.X, 15f);
         }
+
+        for (bd.spark36.character.HelmetGoon g : aggressors) {
+            g.update(delta, player);
+        }
+
+        bd.spark36.character.HelmetGoon closestAggressor = null;
+        float closestDst = Float.MAX_VALUE;
+        for (bd.spark36.character.HelmetGoon g : aggressors) {
+            if (!g.isKnockedOut()) {
+                float d = player.getPosition().dst(g.getPosition());
+                if (d < closestDst) {
+                    closestDst = d;
+                    closestAggressor = g;
+                }
+            }
+        }
+
+        if (closestAggressor != null && closestDst <= 18f && hud != null) {
+            hud.setHelmetGoon(closestAggressor);
+            player.setCombatTarget(closestAggressor.getPosition());
+        } else if (hud != null) {
+            hud.setHelmetGoon(null);
+            player.clearCombatTarget();
+        }
+
+        if (player.isKnockedOut() && hud != null && !hud.isDefeated()) {
+            hud.setDefeated(true);
+        }
     }
 
     @Override
@@ -301,6 +358,9 @@ public class Level4CurfewBlackout implements CampaignLevel {
         if (world != null) world.renderShadowCasters(shadowBatch);
         street.renderShadow(shadowBatch);
         if (apcInstance != null) shadowBatch.render(apcInstance);
+        for (bd.spark36.character.HelmetGoon g : aggressors) {
+            g.render(shadowBatch, null);
+        }
     }
 
     @Override
@@ -308,6 +368,9 @@ public class Level4CurfewBlackout implements CampaignLevel {
         if (world != null) world.render(modelBatch);
         if (world != null) street.render(modelBatch, world.getEnvironment());
         for (ModelInstance mi : instances) modelBatch.render(mi, getEnvironment());
+        for (bd.spark36.character.HelmetGoon g : aggressors) {
+            g.render(modelBatch, getEnvironment());
+        }
     }
 
     @Override
@@ -327,6 +390,46 @@ public class Level4CurfewBlackout implements CampaignLevel {
 
     @Override
     public boolean onPlayerAttack(PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
+        if (player == null || !player.isAttacking()) {
+            attackHitProcessed = false;
+            return false;
+        }
+
+        float prog = player.getAttackProgress();
+        if (prog >= 0.40f && prog <= 0.68f && !attackHitProcessed) {
+            attackHitProcessed = true;
+
+            for (int i = 0; i < aggressors.size; i++) {
+                bd.spark36.character.HelmetGoon g = aggressors.get(i);
+                if (g.isKnockedOut()) continue;
+
+                float dst = player.getPosition().dst(g.getPosition());
+                if (dst <= 2.8f) {
+                    boolean isSweep = (player.getAttackCombo() == 5);
+                    boolean isKick = (player.getAttackCombo() == 3 || player.getAttackCombo() == 4);
+                    float dmg = isSweep ? 34f : (isKick ? 38f : 24f);
+                    hitStopTimer = isSweep ? 0.065f : (isKick ? 0.052f : 0.038f);
+                    if (camera != null) camera.addShake(isSweep ? 0.10f : (isKick ? 0.07f : 0.04f));
+
+                    if (isKick || isSweep) {
+                        bd.spark36.audio.SoundManager.get().playKick();
+                    } else {
+                        bd.spark36.audio.SoundManager.get().playPunch();
+                    }
+
+                    boolean ko = g.takeHitFromPlayer(dmg, isKick, isSweep, player.getHeadingDegrees());
+                    if (ko) {
+                        if (camera != null) camera.addShake(0.24f);
+                        bd.spark36.mission.MissionManager.get().advanceProgress(1);
+                        if (allAggressorsSubdued()) {
+                            bd.spark36.mission.MissionManager.get().completeMission();
+                            if (hud != null) hud.triggerVictory();
+                        }
+                    }
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -350,6 +453,8 @@ public class Level4CurfewBlackout implements CampaignLevel {
 
     @Override
     public void dispose() {
+        for (bd.spark36.character.HelmetGoon g : aggressors) g.dispose();
+        aggressors.clear();
         street.dispose();
         if (world != null) { world.dispose(); world = null; }
         for (Model m : models) m.dispose();

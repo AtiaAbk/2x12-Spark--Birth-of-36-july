@@ -377,7 +377,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
         if (memorials != null) memorials.update(delta);
         if (crowd != null) crowd.update(delta, player.getPosition());
 
-        if (campusSecurity != null && !combatPhase && canMove) {
+        if (campusSecurity != null && !combatPhase) {
             campusSecurity.update(delta, player);
         }
 
@@ -387,6 +387,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
                 if (!entry.inspected && pPos.dst(entry.position) <= 6.5f) {
                     entry.inspected = true;
                     missionTracker.completeObjective("m" + entry.id);
+                    bd.spark36.mission.MissionManager.get().advanceProgress(1);
                     if (hud != null) {
                         hud.triggerMissionToast("EXPLORED: " + entry.title + " / " + entry.location, getCompletedObjectiveCount());
                         bd.spark36.audio.SoundManager.get().playObjective();
@@ -399,7 +400,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
             }
         }
 
-        if (combatPhase && canMove) {
+        if (combatPhase) {
             HelmetGoon closestAggressor = null;
             float closestDst = Float.MAX_VALUE;
             for (HelmetGoon g : aggressors) {
@@ -513,6 +514,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
                             if (allAggressorsSubdued() && !victoryTriggered) {
                                 victoryTriggered = true;
                                 missionTracker.completeObjective("m6");
+                                bd.spark36.mission.MissionManager.get().completeMission();
                                 if (hud != null) {
                                     hud.triggerVictory();
                                 }
@@ -523,10 +525,14 @@ public class Level1PeacefulCampus implements CampaignLevel {
                 }
             }
 
-            // Innocent student proximity: show peaceful solidarity reminder without aborting mission
+            // Protected civilian proximity: strictly enforced prohibition
             String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
-            if (violation != null && hud != null) {
-                hud.triggerMissionToast("CAMPUS SOLIDARITY: Protect peers! Aim attacks at armed helmeted aggressors.", 0);
+            if (violation != null) {
+                if (hud != null) {
+                    hud.disqualify("You attacked a protected campus member.");
+                }
+                bd.spark36.mission.MissionManager.get().abortMission("You attacked a protected campus member.");
+                return false;
             }
         }
         return false;

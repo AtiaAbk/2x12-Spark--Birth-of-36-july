@@ -38,6 +38,7 @@ public class LevelManager implements Disposable {
 
         this.currentLevelIndex = Math.max(1, Math.min(6, levelIndex));
         LevelConfig.setCurrentLevel(currentLevelIndex);
+        bd.spark36.mission.MissionManager.get().startMission(currentLevelIndex);
 
         switch (currentLevelIndex) {
             case 1:
@@ -118,7 +119,7 @@ public class LevelManager implements Disposable {
     }
 
     public boolean handlePlayerAttack() {
-        if (activeLevel != null && activeLevel.isCombatEnabled()) {
+        if (activeLevel != null) {
             boolean hit = activeLevel.onPlayerAttack(player, camera, hud);
             trackCheckpoint();
             return hit;

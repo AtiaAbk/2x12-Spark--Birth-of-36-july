@@ -320,6 +320,15 @@ public class Level6VictoryEpilogue implements CampaignLevel {
 
     @Override
     public boolean onPlayerAttack(PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
+        if (player == null || !player.isAttacking()) return false;
+        String violation = CivilianStrikeRule.check(crowd, player.getPosition(), player.getHeadingDegrees(), CivilianStrikeRule.CIVILIAN_VIOLATION);
+        if (violation != null) {
+            if (hud != null) {
+                hud.disqualify("You attacked a protected campus member.");
+            }
+            bd.spark36.mission.MissionManager.get().abortMission("You attacked a protected campus member.");
+            return false;
+        }
         return false;
     }
 

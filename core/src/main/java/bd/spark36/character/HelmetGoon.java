@@ -44,9 +44,12 @@ public class HelmetGoon implements Disposable {
     private final Vector3 position = new Vector3(0f, 0f, 36.0f);
     private float heading = 0f;
     private float health = 100f;
-    private final float maxHealth = 100f;
+    private float maxHealth = 100f;
     private float poise = 100f;
-    private final float maxPoise = 100f;
+    private float maxPoise = 100f;
+    private float moveSpeed = 2.4f;
+    private float attackCooldownMin = 0.6f;
+    private float attackCooldownMax = 1.2f;
     private float poiseRegenCooldown = 0f;
     private boolean isGuardBroken = false;
     private float guardBreakTimer = 0f;
@@ -327,7 +330,7 @@ public class HelmetGoon implements Disposable {
             case APPROACHING:
                 if (distToPlayer > 2.05f) {
 
-                    float speed = 2.4f;
+                    float speed = moveSpeed;
                     walkCycle += delta * 7f;
                     position.x += MathUtils.sinDeg(heading) * speed * delta;
                     position.z += MathUtils.cosDeg(heading) * speed * delta;
@@ -432,7 +435,7 @@ public class HelmetGoon implements Disposable {
             currentAttackType = 0;
             attackProgress = 0f;
             state = State.APPROACHING;
-            attackCooldown = MathUtils.random(0.6f, 1.2f);
+            attackCooldown = MathUtils.random(attackCooldownMin, attackCooldownMax);
         }
     }
 
@@ -698,6 +701,20 @@ public class HelmetGoon implements Disposable {
         } else {
             patrolTarget.set(x, 0f, z + 14f);
         }
+    }
+
+    public void setCombatStats(float hp, float maxPoise, float speed, float cooldownMin, float cooldownMax) {
+        this.maxHealth = hp;
+        this.health = hp;
+        this.maxPoise = maxPoise;
+        this.poise = maxPoise;
+        this.moveSpeed = speed;
+        this.attackCooldownMin = cooldownMin;
+        this.attackCooldownMax = cooldownMax;
+    }
+
+    public CombatClassification getCombatClassification() {
+        return (role == Role.HELMETED_AGGRESSOR) ? CombatClassification.HOSTILE_OPPONENT : CombatClassification.PROTECTED_CIVILIAN;
     }
 
     @Override

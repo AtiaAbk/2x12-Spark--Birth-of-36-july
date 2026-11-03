@@ -61,6 +61,14 @@ public class PlayerController {
 
     private int gender = 0;
 
+    public enum PlayerCombatState {
+        IDLE,
+        ATTACKING,
+        ATTACK_RECOVERY
+    }
+    private PlayerCombatState combatState = PlayerCombatState.IDLE;
+    private float attackRecoveryTimer = 0f;
+
     private final AnimationStateMachine animStateMachine = new AnimationStateMachine();
     private boolean isMoving = false;
     private boolean isSprinting = false;
@@ -262,13 +270,12 @@ public class PlayerController {
             boolean right = GameInput.isPressed(GameAction.MOVE_RIGHT);
 
             sprintKey = GameInput.isPressed(GameAction.SPRINT) ||
-                        Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) ||
-                        Gdx.input.isKeyPressed(Input.Keys.R);
+                        (Gdx.input != null && (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) || Gdx.input.isKeyPressed(Input.Keys.R)));
 
             if (GameInput.isJustPressed(GameAction.CROUCH)) {
                 isCrouching = !isCrouching;
             }
-            if (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
+            if (Gdx.input != null && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
                 isCrouching = true;
             }
 
@@ -298,12 +305,8 @@ public class PlayerController {
                 gender = (gender == 0) ? 1 : 0;
             }
 
-            boolean punchPressed = false;
-            boolean kickPressed = false;
-            if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
-                punchPressed = GameInput.isJustPressed(GameAction.ATTACK_PUNCH) && !isSittingWater;
-                kickPressed = GameInput.isJustPressed(GameAction.ATTACK_KICK);
-            }
+            boolean punchPressed = GameInput.isJustPressed(GameAction.ATTACK_PUNCH) && !isSittingWater;
+            boolean kickPressed = GameInput.isJustPressed(GameAction.ATTACK_KICK);
 
             if (up) moveDir.y += 1f;
             if (down) moveDir.y -= 1f;
@@ -375,7 +378,7 @@ public class PlayerController {
             }
 
             jumpKey = GameInput.isJustPressed(GameAction.JUMP) ||
-                      Gdx.input.isKeyJustPressed(Input.Keys.V);
+                      (Gdx.input != null && Gdx.input.isKeyJustPressed(Input.Keys.V));
         } else {
             isBlocking = false;
         }
@@ -402,6 +405,7 @@ public class PlayerController {
                     int next = bufferedAttack;
                     bufferedAttack = 0;
                     attackProgress = 0f;
+                    combatState = PlayerCombatState.ATTACKING;
                     if (next == 1) {
                         if (isCrouching) {
                             attackCombo = 5;
@@ -421,9 +425,26 @@ public class PlayerController {
                     isAttacking = false;
                     attackProgress = 1.0f;
                     comboWindowTimer = 0.65f;
+                    combatState = PlayerCombatState.ATTACK_RECOVERY;
+                    attackRecoveryTimer = 0.15f;
                 }
+            } else if (attackProgress >= 0.70f) {
+                combatState = PlayerCombatState.ATTACK_RECOVERY;
+            } else {
+                combatState = PlayerCombatState.ATTACKING;
             }
-        } else if (comboWindowTimer > 0f) {
+        } else if (attackRecoveryTimer > 0f) {
+            attackRecoveryTimer -= delta;
+            if (attackRecoveryTimer <= 0f) {
+                combatState = PlayerCombatState.IDLE;
+            } else {
+                combatState = PlayerCombatState.ATTACK_RECOVERY;
+            }
+        } else {
+            combatState = PlayerCombatState.IDLE;
+        }
+
+        if (comboWindowTimer > 0f) {
             comboWindowTimer -= delta;
             if (comboWindowTimer <= 0f) {
                 attackCombo = 0;
@@ -433,8 +454,8 @@ public class PlayerController {
         if (isSittingWater) {
             sitProgress = Math.min(1.0f, sitProgress + delta * 3.5f);
             velocity.set(0f, 0f, 0f);
-            boolean breakSit = (inputEnabled && (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.S) ||
-                                                 Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.D) ||
+            boolean breakSit = (inputEnabled && (((Gdx.input != null && (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.S) ||
+                                                 Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.D)))) ||
                                                  jumpKey || isAttacking || isDodging));
             if (breakSit) {
                 isSittingWater = false;
@@ -553,7 +574,7 @@ public class PlayerController {
             }
         }
 
-        boolean climbHeld = inputEnabled && isMoving && !isSittingWater &&
+        boolean climbHeld = inputEnabled && isMoving && !isSittingWater && Gdx.input != null &&
             (Gdx.input.isKeyPressed(Input.Keys.J) || Gdx.input.isKeyPressed(Input.Keys.SPACE));
         if (climbHeld && wallBlocked && wallTopY > position.y + STEP_UP_HEIGHT) {
             isClimbing = true;
@@ -967,6 +988,10 @@ public class PlayerController {
 
     public LocomotionState getLocomotionState() {
         return animStateMachine.getCurrentState();
+    }
+
+    public PlayerCombatState getCombatState() {
+        return combatState;
     }
 
     public void resetAnimation() {

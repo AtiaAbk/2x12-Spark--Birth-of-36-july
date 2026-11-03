@@ -486,7 +486,9 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
 
     @Override
     public boolean canInteract(Vector3 playerPos, float playerHeading) {
-        return isInteractable() && state != NpcBehaviorState.INTERACTING_PLAYER;
+        if (!isInteractable() || state == NpcBehaviorState.INTERACTING_PLAYER) return false;
+        if (playerPos != null && playerPos.dst(position) > getInteractionRadius()) return false;
+        return true;
     }
 
     @Override
@@ -520,5 +522,9 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
     @Override
     public String getInteractableId() {
         return "StudentNPC_" + id;
+    }
+
+    public CombatClassification getCombatClassification() {
+        return CombatClassification.PROTECTED_CIVILIAN;
     }
 }

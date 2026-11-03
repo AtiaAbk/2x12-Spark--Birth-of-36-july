@@ -248,6 +248,10 @@ public class WhereWindsMeetHUD implements Disposable {
         }
     }
 
+    public void disqualify(String reason) {
+        setDisqualified(true, reason);
+    }
+
     public boolean isDisqualified() {
         return isDisqualified;
     }
@@ -285,7 +289,11 @@ public class WhereWindsMeetHUD implements Disposable {
     }
 
     public boolean isNpcDialogueActive() {
-        return (activeNpcDialogue != null && npcDialogueTimer > 0f) || (dialogueManager != null && dialogueManager.isDialogueActive());
+        return (dialogueManager != null && dialogueManager.isDialogueActive());
+    }
+
+    public boolean isAmbientDialogueShowing() {
+        return (activeNpcDialogue != null && npcDialogueTimer > 0f);
     }
 
     public void triggerMissionToast(String title, int count) {
@@ -646,21 +654,6 @@ public class WhereWindsMeetHUD implements Disposable {
             return;
         }
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.K) && !isVictoryOpen && activeModalEntry == null) {
-            for (MemorialEntry e : memorials.getEntries()) {
-                e.inspected = true;
-            }
-            missionBannerTime = 6.0f;
-            missionBannerTitle = "ALL HISTORICAL ARCHIVES";
-            missionBannerCount = 5;
-            isVictoryOpen = true;
-            victoryShown = true;
-            victoryAutoAdvanceTimer = 5.0f;
-            int currentLvl = (activeLevel != null) ? activeLevel.getLevelNumber() : 1;
-            bd.spark36.level.LevelConfig.unlockNextLevel(currentLvl);
-            return;
-        }
-
         if (dialogueManager.isDialogueActive()) {
             dialogueManager.update(delta);
             if (dialogueManager.handleInput()) {
@@ -668,15 +661,9 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        if (activeLevel != null) {
-            if (GameInput.isJustPressed(GameInput.GameAction.INTERACT)) {
-                if (activeModalEntry != null) {
-                    activeModalEntry = null;
-                } else {
-                    activeLevel.onInteract(player.getPosition(), player, this);
-                }
-            }
-        } else {
+        if (activeModalEntry != null && GameInput.isJustPressed(GameInput.GameAction.INTERACT)) {
+            activeModalEntry = null;
+        } else if (activeLevel == null) {
             MemorialEntry nearby = (memorials != null) ? memorials.getNearbyMemorial(player.getPosition()) : null;
             if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
                 nearby = boundaryStoneEntry;
@@ -1103,8 +1090,10 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(0.18f, 0.16f, 0.12f, 0.45f);
         shapeRenderer.rect(barX, barY, barW, barH);
 
-        int inspected = memorials.getInspectedCount();
-        int total = memorials.getTotalCount();
+        int inspected = (activeLevel != null) ? activeLevel.getCompletedObjectiveCount() :
+            ((memorials != null) ? memorials.getInspectedCount() : 0);
+        int total = (activeLevel != null) ? activeLevel.getTotalObjectiveCount() :
+            ((memorials != null) ? memorials.getTotalCount() : 5);
         float progress = total > 0 ? (float) inspected / (float) total : 0f;
         float fillW = barW * progress;
 
@@ -1167,18 +1156,22 @@ public class WhereWindsMeetHUD implements Disposable {
         float cardH = currentLayout.cardH;
 
         if (activeLevel != null) {
-            String missionTag = activeLevel.getMissionTag();
+            int currentLvl = activeLevel.getLevelNumber();
+            String missionTag = String.format("MISSION %d/5 — %s", Math.min(currentLvl, 5), activeLevel.getTitle());
             drawOutlined(fonts.smallFont, missionTag, cardX + 18f, cardY + cardH - 18f, new Color(1.0f, 0.75f, 0.30f, 1f));
 
             String missionTitle = activeLevel.getMissionTitle();
             drawOutlined(fonts.headerFont, missionTitle, cardX + 18f, cardY + cardH - 42f, goldAccent);
 
-            String missionDesc = activeLevel.getMissionTarget();
-            drawOutlined(fonts.bodyFont, missionDesc, cardX + 18f, cardY + cardH - 74f, Color.WHITE);
+            int done = activeLevel.getCompletedObjectiveCount();
+            int total = activeLevel.getTotalObjectiveCount();
+            String progressStr = String.format("Objective: %s  [Progress: %d/%d]", activeLevel.getMissionTarget(), done, total);
+            drawOutlined(fonts.bodyFont, progressStr, cardX + 18f, cardY + cardH - 74f, Color.WHITE);
 
             float activeDst = activeLevel.getWaypointDistance(player.getPosition());
-            String distStr = String.format("DISTANCE: %.1f M", activeDst);
-            drawOutlined(fonts.headerFont, distStr, cardX + 18f, cardY + 24f, goldAccent);
+            int unlocked = bd.spark36.level.LevelConfig.getUnlockedLevel();
+            String campaignStr = String.format("Campaign: %d/5 Complete   DISTANCE: %.1f M", Math.max(0, unlocked - 1), activeDst);
+            drawOutlined(fonts.headerFont, campaignStr, cardX + 18f, cardY + 24f, goldAccent);
             return;
         }
 
@@ -3094,35 +3087,37 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.end();
 
         spriteBatch.begin();
-        fonts.titleFont.setColor(new Color(1.0f, 0.35f, 0.30f, 1f));
-        fonts.titleFont.draw(spriteBatch, "DISQUALIFIED -- CAMPUS PEACE VIOLATION", dx + 35f, dy + dh - 20f);
+        fonts.titleFont.setColor(new Color(1.0f, 0.30f, 0.25f, 1f));
+        fonts.titleFont.draw(spriteBatch, "MISSION ABORTED / মিশন বাতিল", dx + 35f, dy + dh - 20f);
 
         fonts.headerFont.setColor(new Color(1.0f, 0.85f, 0.80f, 1f));
-        fonts.headerFont.draw(spriteBatch, "CAMPUS PEACE RULE: UNPROVOKED ATTACK ON INNOCENT STUDENT", dx + 35f, dy + dh - 46f);
+        fonts.headerFont.draw(spriteBatch, "CIVILIAN PROTECTION RULE VIOLATION", dx + 35f, dy + dh - 46f);
 
         fonts.bodyFont.setColor(Color.WHITE);
+        String reasonStr = (disqualifyReason != null && !disqualifyReason.isEmpty()) ?
+            disqualifyReason : "You attacked a protected campus member.";
         fonts.bodyFont.draw(spriteBatch,
-            "You struck an innocent campus student! The Student Movement for meritocracy and justice is founded upon peaceful solidarity, disciplined restraint, and moral courage.",
-            dx + 35f, dy + dh - 95f, dw - 70f, 10, true);
+            "Reason: " + reasonStr + "\nOrdinary campus members and civilian NPCs are strictly protected by campus rules.",
+            dx + 35f, dy + dh - 92f, dw - 70f, 10, true);
 
         fonts.bodyFont.setColor(new Color(0.90f, 0.85f, 0.85f, 1f));
         fonts.bodyFont.draw(spriteBatch,
-            "Unprovoked violence against unarmed campus peers violates the core code of 36 July and results in immediate disqualification.",
-            dx + 35f, dy + dh - 140f, dw - 70f, 10, true);
+            "Attacking peaceful campus peers immediately terminates the mission. Combat and self-defense are permitted only against armed hostile opponents.",
+            dx + 35f, dy + dh - 142f, dw - 70f, 10, true);
 
         fonts.headerFont.setColor(goldAccent);
-        fonts.headerFont.draw(spriteBatch, "RULE OF ENGAGEMENT", sx + 18f, sy + sh - 14f);
+        fonts.headerFont.draw(spriteBatch, "CIVILIAN PROTECTION DIRECTIVE", sx + 18f, sy + sh - 14f);
 
         fonts.smallFont.setColor(new Color(1.0f, 0.90f, 0.85f, 1f));
         fonts.smallFont.draw(spriteBatch,
-            "Self-defense is permitted only against armed aggressors (e.g. Helmeted Attackers). Defend unarmed peers, never harm them.",
+            "Civilian protection is an absolute requirement. Unprovoked harm to peers immediately halts the campaign.",
             sx + 18f, sy + 32f);
 
         fonts.headerFont.setColor(b1Hover ? Color.WHITE : new Color(1f, 0.80f, 0.80f, 1f));
-        fonts.headerFont.draw(spriteBatch, "[R] RETRY MISSION", b1X + 35f, btnY + 30f);
+        fonts.headerFont.draw(spriteBatch, "[R] RESTART MISSION", b1X + 28f, btnY + 30f);
 
         fonts.headerFont.setColor(b2Hover ? Color.WHITE : goldAccent);
-        fonts.headerFont.draw(spriteBatch, "[ESC] MAIN MENU", b2X + 45f, btnY + 30f);
+        fonts.headerFont.draw(spriteBatch, "[ESC] RETURN TO MAIN MENU", b2X + 16f, btnY + 30f);
         spriteBatch.end();
     }
 

@@ -162,6 +162,7 @@ public class Level2StudentConfrontation implements CampaignLevel {
         int completed = objectives.interact(playerPos);
         if (completed >= 0) {
             missionTracker.completeObjective(completed);
+            bd.spark36.mission.MissionManager.get().advanceProgress(1);
             if (hud != null) {
                 String toast;
                 switch (completed) {
@@ -181,14 +182,21 @@ public class Level2StudentConfrontation implements CampaignLevel {
         }
 
         if (crowd != null && hud != null && crowd.interactWithClosest(playerPos, 2.6f, getLevelNumber(), hud)) {
+            bd.spark36.mission.MissionManager.get().advanceProgress(1);
+            if (bd.spark36.mission.MissionManager.get().isMissionComplete()) {
+                checkCompletion(hud);
+            }
             return true;
         }
         return false;
     }
 
     private void checkCompletion(WhereWindsMeetHUD hud) {
-        if (isLevelComplete() && hud != null) {
-            hud.triggerVictory();
+        if (isLevelComplete()) {
+            bd.spark36.mission.MissionManager.get().completeMission();
+            if (hud != null) {
+                hud.triggerVictory();
+            }
         }
     }
 
@@ -322,9 +330,7 @@ public class Level2StudentConfrontation implements CampaignLevel {
 
         for (int i = 0; i < aggressors.size; i++) {
             HelmetGoon g = aggressors.get(i);
-            if (canMove) {
-                g.update(delta, player);
-            }
+            g.update(delta, player);
             if (!g.isKnockedOut()) {
                 float d = player.getPosition().dst(g.getPosition());
                 if (d < closestDst) {
@@ -415,8 +421,12 @@ public class Level2StudentConfrontation implements CampaignLevel {
             }
 
             String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
-            if (violation != null && hud != null) {
-                hud.triggerMissionToast("CAMPUS SOLIDARITY: Protect fellow students! Aim attacks at aggressors.", 0);
+            if (violation != null) {
+                if (hud != null) {
+                    hud.disqualify("You attacked a protected campus member.");
+                }
+                bd.spark36.mission.MissionManager.get().abortMission("You attacked a protected campus member.");
+                return false;
             }
         }
         return false;
