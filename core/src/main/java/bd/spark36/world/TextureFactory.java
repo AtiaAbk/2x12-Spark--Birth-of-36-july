@@ -535,6 +535,11 @@ public class TextureFactory implements Disposable {
         drawTwigSegment(pix, 0, 0, cell, 256, 350, 360, 230, 5.5f, 0.48f, 0.28f, 0.16f, 1f);
         drawTwigSegment(pix, 0, 0, cell, 150, 240, 80, 150, 3.8f, 0.52f, 0.30f, 0.18f, 1f);
         drawTwigSegment(pix, 0, 0, cell, 360, 230, 430, 140, 3.8f, 0.52f, 0.30f, 0.18f, 1f);
+        // Secondary twigs reaching crown fringe leaves
+        drawTwigSegment(pix, 0, 0, cell, 150, 240, 140, 130, 2.8f, 0.52f, 0.30f, 0.18f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 256, 140, 256, 100, 3.0f, 0.52f, 0.30f, 0.18f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 360, 230, 370, 130, 2.8f, 0.52f, 0.30f, 0.18f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 256, 140, 210, 120, 2.6f, 0.52f, 0.30f, 0.18f, 1f);
 
         // 28 Stylized Deciduous Leaves matching Image 1:
         float[][] cell0Leaves = {
@@ -618,6 +623,11 @@ public class TextureFactory implements Disposable {
         drawTwigSegment(pix, ox, oy, cell, 256, 350, 360, 230, 5.5f, 0.48f, 0.24f, 0.12f, 1f);
         drawTwigSegment(pix, ox, oy, cell, 150, 240, 80,  150, 3.8f, 0.52f, 0.26f, 0.14f, 1f);
         drawTwigSegment(pix, ox, oy, cell, 360, 230, 430, 140, 3.8f, 0.52f, 0.26f, 0.14f, 1f);
+        // Secondary twigs reaching crown fringe leaves
+        drawTwigSegment(pix, ox, oy, cell, 150, 240, 140, 130, 2.8f, 0.52f, 0.26f, 0.14f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 140, 256, 100, 3.0f, 0.52f, 0.26f, 0.14f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 360, 230, 370, 130, 2.8f, 0.52f, 0.26f, 0.14f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 140, 210, 120, 2.6f, 0.52f, 0.26f, 0.14f, 1f);
 
         // Autumn colors strictly from Image 1 middle tree pixel samples:
         float aMR = 1.00f, aMG = 0.94f, aMB = 0.55f; // Pale golden midrib
@@ -1866,11 +1876,21 @@ public class TextureFactory implements Disposable {
                 float sideDist = rx * px + ry * py;
                 float across = Math.abs(sideDist);
 
-                // Authentic botanical lanceolate blade (widest at 26%, graceful acute taper)
-                float w = halfWidth * (float) Math.sin(Math.PI * Math.pow(t, 0.62)) * (1.12f - 0.28f * t);
-                if (across > w + 3.0f) continue; // Pad 3px with alpha=0 to eliminate dark mipmap fringes
+                // Authentic botanical bamboo lanceolate profile with petiolule base and needle tip
+                float petioleLen = 0.05f;
+                float w;
+                if (t < petioleLen) {
+                    w = 1.8f + 1.0f * (t / petioleLen);
+                } else {
+                    float tbBlade = (t - petioleLen) / (1.0f - petioleLen);
+                    float envelope = (float) (Math.sin(Math.PI * Math.pow(tbBlade, 0.55)) * Math.pow(1.0 - tbBlade, 0.35) * (1.18f - 0.25f * tbBlade));
+                    float microTeeth = 0.025f * MathUtils.sin(tbBlade * 28.0f);
+                    w = halfWidth * envelope * (1.0f + microTeeth);
+                }
 
-                float alpha = (across <= w + 0.5f) ? MathUtils.clamp(w - across + 0.5f, 0f, 1f) : 0f;
+                if (across > w + 0.5f) continue;
+
+                float alpha = MathUtils.clamp(w - across + 0.5f, 0f, 1f);
                 float normAcross = w > 0.01f ? Math.min(1f, across / w) : 0f;
 
                 float r = MathUtils.lerp(br, tr, t);
@@ -1905,10 +1925,32 @@ public class TextureFactory implements Disposable {
                 }
 
                 float rim = 1f - 0.24f * MathUtils.clamp((normAcross - 0.75f) / 0.25f, 0f, 1f);
-                pix.setColor(MathUtils.clamp(r * foldGain * rim, 0f, 1f),
-                             MathUtils.clamp(g * foldGain * rim, 0f, 1f),
-                             MathUtils.clamp(b * foldGain * rim, 0f, 1f), alpha);
-                pix.drawPixel(ox + x, oy + y);
+                float finalR = MathUtils.clamp(r * foldGain * rim, 0f, 1f);
+                float finalG = MathUtils.clamp(g * foldGain * rim, 0f, 1f);
+                float finalB = MathUtils.clamp(b * foldGain * rim, 0f, 1f);
+
+                int targetX = ox + x, targetY = oy + y;
+                int curPixel = pix.getPixel(targetX, targetY);
+                int curA = curPixel & 0xFF;
+                if (curA == 0) {
+                    pix.setColor(finalR, finalG, finalB, alpha);
+                    pix.drawPixel(targetX, targetY);
+                } else {
+                    float curAf = curA / 255f;
+                    float outA = alpha + curAf * (1f - alpha);
+                    if (outA > 0.001f) {
+                        float curR = ((curPixel >>> 24) & 0xFF) / 255f;
+                        float curG = ((curPixel >>> 16) & 0xFF) / 255f;
+                        float curB = ((curPixel >>> 8) & 0xFF) / 255f;
+                        float outR = (finalR * alpha + curR * curAf * (1f - alpha)) / outA;
+                        float outG = (finalG * alpha + curG * curAf * (1f - alpha)) / outA;
+                        float outB = (finalB * alpha + curB * curAf * (1f - alpha)) / outA;
+                        pix.setColor(MathUtils.clamp(outR, 0f, 1f),
+                                     MathUtils.clamp(outG, 0f, 1f),
+                                     MathUtils.clamp(outB, 0f, 1f), outA);
+                        pix.drawPixel(targetX, targetY);
+                    }
+                }
             }
         }
     }
@@ -1947,38 +1989,87 @@ public class TextureFactory implements Disposable {
                 float sideDist = rx * px + ry * py;
                 float across = Math.abs(sideDist);
 
-                // Stylized deciduous ovate leaf profile with sharp tip matching Image 1
-                float w = halfWidth * (float) Math.pow(Math.sin(Math.PI * Math.pow(t, 0.70)), 0.78) * (1.05f - 0.18f * t);
-                if (across > w + 3.0f) continue; // Pad 3px with alpha=0 to eliminate dark mipmap fringes
+                // Authentic Deciduous Tree Leaf Profile:
+                // 1. Petiole stalk at leaf base (t < 0.08) connecting naturally to twig
+                float petioleLen = 0.075f;
+                float w;
+                if (t < petioleLen) {
+                    w = 2.0f + 1.0f * (t / petioleLen);
+                } else {
+                    float tbBlade = (t - petioleLen) / (1.0f - petioleLen); // 0.0 to 1.0 along leaf blade
 
-                float alpha = (across <= w + 0.5f) ? MathUtils.clamp(w - across + 0.5f, 0f, 1f) : 0f;
+                    // Natural elliptic-ovate leaf envelope: rounded base, widest at tb ~ 0.42, acuminate drip-tip
+                    float envelope = (float) (Math.sin(Math.PI * Math.pow(tbBlade, 0.68)) * Math.pow(1.0 - tbBlade, 0.45) * 1.38);
+
+                    // Organic leaf margin: fine forward-angled serrations (করাতের খাঁজ) + gentle undulating waves
+                    float toothPhase = (tbBlade * 16.0f) % 1.0f;
+                    float toothShape = (toothPhase < 0.78f) ? (toothPhase / 0.78f) : (1.0f - (toothPhase - 0.78f) / 0.22f * 1.5f);
+                    float toothAmp = 0.045f * (float) Math.sin(tbBlade * MathUtils.PI); // subtle teeth along blade body
+                    float undulate = 0.030f * MathUtils.sin(tbBlade * 8.0f); // subtle natural wave
+                    float asym = (sideDist > 0f) ? 1.02f : 0.98f; // subtle natural asymmetry
+
+                    w = halfWidth * envelope * (1.0f + undulate + toothAmp * (toothShape - 0.5f)) * asym;
+                }
+
+                if (across > w + 0.5f) continue;
+
+                float alpha = MathUtils.clamp(w - across + 0.5f, 0f, 1f);
                 float edge = w > 0.01f ? Math.min(1f, across / w) : 1f;
 
-                float r = MathUtils.lerp(br, tr, t);
-                float g = MathUtils.lerp(bg, tg, t);
-                float b = MathUtils.lerp(bb, tb, t);
+                float tbCol = Math.max(0f, (t - petioleLen) / (1.0f - petioleLen));
+                float r = MathUtils.lerp(br, tr, tbCol);
+                float g = MathUtils.lerp(bg, tg, tbCol);
+                float b = MathUtils.lerp(bb, tb, tbCol);
 
-                // 3D volume fold crease across leaf body: lit side +12%, shaded side -12%
-                float foldGain = (sideDist > 0f) ? 1.12f : 0.88f;
+                // 3D volume fold crease across leaf body: lit side +10%, shaded side -9%
+                float foldGain = (sideDist > 0f) ? 1.10f : 0.91f;
 
-                // Luminous chartreuse/pale midrib stem (width ~2.4px, clearly readable)
-                if (across < 2.4f) {
+                // Central tapering midrib stem
+                float midribW = MathUtils.lerp(2.2f, 0.7f, t);
+                if (across < midribW) {
                     r = mr; g = mg; b = mb;
                     foldGain = 1.0f;
-                } else {
-                    float sidePhase = (t * 6f - edge * 1.5f) % 1f;
-                    if (sidePhase < 0f) sidePhase += 1f;
-                    if (sidePhase < 0.12f) {
-                        r *= 0.90f; g *= 0.92f; b *= 0.88f;
+                } else if (t >= petioleLen) {
+                    // Pinnate secondary lateral veins arching upward at ~42 degrees toward apex
+                    float veinPhase = (tbCol * 8.0f - (float) Math.pow(edge, 1.25) * 0.75f) % 1.0f;
+                    if (veinPhase < 0f) veinPhase += 1.0f;
+                    if (veinPhase < 0.09f && tbCol > 0.08f && tbCol < 0.92f) {
+                        r = MathUtils.clamp(r * 1.20f + 0.03f, 0f, 1f);
+                        g = MathUtils.clamp(g * 1.18f + 0.05f, 0f, 1f);
+                        b = MathUtils.clamp(b * 1.10f + 0.02f, 0f, 1f);
+                    } else if (veinPhase > 0.09f && veinPhase < 0.15f && tbCol > 0.08f && tbCol < 0.92f) {
+                        r *= 0.88f; g *= 0.88f; b *= 0.85f;
                     }
                 }
 
                 // Crisp hand-painted cel contour edge for distinct leaf separation
-                float rim = 1f - 0.25f * MathUtils.clamp((edge - 0.75f) / 0.25f, 0f, 1f);
-                pix.setColor(MathUtils.clamp(r * foldGain * rim, 0f, 1f),
-                             MathUtils.clamp(g * foldGain * rim, 0f, 1f),
-                             MathUtils.clamp(b * foldGain * rim, 0f, 1f), alpha);
-                pix.drawPixel(ox + x, oy + y);
+                float rim = 1f - 0.18f * MathUtils.clamp((edge - 0.80f) / 0.20f, 0f, 1f);
+                float finalR = MathUtils.clamp(r * foldGain * rim, 0f, 1f);
+                float finalG = MathUtils.clamp(g * foldGain * rim, 0f, 1f);
+                float finalB = MathUtils.clamp(b * foldGain * rim, 0f, 1f);
+
+                int targetX = ox + x, targetY = oy + y;
+                int curPixel = pix.getPixel(targetX, targetY);
+                int curA = curPixel & 0xFF;
+                if (curA == 0) {
+                    pix.setColor(finalR, finalG, finalB, alpha);
+                    pix.drawPixel(targetX, targetY);
+                } else {
+                    float curAf = curA / 255f;
+                    float outA = alpha + curAf * (1f - alpha);
+                    if (outA > 0.001f) {
+                        float curR = ((curPixel >>> 24) & 0xFF) / 255f;
+                        float curG = ((curPixel >>> 16) & 0xFF) / 255f;
+                        float curB = ((curPixel >>> 8) & 0xFF) / 255f;
+                        float outR = (finalR * alpha + curR * curAf * (1f - alpha)) / outA;
+                        float outG = (finalG * alpha + curG * curAf * (1f - alpha)) / outA;
+                        float outB = (finalB * alpha + curB * curAf * (1f - alpha)) / outA;
+                        pix.setColor(MathUtils.clamp(outR, 0f, 1f),
+                                     MathUtils.clamp(outG, 0f, 1f),
+                                     MathUtils.clamp(outB, 0f, 1f), outA);
+                        pix.drawPixel(targetX, targetY);
+                    }
+                }
             }
         }
     }

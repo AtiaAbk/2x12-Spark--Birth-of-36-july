@@ -47,7 +47,9 @@ public class JulyMemorials implements Disposable {
 
     public JulyMemorials() {
         initEntries();
-        createMonumentMeshes();
+        if (com.badlogic.gdx.Gdx.gl20 != null) {
+            createMonumentMeshes();
+        }
     }
 
     private void initEntries() {

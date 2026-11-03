@@ -39,6 +39,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
     private boolean victoryTriggered = false;
     private float hitStopTimer = 0f;
     private boolean attackHitProcessed = false;
+    private final Vector3 lastPlayerPos = new Vector3(0f, 0f, 72f);
 
     private static final String[] CHECKLIST = {
         "1. Curzon Hall Central Arcade",
@@ -50,6 +51,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
     };
 
     public Level1PeacefulCampus() {
+        this.memorials = new JulyMemorials();
         initDefaultObjectives();
     }
 
@@ -102,7 +104,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
     public String getMissionTitle() {
         if (!combatPhase) {
             if (memorials == null) return "THE SPARK OF SOLIDARITY";
-            MemorialEntry next = memorials.getNextObjective(Vector3.Zero);
+            MemorialEntry next = memorials.getNextObjective(lastPlayerPos);
             return (next != null) ? next.title : "CAMPUS ARCHIVES UNLOCKED";
         } else {
             return "DEFEND AGAINST HELMETED ATTACKERS";
@@ -113,7 +115,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
     public String getMissionTarget() {
         if (!combatPhase) {
             if (memorials == null) return "Target: Curzon Hall Central Arcade";
-            MemorialEntry next = memorials.getNextObjective(Vector3.Zero);
+            MemorialEntry next = memorials.getNextObjective(lastPlayerPos);
             return (next != null) ? "Target: " + next.location : "All 5 archives inspected";
         } else {
             int remaining = getRemainingAggressorsCount();
@@ -125,10 +127,10 @@ public class Level1PeacefulCampus implements CampaignLevel {
     public Vector3 getActiveWaypoint() {
         if (!combatPhase) {
             if (memorials == null) return new Vector3(3.6f, 0f, -16.8f);
-            MemorialEntry next = memorials.getNextObjective(Vector3.Zero);
+            MemorialEntry next = memorials.getNextObjective(lastPlayerPos);
             return (next != null) ? next.position : new Vector3(0f, 0f, 0f);
         } else {
-            HelmetGoon closest = getClosestActiveAggressor(Vector3.Zero);
+            HelmetGoon closest = getClosestActiveAggressor(lastPlayerPos);
             return (closest != null) ? closest.getPosition() : new Vector3(0f, 0f, 36f);
         }
     }
@@ -278,6 +280,10 @@ public class Level1PeacefulCampus implements CampaignLevel {
             m6.activate();
         }
 
+        if (crowd != null) {
+            crowd.setLevelProfile(3);
+        }
+
         if (hud != null) {
             hud.triggerMissionToast("ALERT: CHHATRA LEAGUE HELMET FORCE ATTACKING! / ছাত্রলীগ হেলমেট বাহিনী আক্রমণ করতে আসছে!", 5);
             bd.spark36.audio.SoundManager.get().playObjective();
@@ -338,6 +344,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
+        lastPlayerPos.set(getSpawnPosition());
 
         camera.setColliders(player.getColliders());
         camera.setAngles(0f, -4f);
@@ -346,6 +353,14 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
     @Override
     public void update(float delta, PlayerController player, CinematicCamera camera, boolean canMove, WhereWindsMeetHUD hud) {
+        if (hitStopTimer > 0f) {
+            hitStopTimer -= delta;
+            delta *= 0.15f;
+        }
+
+        if (player != null) {
+            lastPlayerPos.set(player.getPosition());
+        }
 
         if ((Gdx.input.isKeyJustPressed(Input.Keys.F6) || Gdx.input.isKeyJustPressed(Input.Keys.X)) && !combatPhase) {
             if (memorials != null) {

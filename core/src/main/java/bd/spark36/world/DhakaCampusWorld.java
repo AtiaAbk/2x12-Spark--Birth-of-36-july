@@ -404,16 +404,16 @@ public class DhakaCampusWorld implements Disposable {
             PBRTextureAttribute.createBaseColorTexture(textures.leafAtlas),
             FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
             IntAttribute.createCullFace(0),
-            ColorAttribute.createDiffuse(new Color(0.92f, 0.95f, 0.90f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.015f, 0.035f, 0.01f, 1f))
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
+            ColorAttribute.createEmissive(new Color(0.04f, 0.08f, 0.02f, 1f))
         );
 
         Material blossomClumpMat = new Material(
             PBRTextureAttribute.createBaseColorTexture(textures.leafAtlas),
             FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
             IntAttribute.createCullFace(0),
-            ColorAttribute.createDiffuse(new Color(1f, 0.97f, 0.94f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.03f, 0.02f, 0.01f, 1f))
+            ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
+            ColorAttribute.createEmissive(new Color(0.08f, 0.04f, 0.02f, 1f))
         );
 
         Material whiteBlossomClumpMat = new Material(
@@ -478,8 +478,8 @@ public class DhakaCampusWorld implements Disposable {
             FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-
-            ColorAttribute.createEmissive(new Color(0.02f, 0.04f, 0.015f, 1f))
+            // Subtle daylight transmission glow
+            ColorAttribute.createEmissive(new Color(0.04f, 0.08f, 0.02f, 1f))
         );
 
         Material bambooBarkMat = new Material(
@@ -493,7 +493,7 @@ public class DhakaCampusWorld implements Disposable {
             FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.02f, 0.04f, 0.015f, 1f))
+            ColorAttribute.createEmissive(new Color(0.03f, 0.06f, 0.02f, 1f))
         );
 
         Material rockMat = new Material(

@@ -175,9 +175,10 @@ final class TreeGeometry {
             float jl = (float) Math.sqrt(jx * jx + jy * jy + jz * jz);
             if (jl > 0.001f) { jx /= jl; jy /= jl; jz /= jl; } else { jx = 0f; jy = 1f; jz = 0f; }
 
-            float nx = 0.70f * mx + 0.30f * jx;
-            float ny = 0.70f * my + 0.30f * jy;
-            float nz = 0.70f * mz + 0.30f * jz;
+            // Upward normal bias for sunlit canopy wrap matching Image 1
+            float nx = 0.65f * mx + 0.25f * jx;
+            float ny = 0.45f * my + 0.30f * jy + 0.55f;
+            float nz = 0.65f * mz + 0.25f * jz;
             float nl = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
             nx /= nl;
             ny /= nl;

@@ -179,8 +179,8 @@ public class SparkGame extends ApplicationAdapter {
                 bd.spark36.app.GameProfile.get().onLevelActive(active.getLevelNumber(),
                     bd.spark36.level.LevelConfig.getGameMode() == bd.spark36.level.LevelConfig.GameMode.STORY);
                 if (active instanceof bd.spark36.level.Level1PeacefulCampus) {
-                    helmetGoon = ((bd.spark36.level.Level1PeacefulCampus) active).getCampusSecurity();
-                    hud.setHelmetGoon(helmetGoon);
+                    helmetGoon = null;
+                    hud.setHelmetGoon(null);
                 } else {
                     hud.setHelmetGoon(null);
                 }
@@ -393,7 +393,7 @@ public class SparkGame extends ApplicationAdapter {
         JulyMemorials activeMemorials = (currentLevel != null && currentLevel.getMemorials() != null) ? currentLevel.getMemorials() : memorials;
         CampusCrowd activeCrowd = (currentLevel != null && currentLevel.getCrowd() != null) ? currentLevel.getCrowd() : crowd;
 
-        if (bd.spark36.level.LevelConfig.isCombatEnabled() && helmetGoon != null && !helmetGoon.isKnockedOut()) {
+        if (bd.spark36.level.LevelConfig.isCombatEnabled() && helmetGoon != null && helmetGoon.getRole() == bd.spark36.character.HelmetGoon.Role.HELMETED_AGGRESSOR && !helmetGoon.isKnockedOut()) {
             player.setCombatTarget(helmetGoon.getPosition());
         } else if (currentLevel == null || !currentLevel.isCombatEnabled()) {
             player.clearCombatTarget();
