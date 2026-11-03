@@ -232,4 +232,26 @@ public class NpcCrowdTest {
         boolean hitOpposite = crowd.checkHitByPlayer(playerPos, 180f, 2.5f); // facing away (-Z)
         assertFalse(hitOpposite, "Attack facing away from student must not register hit");
     }
+
+    @Test
+    @DisplayName("Diagnostics: test student movement over 60 seconds")
+    public void testStudentLongTermMovement() {
+        StudentNPC[] students = crowd.getStudents();
+        Vector3[] initialPositions = new Vector3[students.length];
+        for (int i = 0; i < students.length; i++) {
+            initialPositions[i] = new Vector3(students[i].getPosition());
+        }
+
+        Vector3 dummyPlayer = new Vector3(0, 0, 0);
+        float delta = 0.016f;
+        for (int frame = 0; frame < 3600; frame++) {
+            crowd.update(delta, dummyPlayer);
+        }
+
+        for (int i = 0; i < students.length; i++) {
+            float dst = initialPositions[i].dst(students[i].getPosition());
+            System.out.printf("Student %d: State=%s, Speed=%.2f, DistMoved=%.2f, Pos=(%.2f, %.2f)%n",
+                i, students[i].getState(), students[i].getSpeed(), dst, students[i].getPosition().x, students[i].getPosition().z);
+        }
+    }
 }
