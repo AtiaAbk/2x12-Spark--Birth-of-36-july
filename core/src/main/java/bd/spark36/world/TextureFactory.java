@@ -1852,7 +1852,7 @@ public class TextureFactory implements Disposable {
         float dx = MathUtils.cos(angleRad), dy = MathUtils.sin(angleRad);
         float px = -dy, py = dx;
 
-        float reach = length + halfWidth + 2f;
+        float reach = length + halfWidth + 5f;
         int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(cellSize - 1, (int) (bx + reach));
         int minY = Math.max(0, (int) (by - reach)), maxY = Math.min(cellSize - 1, (int) (by + reach));
 
@@ -1866,35 +1866,45 @@ public class TextureFactory implements Disposable {
                 float sideDist = rx * px + ry * py;
                 float across = Math.abs(sideDist);
 
+                // Authentic botanical lanceolate blade (widest at 26%, graceful acute taper)
                 float w = halfWidth * (float) Math.sin(Math.PI * Math.pow(t, 0.62)) * (1.12f - 0.28f * t);
-                if (across > w + 0.5f) continue;
+                if (across > w + 3.0f) continue; // Pad 3px with alpha=0 to eliminate dark mipmap fringes
 
-                float alpha = MathUtils.clamp(w - across + 0.5f, 0f, 1f);
-                float normAcross = w > 0.01f ? across / w : 0f;
+                float alpha = (across <= w + 0.5f) ? MathUtils.clamp(w - across + 0.5f, 0f, 1f) : 0f;
+                float normAcross = w > 0.01f ? Math.min(1f, across / w) : 0f;
 
                 float r = MathUtils.lerp(br, tr, t);
                 float g = MathUtils.lerp(bg, tg, t);
                 float b = MathUtils.lerp(bb, tb, t);
 
-                float foldGain = (sideDist > 0f) ? 1.08f : 0.90f;
+                // 3D fold crease across midrib: lit side +14%, shaded side -12%
+                float foldGain = (sideDist > 0f) ? 1.14f : 0.88f;
 
-                if (across < 1.35f) {
-
+                // Translucent pale lime midrib stem (width ~2.2px)
+                if (across < 2.2f) {
                     r = mr; g = mg; b = mb;
                     foldGain = 1.0f;
                 } else {
-
-                    float vDist1 = Math.abs(normAcross - 0.32f);
-                    float vDist2 = Math.abs(normAcross - 0.60f);
-                    float vDist3 = Math.abs(normAcross - 0.84f);
+                    // 3 parallel monocot veins running longitudinally
+                    float vDist1 = Math.abs(normAcross - 0.30f);
+                    float vDist2 = Math.abs(normAcross - 0.58f);
+                    float vDist3 = Math.abs(normAcross - 0.82f);
                     if (vDist1 < 0.07f || vDist2 < 0.06f || vDist3 < 0.05f) {
-                        r *= 0.82f;
-                        g *= 0.88f;
-                        b *= 0.80f;
+                        r *= 0.80f;
+                        g *= 0.86f;
+                        b *= 0.78f;
                     }
                 }
 
-                float rim = 1f - 0.22f * MathUtils.clamp((normAcross - 0.75f) / 0.25f, 0f, 1f);
+                // Sunlit golden-lime highlight on leaf tips
+                if (t > 0.70f) {
+                    float tipGain = (t - 0.70f) / 0.30f;
+                    r = MathUtils.lerp(r, 0.68f, tipGain * 0.45f);
+                    g = MathUtils.lerp(g, 0.94f, tipGain * 0.45f);
+                    b = MathUtils.lerp(b, 0.35f, tipGain * 0.45f);
+                }
+
+                float rim = 1f - 0.24f * MathUtils.clamp((normAcross - 0.75f) / 0.25f, 0f, 1f);
                 pix.setColor(MathUtils.clamp(r * foldGain * rim, 0f, 1f),
                              MathUtils.clamp(g * foldGain * rim, 0f, 1f),
                              MathUtils.clamp(b * foldGain * rim, 0f, 1f), alpha);
@@ -1923,7 +1933,7 @@ public class TextureFactory implements Disposable {
         float dx = MathUtils.cos(angleRad), dy = MathUtils.sin(angleRad);
         float px = -dy, py = dx;
 
-        float reach = length + halfWidth + 2f;
+        float reach = length + halfWidth + 5f;
         int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(cellSize - 1, (int) (bx + reach));
         int minY = Math.max(0, (int) (by - reach)), maxY = Math.min(cellSize - 1, (int) (by + reach));
 
@@ -1937,19 +1947,22 @@ public class TextureFactory implements Disposable {
                 float sideDist = rx * px + ry * py;
                 float across = Math.abs(sideDist);
 
-                float w = halfWidth * (float) Math.pow(Math.sin(Math.PI * Math.pow(t, 0.72)), 0.82);
-                if (across > w + 0.5f) continue;
+                // Stylized deciduous ovate leaf profile with sharp tip matching Image 1
+                float w = halfWidth * (float) Math.pow(Math.sin(Math.PI * Math.pow(t, 0.70)), 0.78) * (1.05f - 0.18f * t);
+                if (across > w + 3.0f) continue; // Pad 3px with alpha=0 to eliminate dark mipmap fringes
 
-                float alpha = MathUtils.clamp(w - across + 0.5f, 0f, 1f);
-                float edge = w > 0.01f ? across / w : 1f;
+                float alpha = (across <= w + 0.5f) ? MathUtils.clamp(w - across + 0.5f, 0f, 1f) : 0f;
+                float edge = w > 0.01f ? Math.min(1f, across / w) : 1f;
 
                 float r = MathUtils.lerp(br, tr, t);
                 float g = MathUtils.lerp(bg, tg, t);
                 float b = MathUtils.lerp(bb, tb, t);
 
-                float foldGain = (sideDist > 0f) ? 1.09f : 0.91f;
+                // 3D volume fold crease across leaf body: lit side +12%, shaded side -12%
+                float foldGain = (sideDist > 0f) ? 1.12f : 0.88f;
 
-                if (across < 1.35f) {
+                // Luminous chartreuse/pale midrib stem (width ~2.4px, clearly readable)
+                if (across < 2.4f) {
                     r = mr; g = mg; b = mb;
                     foldGain = 1.0f;
                 } else {
@@ -1960,7 +1973,8 @@ public class TextureFactory implements Disposable {
                     }
                 }
 
-                float rim = 1f - 0.22f * MathUtils.clamp((edge - 0.78f) / 0.22f, 0f, 1f);
+                // Crisp hand-painted cel contour edge for distinct leaf separation
+                float rim = 1f - 0.25f * MathUtils.clamp((edge - 0.75f) / 0.25f, 0f, 1f);
                 pix.setColor(MathUtils.clamp(r * foldGain * rim, 0f, 1f),
                              MathUtils.clamp(g * foldGain * rim, 0f, 1f),
                              MathUtils.clamp(b * foldGain * rim, 0f, 1f), alpha);
@@ -1976,7 +1990,7 @@ public class TextureFactory implements Disposable {
                                           float tr, float tg, float tb) {
         int autoCell = (pix.getWidth() == 1024) ? 512 : 256;
         drawDeciduousStylizedLeaf(pix, ox, oy, autoCell, bx, by, length, halfWidth, angleRad,
-            br, bg, bb, tr, tg, tb, 0.84f, 0.98f, 0.44f);
+            br, bg, bb, tr, tg, tb, 0.88f, 1.00f, 0.45f);
     }
 
     private void drawTwigSegment(Pixmap pix, int ox, int oy, int cellSize,
@@ -2016,7 +2030,9 @@ public class TextureFactory implements Disposable {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        pix.setColor(0.29f, 0.29f, 0.20f, 1f);
+        // Rich warm terracotta-chestnut stylized bark strictly matching Image 1 bare tree:
+        // Average color (169, 90, 44) -> #A95A2C
+        pix.setColor(0.55f, 0.28f, 0.12f, 1f); // warm chestnut base
         pix.fill();
 
         for (int x = 0; x < size; x++) {
@@ -2024,9 +2040,9 @@ public class TextureFactory implements Disposable {
             for (int y = 0; y < size; y++) {
                 float n = groove * (0.75f + 0.25f * MathUtils.sin(y * 0.08f));
                 float speckle = MathUtils.random(-0.02f, 0.02f);
-                float r = MathUtils.clamp(0.34f + n * 0.12f + speckle, 0.19f, 0.52f);
-                float g = MathUtils.clamp(0.31f + n * 0.10f + speckle, 0.18f, 0.46f);
-                float b = MathUtils.clamp(0.21f + n * 0.07f + speckle, 0.13f, 0.31f);
+                float r = MathUtils.clamp(0.66f + n * 0.15f + speckle, 0.35f, 0.85f);
+                float g = MathUtils.clamp(0.35f + n * 0.12f + speckle, 0.16f, 0.55f);
+                float b = MathUtils.clamp(0.17f + n * 0.08f + speckle, 0.06f, 0.32f);
 
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
