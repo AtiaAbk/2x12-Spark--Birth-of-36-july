@@ -401,27 +401,27 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         Material leafClumpMat = new Material(
-            PBRTextureAttribute.createBaseColorTexture(textures.leafAtlas),
-            FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
+            PBRTextureAttribute.createBaseColorTexture(textures.leafClump),
+            FloatAttribute.createAlphaTest(0.01f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.04f, 0.08f, 0.02f, 1f))
+            ColorAttribute.createEmissive(new Color(0.02f, 0.04f, 0.015f, 1f))
         );
 
         Material blossomClumpMat = new Material(
-            PBRTextureAttribute.createBaseColorTexture(textures.leafAtlas),
-            FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
+            PBRTextureAttribute.createBaseColorTexture(textures.blossomClump),
+            FloatAttribute.createAlphaTest(0.01f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.08f, 0.04f, 0.02f, 1f))
+            ColorAttribute.createEmissive(new Color(0.03f, 0.02f, 0.015f, 1f))
         );
 
         Material whiteBlossomClumpMat = new Material(
-            PBRTextureAttribute.createBaseColorTexture(textures.whiteBlossomAtlas),
-            FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
+            PBRTextureAttribute.createBaseColorTexture(textures.whiteBlossomClump),
+            FloatAttribute.createAlphaTest(0.01f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.03f, 0.03f, 0.025f, 1f))
+            ColorAttribute.createEmissive(new Color(0.02f, 0.03f, 0.02f, 1f))
         );
 
         Material whiteBlossomCardMat = new Material(

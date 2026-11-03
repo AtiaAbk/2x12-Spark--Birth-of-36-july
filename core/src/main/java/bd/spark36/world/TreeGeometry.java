@@ -132,12 +132,17 @@ final class TreeGeometry {
     static void foliage(MeshPartBuilder core, MeshPartBuilder cards, float cx, float cy, float cz,
                         float rx, float ry, float rz, float seed, float leafSize,
                         int[] cardCells, float blossomChance) {
-        float coreScale = leafDensity < 1f ? 0.90f * (0.45f + 0.55f * leafDensity) : 0.90f;
+        float coreScale = leafDensity < 1f ? 0.90f * (0.45f + 0.55f * leafDensity) : 0.92f;
 
-        leafCards(core, cx, cy, cz, rx * 0.70f * coreScale, ry * 0.70f * coreScale, rz * 0.70f * coreScale,
-                  seed + 101f, leafSize * 1.15f, cardCells, blossomChance * 0.4f);
+        // 1. Generate inner volumetric canopy core with deformed organic volume
+        if (core != null) {
+            clump(core, cx, cy, cz, rx * 0.85f * coreScale, ry * 0.80f * coreScale, rz * 0.85f * coreScale, seed);
+        }
 
-        leafCards(cards, cx, cy, cz, rx, ry, rz, seed, leafSize, cardCells, blossomChance);
+        // 2. Generate outer peripheral leaf cards for silhouette fringe and individual leaf sprigs
+        if (cards != null) {
+            leafCards(cards, cx, cy, cz, rx, ry, rz, seed, leafSize, cardCells, blossomChance);
+        }
     }
 
     private static void leafCards(MeshPartBuilder mpb, float cx, float cy, float cz,
@@ -148,15 +153,15 @@ final class TreeGeometry {
         final double p = 1.6;
         double area = 4.0 * Math.PI * Math.pow(
             (Math.pow(rx * ry, p) + Math.pow(rx * rz, p) + Math.pow(ry * rz, p)) / 3.0, 1.0 / p);
-        int count = Math.min(160, (int) (1.45 * area / (leafSize * leafSize * 0.55f)));
-        count = (int) (count * leafDensity);
+        int count = MathUtils.clamp((int) (area * 1.35f * leafDensity), 22, 52);
 
         for (int i = 0; i < count; i++) {
             float th = RNG.nextFloat() * MathUtils.PI2;
             float cp = 2f * RNG.nextFloat() - 1f;
-            if (cp < 0f && RNG.nextFloat() < 0.4f) continue;
-            float sp = (float) Math.sqrt(1f - cp * cp);
-            float phi = (float) Math.acos(cp);
+            // Suppress downward-pointing cards so lower canopy leaves do not hang below head clearance
+            if (cp < -0.45f && RNG.nextFloat() < 0.65f) continue;
+            float sp = (float) Math.sqrt(Math.max(0f, 1f - cp * cp));
+            float phi = (float) Math.acos(MathUtils.clamp(cp, -1f, 1f));
 
             float dx = sp * MathUtils.cos(th), dy = cp, dz = sp * MathUtils.sin(th);
             float yScale = cp < 0f ? 0.55f : 1f;
@@ -169,16 +174,16 @@ final class TreeGeometry {
             float ml = (float) Math.sqrt(mx * mx + my * my + mz * mz);
             if (ml > 0.001f) { mx /= ml; my /= ml; mz /= ml; } else { mx = 0f; my = 1f; mz = 0f; }
 
-            float jx = dx / rx + (RNG.nextFloat() - 0.5f) * 0.4f;
-            float jy = dy / (ry * yScale) + 0.35f + (RNG.nextFloat() - 0.5f) * 0.3f;
-            float jz = dz / rz + (RNG.nextFloat() - 0.5f) * 0.4f;
+            float jx = dx / rx + (RNG.nextFloat() - 0.5f) * 0.3f;
+            float jy = dy / (ry * yScale) + 0.30f + (RNG.nextFloat() - 0.5f) * 0.25f;
+            float jz = dz / rz + (RNG.nextFloat() - 0.5f) * 0.3f;
             float jl = (float) Math.sqrt(jx * jx + jy * jy + jz * jz);
             if (jl > 0.001f) { jx /= jl; jy /= jl; jz /= jl; } else { jx = 0f; jy = 1f; jz = 0f; }
 
-            // Upward normal bias for sunlit canopy wrap matching Image 1
-            float nx = 0.65f * mx + 0.25f * jx;
-            float ny = 0.45f * my + 0.30f * jy + 0.55f;
-            float nz = 0.65f * mz + 0.25f * jz;
+            // Smooth outward canopy normal with upward sunlit wrap
+            float nx = 0.70f * mx + 0.20f * jx;
+            float ny = 0.50f * my + 0.20f * jy + 0.45f;
+            float nz = 0.70f * mz + 0.20f * jz;
             float nl = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
             nx /= nl;
             ny /= nl;
@@ -192,9 +197,10 @@ final class TreeGeometry {
             float tx = SIDE.x * cs + AXIS.x * sn, ty = SIDE.y * cs + AXIS.y * sn, tz = SIDE.z * cs + AXIS.z * sn;
             float bx = -SIDE.x * sn + AXIS.x * cs, by = -SIDE.y * sn + AXIS.y * cs, bz = -SIDE.z * sn + AXIS.z * cs;
 
-            float half = leafSize * (0.80f + 0.45f * RNG.nextFloat()) * 0.5f;
+            // Natural botanical leaf cluster dimension: realistic 0.35m - 0.45m span
+            float half = leafSize * (0.85f + 0.30f * RNG.nextFloat()) * 0.5f;
 
-            float ox = px + nx * half * 0.30f, oy = py + ny * half * 0.30f, oz = pz + nz * half * 0.30f;
+            float ox = px + nx * half * 0.25f, oy = py + ny * half * 0.25f, oz = pz + nz * half * 0.25f;
 
             int cell;
             if (blossomChance >= 0.8f && cardCells.length == 4) {
@@ -216,60 +222,22 @@ final class TreeGeometry {
                 .setNor(nx, ny, nz).setUV(u0, v0);
             mpb.rect(V0, V1, V2, V3);
 
-            float crossAng = 1.25f;
-            float csC = MathUtils.cos(crossAng), snC = MathUtils.sin(crossAng);
-            float tx2 = tx * csC + bx * snC;
-            float ty2 = ty * csC + by * snC;
-            float tz2 = tz * csC + bz * snC;
-            float bx2 = -tx * snC + bx * csC;
-            float by2 = -ty * snC + by * csC;
-            float bz2 = -tz * snC + bz * csC;
-
-            float tilt = 0.28f;
-            float bx2T = bx2 * 0.88f + nx * tilt;
-            float by2T = by2 * 0.88f + ny * tilt;
-            float bz2T = bz2 * 0.88f + nz * tilt;
-
+            // Secondary Intersecting Sprig Quad: orthogonal cross sharing the central stem B
+            // Plane lies on (N, B), intersecting Quad 1 cleanly at 90 degrees along the central stem
+            float tx2 = nx * 0.92f, ty2 = ny * 0.92f, tz2 = nz * 0.92f;
+            float bx2 = bx, by2 = by, bz2 = bz;
             int cell2 = (cardCells.length > 1) ? cardCells[RNG.nextInt(cardCells.length)] : cell;
             float u0b = (cell2 % 2) * 0.5f, u1b = u0b + 0.5f;
             float v0b = (cell2 / 2) * 0.5f, v1b = v0b + 0.5f;
 
-            V0.setPos(ox - tx2 * half - bx2T * half, oy - ty2 * half - by2T * half, oz - tz2 * half - bz2T * half)
+            V0.setPos(ox - tx2 * half - bx2 * half, oy - ty2 * half - by2 * half, oz - tz2 * half - bz2 * half)
                 .setNor(nx, ny, nz).setUV(u0b, v1b);
-            V1.setPos(ox + tx2 * half - bx2T * half, oy + ty2 * half - by2T * half, oz + tz2 * half - bz2T * half)
+            V1.setPos(ox + tx2 * half - bx2 * half, oy + ty2 * half - by2 * half, oz + tz2 * half - bz2 * half)
                 .setNor(nx, ny, nz).setUV(u1b, v1b);
-            V2.setPos(ox + tx2 * half + bx2T * half, oy + ty2 * half + by2T * half, oz + tz2 * half + bz2T * half)
+            V2.setPos(ox + tx2 * half + bx2 * half, oy + ty2 * half + by2 * half, oz + tz2 * half + bz2 * half)
                 .setNor(nx, ny, nz).setUV(u1b, v0b);
-            V3.setPos(ox - tx2 * half + bx2T * half, oy - ty2 * half + by2T * half, oz - tz2 * half - bz2T * half)
+            V3.setPos(ox - tx2 * half + bx2 * half, oy - ty2 * half + by2 * half, oz - tz2 * half - bz2 * half)
                 .setNor(nx, ny, nz).setUV(u0b, v0b);
-            mpb.rect(V0, V1, V2, V3);
-
-            float crossAng3 = 2.35f;
-            float csC3 = MathUtils.cos(crossAng3), snC3 = MathUtils.sin(crossAng3);
-            float tx3 = tx * csC3 + bx * snC3;
-            float ty3 = ty * csC3 + by * snC3;
-            float tz3 = tz * csC3 + bz * snC3;
-            float bx3 = -tx * snC3 + bx * csC3;
-            float by3 = -ty * snC3 + by * csC3;
-            float bz3 = -tz * snC3 + bz * csC3;
-
-            float tilt3 = -0.24f;
-            float bx3T = bx3 * 0.88f + nx * tilt3;
-            float by3T = by3 * 0.88f + ny * tilt3;
-            float bz3T = bz3 * 0.88f + nz * tilt3;
-
-            int cell3 = (cardCells.length > 2) ? cardCells[RNG.nextInt(cardCells.length)] : cell;
-            float u0c = (cell3 % 2) * 0.5f, u1c = u0c + 0.5f;
-            float v0c = (cell3 / 2) * 0.5f, v1c = v0c + 0.5f;
-
-            V0.setPos(ox - tx3 * half - bx3T * half, oy - ty3 * half - by3T * half, oz - tz3 * half - bz3T * half)
-                .setNor(nx, ny, nz).setUV(u0c, v1c);
-            V1.setPos(ox + tx3 * half - bx3T * half, oy + ty3 * half - by3T * half, oz + tz3 * half - bz3T * half)
-                .setNor(nx, ny, nz).setUV(u1c, v1c);
-            V2.setPos(ox + tx3 * half + bx3T * half, oy + ty3 * half + by3T * half, oz + tz3 * half + bz3T * half)
-                .setNor(nx, ny, nz).setUV(u1c, v0c);
-            V3.setPos(ox - tx3 * half + bx3T * half, oy - ty3 * half + by3T * half, oz - tz3 * half - bz3T * half)
-                .setNor(nx, ny, nz).setUV(u0c, v0c);
             mpb.rect(V0, V1, V2, V3);
         }
     }
@@ -297,70 +265,70 @@ final class TreeGeometry {
         for (int k = 0; k < 7; k++) {
             float ang = seed + k * MathUtils.PI2 / 7f + 0.32f * MathUtils.sin(seed * 2.1f + k);
             float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
-            float h0 = (2.6f + 0.16f * k) * s;
+            float h0 = (3.2f + 0.18f * k) * s;
             float t = h0 / topY;
             float sx = x + lean * t, sz = z + leanZ * t;
 
-            float reach = (3.4f + 0.55f * MathUtils.sin(seed + k * 1.7f)) * s;
-            float rise = (1.6f + 0.40f * MathUtils.sin(k * 2.1f + seed)) * s;
+            float reach = (3.3f + 0.45f * MathUtils.sin(seed + k * 1.7f)) * s;
+            float rise = (1.7f + 0.35f * MathUtils.sin(k * 2.1f + seed)) * s;
             float ex = sx + ca * reach, ey = h0 + rise, ez = sz + sa * reach;
             limb(trunk, sx, h0, sz, 0.22f * s, ex, ey, ez, 0.08f * s, 7);
 
             float fa = ang + (k % 2 == 0 ? 0.65f : -0.65f);
             float mx = sx + ca * reach * 0.58f, my = h0 + rise * 0.58f, mz = sz + sa * reach * 0.58f;
-            float fx = mx + MathUtils.cos(fa) * 1.9f * s, fy = my + 1.15f * s, fz = mz + MathUtils.sin(fa) * 1.9f * s;
+            float fx = mx + MathUtils.cos(fa) * 1.8f * s, fy = my + 1.25f * s, fz = mz + MathUtils.sin(fa) * 1.8f * s;
             limb(trunk, mx, my, mz, 0.12f * s, fx, fy, fz, 0.045f * s, 6);
 
             float ta = ang + (k % 2 == 0 ? -0.45f : 0.45f);
-            float tx = ex + MathUtils.cos(ta) * 1.3f * s, ty = ey + 0.65f * s, tz = ez + MathUtils.sin(ta) * 1.3f * s;
+            float tx = ex + MathUtils.cos(ta) * 1.25f * s, ty = ey + 0.70f * s, tz = ez + MathUtils.sin(ta) * 1.25f * s;
             limb(trunk, ex, ey, ez, 0.06f * s, tx, ty, tz, 0.03f * s, 4);
 
-            foliage(leaves, cards, ex, ey + 0.85f * s, ez, 2.7f * s, 1.8f * s, 2.7f * s, seed + k,
+            foliage(leaves, cards, ex, ey + 0.95f * s, ez, 2.5f * s, 1.6f * s, 2.5f * s, seed + k,
                 RAIN_LEAF * s, RAIN_CELLS, 0f);
-            foliage(leaves, cards, fx, fy + 0.65f * s, fz, 2.1f * s, 1.4f * s, 2.1f * s, seed + k * 2.3f,
+            foliage(leaves, cards, fx, fy + 0.75f * s, fz, 2.0f * s, 1.3f * s, 2.0f * s, seed + k * 2.3f,
                 RAIN_LEAF * s, RAIN_CELLS, 0f);
-            foliage(leaves, cards, tx, ty + 0.50f * s, tz, 1.6f * s, 1.2f * s, 1.6f * s, seed + k * 3.7f,
+            foliage(leaves, cards, tx, ty + 0.60f * s, tz, 1.5f * s, 1.1f * s, 1.5f * s, seed + k * 3.7f,
                 RAIN_LEAF * s, RAIN_CELLS, 0f);
         }
 
-        foliage(leaves, cards, topX, topY + 2.3f * s, topZ, 3.6f * s, 2.4f * s, 3.6f * s, seed + 9f,
+        foliage(leaves, cards, topX, topY + 2.4f * s, topZ, 3.2f * s, 2.1f * s, 3.2f * s, seed + 9f,
             RAIN_LEAF * s, RAIN_CELLS, 0f);
-        foliage(leaves, cards, topX, topY + 0.8f * s, topZ, 2.8f * s, 1.6f * s, 2.8f * s, seed + 4f,
+        foliage(leaves, cards, topX, topY + 0.9f * s, topZ, 2.5f * s, 1.5f * s, 2.5f * s, seed + 4f,
             RAIN_LEAF * s, RAIN_CELLS, 0f);
     }
 
-    private static final float RAIN_LEAF = VegetationConfig.RAIN_TREE_LEAF_CARD_SIZE * 2.85f;
-    private static final float KRISHNA_LEAF = VegetationConfig.KRISHNA_LEAF_CARD_SIZE * 3.0f;
+    private static final float RAIN_LEAF = VegetationConfig.RAIN_TREE_LEAF_CARD_SIZE;
+    private static final float KRISHNA_LEAF = VegetationConfig.KRISHNA_LEAF_CARD_SIZE;
     private static final int[] RAIN_CELLS = {0, 0, 1, 1, 1};
-    private static final int[] KRISHNA_CELLS = {2, 2, 2, 1};
+    private static final int[] KRISHNA_CELLS = {0, 0, 1, 1};
 
     static void krishnaTree(MeshPartBuilder trunk, MeshPartBuilder blossom, MeshPartBuilder cards,
                             float x, float z, float s, float seed) {
-        float topY = 3.0f * s;
+        float topY = 3.3f * s;
 
         buttressRoots(trunk, x, z, 0.48f * s, s, seed, 4);
 
         float m1x = x + 0.08f * s * MathUtils.sin(seed);
         float m1z = z + 0.08f * s * MathUtils.cos(seed);
-        limb(trunk, x, -0.20f * s, z, 0.54f * s, m1x, 0.65f * s, m1z, 0.42f * s, 9);
-        limb(trunk, m1x, 0.65f * s, m1z, 0.42f * s, x, 1.70f * s, z, 0.34f * s, 9);
-        limb(trunk, x, 1.70f * s, z, 0.34f * s, x, topY, z, 0.24f * s, 9);
+        limb(trunk, x, -0.20f * s, z, 0.54f * s, m1x, 0.70f * s, m1z, 0.42f * s, 9);
+        limb(trunk, m1x, 0.70f * s, m1z, 0.42f * s, x, 1.85f * s, z, 0.34f * s, 9);
+        limb(trunk, x, 1.85f * s, z, 0.34f * s, x, topY, z, 0.24f * s, 9);
 
         for (int k = 0; k < 3; k++) {
             float ang = seed + k * MathUtils.PI2 / 3f;
             float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
-            float ex = x + ca * 3.6f * s, ey = topY + 1.1f * s, ez = z + sa * 3.6f * s;
-            limb(trunk, x, topY - 0.3f * s, z, 0.22f * s, ex, ey, ez, 0.08f * s, 7);
-            foliage(blossom, cards, ex, ey + 0.5f * s, ez, 3.2f * s, 1.4f * s, 3.2f * s, seed + k * 1.9f,
+            float ex = x + ca * 3.4f * s, ey = topY + 1.2f * s, ez = z + sa * 3.4f * s;
+            limb(trunk, x, topY - 0.2f * s, z, 0.22f * s, ex, ey, ez, 0.08f * s, 7);
+            foliage(blossom, cards, ex, ey + 0.6f * s, ez, 2.9f * s, 1.4f * s, 2.9f * s, seed + k * 1.9f,
                 KRISHNA_LEAF * s, KRISHNA_CELLS, 0.65f);
-            foliage(blossom, cards, x + ca * 1.9f * s, topY + 1.3f * s, z + sa * 1.9f * s,
-                2.8f * s, 1.3f * s, 2.8f * s, seed + k * 0.8f + 3f, KRISHNA_LEAF * s, KRISHNA_CELLS, 0.60f);
+            foliage(blossom, cards, x + ca * 1.8f * s, topY + 1.4f * s, z + sa * 1.8f * s,
+                2.5f * s, 1.3f * s, 2.5f * s, seed + k * 0.8f + 3f, KRISHNA_LEAF * s, KRISHNA_CELLS, 0.60f);
         }
-        foliage(blossom, cards, x, topY + 1.5f * s, z, 4.0f * s, 1.6f * s, 4.0f * s, seed + 6f,
+        foliage(blossom, cards, x, topY + 1.6f * s, z, 3.6f * s, 1.5f * s, 3.6f * s, seed + 6f,
             KRISHNA_LEAF * s, KRISHNA_CELLS, 0.60f);
     }
 
-    private static final float WHITE_LEAF = VegetationConfig.WHITE_BLOSSOM_CARD_SIZE * 2.85f;
+    private static final float WHITE_LEAF = VegetationConfig.WHITE_BLOSSOM_CARD_SIZE;
     private static final int[] WHITE_CELLS = {0, 1, 2, 3};
 
     static void whiteBlossomTree(MeshPartBuilder trunk, MeshPartBuilder blossomCore, MeshPartBuilder blossomCards,
@@ -380,29 +348,29 @@ final class TreeGeometry {
         for (int k = 0; k < 5; k++) {
             float ang = seed + k * MathUtils.PI2 / 5f + 0.32f * MathUtils.sin(seed * 2.2f + k);
             float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
-            float h0 = (2.6f + 0.22f * k) * s;
+            float h0 = (3.1f + 0.20f * k) * s;
             float t = h0 / topY;
             float sx = x + lean * t, sz = z + leanZ * t;
 
-            float reach = (3.4f + 0.40f * MathUtils.sin(seed + k * 1.8f)) * s;
-            float rise = (1.5f + 0.30f * MathUtils.sin(k * 2.0f + seed)) * s;
+            float reach = (3.2f + 0.40f * MathUtils.sin(seed + k * 1.8f)) * s;
+            float rise = (1.6f + 0.30f * MathUtils.sin(k * 2.0f + seed)) * s;
             float ex = sx + ca * reach, ey = h0 + rise, ez = sz + sa * reach;
             limb(trunk, sx, h0, sz, 0.24f * s, ex, ey, ez, 0.07f * s, 7);
 
             float fa = ang + (k % 2 == 0 ? 0.65f : -0.65f);
             float mx = sx + ca * reach * 0.58f, my = h0 + rise * 0.58f, mz = sz + sa * reach * 0.58f;
-            float fx = mx + MathUtils.cos(fa) * 1.85f * s, fy = my + 1.1f * s, fz = mz + MathUtils.sin(fa) * 1.85f * s;
+            float fx = mx + MathUtils.cos(fa) * 1.8f * s, fy = my + 1.15f * s, fz = mz + MathUtils.sin(fa) * 1.8f * s;
             limb(trunk, mx, my, mz, 0.11f * s, fx, fy, fz, 0.045f * s, 6);
 
-            foliage(blossomCore, blossomCards, ex, ey + 0.8f * s, ez, 2.9f * s, 2.0f * s, 2.9f * s, seed + k,
+            foliage(blossomCore, blossomCards, ex, ey + 0.9f * s, ez, 2.6f * s, 1.8f * s, 2.6f * s, seed + k,
                 WHITE_LEAF * s, WHITE_CELLS, 0.85f);
-            foliage(blossomCore, blossomCards, fx, fy + 0.6f * s, fz, 2.2f * s, 1.5f * s, 2.2f * s, seed + k * 2.3f,
+            foliage(blossomCore, blossomCards, fx, fy + 0.7f * s, fz, 2.0f * s, 1.4f * s, 2.0f * s, seed + k * 2.3f,
                 WHITE_LEAF * s, WHITE_CELLS, 0.85f);
         }
 
-        foliage(blossomCore, blossomCards, topX, topY + 2.2f * s, topZ, 3.8f * s, 2.4f * s, 3.8f * s, seed + 8f,
+        foliage(blossomCore, blossomCards, topX, topY + 2.3f * s, topZ, 3.5f * s, 2.2f * s, 3.5f * s, seed + 8f,
             WHITE_LEAF * s, WHITE_CELLS, 0.90f);
-        foliage(blossomCore, blossomCards, topX, topY + 0.8f * s, topZ, 2.9f * s, 1.6f * s, 2.9f * s, seed + 3f,
+        foliage(blossomCore, blossomCards, topX, topY + 0.9f * s, topZ, 2.6f * s, 1.5f * s, 2.6f * s, seed + 3f,
             WHITE_LEAF * s, WHITE_CELLS, 0.85f);
     }
 
