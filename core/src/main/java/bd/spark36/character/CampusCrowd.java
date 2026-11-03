@@ -84,6 +84,35 @@ public class CampusCrowd {
 
         // Apply initial level profile (Level 1 peaceful by default)
         setLevelProfile(1);
+        seedPromenadeWalkers();
+    }
+
+    /**
+     * Seeds initial active walkers along the main promenade (edges 0 and 1)
+     * so students are visibly moving right in front of the player at spawn.
+     */
+    public void seedPromenadeWalkers() {
+        if (students == null || students.length == 0) return;
+        float[][] promenadeSpawns = {
+            {  1.8f, 66.0f, 0, 1, 180f }, // walks north away from gate
+            { -1.8f, 61.0f, 1, 0,   0f }, // walks south towards gate
+            {  2.0f, 54.0f, 1, 2, 180f }, // walks north along promenade
+            { -2.2f, 47.0f, 2, 1,   0f }, // walks south along promenade
+            {  1.6f, 40.0f, 1, 2, 180f }, // walks north
+            { -1.5f, 34.0f, 2, 1,   0f }  // walks south
+        };
+        int count = Math.min(promenadeSpawns.length, students.length);
+        for (int i = 0; i < count; i++) {
+            float[] sp = promenadeSpawns[i];
+            StudentNPC s = students[i];
+            int fromNode = (int) sp[2];
+            int toNode = (int) sp[3];
+            int edge = (fromNode == 0 || toNode == 0) ? 0 : 1;
+            s.enterEdge(graph, edge, fromNode);
+            s.setPosition(sp[0], graph.supportHeight(sp[0], sp[1]), sp[1]);
+            s.setHeading(sp[4]);
+            s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(20f, 40f));
+        }
     }
 
     /**
