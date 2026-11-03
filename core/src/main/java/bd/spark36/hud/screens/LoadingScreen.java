@@ -1,3 +1,4 @@
+// ei file ta level load howar shomoy loading screen dekhay
 package bd.spark36.hud.screens;
 
 import bd.spark36.audio.SoundManager;
@@ -13,15 +14,6 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.MathUtils;
 
-/**
- * High-tech Sci-Fi Loading Screen inspired by Dhaka University monuments and the July movement:
- * - Glowing Aparajeyo Bangla silhouette in electric cyan on left
- * - Glowing Central Shaheed Minar silhouette in crimson red on right
- * - Central animated rotating HUD radar rings & Dhaka skyline
- * - Prominent "2x12 SPARK" title and "BIRTH OF 36 JULY" subtitle
- * - Segmented gradient LED loading bar with percentage readout
- * - 5 Stages: Initializing System, Loading Assets, Preparing World, Syncing Data, Finalizing
- */
 public class LoadingScreen {
 
     private final ShapeRenderer shapeRenderer;
@@ -36,7 +28,6 @@ public class LoadingScreen {
     private float finishFade = 1.0f;
     private int lastStageSound = -1;
 
-    // Cyberpunk Neon Color Palette
     private final Color bgDark = new Color(0.015f, 0.025f, 0.040f, 1f);
     private final Color cyanGlow = new Color(0.00f, 0.88f, 1.00f, 1f);
     private final Color cyanMuted = new Color(0.00f, 0.55f, 0.75f, 0.5f);
@@ -81,14 +72,12 @@ public class LoadingScreen {
     public void update(float delta) {
         animTime += delta;
 
-        // Skip to end if user presses SPACE, ENTER, or clicks
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
             Gdx.input.isKeyJustPressed(Input.Keys.ENTER) ||
             Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             progress = Math.max(progress, 0.96f);
         }
 
-        // Advance progress smoothly over totalDuration
         if (progress < 1.0f) {
             float step = delta / totalDuration;
             float speedMod = 1.0f;
@@ -128,14 +117,12 @@ public class LoadingScreen {
         shapeRenderer.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
         batch.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
 
-        // 1. BACKGROUND GRADIENTS & SMOOTH NEON MIST DIFFUSION
         shapeRenderer.begin(ShapeType.Filled);
-        // Base dark space gradient
+
         shapeRenderer.rect(0, 0, w, h,
             new Color(0.010f, 0.020f, 0.035f, 1f), new Color(0.015f, 0.025f, 0.040f, 1f),
             new Color(0.025f, 0.010f, 0.020f, 1f), new Color(0.020f, 0.015f, 0.030f, 1f));
 
-        // Smooth Multi-Layer Radial Glow (Left Cyan)
         float leftBase = 0.025f + 0.010f * MathUtils.sin(animTime * 1.4f);
         for (int step = 0; step < 8; step++) {
             float frac = (8 - step) / 8.0f;
@@ -143,7 +130,6 @@ public class LoadingScreen {
             shapeRenderer.circle(w * 0.18f, h * 0.50f, w * 0.35f * (step + 1) / 8f, 36);
         }
 
-        // Smooth Multi-Layer Radial Glow (Right Crimson)
         float rightBase = 0.025f + 0.010f * MathUtils.cos(animTime * 1.4f);
         for (int step = 0; step < 8; step++) {
             float frac = (8 - step) / 8.0f;
@@ -151,29 +137,23 @@ public class LoadingScreen {
             shapeRenderer.circle(w * 0.82f, h * 0.50f, w * 0.35f * (step + 1) / 8f, 36);
         }
 
-        // Center Subtle Radar Backplate
         shapeRenderer.setColor(0.03f, 0.06f, 0.10f, 0.75f);
         shapeRenderer.circle(cx, cy + 45f, 210f, 48);
         shapeRenderer.end();
 
-        // 2. MONUMENT SILHOUETTES & SCI-FI ELEMENTS
         renderMonuments(shapeRenderer, w, h);
 
-        // 3. CENTRAL RADAR & RETICLE RINGS
         renderCentralRadar(shapeRenderer, cx, cy + 45f);
 
-        // 4. SCI-FI HUD FRAME & CORNER BRACKETS
         renderHudFrame(shapeRenderer, w, h);
 
-        // 5. PROGRESS BAR & STAGES
         renderProgressBar(shapeRenderer, cx, h * 0.24f);
 
-        // 6. TEXT & LABELS
         renderText(cx, cy + 45f, h);
     }
 
     private void renderMonuments(ShapeRenderer sr, float w, float h) {
-        // --- Left: Aparajeyo Bangla & Curzon Arches (Cyan / Blue Neon) ---
+
         sr.begin(ShapeType.Line);
         Gdx.gl.glLineWidth(2.0f);
         sr.setColor(0.00f, 0.65f, 0.90f, 0.40f);
@@ -207,7 +187,6 @@ public class LoadingScreen {
         sr.line(lx + 10f, ly + 122f, lx + 34f, ly + 122f);
         sr.end();
 
-        // --- Right: Central Shaheed Minar (Crimson Red Neon) ---
         sr.begin(ShapeType.Line);
         Gdx.gl.glLineWidth(2.0f);
         float rx = w * 0.88f;
@@ -374,7 +353,6 @@ public class LoadingScreen {
         }
         sr.end();
 
-        // 5 Pipeline Stage Badges
         float stageY = barY - 46f;
         float stageAreaW = 920f;
         float stageSpacing = stageAreaW / 5f;
@@ -411,7 +389,6 @@ public class LoadingScreen {
     private void renderText(float cx, float cy, float h) {
         batch.begin();
 
-        // 1. GAME TITLE: "2x12 SPARK"
         fonts.titleFont.setColor(0.00f, 0.80f, 1.00f, 0.45f);
         drawCentered(fonts.titleFont, "2x12 SPARK", cx + 2f, cy - 18f);
         fonts.titleFont.setColor(1.00f, 0.20f, 0.30f, 0.45f);
@@ -420,11 +397,9 @@ public class LoadingScreen {
         fonts.titleFont.setColor(textWhite);
         drawCentered(fonts.titleFont, "2x12 SPARK", cx, cy - 20f);
 
-        // 2. SUBTITLE: "BIRTH OF 36 JULY"
         fonts.headerFont.setColor(yellowGlow);
         drawCentered(fonts.headerFont, "B I R T H   O F   3 6   J U L Y", cx, cy - 54f);
 
-        // 3. "LOADING..." & PERCENTAGE (Positioned with generous clearance above the bar)
         float barY = h * 0.24f;
         float pulseDot = 0.70f + 0.30f * MathUtils.sin(animTime * 4.5f);
         fonts.headerFont.setColor(0.00f, 0.90f, 0.70f, pulseDot);
@@ -435,7 +410,6 @@ public class LoadingScreen {
         fonts.headerFont.setColor(cyanGlow);
         fonts.headerFont.draw(batch, pct + "%", cx + 400f, barY + 18f);
 
-        // 4. STAGE NAMES
         float stageY = barY - 46f;
         float stageAreaW = 920f;
         float stageSpacing = stageAreaW / 5f;
@@ -457,7 +431,6 @@ public class LoadingScreen {
             fonts.smallFont.draw(batch, STAGE_LABELS[s], sx - 35f, stageY + 12f);
         }
 
-        // 5. FOOTER HINT
         fonts.smallFont.setColor(new Color(0.40f, 0.50f, 0.65f, 0.70f));
         drawCentered(fonts.smallFont, "PRESS [SPACE / ENTER] OR CLICK TO SKIP", cx, 36f);
 

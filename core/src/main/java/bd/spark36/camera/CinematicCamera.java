@@ -1,3 +1,4 @@
+// ei file ta third person ar cinematic camera movement control kore
 package bd.spark36.camera;
 
 import com.badlogic.gdx.Gdx;
@@ -6,41 +7,30 @@ import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 
-/**
- * Cinematic 3rd-person over-the-shoulder camera for 2x12: Spark.
- * AAA-level enhancements: camera bob, FOV push on sprint, heading look-ahead,
- * impulse-based screen shake system.
- */
 public class CinematicCamera {
 
     private final PerspectiveCamera camera;
 
-    // Camera-vs-world collision
     private static final float CAMERA_MARGIN = 0.30f;
     private static final float MIN_ARM_FRACTION = 0.12f;
     private float[][] colliders;
 
-    // Follow target config
     private float distance = 3.3f;
     private final float minDistance = 2.2f;
     private final float maxDistance = 6.0f;
     private float shoulderOffset = 0.28f;
     private float targetHeight = 1.32f;
 
-    // Angles (degrees)
     private float yaw = 0f;
     private float pitch = 5.0f;
     private final float minPitch = -15f;
     private final float maxPitch = 38f;
 
-    // Mouse & Trackpad
     private float mouseSensitivity = 0.22f;
 
-    // ─── Player comfort settings (Settings screen, applied live to every camera) ───
     private static volatile float userSensitivity = 1.0f;
     private static volatile boolean reduceMotion = false;
 
-    /** Multiplier on the base mouse sensitivity, clamped to 0.25..3. */
     public static void setUserSensitivity(float multiplier) {
         if (Float.isNaN(multiplier)) multiplier = 1f;
         userSensitivity = MathUtils.clamp(multiplier, 0.25f, 3.0f);
@@ -48,29 +38,23 @@ public class CinematicCamera {
 
     public static float getUserSensitivity() { return userSensitivity; }
 
-    /** When on: no head-bob, no screen shake, no sprint FOV push. */
     public static void setReduceMotion(boolean on) { reduceMotion = on; }
 
     public static boolean isReduceMotion() { return reduceMotion; }
 
-    /** Degrees of yaw/pitch per pixel of mouse movement after the user multiplier. */
     public float getEffectiveSensitivity() { return mouseSensitivity * userSensitivity; }
 
-    /** Current vertical head-bob offset (world units). */
     public float getCurrentBob() { return currentBob; }
 
-    /** Current screen-shake offset (world units). */
     public Vector3 getShakeOffset() { return shakeOffset; }
     private boolean mouseLookActive = true;
     private int initFrameSkip = 2;
 
-    // Smooth interpolation
     private final Vector3 currentCameraPos = new Vector3();
     private final Vector3 desiredCameraPos = new Vector3();
     private final Vector3 targetFocus = new Vector3();
     private final Vector3 currentLookAt = new Vector3();
 
-    // Debug & Inspection Viewpoint Override
     private boolean fixedView = false;
     private final Vector3 fixedPos = new Vector3();
     private final Vector3 fixedLookAt = new Vector3();
@@ -95,33 +79,29 @@ public class CinematicCamera {
         return fixedView;
     }
 
-    // ─── Camera Bob ───────────────────────────────────────────────────
     private float bobTime = 0f;
-    private float bobAmplitude = 0.045f;  // 4.5cm vertical bob
-    private float bobFrequency = 1.85f;   // ~2 steps per second
+    private float bobAmplitude = 0.045f;
+    private float bobFrequency = 1.85f;
     private float currentBob = 0f;
-    private float bobDecay = 0f;           // 0 = walking, 1 = still
+    private float bobDecay = 0f;
 
-    // ─── FOV System ───────────────────────────────────────────────────
     private float baseFov = 65f;
     private float sprintFov = 79f;
     private float currentFov = 65f;
     private float targetFov = 65f;
 
-    // ─── Look-Ahead ───────────────────────────────────────────────────
     private float lookAheadStrength = 0.30f;
     private final Vector3 lookAheadOffset = new Vector3();
     private float currentHeadingX = 0f;
     private float currentHeadingZ = 0f;
 
-    // ─── Screen Shake ─────────────────────────────────────────────────
     private float shakeMagnitude = 0f;
-    private float shakeDecay = 8.0f;       // how fast shake fades
+    private float shakeDecay = 8.0f;
     private float shakeTime = 0f;
     private final Vector3 shakeOffset = new Vector3();
 
     public CinematicCamera(int viewportWidth, int viewportHeight) {
-        // Debug/test hooks so automated screenshots can inspect the player from any side and range
+
         yaw = Float.parseFloat(System.getProperty("bd.spark36.cameraYaw", "0"));
         distance = Float.parseFloat(System.getProperty("bd.spark36.cameraDistance", String.valueOf(distance)));
         pitch = Float.parseFloat(System.getProperty("bd.spark36.cameraPitch", String.valueOf(pitch)));
@@ -138,12 +118,6 @@ public class CinematicCamera {
         currentLookAt.set(0f, 1.32f, 49.4f);
     }
 
-    /**
-     * Updates camera from input and player state.
-     * @param isMoving   whether player is currently walking
-     * @param isSprinting whether player is sprinting
-     * @param headingDeg  player facing direction in degrees
-     */
     public void update(float delta, Vector3 playerPos, boolean inputEnabled) {
         update(delta, playerPos, inputEnabled, false, false, 0f);
     }
@@ -158,7 +132,6 @@ public class CinematicCamera {
             return;
         }
 
-        // 1. Mouse/Trackpad rotation
         boolean testMode = System.getProperty("bd.spark36.testScreenshot") != null ||
                            System.getProperty("bd.spark36.testHeroScreenshot") != null ||
                            System.getProperty("bd.spark36.testSitScreenshot") != null ||
@@ -199,23 +172,20 @@ public class CinematicCamera {
             }
         }
 
-        // 2. Camera bob — only when moving, fades out when still
         if (isMoving && inputEnabled && !reduceMotion) {
             float bobRate = isSprinting ? bobFrequency * 1.55f : bobFrequency;
             bobTime += delta * bobRate * MathUtils.PI2;
             float targetBob = MathUtils.sin(bobTime) * bobAmplitude * (isSprinting ? 1.5f : 1f);
             currentBob = currentBob + (targetBob - currentBob) * Math.min(1f, 18f * delta);
         } else {
-            // Decay bob smoothly when stopping
+
             currentBob *= Math.max(0f, 1f - 8f * delta);
         }
 
-        // 3. FOV push
         targetFov = isSprinting && isMoving && !reduceMotion ? sprintFov : baseFov;
         currentFov += (targetFov - currentFov) * Math.min(1f, 5f * delta);
         camera.fieldOfView = currentFov;
 
-        // 4. Look-ahead offset (camera leads toward player facing direction)
         float headRad = headingDeg * MathUtils.degreesToRadians;
         float targetLAX = -MathUtils.sin(headRad) * lookAheadStrength * (isMoving ? 1f : 0.3f);
         float targetLAZ = -MathUtils.cos(headRad) * lookAheadStrength * (isMoving ? 1f : 0.3f);
@@ -223,7 +193,6 @@ public class CinematicCamera {
         currentHeadingZ += (targetLAZ - currentHeadingZ) * Math.min(1f, 4f * delta);
         lookAheadOffset.set(currentHeadingX, 0f, currentHeadingZ);
 
-        // 5. Screen shake decay
         if (reduceMotion) shakeMagnitude = 0f;
         if (shakeMagnitude > 0.0001f) {
             shakeMagnitude -= shakeDecay * delta * shakeMagnitude;
@@ -238,7 +207,6 @@ public class CinematicCamera {
             shakeOffset.setZero();
         }
 
-        // 6. Target focus = player chest + look-ahead + dynamic vertical pitch elevation
         float pitchRad = pitch * MathUtils.degreesToRadians;
         float sinPitch = MathUtils.sin(pitchRad);
         float pitchElevation = -sinPitch * 0.85f;
@@ -248,7 +216,6 @@ public class CinematicCamera {
             playerPos.z + lookAheadOffset.z
         );
 
-        // 7. Spherical orbit
         float yawRad   = yaw * MathUtils.degreesToRadians;
         float cosPitch = MathUtils.cos(pitchRad);
         float cosYaw   = MathUtils.cos(yawRad);
@@ -271,7 +238,6 @@ public class CinematicCamera {
 
         pullInFromSolids(targetFocus, desiredCameraPos);
 
-        // 8. Smooth cinematic lerp
         float followSpeed = 12f;
         currentCameraPos.lerp(desiredCameraPos, Math.min(1f, followSpeed * delta));
         currentLookAt.lerp(targetFocus, Math.min(1f, (followSpeed + 4f) * delta));
@@ -282,16 +248,10 @@ public class CinematicCamera {
         camera.update();
     }
 
-    /** Solid boxes ({minX, minY, minZ, maxX, maxY, maxZ}) the camera must not end up inside. */
     public void setColliders(float[][] boxes) {
         this.colliders = boxes;
     }
 
-    /**
-     * Shortens the focus-to-camera arm so the camera stops in front of the first solid it would
-     * pass through, instead of poking through walls and showing the inside of buildings.
-     * Boxes are grown by CAMERA_MARGIN so the near plane never clips a wall face.
-     */
     private void pullInFromSolids(Vector3 focus, Vector3 camPos) {
         if (colliders == null) return;
 
@@ -316,8 +276,7 @@ public class CinematicCamera {
                     if (tEnter > tExit) hit = false;
                 }
             }
-            // tEnter == 0 means the focus is already inside the grown box (hugging a wall);
-            // leave the arm alone rather than shove the camera into the player's head.
+
             if (hit && tEnter > 0f && tEnter < nearest) nearest = tEnter;
         }
 
@@ -327,7 +286,6 @@ public class CinematicCamera {
         }
     }
 
-    /** Trigger a screen shake impulse. magnitude in world units (0.05 = subtle, 0.2 = strong). */
     public void addShake(float magnitude) {
         if (reduceMotion) return;
         shakeMagnitude = Math.min(shakeMagnitude + magnitude, 0.35f);

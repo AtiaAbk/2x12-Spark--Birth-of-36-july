@@ -1,3 +1,4 @@
+// ei file ta movement er bijoy ar epilogue er shesh level
 package bd.spark36.level;
 
 import com.badlogic.gdx.Gdx;
@@ -22,17 +23,10 @@ import bd.spark36.world.DhakaCampusWorld;
 import bd.spark36.world.TextureFactory;
 import bd.spark36.world.landmarks.ShaheedMinarBuilder;
 
-/**
- * LEVEL 6: "36 July — The Historical Turning Point & Epilogue" (৩৬ জুলাই ও ঐতিহাসিক বিজয়)
- * Period: August 5, 2024 ("36 July" — The Long March to Dhaka & Fall of the Autocratic Regime).
- * Environment: Triumphant Dhaka University campus under radiant golden afternoon skies, marigold garlands, liberated gates.
- * Focus: Leading the victory march, laying floral tributes to the fallen martyrs, ringing the Bell of Freedom, epilogue credits.
- * Combat: Peaceful celebration and solemn historical commemoration.
- */
 public class Level6VictoryEpilogue implements CampaignLevel {
 
     private DhakaCampusWorld world;
-    private final StreetDressing street = new StreetDressing(6); // T8 street identity
+    private final StreetDressing street = new StreetDressing(6);
     private CampusCrowd crowd;
     private Environment goldenEnvironment;
 
@@ -40,17 +34,12 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     private final Array<ModelInstance> instances = new Array<>();
     private final java.util.List<float[]> colliders = new java.util.ArrayList<>();
 
-    // Objectives:
-    // 1. Lead the victory march through the liberated Curzon promenade gate
-    // 2. Lay marigold floral wreath at the Martyrs' Commemorative Altar
-    // 3. Ring the Bell of Freedom at the Teacher-Student Centre (TSC)
-    // 4. View the permanent historical epilogue and documentary credits
     private final boolean[] objectivesDone = new boolean[4];
     private final Vector3[] waypoints = {
-        new Vector3(0f, 0f, 48f),   // Liberated Main Gate
-        new Vector3(3.6f, 0f, -16.8f), // Martyrs' Altar (Curzon Arcade)
-        new Vector3(66f, 0f, 20f),  // TSC Bell of Freedom
-        new Vector3(0f, 0f, -22f)   // Epilogue Pavilion
+        new Vector3(0f, 0f, 48f),
+        new Vector3(3.6f, 0f, -16.8f),
+        new Vector3(66f, 0f, 20f),
+        new Vector3(0f, 0f, -22f)
     };
 
     private static final String[] CHECKLIST = {
@@ -194,7 +183,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
             objectivesDone[3] = true;
             hud.triggerMissionToast("36 JULY VICTORY ACCOMPLISHED!", getCompletedObjectiveCount());
             hud.triggerVictory();
-            hud.openCredits("36 July Epilogue"); // T4: credits & sources first; victory screen waits underneath
+            hud.openCredits("36 July Epilogue");
             return true;
         }
         return false;
@@ -213,7 +202,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
 
     @Override
     public Vector3 getSpawnPosition() {
-        return new Vector3(0f, 0f, 72f); // Starting at outer promenade
+        return new Vector3(0f, 0f, 72f);
     }
 
     @Override
@@ -225,25 +214,22 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     public void init(TextureFactory textures, PlayerController player, CinematicCamera camera) {
         this.world = new DhakaCampusWorld(textures);
 
-        // Radiant golden afternoon lighting ("36 July" triumphant warmth)
         goldenEnvironment = new Environment();
         goldenEnvironment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.55f, 0.52f, 0.45f, 1f));
         DirectionalLight goldSun = new DirectionalLight().set(1.0f, 0.92f, 0.75f, -0.3f, -0.85f, -0.3f);
         goldenEnvironment.add(goldSun);
 
-        // Floral Memorial Models & Victory Garlands
         ModelBuilder mb = new ModelBuilder();
         long attr = Usage.Position | Usage.Normal;
-        Material marigoldMat = new Material(ColorAttribute.createDiffuse(new Color(0.98f, 0.65f, 0.08f, 1f))); // Orange marigold
-        Material roseMat = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.12f, 0.18f, 1f)));     // Red rose
+        Material marigoldMat = new Material(ColorAttribute.createDiffuse(new Color(0.98f, 0.65f, 0.08f, 1f)));
+        Material roseMat = new Material(ColorAttribute.createDiffuse(new Color(0.88f, 0.12f, 0.18f, 1f)));
         Material whiteMarble = new Material(ColorAttribute.createDiffuse(new Color(0.95f, 0.95f, 0.92f, 1f)));
         Material bellBronze = new Material(ColorAttribute.createDiffuse(new Color(0.82f, 0.68f, 0.32f, 1f)));
 
-        // 1. Martyrs' Floral Monument Altar
         mb.begin();
         com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder pAltar = mb.part("altar", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, attr, whiteMarble);
         pAltar.box(0, 0.3f, 0, 3.2f, 0.6f, 2.2f);
-        // Wreath of marigolds and roses on altar
+
         com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder pFlowers = mb.part("flowers", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, attr, marigoldMat);
         for (int i = 0; i < 16; i++) {
             float ang = i * 22.5f * com.badlogic.gdx.math.MathUtils.degreesToRadians;
@@ -256,7 +242,6 @@ public class Level6VictoryEpilogue implements CampaignLevel {
         ai.transform.setTranslation(waypoints[1]);
         instances.add(ai);
 
-        // 2. Bell of Freedom at TSC
         mb.begin();
         com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder pBellFrame = mb.part("frame", com.badlogic.gdx.graphics.GL20.GL_TRIANGLES, attr, whiteMarble);
         pBellFrame.box(0, 2.2f, 0, 0.25f, 4.4f, 0.25f);
@@ -275,7 +260,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
         street.build(colliders);
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
-        LevelPbrMaterials.adopt(instances); // T8: legacy Diffuse colours -> PBR base colour
+        LevelPbrMaterials.adopt(instances);
         this.crowd = new CampusCrowd(20, player.getColliders());
         this.crowd.setLevelProfile(6);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
@@ -290,8 +275,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
     public void update(float delta, PlayerController player, CinematicCamera camera, boolean canMove, WhereWindsMeetHUD hud) {
         if (world != null) world.update(delta);
         if (crowd != null) crowd.update(delta, player.getPosition());
-        // T4 test switch -Dbd.spark36.testEpilogueCredits (with -Dbd.spark36.level=6): complete the
-        // first three objectives, then take the real final-objective interaction path.
+
         if (!epilogueTestDone && bd.spark36.hud.screens.CreditsScreen.epilogueTestRequested()) {
             epilogueTestTime += delta;
             if (epilogueTestTime >= 1.5f) {
@@ -330,8 +314,7 @@ public class Level6VictoryEpilogue implements CampaignLevel {
 
     @Override
     public Environment getEnvironment() {
-        // T8: the campus world is lit by its daylight PBR environment (IBL, sun, fog, shadows) in every
-        // chapter; the old per-level environment had no IBL and rendered characters and props white.
+
         return world != null ? world.getEnvironment() : goldenEnvironment;
     }
 

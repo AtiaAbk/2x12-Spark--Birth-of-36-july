@@ -1,3 +1,4 @@
+// ei file ta performance frame stats calculation test kore
 package bd.spark36.diagnostics;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -9,7 +10,7 @@ class FrameStatsTest {
     @Test
     void warmupFramesAreDiscarded() {
         FrameStats s = new FrameStats(1f);
-        for (int i = 0; i < 180; i++) assertFalse(s.record(1f / 60f)); // 3 s warmup
+        for (int i = 0; i < 180; i++) assertFalse(s.record(1f / 60f));
         assertEquals(0, s.frameCount());
     }
 
@@ -26,7 +27,7 @@ class FrameStatsTest {
     @Test
     void percentileCapturesSlowFrames() {
         FrameStats s = new FrameStats(100f);
-        s.record(3.5f); // consume warmup in one frame
+        s.record(3.5f);
         for (int i = 0; i < 99; i++) s.record(0.010f);
         s.record(0.050f);
         assertEquals(50f, s.maxMs(), 0.01f);

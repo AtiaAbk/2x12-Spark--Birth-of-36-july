@@ -1,3 +1,4 @@
+// ei file ta settings menu render kore jekhane player option change kore
 package bd.spark36.hud.screens;
 
 import bd.spark36.app.GameProfile;
@@ -16,16 +17,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 
-/**
- * Settings screen shared by the main menu and the pause menu (reference sections 8.5 and 11.3).
- *
- * <p>Keyboard: W/S or Up/Down select, A/D or Left/Right change, Enter/Space toggles or activates,
- * Esc/Backspace goes back. Mouse: hover selects, click the left or right half of a value to step
- * it down or up, click BACK to leave. Every change is applied live and written to
- * spark36_settings.json at once.</p>
- *
- * <p>The caller owns the render targets and passes virtual coordinates (origin bottom-left).</p>
- */
 public final class SettingsScreen {
 
     public enum Row {
@@ -53,7 +44,6 @@ public final class SettingsScreen {
 
     private static final Row[] ROWS = Row.values();
 
-    // Palette shared with the main menu and pause menu
     private final Color glassBg = new Color(0.05f, 0.07f, 0.10f, 0.92f);
     private final Color gold = new Color(1.0f, 0.85f, 0.40f, 1f);
     private final Color goldBorder = new Color(0.92f, 0.76f, 0.32f, 0.88f);
@@ -67,7 +57,6 @@ public final class SettingsScreen {
     private int selection = 0;
     private String fromLabel = "";
 
-    // Layout (virtual units), recomputed each frame from the viewport
     private float px, py, pw, ph, rowX, rowW, valueX, valueW, firstRowY;
     private static final float ROW_H = 36f;
     private static final float ROW_STEP = 41f;
@@ -90,27 +79,16 @@ public final class SettingsScreen {
         return selection;
     }
 
-    /** Folder holding spark36_settings.json / spark36_save.json. */
     static String profileFolder() {
         return GameProfile.get().getManager().getStorage().describe();
     }
 
-    /**
-     * Screenshot folder as used by the capture code: {@code -Dbd.spark36.screenshotDir} if given,
-     * otherwise {@code <home>/Pictures/Spark36}. Display only.
-     */
     static String screenshotFolder() {
         String o = System.getProperty("bd.spark36.screenshotDir");
         if (o != null && !o.trim().isEmpty()) return new java.io.File(o.trim()).getAbsolutePath();
         return new java.io.File(new java.io.File(System.getProperty("user.home", "."), "Pictures"), "Spark36").getAbsolutePath();
     }
 
-    /**
-     * Test switch {@code -Dbd.spark36.testSettingsMutate=true}: performs the same changes a player
-     * would make with the keys (sensitivity up, master volume down twice, subtitles off, text size
-     * up, reduce motion on) through the same apply-and-save path, so a second launch can show
-     * that they persisted.
-     */
     public static void applyScriptedTestChangesIfRequested() {
         if (!"true".equalsIgnoreCase(System.getProperty("bd.spark36.testSettingsMutate"))) return;
         GameProfile p = GameProfile.get();
@@ -125,7 +103,6 @@ public final class SettingsScreen {
         p.settingsChanged();
     }
 
-    /** True when a test run asked for an automatic settings-screen screenshot. */
     public static boolean screenshotTestRequested() {
         return System.getProperty("bd.spark36.testSettingsScreenshot") != null;
     }
@@ -146,18 +123,14 @@ public final class SettingsScreen {
         return firstRowY - i * ROW_STEP;
     }
 
-    // ── Input ─────────────────────────────────────────────────────────────
-
-    /** Handles one frame of input. Mouse coordinates are in the same virtual space as render(). */
     public void update(float w, float h, float mouseX, float mouseY) {
         if (!open) return;
         computeLayout(w, h);
 
-        // Mouse hover + click
         for (int i = 0; i < ROWS.length; i++) {
             float by = rowY(i);
             if (mouseX >= rowX && mouseX <= rowX + rowW && mouseY >= by && mouseY <= by + ROW_H) {
-                // Hover selects only while the mouse moves, so a resting cursor never fights the keyboard.
+
                 boolean mouseMoved = Gdx.input.getDeltaX() != 0 || Gdx.input.getDeltaY() != 0;
                 if (selection != i && mouseMoved) {
                     selection = i;
@@ -207,7 +180,7 @@ public final class SettingsScreen {
             adjust(profile.settings(), row, dir, RenderPipelineConfig.activeGraphicsTier, RenderPipelineConfig.toneMappingMode);
             profile.settingsChanged();
         }
-        click(); // after the change, so the click is heard at the new volume
+        click();
     }
 
     private static void click() {
@@ -215,12 +188,6 @@ public final class SettingsScreen {
         if (sm != null) sm.playClick();
     }
 
-    /**
-     * Steps one setting up ({@code dir > 0}) or down. Pure logic, used by the screen and tests.
-     *
-     * @param effectiveTier tier currently in use (shown when the saved value is "default")
-     * @param effectiveTone tone map currently in use
-     */
     public static void adjust(GameSettings s, Row row, int dir, GraphicsTier effectiveTier, int effectiveTone) {
         int d = dir >= 0 ? 1 : -1;
         switch (row) {
@@ -248,14 +215,14 @@ public final class SettingsScreen {
                 s.reduceCameraMotion = !s.reduceCameraMotion;
                 break;
             case GRAPHICS: {
-                GraphicsTier[] tiers = GraphicsTier.values(); // LOW, MEDIUM, HIGH
+                GraphicsTier[] tiers = GraphicsTier.values();
                 GraphicsTier cur = effectiveTier != null ? effectiveTier : GraphicsTier.MEDIUM;
                 int idx = Math.max(0, Math.min(tiers.length - 1, cur.ordinal() + d));
                 s.graphicsTier = tiers[idx].name();
                 break;
             }
             case TONEMAP: {
-                // Display order ACES (1) -> REINHARD (2) -> LINEAR (0)
+
                 int[] order = {1, 2, 0};
                 int pos = 0;
                 for (int i = 0; i < order.length; i++) if (order[i] == effectiveTone) pos = i;
@@ -277,7 +244,6 @@ public final class SettingsScreen {
         return Math.max(0, Math.min(10, pct)) / 10f;
     }
 
-    /** Text shown in the value column. */
     public static String valueText(GameSettings s, Row row, GraphicsTier effectiveTier, int effectiveTone) {
         switch (row) {
             case SENSITIVITY: return String.format(java.util.Locale.ROOT, "%.2fx", s.mouseSensitivity);
@@ -308,8 +274,6 @@ public final class SettingsScreen {
             default: return 0f;
         }
     }
-
-    // ── Rendering ─────────────────────────────────────────────────────────
 
     public void render(ShapeRenderer shapes, SpriteBatch batch, FontRenderer fonts, float w, float h) {
         if (!open) return;
@@ -396,12 +360,10 @@ public final class SettingsScreen {
             }
         }
 
-        // Read-only locations: where settings and screenshots are stored
         fonts.smallFont.setColor(new Color(0.55f, 0.52f, 0.48f, 0.85f));
         fonts.smallFont.draw(batch, "Settings & save:  " + profileFolder(), rowX, py + 102f);
         fonts.smallFont.draw(batch, "Screenshots:  " + screenshotFolder(), rowX, py + 84f);
 
-        // Help line for the selected row, then key hints
         fonts.bodyFont.setColor(dimCol);
         fonts.bodyFont.draw(batch, ROWS[selection].help, rowX, py + 58f);
         fonts.smallFont.setColor(new Color(0.55f, 0.52f, 0.48f, 0.85f));

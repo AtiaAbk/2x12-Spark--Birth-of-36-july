@@ -1,3 +1,4 @@
+// ei file ta bloom, color grading ar hdr tone mapping apply kore
 package bd.spark36.render;
 
 import com.badlogic.gdx.Gdx;
@@ -14,46 +15,24 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.utils.Disposable;
 import bd.spark36.world.WeatherController;
 
-/**
- * AAA-grade HDR post-processing and tone-mapping pipeline for Spark: Birth of 36 July.
- *
- * <p>Pipeline execution order:
- * <ol>
- *   <li>Scene 3D pass renders directly into linear HDR floating-point FBO (RGBA16F preferred)</li>
- *   <li>Atmospheric sky background and god-ray overlays captured inside FBO</li>
- *   <li>Bloom bright-pass extraction at half-resolution</li>
- *   <li>Separable two-pass Gaussian blur (horizontal then vertical)</li>
- *   <li>Full-screen composite pass: Samples linear HDR scene, composites bloom in linear space,
- *       applies photographic exposure, ACES filmic tone mapping, vignette, and outputs
- *       gamma-corrected sRGB to the backbuffer exactly once</li>
- * </ol>
- *
- * <p>Robust fallback: If floating-point buffers are unsupported on the underlying driver,
- * seamlessly falls back to standard 32-bit RGBA8888 without crashing.</p>
- */
 public class HdrPostProcessor implements Disposable {
 
     private static final String TAG = "HdrPostProcessor";
 
-    // Frame buffers
-    private FrameBuffer sceneFBO;    // Linear scene target (RGBA16F or fallback RGBA8888)
-    private FrameBuffer bloomFBO;    // Bright-extract pass
-    private FrameBuffer blurHFBO;   // Horizontal blur pass
-    private FrameBuffer blurVFBO;   // Vertical blur pass (= final bloom)
+    private FrameBuffer sceneFBO;
+    private FrameBuffer bloomFBO;
+    private FrameBuffer blurHFBO;
+    private FrameBuffer blurVFBO;
 
-    // Shaders
     private ShaderProgram bloomExtractShader;
     private ShaderProgram bloomBlurShader;
     private ShaderProgram compositeShader;
 
-    // Full-screen quad mesh
     private Mesh quad;
 
-    // Dimensions
     private int sceneW, sceneH;
     private int bloomW, bloomH;
 
-    // Runtime state
     private boolean valid = false;
     private boolean isHdrFboActive = false;
     private float time = 0f;
@@ -62,10 +41,6 @@ public class HdrPostProcessor implements Disposable {
         resize(screenW, screenH);
     }
 
-    /**
-     * Reallocates framebuffers and recompiles shaders on window resize.
-     * Guaranteed leak-free.
-     */
     public void resize(int screenW, int screenH) {
         dispose();
 
@@ -76,12 +51,11 @@ public class HdrPostProcessor implements Disposable {
 
         GraphicsTier tier = GraphicsTier.fromSystemProperty();
 
-        // 1. Allocate Scene FrameBuffer (try RGBA16F floating-point first)
         boolean requestedHdr = RenderPipelineConfig.hdrEnabled && tier.enableHdr && Gdx.gl30 != null;
         if (requestedHdr) {
             try {
                 GLFrameBuffer.FrameBufferBuilder fbb = new GLFrameBuffer.FrameBufferBuilder(sceneW, sceneH);
-                // Attach 16-bit half-float RGBA texture
+
                 fbb.addFloatAttachment(GL30.GL_RGBA16F, GL20.GL_RGBA, GL30.GL_HALF_FLOAT, false);
                 fbb.addBasicDepthRenderBuffer();
                 sceneFBO = fbb.build();
@@ -94,7 +68,6 @@ public class HdrPostProcessor implements Disposable {
             }
         }
 
-        // Fallback allocation if HDR FBO failed or wasn't requested
         if (sceneFBO == null) {
             try {
                 GLFrameBuffer.FrameBufferBuilder fallbackFbb = new GLFrameBuffer.FrameBufferBuilder(sceneW, sceneH);
@@ -110,7 +83,6 @@ public class HdrPostProcessor implements Disposable {
             }
         }
 
-        // 2. Allocate Bloom pass framebuffers (half resolution)
         try {
             bloomFBO = new FrameBuffer(Format.RGBA8888, bloomW, bloomH, false);
             blurHFBO = new FrameBuffer(Format.RGBA8888, bloomW, bloomH, false);
@@ -121,7 +93,6 @@ public class HdrPostProcessor implements Disposable {
             return;
         }
 
-        // 3. Load Post-Processing Shaders
         bloomExtractShader = loadShader("shaders/postprocess.vert", "shaders/bloom_extract.frag");
         bloomBlurShader    = loadShader("shaders/postprocess.vert", "shaders/bloom_blur.frag");
         compositeShader    = loadShader("shaders/postprocess.vert", "shaders/postprocess.frag");
@@ -131,7 +102,6 @@ public class HdrPostProcessor implements Disposable {
             return;
         }
 
-        // 4. Full-screen quad mesh (NDC -1 to +1, UV 0 to 1)
         quad = new Mesh(true, 4, 6,
             new VertexAttribute(Usage.Position, 2, "a_position"),
             new VertexAttribute(Usage.TextureCoordinates, 2, "a_texCoord0"));
@@ -169,42 +139,23 @@ public class HdrPostProcessor implements Disposable {
         return shader;
     }
 
-    /**
-     * Begins capturing the 3D scene into the linear HDR FrameBuffer.
-     * Call before rendering any 3D world geometry or sky background.
-     */
     public void beginCapture() {
         if (!valid) return;
         sceneFBO.begin();
-        // Clear to the linear clear-sky zenith (matches AtmosphereConfig.CLEAR_SUNNY, T8)
+
         Gdx.gl.glClearColor(0.085f, 0.172f, 0.504f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
     }
 
-    /**
-     * Ends capturing into the scene FrameBuffer.
-     * Call after 3D world and atmospheric overlays are rendered, but before HUD.
-     */
     public void endCapture() {
         if (!valid) return;
         sceneFBO.end();
     }
 
-    /**
-     * Executes the post-processing chain with default weather coupling.
-     */
     public void render(float delta) {
         render(delta, null);
     }
 
-    /**
-     * Executes the full post-processing chain:
-     * - Bloom bright extraction & multi-pass Gaussian blur (scaled per GraphicsTier, 0-cost when disabled)
-     * - Full-screen composite pass: FXAA 3.11 with early-exit optimization, linear bloom composite,
-     *   photographic exposure, dynamic white balance (weather-coupled temperature & tint), shadow lift,
-     *   contrast & saturation, ACES / Reinhard / Linear tone mapping, subtle vignette, film grain dither,
-     *   and single linear-to-sRGB gamma transfer.
-     */
     public void render(float delta, WeatherController weather) {
         if (!valid) return;
         time += delta;
@@ -221,7 +172,7 @@ public class HdrPostProcessor implements Disposable {
         Texture bloomFinal = null;
 
         if (bloomActive) {
-            // ── Pass 1: Bloom bright-extract ─────────────────
+
             bloomFBO.begin();
             Gdx.gl.glViewport(0, 0, bloomW, bloomH);
             Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
@@ -236,7 +187,6 @@ public class HdrPostProcessor implements Disposable {
             Texture bloomExtracted = bloomFBO.getColorBufferTexture();
             bloomExtracted.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 
-            // ── Pass 2: Horizontal blur ───────────────────────
             blurHFBO.begin();
             Gdx.gl.glViewport(0, 0, bloomW, bloomH);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -248,7 +198,6 @@ public class HdrPostProcessor implements Disposable {
             quad.render(bloomBlurShader, GL20.GL_TRIANGLES);
             blurHFBO.end();
 
-            // ── Pass 3: Vertical blur ─────────────────────────
             blurVFBO.begin();
             Gdx.gl.glViewport(0, 0, bloomW, bloomH);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -262,7 +211,6 @@ public class HdrPostProcessor implements Disposable {
             quad.render(bloomBlurShader, GL20.GL_TRIANGLES);
             blurVFBO.end();
 
-            // High tier: Second ping-pong blur pass for buttery wide halo
             if (tier.bloomPasses >= 2) {
                 blurHFBO.begin();
                 Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -293,7 +241,6 @@ public class HdrPostProcessor implements Disposable {
             bloomFinal.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         }
 
-        // ── Pass 4: Composite to screen with Tone Mapping & Grading ─────────
         Gdx.gl.glViewport(0, 0, sceneW, sceneH);
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -314,7 +261,7 @@ public class HdrPostProcessor implements Disposable {
             compositeShader.setUniformi("u_bloomTexture", 1);
             compositeShader.setUniformf("u_bloomStrength", RenderPipelineConfig.bloomStrength);
         } else {
-            // When bloom is disabled, bind fallback and set strength to 0.0 (zero math overhead)
+
             bloomFBO.getColorBufferTexture().bind(1);
             compositeShader.setUniformi("u_bloomTexture", 1);
             compositeShader.setUniformf("u_bloomStrength", 0.0f);
@@ -335,7 +282,6 @@ public class HdrPostProcessor implements Disposable {
         compositeShader.setUniformf("u_time", time);
         quad.render(compositeShader, GL20.GL_TRIANGLES);
 
-        // Crucial: Restore active texture to unit 0 for subsequent 2D batch / HUD rendering
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
 
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);

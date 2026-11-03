@@ -1,3 +1,4 @@
+// ei file ta aitihashik source catalog data test kore
 package bd.spark36.history;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.Test;
 
 class SourceCatalogTest {
 
-    /** The shipped register; Gradle runs core tests with core/ as the working directory. */
     static File shippedFile() {
         File f = new File("../assets/" + SourceCatalog.ASSET_PATH);
         if (!f.isFile()) f = new File("assets/" + SourceCatalog.ASSET_PATH);
@@ -93,7 +93,7 @@ class SourceCatalogTest {
             assertEquals(mapped.length, c.sourcesForMemorial(id).size());
         }
         assertEquals(0, SourceCatalog.idsForMemorial(42).length);
-        // The Hakim Chattar scene is a game reconstruction: its card must say so.
+
         assertEquals(SourceCatalog.FICTIONAL, c.find(SourceCatalog.idsForMemorial(4)[1]).label);
     }
 }

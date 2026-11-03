@@ -1,3 +1,4 @@
+// ei file ta rastar pasher current er khuti ar tar toiri kore
 package bd.spark36.world.landmarks;
 
 import static bd.spark36.world.landmarks.StreetPropKit.box;
@@ -10,15 +11,6 @@ import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
 
-/**
- * A run of tapered concrete distribution poles with a steel cross-arm and insulators, three
- * sagging power conductors between poles, the lower bundle of loosely strung telecom/TV cables
- * that Dhaka streets are known for, coiled spare cable, pole-mounted transformer drums on
- * chosen poles, and service drops to the buildings behind the run.
- *
- * <p>Built directly in world coordinates (place the instance at the origin), so the whole run is
- * one static model for the street's ModelCache.</p>
- */
 public final class ElectricPoleCableBuilder {
 
     private static final float POLE_H = 9.0f;
@@ -26,15 +18,10 @@ public final class ElectricPoleCableBuilder {
 
     private ElectricPoleCableBuilder() {}
 
-    /**
-     * @param poles       pole base positions {x, z} in order along the run
-     * @param transformer per pole: mount a transformer drum
-     * @param dropZ       z of the building faces that receive service drops, or NaN for none
-     */
     public static Model buildRun(ModelBuilder mb, StreetPropKit k, float[][] poles, boolean[] transformer, float dropZ) {
         mb.begin();
         long a = StreetPropKit.ATTR;
-        // Parts of one vertex layout share a MeshBuilder: finish each material before the next part().
+
         int n = poles.length;
         Vector3[] dirs = new Vector3[n];
         Vector3[] sides = new Vector3[n];
@@ -47,7 +34,6 @@ public final class ElectricPoleCableBuilder {
             yaws[i] = (float) Math.toDegrees(Math.atan2(sides[i].x, sides[i].z));
         }
 
-        // Tapered concrete poles: three stacked sections
         MeshPartBuilder conc = mb.part("poles", GL20.GL_TRIANGLES, a, k.concrete);
         for (float[] p : poles) {
             box(conc, p[0], 1.5f, p[1], 0.30f, 3.0f, 0.30f);
@@ -55,7 +41,6 @@ public final class ElectricPoleCableBuilder {
             box(conc, p[0], 7.5f, p[1], 0.20f, 3.0f, 0.20f);
         }
 
-        // Cross-arms, insulators, junction boxes, transformer brackets
         MeshPartBuilder steel = mb.part("hardware", GL20.GL_TRIANGLES, a, k.steel);
         for (int i = 0; i < n; i++) {
             float x = poles[i][0], z = poles[i][1];
@@ -70,14 +55,12 @@ public final class ElectricPoleCableBuilder {
             }
         }
 
-        // Transformer drums
         MeshPartBuilder tank = mb.part("transformers", GL20.GL_TRIANGLES, a, k.shutter);
         for (int i = 0; i < n; i++) {
             if (transformer == null || !transformer[i]) continue;
             post(tank, poles[i][0] + dirs[i].x * 0.45f, 6.4f, poles[i][1] + dirs[i].z * 0.45f, 0.55f, 0.85f, 10);
         }
 
-        // Cables: coils, service drops, power conductors and the lower telecom/TV bundle
         MeshPartBuilder cable = mb.part("cables", GL20.GL_TRIANGLES, a, k.cable);
         Vector3 pa = new Vector3(), pb = new Vector3();
         for (int i = 0; i < n; i++) {
@@ -109,7 +92,6 @@ public final class ElectricPoleCableBuilder {
         return mb.end();
     }
 
-    /** Parabolic sag approximation of a catenary from a to b, built from short rods. */
     private static void sag(MeshPartBuilder p, Vector3 a, Vector3 b, float sag, float thickness) {
         Vector3 prev = new Vector3(a);
         Vector3 cur = new Vector3();

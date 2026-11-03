@@ -1,3 +1,4 @@
+// ei file ta curfew ar internet blackout er moddhe level
 package bd.spark36.level;
 
 import com.badlogic.gdx.Gdx;
@@ -25,17 +26,10 @@ import bd.spark36.world.TextureFactory;
 import bd.spark36.world.landmarks.BarricadeBuilder;
 import bd.spark36.world.landmarks.MilitaryVehicleBuilder;
 
-/**
- * LEVEL 4: "Voices in the Dark" (অন্ধকারে কণ্ঠস্বর)
- * Period: July 20 – 23, 2024 (Total communications blackout, army curfew & BTR-80 APC checkpoints).
- * Environment: Deep night urban corridor, solitary sodium lamps, sweeping military searchlights.
- * Focus: Stealth pathfinding, avoiding searchlight cones, hand-delivering casualty documentation to press.
- * Combat: Pure covert stealth & evasion.
- */
 public class Level4CurfewBlackout implements CampaignLevel {
 
     private DhakaCampusWorld world;
-    private final StreetDressing street = new StreetDressing(4); // T8 street identity
+    private final StreetDressing street = new StreetDressing(4);
     private Environment nightEnvironment;
 
     private final Array<Model> models = new Array<>();
@@ -45,17 +39,12 @@ public class Level4CurfewBlackout implements CampaignLevel {
     private ModelInstance apcInstance;
     private ModelInstance searchlightInstance;
 
-    // Objectives:
-    // 1. Infiltrate outer perimeter sandbag checkpoint
-    // 2. Retrieve casualty documentation dossier from courier
-    // 3. Bypass BTR-80 APC searchlight zone
-    // 4. Reach independent press contact at Library gate
     private final boolean[] objectivesDone = new boolean[4];
     private final Vector3[] waypoints = {
-        new Vector3(0f, 0f, 48f),    // Checkpoint 1
-        new Vector3(14f, 0f, 22f),   // Courier hiding spot
-        new Vector3(0f, 0f, 6f),     // APC Searchlight sector
-        new Vector3(-42f, 0f, 18f)   // Press contact
+        new Vector3(0f, 0f, 48f),
+        new Vector3(14f, 0f, 22f),
+        new Vector3(0f, 0f, 6f),
+        new Vector3(-42f, 0f, 18f)
     };
 
     private static final String[] CHECKLIST = {
@@ -216,7 +205,7 @@ public class Level4CurfewBlackout implements CampaignLevel {
 
     @Override
     public boolean isCombatEnabled() {
-        return false; // Stealth & covert courier
+        return false;
     }
 
     @Override
@@ -233,16 +222,14 @@ public class Level4CurfewBlackout implements CampaignLevel {
     public void init(TextureFactory textures, PlayerController player, CinematicCamera camera) {
         this.world = new DhakaCampusWorld(textures);
 
-        // Curfew night environment: deep blue-black ambient with solitary warm sodium streetlights
         nightEnvironment = new Environment();
         nightEnvironment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.12f, 0.14f, 0.18f, 1f));
         DirectionalLight moon = new DirectionalLight().set(0.18f, 0.22f, 0.28f, -0.3f, -0.9f, -0.3f);
         nightEnvironment.add(moon);
 
-        // Build BTR-80 APC and Searchlight
         ModelBuilder mb = new ModelBuilder();
         long attr = Usage.Position | Usage.Normal;
-        Material apcArmor = new Material(ColorAttribute.createDiffuse(new Color(0.24f, 0.30f, 0.22f, 1f))); // Olive drab
+        Material apcArmor = new Material(ColorAttribute.createDiffuse(new Color(0.24f, 0.30f, 0.22f, 1f)));
         Material wheelRubber = new Material(ColorAttribute.createDiffuse(new Color(0.12f, 0.12f, 0.14f, 1f)));
         Material turretSteel = new Material(ColorAttribute.createDiffuse(new Color(0.20f, 0.26f, 0.18f, 1f)));
         Material searchlightGlass = new Material(
@@ -263,17 +250,14 @@ public class Level4CurfewBlackout implements CampaignLevel {
         models.add(beamModel);
         models.add(sandbagModel);
 
-        // APC stationed at crossroads (0, 0, 10)
         apcInstance = new ModelInstance(apcModel);
         apcInstance.transform.setTranslation(0f, 0f, 10f);
         instances.add(apcInstance);
         colliders.add(new float[] { -1.8f, 0f, 6.5f, 1.8f, 3.0f, 13.5f });
 
-        // Searchlight beam
         searchlightInstance = new ModelInstance(beamModel);
         instances.add(searchlightInstance);
 
-        // Sandbag revetments blocking side streets
         Vector3[] sbp = {
             new Vector3(-6f, 0f, 48f),
             new Vector3(6f, 0f, 48f),
@@ -289,7 +273,7 @@ public class Level4CurfewBlackout implements CampaignLevel {
         street.build(colliders);
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
-        LevelPbrMaterials.adopt(instances); // T8: legacy Diffuse colours -> PBR base colour
+        LevelPbrMaterials.adopt(instances);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
         player.setHeadingDegrees(getSpawnHeading());
 
@@ -302,7 +286,6 @@ public class Level4CurfewBlackout implements CampaignLevel {
     public void update(float delta, PlayerController player, CinematicCamera camera, boolean canMove, WhereWindsMeetHUD hud) {
         if (world != null) world.update(delta);
 
-        // Sweeping searchlight cone animation
         searchlightAngle += delta * 0.8f;
         float sweepDeg = MathUtils.sin(searchlightAngle) * 45f;
         if (searchlightInstance != null) {
@@ -338,8 +321,7 @@ public class Level4CurfewBlackout implements CampaignLevel {
 
     @Override
     public Environment getEnvironment() {
-        // T8: the campus world is lit by its daylight PBR environment (IBL, sun, fog, shadows) in every
-        // chapter; the old per-level environment had no IBL and rendered characters and props white.
+
         return world != null ? world.getEnvironment() : nightEnvironment;
     }
 

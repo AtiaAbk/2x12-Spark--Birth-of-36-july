@@ -1,3 +1,4 @@
+// ei file ta photo mode ar screenshot tolar input handle kore
 package bd.spark36.capture;
 
 import bd.spark36.camera.CinematicCamera;
@@ -10,17 +11,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 
-/**
- * Single entry point SparkGame talks to for screenshots, photo mode and the gallery, so the game
- * loop only needs a handful of one-line hooks:
- * <ul>
- *   <li>F12: HUD-free capture. The request is remembered and taken in {@link #beforeHud()} of the
- *       next frame, after the 3D scene and post-processing but before any 2D overlay.</li>
- *   <li>F10: photo mode (simulation frozen, HUD hidden, orbit camera). Esc or F10 leaves it.</li>
- *   <li>F11 (gameplay) or G / Tab (photo mode): gallery.</li>
- * </ul>
- * Results are reported with a toast drawn after the HUD, so a toast never ends up in a capture.
- */
 public final class CaptureController {
 
     private final FontRenderer fonts;
@@ -35,7 +25,6 @@ public final class CaptureController {
     private boolean pendingUserCapture;
     private boolean galleryReturnsToPhoto;
 
-    // Automated verification (-Dbd.spark36.testPhotoMode / testGallery)
     private final boolean testPhotoMode = System.getProperty("bd.spark36.testPhotoMode") != null;
     private final boolean testGallery = System.getProperty("bd.spark36.testGallery") != null;
     private float testTime;
@@ -48,16 +37,11 @@ public final class CaptureController {
         this.gallery = new GalleryScreen(fonts);
     }
 
-    // ── State queries used by SparkGame ──────────────────────────────
-
     public boolean isPhotoModeActive() { return photo.isActive(); }
 
     public boolean isGalleryOpen() { return gallery.isOpen(); }
 
-    /** True while the HUD must not be drawn (photo mode). */
     public boolean hidesHud() { return photo.isActive(); }
-
-    // ── Harness captures (deterministic names, may overwrite) ────────
 
     public static void captureHarness(String name) {
         ScreenshotService.Result r = ScreenshotService.get().saveHarnessCapture(name, FrameGrabber.currentFrameSink());
@@ -65,13 +49,6 @@ public final class CaptureController {
         else Gdx.app.error("SparkGame", r.message);
     }
 
-    // ── Frame hooks ──────────────────────────────────────────────────
-
-    /**
-     * Normal gameplay keys, called after the frame is drawn.
-     * @param photoFrame whether photo mode was active when this frame began
-     * @return true when the rest of the gameplay key handling must be skipped this frame
-     */
     public boolean handleGameplayKeys(float delta, CinematicCamera camera, Vector3 playerPos,
                                       boolean modalOpen, boolean photoFrame) {
         tickTest(delta, camera, playerPos);
@@ -89,7 +66,6 @@ public final class CaptureController {
         return false;
     }
 
-    /** Replaces CinematicCamera.update while photo mode is active; handles all photo-mode keys. */
     public void updatePhotoCamera(float delta) {
         if (!photo.isActive()) return;
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Gdx.input.isKeyJustPressed(Input.Keys.F10)) {
@@ -105,7 +81,6 @@ public final class CaptureController {
         photo.update(delta, scroll.consumeScrollY(), !testPhotoMode);
     }
 
-    /** Call after the 3D scene, post-processing and particles, before the HUD. */
     public void beforeHud() {
         if (!pendingUserCapture) return;
         pendingUserCapture = false;
@@ -113,7 +88,6 @@ public final class CaptureController {
         toast.show(r.ok ? r.message + "  (" + r.file.getParent() + ")" : r.message, !r.ok);
     }
 
-    /** Call after the HUD: photo-mode hint line and capture toast. */
     public void afterHud(float delta) {
         toast.update(delta);
         if (batch == null) {
@@ -147,15 +121,12 @@ public final class CaptureController {
         fonts.smallFont.getData().setScale(oldX, oldY);
     }
 
-    /** Draws the gallery instead of the game while it is open. */
     public void renderGallery(float delta) {
         boolean close = gallery.render(delta, scroll.consumeScrollY());
         toast.update(delta);
         if (gallery.isOpen()) tickTest(delta, testCamera, testPlayerPos);
         if (close) closeGallery();
     }
-
-    // ── Transitions ──────────────────────────────────────────────────
 
     private void enterPhotoMode(CinematicCamera camera, Vector3 playerPos) {
         photo.enter(camera, playerPos);
@@ -180,7 +151,7 @@ public final class CaptureController {
             Gdx.input.getDeltaX();
             Gdx.input.getDeltaY();
         } else {
-            scroll.uninstall(); // gameplay re-captures the cursor itself
+            scroll.uninstall();
         }
     }
 
@@ -194,15 +165,6 @@ public final class CaptureController {
         shapes = null;
     }
 
-    // ── Automated verification ───────────────────────────────────────
-
-    /**
-     * {@code -Dbd.spark36.testPhotoMode=true}: enter photo mode, orbit with a little roll, capture
-     * the hint overlay (harness name {@code t7/photo_mode_overlay}), then a real F12-path capture
-     * (unique name), then leave photo mode and log the follow camera's state before/after.
-     * {@code -Dbd.spark36.testGallery=true} then opens the gallery and captures the grid and viewer
-     * as {@code t7/gallery_grid} and {@code t7/gallery_viewer}. {@code autoExit} quits at the end.
-     */
     private void tickTest(float delta, CinematicCamera camera, Vector3 playerPos) {
         if (!testPhotoMode && !testGallery) return;
         if (camera != null) { testCamera = camera; testPlayerPos = playerPos; }
@@ -218,7 +180,7 @@ public final class CaptureController {
                 captureHarness("t7/photo_mode_overlay");
                 testStep = 2;
             } else if (testStep == 2 && testTime >= 2.8f) {
-                pendingUserCapture = true; // same path as F12, taken before the HUD next frame
+                pendingUserCapture = true;
                 testStep = 3;
             } else if (testStep == 3 && testTime >= 3.2f) {
                 exitPhotoMode();

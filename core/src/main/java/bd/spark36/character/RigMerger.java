@@ -1,3 +1,4 @@
+// ei file ta character er bibhinno body part mesh eksathe merge kore
 package bd.spark36.character;
 
 import com.badlogic.gdx.graphics.GL20;
@@ -14,25 +15,12 @@ import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Array;
 
-/**
- * Bakes the rigid parts of one body segment into as few meshes as possible.
- *
- * <p>A {@link StudentMesh} body segment (head, chest, forearm ...) is made of dozens of small
- * primitives that all move with the same segment transform. Drawing each as its own
- * {@link ModelInstance} cost one draw call per primitive per pass (about 110 per character, twice:
- * shadow and main). Parts whose materials are identical in every attribute value are merged here
- * into one mesh with their local transform baked into the vertices, so the shader, material and
- * geometry are unchanged and the image is the same; only the number of draw calls drops.
- *
- * <p>Runs once at rig build time; nothing here is called per frame.
- */
 final class RigMerger {
 
-    private static final int MAX_VERTS = 65535; // short indices
+    private static final int MAX_VERTS = 65535;
 
     private RigMerger() {}
 
-    /** Returns merged parts (identity local transform) for {@code parts}; new models go to {@code owned}. */
     static Array<StudentMesh.Part> merge(Array<StudentMesh.Part> parts, Array<Model> owned) {
         Array<StudentMesh.Part> out = new Array<>();
         boolean[] used = new boolean[parts.size];

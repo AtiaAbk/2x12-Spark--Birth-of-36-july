@@ -1,3 +1,4 @@
+// ei file ta campus e aitihashik ghotona shomporke card popup dekhay
 package bd.spark36.hud.screens;
 
 import bd.spark36.history.SourceCatalog;
@@ -13,12 +14,6 @@ import com.badlogic.gdx.utils.Align;
 
 import java.util.List;
 
-/**
- * Historical context card drawn directly above a memorial / archive modal: one row per mapped
- * register entry with its evidence label and a one-line source, taken from
- * {@code historical_sources.json} through {@link SourceCatalog}. Draws nothing for entries without
- * a mapping. Uses the caller's projection (the HUD's virtual space).
- */
 public final class HistoricalContextCard {
 
     private static final float ROW_H = 26f;
@@ -28,7 +23,6 @@ public final class HistoricalContextCard {
 
     private HistoricalContextCard() {}
 
-    /** Colour of an evidence label, shared with the credits screen. */
     public static Color labelColor(String label) {
         if (SourceCatalog.VERIFIED.equals(label)) return new Color(0.45f, 0.85f, 0.50f, 1f);
         if (SourceCatalog.CORROBORATED.equals(label)) return new Color(0.95f, 0.78f, 0.35f, 1f);
@@ -38,16 +32,11 @@ public final class HistoricalContextCard {
         return new Color(0.75f, 0.75f, 0.75f, 1f);
     }
 
-    /** Height the card needs for this memorial (0 when there is nothing to show). */
     public static float height(int memorialId) {
         int n = SourceCatalog.get().sourcesForMemorial(memorialId).size();
         return n == 0 ? 0f : HEAD_H + n * ROW_H + 10f;
     }
 
-    /**
-     * Draws the card with its bottom edge at {@code y}, spanning {@code x .. x + w}. Expects no
-     * batch or shape pass to be active, and leaves none active.
-     */
     public static void render(ShapeRenderer shapes, SpriteBatch batch, FontRenderer fonts,
                               int memorialId, float x, float y, float w) {
         List<SourceCatalog.Source> rows = SourceCatalog.get().sourcesForMemorial(memorialId);

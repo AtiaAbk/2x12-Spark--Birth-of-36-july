@@ -1,3 +1,4 @@
+// ei file ta character animation state machine test kore
 package bd.spark36.character;
 
 import com.badlogic.gdx.math.MathUtils;
@@ -62,19 +63,16 @@ public class CharacterAnimationTest {
         poseB.torsoPitch = 30.0f;
         poseB.upperArmPitch[0] = -40.0f;
 
-        // Alpha = 0.0 -> matches A
         CharacterPose.lerp(poseA, poseB, 0.0f, poseOut);
         assertEquals(0.80f, poseOut.pelvisHeight, 1e-5f);
         assertEquals(10.0f, poseOut.torsoPitch, 1e-5f);
         assertEquals(20.0f, poseOut.upperArmPitch[0], 1e-5f);
 
-        // Alpha = 1.0 -> matches B
         CharacterPose.lerp(poseA, poseB, 1.0f, poseOut);
         assertEquals(1.00f, poseOut.pelvisHeight, 1e-5f);
         assertEquals(30.0f, poseOut.torsoPitch, 1e-5f);
         assertEquals(-40.0f, poseOut.upperArmPitch[0], 1e-5f);
 
-        // Alpha = 0.5 -> exact midpoint
         CharacterPose.lerp(poseA, poseB, 0.5f, poseOut);
         assertEquals(0.90f, poseOut.pelvisHeight, 1e-5f);
         assertEquals(20.0f, poseOut.torsoPitch, 1e-5f);
@@ -98,11 +96,9 @@ public class CharacterAnimationTest {
         Vector3 pos = new Vector3(0, 0, 0);
         Vector3 vel = new Vector3(3.5f, 0, 0);
 
-        // Walk
         stateMachine.update(0.016f, pos, 0f, vel, true, true, false, false, false, false, false, false, false, 0, 0f, false, 0f, 0f);
         assertEquals(LocomotionState.WALK, stateMachine.getCurrentState());
 
-        // Sprint
         vel.set(8.5f, 0, 0);
         stateMachine.update(0.016f, pos, 0f, vel, true, true, true, false, false, false, false, false, false, 0, 0f, false, 0f, 0f);
         assertEquals(LocomotionState.SPRINT, stateMachine.getCurrentState());
@@ -114,11 +110,9 @@ public class CharacterAnimationTest {
         Vector3 pos = new Vector3(0, 2, 0);
         Vector3 vel = new Vector3(0, 8.0f, 0);
 
-        // Rising -> JUMP
         stateMachine.update(0.016f, pos, 0f, vel, false, false, false, false, false, false, false, false, false, 0, 0f, false, 0f, 0f);
         assertEquals(LocomotionState.AIRBORNE_JUMP, stateMachine.getCurrentState());
 
-        // Falling -> FALL
         vel.set(0, -6.0f, 0);
         stateMachine.update(0.016f, pos, 0f, vel, false, false, false, false, false, false, false, false, false, 0, 0f, false, 0f, 0f);
         assertEquals(LocomotionState.AIRBORNE_FALL, stateMachine.getCurrentState());
@@ -130,26 +124,21 @@ public class CharacterAnimationTest {
         Vector3 pos = new Vector3(0, 0, 0);
         Vector3 vel = new Vector3(0, 0, 0);
 
-        // Crouch Idle
         stateMachine.update(0.016f, pos, 0f, vel, true, false, false, true, false, false, false, false, false, 0, 0f, false, 0f, 0f);
         assertEquals(LocomotionState.CROUCH_IDLE, stateMachine.getCurrentState());
 
-        // Crouch Walk
         vel.set(1.5f, 0, 0);
         stateMachine.update(0.016f, pos, 0f, vel, true, true, false, true, false, false, false, false, false, 0, 0f, false, 0f, 0f);
         assertEquals(LocomotionState.CROUCH_WALK, stateMachine.getCurrentState());
 
-        // Wading in water
         vel.set(2.0f, 0, 0);
         stateMachine.update(0.016f, pos, 0f, vel, true, true, false, false, false, true, false, false, false, 0, 0f, false, 0f, 0f);
         assertEquals(LocomotionState.WADING, stateMachine.getCurrentState());
 
-        // Wall Climbing
         vel.set(0, 2.5f, 0);
         stateMachine.update(0.016f, pos, 0f, vel, false, false, false, false, true, false, false, false, false, 0, 0f, false, 0f, 0f);
         assertEquals(LocomotionState.WALL_CLIMB, stateMachine.getCurrentState());
 
-        // Sitting at ghat
         vel.set(0, 0, 0);
         stateMachine.update(0.016f, pos, 0f, vel, true, false, false, false, false, false, true, false, false, 0, 0f, false, 0f, 0f);
         assertEquals(LocomotionState.SITTING_WATER, stateMachine.getCurrentState());
@@ -161,23 +150,18 @@ public class CharacterAnimationTest {
         Vector3 pos = new Vector3(0, 0, 0);
         Vector3 vel = new Vector3(0, 0, 0);
 
-        // Attack Strike
         stateMachine.update(0.016f, pos, 0f, vel, true, false, false, false, false, false, false, false, true, 1, 0.2f, false, 0f, 0f);
         assertEquals(LocomotionState.COMBAT_ATTACK, stateMachine.getCurrentState());
 
-        // Attack Kick
         stateMachine.update(0.016f, pos, 0f, vel, true, false, false, false, false, false, false, false, true, 3, 0.2f, false, 0f, 0f);
         assertEquals(LocomotionState.COMBAT_ATTACK, stateMachine.getCurrentState());
 
-        // Dodge slip
         stateMachine.update(0.016f, pos, 0f, vel, true, false, false, false, false, false, false, false, false, 0, 0f, true, 0.1f, 0f);
         assertEquals(LocomotionState.COMBAT_DODGE, stateMachine.getCurrentState());
 
-        // Block guard
         stateMachine.update(0.016f, pos, 0f, vel, true, false, false, false, false, false, false, true, false, 0, 0f, false, 0f, 0f);
         assertEquals(LocomotionState.COMBAT_GUARD, stateMachine.getCurrentState());
 
-        // Hit Stagger
         stateMachine.update(0.016f, pos, 0f, vel, true, false, false, false, false, false, false, false, false, 0, 0f, false, 0f, 0.25f);
         assertEquals(LocomotionState.COMBAT_STAGGER, stateMachine.getCurrentState());
     }
@@ -189,14 +173,12 @@ public class CharacterAnimationTest {
         Vector3 velA = new Vector3(2.0f, 0, 0);
         Vector3 velB = new Vector3(6.0f, 0, 0);
 
-        // At 2 m/s for 1 second
         stateMachine.reset();
         for (int i = 0; i < 60; i++) {
             stateMachine.update(1f / 60f, pos, 0f, velA, true, true, false, false, false, false, false, false, false, 0, 0f, false, 0f, 0f);
         }
         float phaseA = stateMachine.getStridePhase();
 
-        // At 6 m/s for 1 second
         AnimationStateMachine fastMachine = new AnimationStateMachine();
         for (int i = 0; i < 60; i++) {
             fastMachine.update(1f / 60f, pos, 0f, velB, true, true, false, false, false, false, false, false, false, 0, 0f, false, 0f, 0f);
@@ -212,10 +194,8 @@ public class CharacterAnimationTest {
         Vector3 pos = new Vector3(0, 0, 0);
         Vector3 vel = new Vector3(0, 0, 0);
 
-        // Trigger hard landing impact from -7.5 m/s fall
         stateMachine.notifyLanded(-7.5f);
 
-        // Advance 0.08s so cross-fade completes and cushion reaches peak shock absorption
         for (int i = 0; i < 5; i++) {
             stateMachine.update(0.016f, pos, 0f, vel, true, false, false, false, false, false, false, false, false, 0, 0f, false, 0f, 0f);
         }
@@ -223,16 +203,13 @@ public class CharacterAnimationTest {
         assertEquals(LocomotionState.LANDING, stateMachine.getCurrentState());
         CharacterPose landingPose = stateMachine.getBlendedPose();
 
-        // Pelvis must be depressed and knees bent
         assertTrue(landingPose.pelvisHeight < 0.87f, "Landing impact must compress pelvis height downward");
         assertTrue(landingPose.kneePitch[0] > 10.0f, "Landing impact must flex knees to absorb shock");
 
-        // Advance 0.3 seconds past landing duration (0.22s)
         for (int i = 0; i < 20; i++) {
             stateMachine.update(0.016f, pos, 0f, vel, true, false, false, false, false, false, false, false, false, 0, 0f, false, 0f, 0f);
         }
 
-        // Must smoothly return to IDLE
         assertEquals(LocomotionState.IDLE, stateMachine.getCurrentState());
     }
 
@@ -242,7 +219,6 @@ public class CharacterAnimationTest {
         Vector3 pos = new Vector3(0, 0, 0);
         Vector3 vel = new Vector3(0, 0, 4.0f);
 
-        // Turn right sharply (heading increases by 45 degrees over 0.1s)
         float heading = 0f;
         for (int i = 0; i < 6; i++) {
             heading += 7.5f;
@@ -250,7 +226,7 @@ public class CharacterAnimationTest {
         }
 
         CharacterPose pose = stateMachine.getBlendedPose();
-        // Rightward angular velocity produces negative bank roll (tilt into the turn)
+
         assertTrue(pose.torsoRoll < 0f, "Turning right must lean character torso into the turn (negative roll)");
         assertTrue(pose.torsoRoll >= -8.0f, "Banking roll must be safely clamped within -8 degrees");
     }
@@ -261,11 +237,9 @@ public class CharacterAnimationTest {
         Vector3 pos = new Vector3(0, 0, 0);
         Vector3 vel = new Vector3(0, 0, 0);
 
-        // Start in IDLE
         stateMachine.update(0.05f, pos, 0f, vel, true, false, false, false, false, false, false, false, false, 0, 0f, false, 0f, 0f);
         float idlePelvis = stateMachine.getBlendedPose().pelvisHeight;
 
-        // Initiate WALK
         vel.set(4.0f, 0, 0);
         stateMachine.update(0.04f, pos, 0f, vel, true, true, false, false, false, false, false, false, false, 0, 0f, false, 0f, 0f);
         assertTrue(stateMachine.isTransitioning(), "State machine must be smoothly cross-fading into WALK");
@@ -273,7 +247,6 @@ public class CharacterAnimationTest {
         float midPelvis = stateMachine.getBlendedPose().pelvisHeight;
         assertNotNull(midPelvis);
 
-        // Advance to transition completion
         for (int i = 0; i < 20; i++) {
             stateMachine.update(0.02f, pos, 0f, vel, true, true, false, false, false, false, false, false, false, 0, 0f, false, 0f, 0f);
         }

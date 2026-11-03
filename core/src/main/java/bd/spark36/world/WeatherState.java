@@ -1,11 +1,6 @@
+// ei file ta current weather er state information store kore
 package bd.spark36.world;
 
-/**
- * Historical atmospheric and weather conditions for Spark: Birth of 36 July.
- * Recreates authentic Dhaka summer weather during the July 2024 student movement:
- * scorching clear summer sun, golden afternoon hours, heavy pre-monsoon cloud cover,
- * and seasonal monsoon downpours.
- */
 public enum WeatherState {
     CLEAR_SUNNY("Clear Summer Daylight", "পরিষ্কার রৌদ্রোজ্জ্বল দিন"),
     GOLDEN_HOUR("Golden Hour Sunset", "গোধূলি বেলা"),

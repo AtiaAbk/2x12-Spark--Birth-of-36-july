@@ -1,15 +1,10 @@
+// ei file ta brishti, batash ar weather change control kore
 package bd.spark36.world;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 
-/**
- * Real-time dynamic weather state machine and atmospheric parameter interpolator.
- * Handles smooth, delta-time independent blending between weather states (Clear Sunny,
- * Golden Hour Sunset, Overcast Monsoon, and Monsoon Rain) across sun angle, color,
- * native PBR distance fog, sky gradient bands, volumetric shafts, and precipitation.
- */
 public class WeatherController {
 
     private WeatherState currentState = WeatherState.CLEAR_SUNNY;
@@ -17,7 +12,6 @@ public class WeatherController {
     private float transitionProgress = 1.0f;
     private float transitionDuration = 4.0f;
 
-    // Snapshot of source values when transition starts
     private final Vector3 srcSunDir = new Vector3();
     private final Color srcSunColor = new Color();
     private final Color srcAmbientColor = new Color();
@@ -38,7 +32,6 @@ public class WeatherController {
     private float srcTemperature;
     private float srcTint;
 
-    // Target values
     private final Vector3 tgtSunDir = new Vector3();
     private final Color tgtSunColor = new Color();
     private final Color tgtAmbientColor = new Color();
@@ -59,7 +52,6 @@ public class WeatherController {
     private float tgtTemperature;
     private float tgtTint;
 
-    // Active interpolated values
     private final Vector3 currentSunDir = new Vector3();
     private final Color currentSunColor = new Color();
     private final Color currentAmbientColor = new Color();
@@ -101,11 +93,6 @@ public class WeatherController {
         return WeatherState.CLEAR_SUNNY;
     }
 
-    /**
-     * Initiates a smooth transition toward target weather.
-     * @param target Desired weather state.
-     * @param durationSeconds Transition time in seconds (<=0 snaps immediately).
-     */
     public void setWeather(WeatherState target, float durationSeconds) {
         if (target == null) target = WeatherState.CLEAR_SUNNY;
 
@@ -118,7 +105,6 @@ public class WeatherController {
             return;
         }
 
-        // Store current interpolated values as new source
         srcSunDir.set(currentSunDir);
         srcSunColor.set(currentSunColor);
         srcAmbientColor.set(currentAmbientColor);
@@ -139,7 +125,6 @@ public class WeatherController {
         srcTemperature = currentTemperature;
         srcTint = currentTint;
 
-        // Load target preset
         AtmosphereConfig.Preset p = AtmosphereConfig.getPreset(target);
         tgtSunDir.set(p.sunDirection);
         tgtSunColor.set(p.sunColor);
@@ -250,7 +235,6 @@ public class WeatherController {
             currentState = targetState;
         }
 
-        // Hermite smoothstep for natural perceptual easing
         float t = transitionProgress * transitionProgress * (3.0f - 2.0f * transitionProgress);
 
         currentSunDir.set(srcSunDir).lerp(tgtSunDir, t).nor();

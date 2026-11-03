@@ -1,3 +1,4 @@
+// ei file ta campus e student der path dhore shavabik chola fira koray
 package bd.spark36.character;
 
 import com.badlogic.gdx.graphics.g3d.Environment;
@@ -7,19 +8,8 @@ import com.badlogic.gdx.math.Vector3;
 import bd.spark36.hud.WhereWindsMeetHUD;
 import bd.spark36.level.DialogueRepository;
 
-/**
- * Realistic Campus Student Crowd & Population Management System for "Spark: Birth of 36 July".
- * Features:
- * - Autonomous individual StudentNPC agents with AI state machines.
- * - Level-aware behavioral profiles matching historical dates (July 1 to August 5, 2024).
- * - Navigation along the verified campus waypoint network clear of solid obstacles and water.
- * - Phase 7 anatomical CharacterPose kinematics (hip sway, breathing, look-around, conversation gesturing, chanting).
- * - Local neighborhood obstacle and student-student / student-player avoidance.
- * - Interactive student dialogue integrated with the HUD.
- */
 public class CampusCrowd {
 
-    // Re-expose waypoint geometry for backward compatibility
     public static final float[][] NODES = CampusWaypointGraph.NODES;
     public static final int[][] EDGES = CampusWaypointGraph.EDGES;
 
@@ -30,7 +20,6 @@ public class CampusCrowd {
     private final StudentNPC[] students;
     private int activeLevelNumber = 1;
 
-    // Local temporary math buffers (Zero heap allocation during runtime)
     private final float[] pushTmp = new float[2];
 
     public CampusCrowd(int count, float[][] colliders) {
@@ -51,7 +40,6 @@ public class CampusCrowd {
 
             StudentNPC s = new StudentNPC(i, gender, variant, speed, role);
 
-            // Spawn onto a validated clear edge lane
             if (!usable.isEmpty()) {
                 int e = usable.get(MathUtils.random(usable.size() - 1));
                 boolean flip = MathUtils.randomBoolean();
@@ -66,7 +54,6 @@ public class CampusCrowd {
                 if (len < 0.001f) len = 0.001f;
                 float nx = -dz / len, nz = dx / len;
 
-                // Pick an initial lane offset
                 float[] edgeLanes = lanes[e];
                 float chosenLane = (edgeLanes != null && edgeLanes.length > 0) ?
                     edgeLanes[MathUtils.random(edgeLanes.length - 1)] : 0f;
@@ -82,24 +69,19 @@ public class CampusCrowd {
             students[i] = s;
         }
 
-        // Apply initial level profile (Level 1 peaceful by default)
         setLevelProfile(1);
         seedPromenadeWalkers();
     }
 
-    /**
-     * Seeds initial active walkers along the main promenade (edges 0 and 1)
-     * so students are visibly moving right in front of the player at spawn.
-     */
     public void seedPromenadeWalkers() {
         if (students == null || students.length == 0) return;
         float[][] promenadeSpawns = {
-            {  1.8f, 66.0f, 0, 1, 180f }, // walks north away from gate
-            { -1.8f, 61.0f, 1, 0,   0f }, // walks south towards gate
-            {  2.0f, 54.0f, 1, 2, 180f }, // walks north along promenade
-            { -2.2f, 47.0f, 2, 1,   0f }, // walks south along promenade
-            {  1.6f, 40.0f, 1, 2, 180f }, // walks north
-            { -1.5f, 34.0f, 2, 1,   0f }  // walks south
+            {  1.8f, 66.0f, 0, 1, 180f },
+            { -1.8f, 61.0f, 1, 0,   0f },
+            {  2.0f, 54.0f, 1, 2, 180f },
+            { -2.2f, 47.0f, 2, 1,   0f },
+            {  1.6f, 40.0f, 1, 2, 180f },
+            { -1.5f, 34.0f, 2, 1,   0f }
         };
         int count = Math.min(promenadeSpawns.length, students.length);
         for (int i = 0; i < count; i++) {
@@ -115,9 +97,6 @@ public class CampusCrowd {
         }
     }
 
-    /**
-     * Configures crowd behavior profile to reflect the active historical level.
-     */
     public void setLevelProfile(int levelNumber) {
         this.activeLevelNumber = levelNumber;
 
@@ -125,7 +104,7 @@ public class CampusCrowd {
             StudentNPC s = students[i];
             s.setLevelNumber(levelNumber);
             switch (levelNumber) {
-                case 2: // July 15–16: Student Confrontation & Resistance
+                case 2:
                     if (i % 4 == 0) {
                         s.transitionTo(NpcBehaviorState.GROUPING, MathUtils.random(10f, 20f));
                         s.routeToNode(graph, CampusWaypointGraph.NODE_ARTS_PLAZA);
@@ -136,7 +115,7 @@ public class CampusCrowd {
                     }
                     break;
 
-                case 3: // July 18: Police Escalation & Tear Gas
+                case 3:
                     if (i % 4 == 0) {
                         s.transitionTo(NpcBehaviorState.FLEEING, MathUtils.random(10f, 20f));
                         s.routeToNode(graph, CampusWaypointGraph.NODE_MAIN_GATE);
@@ -147,7 +126,7 @@ public class CampusCrowd {
                     }
                     break;
 
-                case 4: // July 19–20: Curfew & Internet Blackout
+                case 4:
                     if (i % 2 == 0) {
                         s.transitionTo(NpcBehaviorState.IDLE, MathUtils.random(3f, 6f));
                     } else {
@@ -155,7 +134,7 @@ public class CampusCrowd {
                     }
                     break;
 
-                case 5: // August 3–4: Mass Mobilization — 1-Point Demand
+                case 5:
                     if (i % 3 == 0) {
                         s.transitionTo(NpcBehaviorState.CHANTING, MathUtils.random(8f, 16f));
                     } else if (i % 3 == 1) {
@@ -166,7 +145,7 @@ public class CampusCrowd {
                     }
                     break;
 
-                case 6: // August 5: Victory Epilogue — 36 July
+                case 6:
                     if (i % 4 == 0) {
                         s.transitionTo(NpcBehaviorState.CHANTING, MathUtils.random(6f, 12f));
                     } else if (i % 4 == 1) {
@@ -176,7 +155,7 @@ public class CampusCrowd {
                     }
                     break;
 
-                case 1: // July 1–14: Peaceful Academic Life & Early Quota Awareness
+                case 1:
                 default:
                     if (i % 4 == 0) {
                         s.transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(2f, 4f));
@@ -190,9 +169,6 @@ public class CampusCrowd {
         }
     }
 
-    /**
-     * Updates simulation, state machine transitions, crowd avoidance, and kinematics.
-     */
     public void update(float delta, Vector3 playerPos) {
         if (delta > 0.1f) delta = 0.1f;
 
@@ -200,7 +176,6 @@ public class CampusCrowd {
             StudentNPC s = students[i];
             s.update(delta, graph, playerPos, delta);
 
-            // 1. Local avoidance against player
             if (playerPos != null) {
                 float[] push = avoid(s.getPosition().x, s.getPosition().z, playerPos.x, playerPos.z, PLAYER_SPACE, 1.8f);
                 if (push[0] != 0f || push[1] != 0f) {
@@ -208,7 +183,6 @@ public class CampusCrowd {
                 }
             }
 
-            // 2. Local avoidance against peer students + organic conversation triggering
             for (int j = i + 1; j < students.length; j++) {
                 StudentNPC o = students[j];
                 float dx = s.getPosition().x - o.getPosition().x;
@@ -220,7 +194,6 @@ public class CampusCrowd {
                     s.applyAvoidanceForce(push[0], push[1], delta, graph);
                     o.applyAvoidanceForce(-push[0], -push[1], delta, graph);
 
-                    // Organic peer conversation initiation
                     if (s.getState() == NpcBehaviorState.WALKING && o.getState() == NpcBehaviorState.WALKING &&
                         s.getChatCooldown() <= 0f && o.getChatCooldown() <= 0f && d2 < 2.0f * 2.0f) {
                         float chatDuration = MathUtils.random(2.5f, 4.5f);
@@ -246,9 +219,6 @@ public class CampusCrowd {
         return pushTmp;
     }
 
-    /**
-     * Finds the nearest student within interaction distance who is available for conversation.
-     */
     public StudentNPC getClosestInteractable(Vector3 playerPos, float maxDistance) {
         if (playerPos == null || students == null) return null;
         StudentNPC best = null;
@@ -267,10 +237,6 @@ public class CampusCrowd {
         return best;
     }
 
-    /**
-     * Starts player conversation with the closest interactable student and displays dialogue in HUD.
-     * Returns true if interaction was initiated.
-     */
     public boolean interactWithClosest(Vector3 playerPos, float maxDistance, int levelNumber, WhereWindsMeetHUD hud) {
         StudentNPC npc = getClosestInteractable(playerPos, maxDistance);
         if (npc != null) {
@@ -280,18 +246,12 @@ public class CampusCrowd {
         return false;
     }
 
-    /**
-     * Draws every student using evaluated CharacterPose and PBR materials.
-     */
     public void render(ModelBatch batch, Environment env, StudentMesh mesh) {
         for (StudentNPC s : students) {
             s.render(batch, env, mesh);
         }
     }
 
-    /**
-     * Detects if an attack hits any student in the crowd (campus peace violation check).
-     */
     public boolean checkHitByPlayer(Vector3 playerPos, float heading, float attackRange) {
         if (students == null) return false;
         for (StudentNPC s : students) {

@@ -1,3 +1,4 @@
+// ei file ta bounded lru cache er memory limit test kore
 package bd.spark36.capture;
 
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ class BoundedLruCacheTest {
         BoundedLruCache<String, String> c = cache(2, 1000);
         c.put("a", "A");
         c.put("b", "B");
-        c.get("a"); // touch a, so b is now the eldest
+        c.get("a");
         c.put("c", "C");
         assertEquals(List.of("B"), evicted);
         assertTrue(c.containsKey("a"));
@@ -34,7 +35,7 @@ class BoundedLruCacheTest {
         BoundedLruCache<String, String> c = cache(100, 10);
         c.put("a", "aaaa");
         c.put("b", "bbbb");
-        c.put("c", "cccc"); // 12 > 10
+        c.put("c", "cccc");
         assertEquals(List.of("aaaa"), evicted);
         assertEquals(8, c.totalWeight());
     }

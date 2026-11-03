@@ -1,3 +1,4 @@
+// ei file ta rastar lamp post, dustbin ar street prop toiri kore
 package bd.spark36.world.landmarks;
 
 import com.badlogic.gdx.graphics.Texture;
@@ -11,45 +12,33 @@ import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 
-/**
- * Shared material palette and shape helpers for the Dhaka street-dressing builders
- * (rickshaws, CNG auto-rickshaws, buses, tea stalls, shopfronts, electric poles).
- *
- * <p>Every street prop draws from this one small set of materials, so a {@code ModelCache}
- * holding all of them merges into about one draw call per material, however many props
- * are placed. Colours are written as sRGB (what you would pick from a photo) and stored
- * as linear PBR base colours, because the scene renders in linear space.</p>
- */
 public final class StreetPropKit {
 
-    /** One vertex layout for all street props, so the cache can merge across prop types. */
     public static final long ATTR = Usage.Position | Usage.Normal | Usage.TextureCoordinates;
 
-    // Vehicles
-    public final Material rickshawRed;     // painted rickshaw body and art panels
-    public final Material rickshawHood;    // black vinyl hood
-    public final Material accentYellow;    // trim, art panel highlights, bananas
-    public final Material accentBlue;      // trim, plastic chairs, bus livery band
-    public final Material cngGreen;        // CNG auto-rickshaw body (CNG three-wheelers are green)
-    public final Material busBody;         // faded cream bus body
-    public final Material steel;           // frames, grilles, cages
-    public final Material chrome;          // hubs, lamps, kettle
-    public final Material tyre;            // tyres, rubber
-    public final Material glass;           // dark glazing
+    public final Material rickshawRed;
+    public final Material rickshawHood;
+    public final Material accentYellow;
+    public final Material accentBlue;
+    public final Material cngGreen;
+    public final Material busBody;
+    public final Material steel;
+    public final Material chrome;
+    public final Material tyre;
+    public final Material glass;
 
-    // Built fabric
     public final Material plasterCream;
     public final Material plasterGreen;
     public final Material plasterRose;
-    public final Material concrete;        // footpath, poles, slab edges
-    public final Material shutter;         // rolling steel shutters
-    public final Material interior;        // dark shop interiors
-    public final Material wood;            // stall boards, benches
-    public final Material tinRoof;         // corrugated tin
-    public final Material tarpBlue;        // plastic tarpaulin awnings
-    public final Material waterTank;       // black rooftop plastic water tanks
-    public final Material cable;           // overhead cables
-    public final Material signs;           // Bengali signboard atlas
+    public final Material concrete;
+    public final Material shutter;
+    public final Material interior;
+    public final Material wood;
+    public final Material tinRoof;
+    public final Material tarpBlue;
+    public final Material waterTank;
+    public final Material cable;
+    public final Material signs;
 
     public StreetPropKit(Texture signAtlas) {
         rickshawRed  = mat("street_rickshawRed",  0.72f, 0.16f, 0.12f, 0.0f, 0.55f);
@@ -82,12 +71,10 @@ public final class StreetPropKit {
         signs.set(PBRFloatAttribute.createRoughness(0.7f));
     }
 
-    /** sRGB channel value (0..1) to linear. */
     public static float lin(float c) {
         return c <= 0.04045f ? c / 12.92f : (float) Math.pow((c + 0.055f) / 1.055f, 2.4f);
     }
 
-    /** Opaque PBR material from an sRGB colour. */
     public static Material mat(String id, float r, float g, float b, float metallic, float roughness) {
         Material m = new Material(id);
         m.set(PBRColorAttribute.createBaseColorFactor(new com.badlogic.gdx.graphics.Color(lin(r), lin(g), lin(b), 1f)));
@@ -96,20 +83,16 @@ public final class StreetPropKit {
         return m;
     }
 
-    // ── Shape helpers (all use the part's vertex transform, then reset it) ─────────
-
     private static final Matrix4 TMP = new Matrix4();
     private static final Quaternion Q = new Quaternion();
     private static final Vector3 DIR = new Vector3();
     private static final Vector3 MID = new Vector3();
 
-    /** Axis-aligned box centred at (x, y, z). */
     public static void box(MeshPartBuilder p, float x, float y, float z, float w, float h, float d) {
         p.setVertexTransformationEnabled(false);
         p.box(x, y, z, w, h, d);
     }
 
-    /** Box centred at (x, y, z), rotated by yaw (about Y), then pitch (about X), then roll (about Z), in degrees. */
     public static void box(MeshPartBuilder p, float x, float y, float z, float w, float h, float d,
                            float yawDeg, float pitchDeg, float rollDeg) {
         TMP.idt().translate(x, y, z).rotate(Vector3.Y, yawDeg).rotate(Vector3.X, pitchDeg).rotate(Vector3.Z, rollDeg);
@@ -118,7 +101,6 @@ public final class StreetPropKit {
         p.setVertexTransformationEnabled(false);
     }
 
-    /** Wheel: a cylinder of the given radius and width whose axle runs along X, centred at (x, y, z). */
     public static void wheel(MeshPartBuilder p, float x, float y, float z, float radius, float width, int divisions) {
         TMP.idt().translate(x, y, z).rotate(Vector3.Z, 90f);
         p.setVertexTransform(TMP);
@@ -126,7 +108,6 @@ public final class StreetPropKit {
         p.setVertexTransformationEnabled(false);
     }
 
-    /** Upright cylinder (axis along Y) with its base at (x, y, z). */
     public static void post(MeshPartBuilder p, float x, float y, float z, float diameter, float height, int divisions) {
         TMP.idt().translate(x, y + height * 0.5f, z);
         p.setVertexTransform(TMP);
@@ -134,7 +115,6 @@ public final class StreetPropKit {
         p.setVertexTransformationEnabled(false);
     }
 
-    /** Thin square-section rod from a to b (cables, struts, tubes). */
     public static void rod(MeshPartBuilder p, Vector3 a, Vector3 b, float thickness) {
         DIR.set(b).sub(a);
         float len = DIR.len();
@@ -148,14 +128,10 @@ public final class StreetPropKit {
         p.setVertexTransformationEnabled(false);
     }
 
-    /**
-     * Flat, single-sided textured quad (signboards) facing +Z in the builder's local frame:
-     * centred at (x, y, z), w wide and h tall, showing atlas rows [vBottom, vTop].
-     */
     public static void signQuad(MeshPartBuilder p, float x, float y, float z, float w, float h,
                                 float vBottom, float vTop) {
         p.setVertexTransformationEnabled(false);
-        // MeshBuilder.rect maps corner00 to v2 and corner01 to v1, so pass (top, bottom).
+
         p.setUVRange(0f, vTop, 1f, vBottom);
         float hw = w * 0.5f, hh = h * 0.5f;
         p.rect(x - hw, y - hh, z,

@@ -1,3 +1,4 @@
+// ei file ta campus er student npc der identity ar dialogue manage kore
 package bd.spark36.character;
 
 import com.badlogic.gdx.graphics.g3d.Environment;
@@ -7,35 +8,24 @@ import com.badlogic.gdx.math.Vector3;
 import bd.spark36.level.DialogueRepository;
 import bd.spark36.world.TerrainSurface;
 
-/**
- * Individual Student NPC entity on the University of Dhaka campus.
- * Features:
- * - Unique identifier and historical student profile.
- * - Autonomous AI state machine: IDLE, WALKING, LOOKING_AROUND, SOCIALIZING, GROUPING, LISTENING, CHANTING, FLEEING, INTERACTING_PLAYER.
- * - Dedicated zero-allocation CharacterPose evaluated with Phase 7 anatomical kinematics.
- * - Waypoint-following and Dijkstra path navigation.
- * - Contextual Bengali and English dialogue interactions.
- */
 public class StudentNPC implements bd.spark36.interaction.Interactable {
 
     private final int id;
     private final String roleTitle;
-    private final int gender; // 0 = Male, 1 = Female
-    private final int variant; // 1 .. StudentMesh.getVariantCount() - 1
+    private final int gender;
+    private final int variant;
     private int activeLevelNumber = 1;
 
-    // Spatial & Kinematic State
     private final Vector3 position = new Vector3();
     private final Vector3 lastPosition = new Vector3();
     private final Vector3 velocity = new Vector3();
-    private float heading = 0f; // degrees
+    private float heading = 0f;
     private float targetHeading = 0f;
     private float baseSpeed = 1.30f;
     private float currentSpeed = 0f;
     private float speedPhase = 0f;
     private float walkCycle = 0f;
 
-    // AI Behavioral State Machine
     private NpcBehaviorState state = NpcBehaviorState.IDLE;
     private NpcBehaviorState previousState = NpcBehaviorState.IDLE;
     private float stateTimer = 0f;
@@ -46,7 +36,6 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
     private final Vector3 groupFocalPoint = new Vector3();
     private boolean hasGroupFocalPoint = false;
 
-    // Navigation State
     private int currentEdge = 0;
     private int fromNode = 0;
     private int toNode = 1;
@@ -55,10 +44,8 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
     private int pathLength = 0;
     private int pathIndex = 0;
 
-    // Phase 7 Articulated Character Pose (Zero Heap Allocation)
     private final CharacterPose pose = new CharacterPose();
 
-    // Dialogue State
     private DialogueRepository.DialogueLine activeDialogue = null;
     private int levelNumber = 1;
 
@@ -74,15 +61,11 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
         this.pose.reset();
     }
 
-    /**
-     * Updates NPC state machine, path movement, avoidance steering, and pose kinematics.
-     */
     public void update(float delta, CampusWaypointGraph graph, Vector3 playerPos, float levelDelta) {
         if (delta > 0.1f) delta = 0.1f;
         stateTimer += delta;
         if (chatCooldown > 0f) chatCooldown -= delta;
 
-        // 1. Behavioral State Machine Logic
         switch (state) {
             case IDLE:
                 currentSpeed = Math.max(0f, currentSpeed - 4f * delta);
@@ -142,12 +125,11 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
                 break;
         }
 
-        // 2. Evaluate Articulated Character Kinematics into pose
         evaluatePose(delta);
     }
 
     private void updateWalkingMovement(float delta, CampusWaypointGraph graph, Vector3 playerPos) {
-        // Dynamic pace drift
+
         float speedMultiplier = (state == NpcBehaviorState.FLEEING) ? 1.75f :
                                 (state == NpcBehaviorState.GROUPING) ? 1.25f : 1.0f;
         float targetSpeed = baseSpeed * speedMultiplier * (1f + 0.08f * MathUtils.sin(speedPhase += delta * 0.4f));
@@ -175,10 +157,8 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
 
         lastPosition.set(position);
 
-        // Move with solid collision testing
         moveWithCollision(graph, vx * delta, vz * delta);
 
-        // Stuck detection
         if (position.dst2(lastPosition) < (currentSpeed * delta * 0.15f) * (currentSpeed * delta * 0.15f)) {
             stuckTime += delta;
             if (stuckTime > 1.2f) {
@@ -189,12 +169,10 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
             stuckTime = 0f;
         }
 
-        // Elevation support from stairs/plinths + terrain surface
         float groundY = Math.max(graph.supportHeight(position.x, position.z),
                                  TerrainSurface.getGroundHeight(position.x, position.z));
         position.y += (groundY - position.y) * Math.min(1f, 12f * delta);
 
-        // Walk cycle cadence scaled to physical speed
         walkCycle += (currentSpeed / 1.45f) * MathUtils.PI2 * delta;
         turnTowards(vx, vz, delta, 5.5f);
     }
@@ -202,7 +180,7 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
     private void advanceToNextWaypoint(CampusWaypointGraph graph) {
         if (graph == null) return;
         if (pathIndex < pathLength) {
-            // Follow planned Dijkstra path
+
             int nextNode = plannedPath[pathIndex++];
             int edge = findEdgeBetween(toNode, nextNode);
             if (edge != -1) {
@@ -211,7 +189,7 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
                 pickRandomNextEdge(graph);
             }
         } else {
-            // Destination reached or roaming freely
+
             pickRandomNextEdge(graph);
             if (state == NpcBehaviorState.GROUPING) {
                 transitionTo(NpcBehaviorState.LISTENING, MathUtils.random(6f, 14f));
@@ -276,7 +254,6 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
         }
     }
 
-    /** Plans a shortest path to a target waypoint node using Dijkstra routing. */
     public void routeToNode(CampusWaypointGraph graph, int targetNode) {
         pathLength = graph.findPath(this.toNode, targetNode, plannedPath);
         pathIndex = 0;
@@ -290,7 +267,6 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
             position.z += mz;
         }
 
-        // Shove resolution if already overlapping
         float[] b = graph.insideSolid(position.x, position.z, CampusWaypointGraph.BODY_RADIUS);
         if (b != null) {
             float r = CampusWaypointGraph.BODY_RADIUS;
@@ -326,9 +302,6 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
         heading += diff * Math.min(1f, rate * delta);
     }
 
-    /**
-     * Evaluates anatomical pose degrees of freedom with Phase 7 kinematic fidelity.
-     */
     private void evaluatePose(float delta) {
         pose.reset();
 
@@ -360,7 +333,7 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
                 pose.foreArmPitch[side] = -16f - Math.max(0f, armDir) * 14f;
             }
         } else {
-            // Stationary Behavioral Poses
+
             switch (state) {
                 case LOOKING_AROUND:
                     pose.headYaw = MathUtils.sin(stateTimer * 1.2f) * 26f;
@@ -379,7 +352,7 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
 
                 case CHANTING: {
                     float chantPhase = MathUtils.sin(stateTimer * 4.0f);
-                    pose.upperArmPitch[1] = -85f + chantPhase * 12f; // Right arm raised
+                    pose.upperArmPitch[1] = -85f + chantPhase * 12f;
                     pose.foreArmPitch[1] = -18f;
                     pose.torsoPitch = 5.0f + chantPhase * 3.5f;
                     break;
@@ -392,7 +365,7 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
 
                 case IDLE:
                 default:
-                    // Subtle organic fidget
+
                     if (stateTimer > 4.0f) {
                         pose.headYaw = MathUtils.sin(stateTimer * 0.6f) * 10f;
                     }
@@ -400,7 +373,6 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
             }
         }
 
-        // Lightweight Foot Elevation Offset based on ground height
         float groundL = TerrainSurface.getGroundHeight(position.x - 0.12f, position.z);
         float groundR = TerrainSurface.getGroundHeight(position.x + 0.12f, position.z);
         float groundC = TerrainSurface.getGroundHeight(position.x, position.z);
@@ -464,7 +436,6 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
         mesh.render(batch, env, position, heading, pose, false, false, gender, variant);
     }
 
-    // Getters
     public float getLane() { return lane; }
     public void setLane(float lane) { this.lane = lane; }
 
@@ -497,10 +468,6 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
     public void setLevelNumber(int levelNumber) {
         this.activeLevelNumber = levelNumber;
     }
-
-    // =========================================================================
-    // INTERACTABLE INTERFACE IMPLEMENTATION
-    // =========================================================================
 
     @Override
     public Vector3 getInteractionPosition() {

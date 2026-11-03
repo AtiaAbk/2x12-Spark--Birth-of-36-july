@@ -1,3 +1,4 @@
+// ei file ta gachpala ar foliage data structure test kore
 package bd.spark36.world;
 
 import bd.spark36.render.GraphicsTier;
@@ -43,7 +44,7 @@ public class VegetationTest {
     public void testCanopyDisplacementBoundsAndMonotonicity() {
         Vector3 disp = new Vector3();
         float treeH = 12.0f;
-        float maxAllowedDisp = 0.085f; // ~8.5 cm max displacement
+        float maxAllowedDisp = 0.085f;
 
         for (float t = 0f; t <= 8f; t += 0.25f) {
             for (float h = 1.0f; h <= treeH; h += 2.0f) {
@@ -53,7 +54,6 @@ public class VegetationTest {
                     "Displacement length " + len + " exceeded physical limit " + maxAllowedDisp + " at height " + h);
             }
 
-            // Monotonic test: top of tree flexes more than or equal to trunk midpoint in peak gusts
             Vector3 dispMid = new Vector3();
             Vector3 dispTop = new Vector3();
             windModel.getCanopyDisplacement(0f, 0f, treeH * 0.5f, treeH, t, dispMid);
@@ -190,7 +190,6 @@ public class VegetationTest {
         for (float t = 0f; t <= 10f; t += 0.25f) {
             entity.update(t, windModel, GraphicsTier.MEDIUM, null);
 
-            // Transform local root (0, 0, 0)
             rootWorldTrunk.set(0f, 0f, 0f).mul(entity.getTrunkInstance().transform);
             rootWorldCore.set(0f, 0f, 0f).mul(entity.getCanopyCoreInstance().transform);
             rootWorldCards.set(0f, 0f, 0f).mul(entity.getLeafCardsInstance().transform);
@@ -233,7 +232,7 @@ public class VegetationTest {
             float coreDeflection = (float) Math.hypot(topCore.x, topCore.z);
 
             if (trunkDeflection > 0.01f) {
-                // Core has 1.0x sway vs trunk 0.45x sway -> coreDeflection > trunkDeflection
+
                 assertTrue(coreDeflection >= trunkDeflection,
                     "Core deflection " + coreDeflection + " must exceed trunk deflection " + trunkDeflection);
                 dynamicChecks++;
@@ -259,12 +258,10 @@ public class VegetationTest {
             public void update(boolean updateFrustum) {}
         };
 
-        // Near distance: 20m from tree -> cards visible
         cam.position.set(0f, 2f, 20f);
         entity.update(0f, windModel, GraphicsTier.MEDIUM, cam);
         assertTrue(entity.isShowingCards(), "Leaf cards should be visible at 20m (< 65m cutoff)");
 
-        // Far distance: 100m from tree -> cards culled
         cam.position.set(0f, 2f, 100f);
         entity.update(0f, windModel, GraphicsTier.MEDIUM, cam);
         assertFalse(entity.isShowingCards(), "Leaf cards should be culled at 100m (> 65m cutoff)");

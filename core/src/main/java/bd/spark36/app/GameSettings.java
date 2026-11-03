@@ -1,37 +1,29 @@
+// ei file ta graphics, sound ar gameplay settings er data rakhe
 package bd.spark36.app;
 
-/**
- * Player-facing settings persisted to {@code spark36_settings.json} (repo DECISION-004).
- *
- * <p>Plain data with no libGDX dependency so it can be built, clamped and compared in unit tests.
- * Every setter clamps to the legal range so a hand-edited or corrupt file can never push the game
- * into an unusable state.</p>
- */
 public final class GameSettings {
 
     public static final float MIN_SENSITIVITY = 0.25f;
     public static final float MAX_SENSITIVITY = 3.0f;
 
-    /** Dialogue text scale steps offered by the settings screen. */
     public static final float[] TEXT_SCALES = {0.85f, 1.0f, 1.2f, 1.4f};
     public static final String[] TEXT_SCALE_NAMES = {"SMALL", "NORMAL", "LARGE", "EXTRA LARGE"};
 
     public enum Language { EN, BN }
 
-    /** Multiplier on the camera's base mouse sensitivity (1.0 = shipped feel). */
     public float mouseSensitivity = 1.0f;
     public float masterVolume = 0.85f;
     public float sfxVolume = 1.0f;
     public float ambienceVolume = 0.6f;
-    /** Subtitles on by default (reference section 11.3). */
+
     public boolean subtitles = true;
-    /** Index into {@link #TEXT_SCALES}. */
+
     public int textSizeIndex = 1;
-    /** Removes camera head-bob, screen shake and the sprint FOV push. */
+
     public boolean reduceCameraMotion = false;
-    /** LOW / MEDIUM / HIGH, or null meaning "use the assets/visuals.properties default". */
+
     public String graphicsTier = null;
-    /** 1 = ACES, 2 = Reinhard, 0 = Linear; -1 meaning "use the visuals.properties default". */
+
     public int toneMapping = -1;
     public Language language = Language.EN;
 
@@ -47,7 +39,6 @@ public final class GameSettings {
         return TEXT_SCALE_NAMES[textSizeIndex];
     }
 
-    /** Clamps every field into its legal range; returns this for chaining. */
     public GameSettings sanitize() {
         mouseSensitivity = clamp(finite(mouseSensitivity, 1.0f), MIN_SENSITIVITY, MAX_SENSITIVITY);
         masterVolume = clamp(finite(masterVolume, 0.85f), 0f, 1f);

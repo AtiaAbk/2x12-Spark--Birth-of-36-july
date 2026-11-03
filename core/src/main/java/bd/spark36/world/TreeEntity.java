@@ -1,3 +1,4 @@
+// ei file ta ekti gach er model, batasher nora ar lod handle kore
 package bd.spark36.world;
 
 import bd.spark36.render.GraphicsTier;
@@ -9,12 +10,6 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 
-/**
- * An individual tree entity in the campus environment.
- * Encapsulates the tree instance models (trunk, core canopy, leaf cards),
- * evaluates base-anchored wind sway (guaranteeing zero displacement at y <= 0),
- * and performs distance-based Level-of-Detail (LOD).
- */
 public class TreeEntity {
 
     public final int species;
@@ -46,7 +41,6 @@ public class TreeEntity {
         this.canopyCoreInstance = canopyCore;
         this.leafCardsInstance = leafCards;
 
-        // Position models at world base
         if (trunkInstance != null) {
             trunkInstance.transform.setToTranslation(position);
         }
@@ -57,7 +51,6 @@ public class TreeEntity {
             leafCardsInstance.transform.setToTranslation(position);
         }
 
-        // Bounding box in world coordinates for frustum culling
         float radius = 4.8f * scale;
         bounds.set(
             new Vector3(x - radius, -0.35f * scale, z - radius),
@@ -81,12 +74,8 @@ public class TreeEntity {
         return showCards;
     }
 
-    /**
-     * Updates wind sway simulation and distance-based LOD.
-     * Guaranteed: base (y <= 0) displacement is identically (0, 0, 0).
-     */
     public void update(float time, WindModel wind, GraphicsTier tier, Camera camera) {
-        // Distance calculation for Level of Detail
+
         if (camera != null) {
             float dx = camera.position.x - position.x;
             float dy = camera.position.y - (position.y + height * 0.5f);
@@ -94,7 +83,7 @@ public class TreeEntity {
             lastDistSq = dx * dx + dy * dy + dz * dz;
 
             float lodCutoff = tier.vegetationLodDistance;
-            // Hysteresis prevents rapid toggling at cutoff border
+
             float threshold = showCards ? (lodCutoff + VegetationConfig.LOD_HYSTERESIS) : lodCutoff;
             showCards = (lastDistSq <= threshold * threshold);
         } else {
@@ -108,7 +97,6 @@ public class TreeEntity {
             return;
         }
 
-        // Evaluate wind tilt angles
         wind.getWindDirection(windDir);
         windCross.set(-windDir.z, 0f, windDir.x).nor();
 
@@ -116,23 +104,18 @@ public class TreeEntity {
         float pitchDeg = tempPitchRoll.x;
         float rollDeg = tempPitchRoll.z;
 
-        // Base-anchored transforms with layered hierarchical sway:
-        // Local origin (0, 0, 0) strictly guaranteed zero displacement in world space.
-        // 1. Stiff trunk (0.45x sway)
         if (trunkInstance != null) {
             trunkInstance.transform.setToTranslation(position)
                 .rotate(windCross, pitchDeg * 0.45f)
                 .rotate(windDir, rollDeg * 0.45f);
         }
 
-        // 2. Moderate canopy core (1.0x sway)
         if (canopyCoreInstance != null) {
             canopyCoreInstance.transform.setToTranslation(position)
                 .rotate(windCross, pitchDeg * 1.0f)
                 .rotate(windDir, rollDeg * 1.0f);
         }
 
-        // 3. Dynamic leaf cards (1.35x sway + 3.4 Hz micro-flutter)
         if (leafCardsInstance != null) {
             float flutter = 0.35f * MathUtils.sin(time * 3.4f * 2.0f * MathUtils.PI + seed);
             leafCardsInstance.transform.setToTranslation(position)

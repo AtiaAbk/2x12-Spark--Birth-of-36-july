@@ -1,22 +1,11 @@
+// ei file ta opengl er draw call, triangle ar texture memory track kore
 package bd.spark36.diagnostics;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 
-/**
- * Opt-in per-frame GL and CPU-phase profiler ({@code -Dbd.spark36.glProfile=true}).
- *
- * <p>Wraps libGDX {@link GLProfiler} (draw calls, texture bindings, shader switches, GL calls,
- * vertices) and times the frame phases with {@link System#nanoTime()}. Once per second it logs
- * the per-frame averages under the {@code GlStats} tag. With
- * {@code -Dbd.spark36.glProfileSync=true} every phase end calls {@code glFinish()} so the phase
- * time includes the GPU work it queued (slower overall, but attributes GPU cost per phase).
- *
- * <p>When the switch is off every method is a cheap static-boolean check. No per-frame allocation.
- */
 public final class GlStats {
 
-    /** Frame phases, in render order. */
     public enum Phase { UPDATE, SHADOW, SKY, WORLD3D, OVERLAYS, POST, PARTICLES, HUD, OTHER }
 
     public static final boolean ENABLED = "true".equalsIgnoreCase(System.getProperty("bd.spark36.glProfile"));
@@ -39,7 +28,6 @@ public final class GlStats {
 
     private GlStats() {}
 
-    /** Call at the very start of a gameplay frame. */
     public static void beginFrame() {
         if (!ENABLED) return;
         if (profiler == null) {
@@ -53,7 +41,6 @@ public final class GlStats {
         drawsAtPhaseStart = 0;
     }
 
-    /** Ends the current phase, attributing the time since the previous mark to {@code phase}. */
     public static void mark(Phase phase) {
         if (!ENABLED || profiler == null) return;
         if (SYNC) Gdx.gl.glFinish();
@@ -65,7 +52,6 @@ public final class GlStats {
         phaseStart = now;
     }
 
-    /** Call at the end of a gameplay frame; logs once per second. */
     public static void endFrame() {
         if (!ENABLED || profiler == null) return;
         long now = System.nanoTime();

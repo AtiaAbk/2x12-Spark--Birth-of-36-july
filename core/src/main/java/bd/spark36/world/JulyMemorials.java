@@ -1,3 +1,4 @@
+// ei file ta curzon hall e july shahid der shritishoudho banay
 package bd.spark36.world;
 
 import com.badlogic.gdx.graphics.Color;
@@ -16,10 +17,6 @@ import com.badlogic.gdx.utils.Disposable;
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 
-/**
- * Manages the 5 authentic historical memorials from the July 2024 Student Mass Uprising.
- * Provides 3D commemorative monuments with pulsing glowing beacons and historical archival records.
- */
 public class JulyMemorials implements Disposable {
 
     public static class MemorialEntry {
@@ -104,7 +101,6 @@ public class JulyMemorials implements Disposable {
         ModelBuilder mb = new ModelBuilder();
         long attr = Usage.Position | Usage.Normal;
 
-        // Monument Materials
         Color baseCol = new Color(0.20f, 0.22f, 0.24f, 1f);
         Color pillarCol = new Color(0.72f, 0.28f, 0.22f, 1f);
         Color goldCol = new Color(0.95f, 0.78f, 0.30f, 1f);
@@ -174,10 +170,8 @@ public class JulyMemorials implements Disposable {
             MemorialEntry entry = entries.get(i);
             ModelInstance beacon = beaconInstances.get(i);
 
-            // Firmly placed finial cap (no floating or bobbing)
             beacon.transform.setTranslation(entry.position.x, 3.32f, entry.position.z);
 
-            // If inspected, plaque/finial reflects green completion
             ColorAttribute diff = (ColorAttribute) beacon.materials.first().get(ColorAttribute.Diffuse);
             if (entry.inspected) {
                 diff.color.set(0.2f, 0.85f, 0.4f, 1f);
@@ -196,9 +190,6 @@ public class JulyMemorials implements Disposable {
         }
     }
 
-    /**
-     * Finds the nearest memorial within the interaction distance (7.5m).
-     */
     public MemorialEntry getNearbyMemorial(Vector3 playerPos) {
         for (MemorialEntry entry : entries) {
             if (playerPos.dst(entry.position) <= 7.5f) {
@@ -208,9 +199,6 @@ public class JulyMemorials implements Disposable {
         return null;
     }
 
-    /**
-     * Gets the current active mission objective (first uninspected in sequence, or closest overall).
-     */
     public MemorialEntry getNextObjective(Vector3 playerPos) {
         for (MemorialEntry entry : entries) {
             if (!entry.inspected) {

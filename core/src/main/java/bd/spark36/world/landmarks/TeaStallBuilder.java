@@ -1,3 +1,4 @@
+// ei file ta dhaka university er cha er tong dokan generate kore
 package bd.spark36.world.landmarks;
 
 import static bd.spark36.world.landmarks.StreetPropKit.box;
@@ -9,15 +10,6 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 
-/**
- * Roadside tea stall ("cha'er dokan"): a raised plank kiosk under a sloping tin roof with a blue
- * tarpaulin awning, glass biscuit jars and an aluminium kettle on a clay stove on the counter, a
- * hanging bunch of bananas, the painted signboard "ভাই ভাই চা ঘর", and a long wooden bench in front.
- * When closed (curfew), the front is boarded up, the jars and kettle are gone and the awning is down.
- *
- * <p>Local frame: origin on the ground at the kiosk centre, serving side toward +Z.
- * Footprint about 1.8 m x 1.3 m plus the bench 1.1 m in front.</p>
- */
 public final class TeaStallBuilder {
 
     private TeaStallBuilder() {}
@@ -28,19 +20,19 @@ public final class TeaStallBuilder {
         final float w = 1.8f, d = 1.3f;
 
         MeshPartBuilder wood = mb.part("wood", GL20.GL_TRIANGLES, a, k.wood);
-        box(wood, 0f, 0.55f, 0f, w, 0.10f, d);                       // raised floor
-        box(wood, 0f, 1.35f, -d * 0.5f + 0.03f, w, 1.50f, 0.06f);    // back wall
+        box(wood, 0f, 0.55f, 0f, w, 0.10f, d);
+        box(wood, 0f, 1.35f, -d * 0.5f + 0.03f, w, 1.50f, 0.06f);
         for (int s = -1; s <= 1; s += 2) {
-            box(wood, s * (w * 0.5f - 0.03f), 1.35f, 0f, 0.06f, 1.50f, d);   // side walls
-            box(wood, s * (w * 0.5f - 0.05f), 0.25f, d * 0.5f - 0.05f, 0.08f, 0.50f, 0.08f); // stilts
+            box(wood, s * (w * 0.5f - 0.03f), 1.35f, 0f, 0.06f, 1.50f, d);
+            box(wood, s * (w * 0.5f - 0.05f), 0.25f, d * 0.5f - 0.05f, 0.08f, 0.50f, 0.08f);
             box(wood, s * (w * 0.5f - 0.05f), 0.25f, -d * 0.5f + 0.05f, 0.08f, 0.50f, 0.08f);
         }
-        box(wood, 0f, 0.95f, d * 0.5f - 0.02f, w, 0.70f, 0.04f);     // counter front
-        box(wood, 0f, 1.32f, d * 0.5f - 0.15f, w, 0.05f, 0.34f);     // counter top
+        box(wood, 0f, 0.95f, d * 0.5f - 0.02f, w, 0.70f, 0.04f);
+        box(wood, 0f, 1.32f, d * 0.5f - 0.15f, w, 0.05f, 0.34f);
         if (!open) {
-            box(wood, 0f, 1.75f, d * 0.5f, w - 0.1f, 0.80f, 0.04f);  // boarded front
+            box(wood, 0f, 1.75f, d * 0.5f, w - 0.1f, 0.80f, 0.04f);
         }
-        // Bench in front: plank on four legs
+
         box(wood, 0f, 0.44f, d * 0.5f + 1.05f, 1.70f, 0.05f, 0.30f);
         for (int s = -1; s <= 1; s += 2) {
             box(wood, s * 0.75f, 0.21f, d * 0.5f + 0.95f, 0.06f, 0.42f, 0.06f);
@@ -54,14 +46,14 @@ public final class TeaStallBuilder {
         if (open) {
             box(tarp, 0f, 2.05f, d * 0.5f + 0.70f, w + 0.2f, 0.02f, 1.10f, 0f, 14f, 0f);
         } else {
-            box(tarp, 0f, 1.75f, d * 0.5f + 0.03f, w - 0.1f, 0.80f, 0.02f);   // tarp lashed over the boards
+            box(tarp, 0f, 1.75f, d * 0.5f + 0.03f, w - 0.1f, 0.80f, 0.02f);
         }
 
         MeshPartBuilder signs = mb.part("sign", GL20.GL_TRIANGLES, a, k.signs);
         signQuad(signs, 0f, 2.40f, d * 0.5f + 0.14f, 1.90f, 0.30f,
             BengaliSignAtlas.vBottom(BengaliSignAtlas.Sign.TEA_STALL), BengaliSignAtlas.vTop(BengaliSignAtlas.Sign.TEA_STALL));
         MeshPartBuilder signBack = mb.part("signBoard", GL20.GL_TRIANGLES, a, k.steel);
-        box(signBack, 0f, 2.40f, d * 0.5f + 0.11f, 1.94f, 0.34f, 0.03f); // front face at +0.125, sign sits 1.5 cm proud
+        box(signBack, 0f, 2.40f, d * 0.5f + 0.11f, 1.94f, 0.34f, 0.03f);
 
         if (open) {
             MeshPartBuilder glass = mb.part("jars", GL20.GL_TRIANGLES, a, k.glass);

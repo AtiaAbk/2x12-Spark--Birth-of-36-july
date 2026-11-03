@@ -1,44 +1,35 @@
+// ei file ta character er joint angle ar skeletal pose define kore
 package bd.spark36.character;
 
 import com.badlogic.gdx.math.MathUtils;
 
-/**
- * Lightweight, allocation-free container for an articulated character pose.
- * Holds continuous joint rotation angles and translation offsets evaluated by
- * the animation state machine, supporting smooth Hermite/linear blending between states.
- */
 public class CharacterPose {
 
-    // Root and Pelvis
     public float bobOffset = 0f;
     public float pelvisHeight = 0.87f;
     public float pelvisPitch = 0f;
     public float pelvisTwist = 0f;
     public float pelvisRoll = 0f;
 
-    // Torso and Spine
     public float torsoPitch = 0f;
     public float torsoTwist = 0f;
     public float torsoRoll = 0f;
     public float breathe = 0f;
 
-    // Neck and Head
     public float neckPitch = 0f;
     public float neckYaw = 0f;
     public float headPitch = 0f;
     public float headYaw = 0f;
     public float headRoll = 0f;
 
-    // Legs (0 = Left, 1 = Right)
     public final float[] thighPitch = new float[2];
     public final float[] thighRoll = new float[2];
     public final float[] thighYaw = new float[2];
     public final float[] kneePitch = new float[2];
     public final float[] footPitch = new float[2];
     public final float[] footRoll = new float[2];
-    public final float[] footGroundOffset = new float[2]; // Ground adaptation (IK)
+    public final float[] footGroundOffset = new float[2];
 
-    // Arms (0 = Left, 1 = Right)
     public final float[] upperArmPitch = new float[2];
     public final float[] upperArmRoll = new float[2];
     public final float[] upperArmYaw = new float[2];
@@ -130,10 +121,6 @@ public class CharacterPose {
         }
     }
 
-    /**
-     * Blends pose {@code a} towards pose {@code b} with weight {@code t} in [0, 1].
-     * Stores result directly into {@code this} with zero allocation.
-     */
     public void lerp(CharacterPose a, CharacterPose b, float t) {
         float alpha = MathUtils.clamp(t, 0f, 1f);
 

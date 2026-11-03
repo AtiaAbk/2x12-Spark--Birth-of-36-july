@@ -1,17 +1,8 @@
+// ei file ta campus er batash ar natural shobdo synthesize kore
 package bd.spark36.audio;
 
 import java.util.Random;
 
-/**
- * Synthesises seamless looping ambience beds as 16-bit mono PCM. Pure Java (no libGDX), seeded so
- * every run produces the same audio and tests can check it.
- *
- * <p>All content is generated here; nothing is sampled or recorded, so there is no third-party
- * licence and no claim that it is a real recording of any place or date (reference section 11.1).</p>
- *
- * <p>Seamless looping: each bed is rendered {@code CROSSFADE} seconds longer than the loop and the
- * overhang is equal-power crossfaded into the head, so the last sample flows into the first.</p>
- */
 public final class AmbienceSynth {
 
     public static final int SAMPLE_RATE = 22050;
@@ -20,14 +11,12 @@ public final class AmbienceSynth {
 
     private AmbienceSynth() {}
 
-    /** Open-air campus: soft wind in the trees with occasional distant bird calls (Levels 1-2). */
     public static short[] campusBirdsAndWind(long seed) {
         Random rnd = new Random(seed);
         int loop = (int) (SAMPLE_RATE * LOOP_SECONDS);
         int total = loop + (int) (SAMPLE_RATE * CROSSFADE);
         float[] buf = new float[total];
 
-        // Wind: white noise through two one-pole low-passes, swelling on loop-periodic LFOs.
         float lp1 = 0f, lp2 = 0f;
         for (int i = 0; i < total; i++) {
             float t = (float) i / SAMPLE_RATE;
@@ -36,11 +25,10 @@ public final class AmbienceSynth {
             lp2 += 0.020f * (lp1 - lp2);
             float swell = 0.55f + 0.30f * (float) Math.sin(2 * Math.PI * 2 * t / LOOP_SECONDS)
                                 + 0.15f * (float) Math.sin(2 * Math.PI * 5 * t / LOOP_SECONDS + 1.3);
-            float leaves = (lp1 - lp2) * 0.6f; // a touch of high rustle on gusts
+            float leaves = (lp1 - lp2) * 0.6f;
             buf[i] = lp2 * 4.2f * swell + leaves * swell * swell;
         }
 
-        // Birds: short phrases of 2-5 chirps (pitch sweeps with vibrato), quiet and spaced out.
         float tCursor = 0.4f + rnd.nextFloat();
         while (tCursor < LOOP_SECONDS - 0.8f) {
             int chirps = 2 + rnd.nextInt(4);
@@ -58,10 +46,6 @@ public final class AmbienceSynth {
         return finish(buf, loop, 0.55f);
     }
 
-    /**
-     * Distant crowd murmur (Levels 5-6): many unintelligible voices made of formant-filtered noise
-     * with syllable-rate envelopes, low-passed for distance. No words, chants or slogans.
-     */
     public static short[] distantCrowdMurmur(long seed) {
         Random rnd = new Random(seed);
         int loop = (int) (SAMPLE_RATE * LOOP_SECONDS);
@@ -71,17 +55,17 @@ public final class AmbienceSynth {
         int voices = 22;
         for (int v = 0; v < voices; v++) {
             float gain = 0.5f + rnd.nextFloat() * 0.5f;
-            // Two-pole resonator state
+
             float y1 = 0f, y2 = 0f;
             int i = 0;
             while (i < total) {
-                // One syllable: 110-260 ms with a formant between 280 and 950 Hz
+
                 int len = (int) (SAMPLE_RATE * (0.11f + rnd.nextFloat() * 0.15f));
                 float f = 280f + rnd.nextFloat() * 670f;
                 float r = 0.985f;
                 float a1 = (float) (2 * r * Math.cos(2 * Math.PI * f / SAMPLE_RATE));
                 float a2 = -r * r;
-                boolean pause = rnd.nextFloat() < 0.22f; // speakers breathe
+                boolean pause = rnd.nextFloat() < 0.22f;
                 float sylAmp = pause ? 0f : gain * (0.6f + rnd.nextFloat() * 0.4f);
                 for (int k = 0; k < len && i < total; k++, i++) {
                     float env = (float) Math.sin(Math.PI * k / len);
@@ -94,7 +78,6 @@ public final class AmbienceSynth {
             }
         }
 
-        // Distance: low-pass, plus a soft loop-periodic swell and a low rumble bed.
         float lp = 0f, rumble = 0f;
         for (int i = 0; i < total; i++) {
             float t = (float) i / SAMPLE_RATE;
@@ -120,7 +103,6 @@ public final class AmbienceSynth {
         }
     }
 
-    /** Crossfades the overhang into the head, normalises to {@code peak} and converts to PCM16. */
     private static short[] finish(float[] buf, int loop, float peak) {
         int fade = buf.length - loop;
         float[] out = new float[loop];

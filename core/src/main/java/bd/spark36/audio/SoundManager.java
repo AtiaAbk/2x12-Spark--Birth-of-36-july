@@ -1,3 +1,4 @@
+// ei file ta game er shob sound effects ar background audio play kore
 package bd.spark36.audio;
 
 import com.badlogic.gdx.Files;
@@ -14,28 +15,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-/**
- * Procedural Audio Synthesizer and Sound Manager for Spark: Birth of 36 July.
- * Synthesizes 100% legally compliant, royalty-free 16-bit PCM sound effects
- * for footsteps, UI chimes, martial arts combat impacts, tear gas hiss,
- * water splashes, and the historic Freedom Bell toll, plus looping ambience beds
- * ({@link AmbienceSynth}).
- *
- * <p>All audio is generated in memory and handed to OpenAL through an in-memory file handle;
- * nothing is written to disk (earlier builds wrote .wav files relative to the working directory,
- * which put them in assets/assets/audio/).</p>
- *
- * <p>Mixer: every effect plays at {@code base * master * sfx}; the ambience bed at
- * {@code base * master * ambience}.</p>
- */
 public class SoundManager implements Disposable {
 
-    /** Looping background beds. */
     public enum Ambience { NONE, CAMPUS, CROWD }
 
     private static SoundManager instance;
 
-    // Volumes set before the manager exists (startup settings) are picked up by the constructor.
     private static float initialMaster = 0.85f;
     private static float initialSfx = 1.0f;
     private static float initialAmbience = 0.6f;
@@ -72,26 +57,22 @@ public class SoundManager implements Disposable {
         return instance;
     }
 
-    /** The manager if something already created it, else null (never starts audio). */
     public static SoundManager getIfCreated() {
         return instance;
     }
 
-    /** Volumes to use when the manager is created later. */
     public static void setInitialVolumes(float master, float sfx, float ambience) {
         initialMaster = clamp01(master);
         initialSfx = clamp01(sfx);
         initialAmbience = clamp01(ambience);
     }
 
-    /** Which bed a level uses: campus birds/wind for 1-2, distant crowd for 5-6, none otherwise. */
     public static Ambience ambienceForLevel(int level) {
         if (level == 1 || level == 2) return Ambience.CAMPUS;
         if (level == 5 || level == 6) return Ambience.CROWD;
         return Ambience.NONE;
     }
 
-    /** Effective playback gain for a sound with the given base level. */
     public static float mix(float base, float master, float channel) {
         return clamp01(base) * clamp01(master) * clamp01(channel);
     }
@@ -188,11 +169,6 @@ public class SoundManager implements Disposable {
         }
     }
 
-    // ==========================================
-    // AMBIENCE BEDS
-    // ==========================================
-
-    /** Switches to the given looping bed (no-op when it is already playing). */
     public void setAmbience(Ambience which) {
         if (which == null) which = Ambience.NONE;
         if (which == currentAmbience && (which == Ambience.NONE || ambId != -1)) return;
@@ -282,10 +258,6 @@ public class SoundManager implements Disposable {
         if (Gdx.app != null) Gdx.app.log("SoundManager", msg);
     }
 
-    /**
-     * A read-only file handle over a byte array, so OpenAL can decode generated WAV data without
-     * a file on disk.
-     */
     static final class MemoryFileHandle extends FileHandle {
         private final byte[] data;
 
@@ -315,10 +287,6 @@ public class SoundManager implements Disposable {
         }
     }
 
-    // ==========================================
-    // PROCEDURAL 16-BIT PCM WAV SYNTHESIS
-    // ==========================================
-
     static byte[] buildWav(short[] samples, int sampleRate) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
@@ -330,13 +298,13 @@ public class SoundManager implements Disposable {
             dos.writeInt(Integer.reverseBytes(chunkSize));
             dos.writeBytes("WAVE");
             dos.writeBytes("fmt ");
-            dos.writeInt(Integer.reverseBytes(16)); // Subchunk1Size
-            dos.writeShort(Short.reverseBytes((short) 1)); // AudioFormat (PCM)
-            dos.writeShort(Short.reverseBytes((short) 1)); // NumChannels (Mono)
-            dos.writeInt(Integer.reverseBytes(sampleRate)); // SampleRate
-            dos.writeInt(Integer.reverseBytes(sampleRate * 2)); // ByteRate (SampleRate * NumChannels * BitsPerSample/8)
-            dos.writeShort(Short.reverseBytes((short) 2)); // BlockAlign
-            dos.writeShort(Short.reverseBytes((short) 16)); // BitsPerSample
+            dos.writeInt(Integer.reverseBytes(16));
+            dos.writeShort(Short.reverseBytes((short) 1));
+            dos.writeShort(Short.reverseBytes((short) 1));
+            dos.writeInt(Integer.reverseBytes(sampleRate));
+            dos.writeInt(Integer.reverseBytes(sampleRate * 2));
+            dos.writeShort(Short.reverseBytes((short) 2));
+            dos.writeShort(Short.reverseBytes((short) 16));
             dos.writeBytes("data");
             dos.writeInt(Integer.reverseBytes(subChunk2Size));
 
@@ -345,7 +313,7 @@ public class SoundManager implements Disposable {
             }
             dos.flush();
         } catch (IOException e) {
-            // Unreachable in byte array streams
+
         }
         return baos.toByteArray();
     }
@@ -436,7 +404,7 @@ public class SoundManager implements Disposable {
         int noteSplit = (int) (rate * 0.18f);
         for (int i = 0; i < len; i++) {
             float t = (float) i / rate;
-            float f = (i < noteSplit) ? 587.33f : 880.0f; // D5 to A5
+            float f = (i < noteSplit) ? 587.33f : 880.0f;
             float noteT = (i < noteSplit) ? t : (t - 0.18f);
             float env = (float) Math.exp(-noteT * 6.5);
             float osc = MathUtils.sin(t * MathUtils.PI2 * f) * 0.7f +

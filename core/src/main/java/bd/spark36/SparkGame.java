@@ -1,3 +1,4 @@
+// ei file ta shob level, rendering ar game loop eksathe chalay
 package bd.spark36;
 
 import com.badlogic.gdx.ApplicationAdapter;
@@ -34,30 +35,20 @@ import bd.spark36.world.TextureFactory;
 import bd.spark36.world.WeatherController;
 import bd.spark36.world.WeatherState;
 
-
 public class SparkGame extends ApplicationAdapter {
 
-    // ==========================================
-    // GAME STATE MACHINE
-    // ==========================================
     private enum GameState { LOADING, MAIN_MENU, PLAYING }
     private GameState gameState = GameState.LOADING;
 
-    // Loading Screen (high-tech 2x12 SPARK UI)
     private bd.spark36.hud.screens.LoadingScreen loadingScreen;
 
-    // Main Menu (rendering and input live in bd.spark36.hud.screens.MainMenuScreen)
     private bd.spark36.hud.screens.MainMenuScreen mainMenu;
 
-    // Shared Renderers (initialized in create — lightweight, used by both states)
     private ShapeRenderer shapeRenderer;
     private SpriteBatch menuBatch;
     private FontRenderer fontRenderer;
     private GlyphLayout glyphLayout;
 
-    // ==========================================
-    // 3D GAMEPLAY SUBSYSTEMS (lazy init on first play)
-    // ==========================================
     private ModelBatch modelBatch;
     private ModelBatch shadowBatch;
     private final Vector3 shadowForward = new Vector3();
@@ -79,17 +70,15 @@ public class SparkGame extends ApplicationAdapter {
     private boolean gameplayInitialized = false;
     private int selectedChapter = 1;
 
-    // Auto-screenshot support
     private float testTimer = 0f;
     private boolean autoScreenshotTaken = false;
 
-    // T7: screenshots, F10 photo mode, F11 gallery (logic lives in bd.spark36.capture)
     private bd.spark36.capture.CaptureController capture;
     private boolean photoFrame = false;
 
     @Override
     public void create() {
-        // Initialize lightweight shared renderers for both menu and gameplay
+
         shapeRenderer = new ShapeRenderer();
         menuBatch = new SpriteBatch();
         fontRenderer = new FontRenderer();
@@ -139,10 +128,6 @@ public class SparkGame extends ApplicationAdapter {
         }
     }
 
-    /**
-     * Lazily initializes all 3D gameplay subsystems on first play.
-     * Keeps them alive for re-entry from pause menu.
-     */
     private void initGameplay() {
         if (gameplayInitialized) return;
 
@@ -171,17 +156,14 @@ public class SparkGame extends ApplicationAdapter {
         levelManager.loadLevel(selectedChapter);
         syncLevelSubsystems();
 
-        // Test hook: start somewhere other than the gate, e.g. -Dbd.spark36.startPos=4,41
         String startPos = System.getProperty("bd.spark36.startPos");
         if (startPos != null) {
             String[] xz = startPos.split(",");
             player.setPosition(Float.parseFloat(xz[0].trim()), 0f, Float.parseFloat(xz[1].trim()));
         }
 
-        // AAA post-processing pipeline (bloom + color grade + vignette + grain)
         postProcessor = new PostProcessor(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
 
-        // Environmental particle system (leaves, dust, water ripples)
         particleSystem = new ParticleSystem();
 
         gameplayInitialized = true;
@@ -209,7 +191,6 @@ public class SparkGame extends ApplicationAdapter {
         if (crowd == null) crowd = new CampusCrowd(16, player.getColliders());
     }
 
-    /** Transitions from Main Menu to Peaceful Exploration Campaign */
     public void startGameplay() {
         initGameplay();
         if (levelManager != null && levelManager.getActiveLevel() != null && levelManager.getActiveLevel().getLevelNumber() != selectedChapter) {
@@ -226,7 +207,6 @@ public class SparkGame extends ApplicationAdapter {
         Gdx.input.setCursorCatched(true);
     }
 
-    /** Transitions from Main Menu to Arena Combat Mode */
     public void startArenaMode() {
         bd.spark36.level.LevelConfig.reset(2, bd.spark36.level.LevelConfig.GameMode.ARENA);
         startGameplay();
@@ -236,7 +216,6 @@ public class SparkGame extends ApplicationAdapter {
         }
     }
 
-    /** Transitions from Gameplay back to Main Menu */
     public void returnToMainMenu() {
         gameState = GameState.MAIN_MENU;
         selectedChapter = bd.spark36.level.LevelConfig.getUnlockedLevel();
@@ -248,9 +227,6 @@ public class SparkGame extends ApplicationAdapter {
         Gdx.input.setCursorCatched(false);
     }
 
-    // ==========================================
-    // MAIN RENDER DISPATCH
-    // ==========================================
     private static final boolean DEV_KEYS = Boolean.getBoolean("bd.spark36.devKeys");
 
     private final bd.spark36.diagnostics.FrameStats frameStats =
@@ -264,7 +240,7 @@ public class SparkGame extends ApplicationAdapter {
             Gdx.app.exit();
         }
         if (capture != null && capture.isGalleryOpen()) {
-            capture.renderGallery(Math.min(0.1f, Gdx.graphics.getDeltaTime())); // T7: gallery replaces the frame
+            capture.renderGallery(Math.min(0.1f, Gdx.graphics.getDeltaTime()));
             return;
         }
         if (gameState == GameState.LOADING) {
@@ -276,9 +252,6 @@ public class SparkGame extends ApplicationAdapter {
         }
     }
 
-    // ==========================================
-    // LOADING SCREEN (High-Tech 2x12 SPARK UI)
-    // ==========================================
     private void renderLoading() {
         float delta = Gdx.graphics.getDeltaTime();
         if (delta > 0.1f) delta = 0.1f;
@@ -290,7 +263,6 @@ public class SparkGame extends ApplicationAdapter {
         loadingScreen.update(delta);
         loadingScreen.render();
 
-        // Automated visual verification for Loading Screen
         if (System.getProperty("bd.spark36.testLoadingScreenshot") != null) {
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 0.4f) {
@@ -314,14 +286,10 @@ public class SparkGame extends ApplicationAdapter {
         }
     }
 
-    // ==========================================
-    // MAIN MENU SCREEN (Where Winds Meet aesthetic)
-    // ==========================================
     private void renderMainMenu() {
         float delta = Gdx.graphics.getDeltaTime();
         if (delta > 0.1f) delta = 0.1f;
 
-        // Automated testing support: auto start gameplay if system property set
         if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.autoStartGame"))) {
             startGameplay();
             return;
@@ -354,7 +322,6 @@ public class SparkGame extends ApplicationAdapter {
         }
         mainMenu.render();
 
-        // Automated visual verification for Main Menu
         if (System.getProperty("bd.spark36.testMenuScreenshot") != null) {
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 1.0f) {
@@ -380,21 +347,17 @@ public class SparkGame extends ApplicationAdapter {
         }
     }
 
-    // ==========================================
-    // GAMEPLAY RENDERING (all existing logic)
-    // ==========================================
     private void renderGameplay() {
         GlStats.beginFrame();
         float delta = Gdx.graphics.getDeltaTime();
         if (delta > 0.1f) delta = 0.1f;
         if (hitStopTimer > 0f) {
             hitStopTimer -= delta;
-            delta *= 0.12f; // Impact micro-freeze pause for kinetic weight
+            delta *= 0.12f;
         }
         int screenW = Gdx.graphics.getBackBufferWidth();
         int screenH = Gdx.graphics.getBackBufferHeight();
 
-        // Check for exit actions from pause menu or victory screen
         int exitAction = hud.consumeExitAction();
         if (exitAction == 1) {
             returnToMainMenu();
@@ -430,18 +393,16 @@ public class SparkGame extends ApplicationAdapter {
         JulyMemorials activeMemorials = (currentLevel != null && currentLevel.getMemorials() != null) ? currentLevel.getMemorials() : memorials;
         CampusCrowd activeCrowd = (currentLevel != null && currentLevel.getCrowd() != null) ? currentLevel.getCrowd() : crowd;
 
-        // Pass active boss position to player for smooth martial arts combat facing (Arena mode only)
         if (bd.spark36.level.LevelConfig.isCombatEnabled() && helmetGoon != null && !helmetGoon.isKnockedOut()) {
             player.setCombatTarget(helmetGoon.getPosition());
         } else if (currentLevel == null || !currentLevel.isCombatEnabled()) {
             player.clearCombatTarget();
         }
 
-        photoFrame = capture.isPhotoModeActive(); // T7: photo mode freezes the simulation like the pause menu
+        photoFrame = capture.isPhotoModeActive();
         boolean isSimulationFrozen = photoFrame || (hud != null && (hud.isPauseMenuOpen() || hud.isExitConfirmOpen()));
         float simDelta = isSimulationFrozen ? 0f : delta;
 
-        // 1. Update Game Logic
         boolean canMove = !hud.isModalOpen() && !hud.isNpcDialogueActive() && System.getProperty("bd.spark36.testHeroScreenshot") == null;
         if (!isSimulationFrozen && !hud.isModalOpen()) {
             if (GameInput.isJustPressed(GameInput.GameAction.INTERACT)) {
@@ -466,7 +427,6 @@ public class SparkGame extends ApplicationAdapter {
         }
         player.update(simDelta, camera.getYaw(), canMove && !isSimulationFrozen);
 
-        // Procedural footstep audio
         if (!isSimulationFrozen && canMove && !player.isSittingWater() && !player.isDodging()) {
             bd.spark36.audio.SoundManager.get().updateFootsteps(simDelta, player.isMoving(), player.isSprinting());
         }
@@ -480,22 +440,19 @@ public class SparkGame extends ApplicationAdapter {
             if (activeMemorials != null) activeMemorials.update(simDelta);
         }
 
-        // Combat attack resolution
         if (!isSimulationFrozen && currentLevel != null && currentLevel.isCombatEnabled()) {
             levelManager.handlePlayerAttack();
         }
 
-        // Enhanced camera: pass movement state for bob + FOV push + shake
         if (photoFrame) {
-            capture.updatePhotoCamera(delta); // T7: orbit camera; the follow camera's state is left untouched
+            capture.updatePhotoCamera(delta);
         } else {
             camera.update(simDelta, player.getPosition(), canMove && !isSimulationFrozen,
                 player.isMoving() && !isSimulationFrozen, player.isSprinting() && !isSimulationFrozen, player.getHeadingDegrees());
         }
 
-        if (!photoFrame) hud.update(delta, player, activeMemorials); // T7: HUD keys (Esc, G, Tab) are photo-mode keys
+        if (!photoFrame) hud.update(delta, player, activeMemorials);
 
-        // Update particles (incorporating weather rain intensity & GraphicsTier)
         if (particleSystem != null) {
             WeatherController wc = (activeWorld != null) ? activeWorld.getWeatherController() : null;
             float rainInt = (wc != null) ? wc.getCurrentRainIntensity() : 0f;
@@ -503,7 +460,7 @@ public class SparkGame extends ApplicationAdapter {
         }
 
         GlStats.mark(GlStats.Phase.UPDATE);
-        // 1b. SUN SHADOW PASS: depth-only render from the sun, centred a little ahead of the player
+
         if (activeWorld != null) {
             shadowForward.set(camera.getCamera().direction.x, 0f, camera.getCamera().direction.z).nor();
             activeWorld.beginShadowPass(player.getPosition(), shadowForward);
@@ -533,22 +490,21 @@ public class SparkGame extends ApplicationAdapter {
         }
         GlStats.mark(GlStats.Phase.SHADOW);
 
-        // 2. POST-PROCESSING: Begin FBO capture (replaces direct sky render)
         boolean ppActive = postProcessor != null && postProcessor.isValid();
         WeatherController wc = (activeWorld != null) ? activeWorld.getWeatherController() : null;
         if (ppActive) {
             postProcessor.beginCapture();
-            // Sky renders INSIDE the FBO with camera pitch/yaw coupling and dynamic weather
+
             atmosphere.renderSkyBackground(screenW, screenH, camera.getCamera(), wc);
             Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
         } else {
-            // Fallback: render sky directly to screen
+
             atmosphere.renderSkyBackground(screenW, screenH, camera.getCamera(), wc);
             Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
         }
 
         GlStats.mark(GlStats.Phase.SKY);
-        // 3. Render 3D World Pass (inside FBO if post-processing active)
+
         camera.resize(screenW, screenH);
         modelBatch.begin(camera.getCamera());
         com.badlogic.gdx.graphics.g3d.Environment activeEnv = (currentLevel != null && currentLevel.getEnvironment() != null) ?
@@ -583,45 +539,40 @@ public class SparkGame extends ApplicationAdapter {
             activeWorld.renderDebugOpeningNormals(shapeRenderer, camera.getCamera());
         }
 
-        // 4. Atmospheric overlays (labels, god rays) — inside FBO for bloom
         atmosphere.renderAtmosphereOverlays(camera.getCamera(), delta, screenW, screenH);
         if (currentLevel != null) {
             currentLevel.renderOverlays(camera, delta, screenW, screenH);
         }
 
         GlStats.mark(GlStats.Phase.OVERLAYS);
-        // 5. End FBO capture and apply post-processing chain to screen
+
         if (ppActive) {
             postProcessor.endCapture();
             postProcessor.render(delta, wc);
         }
         GlStats.mark(GlStats.Phase.POST);
 
-        // 6. Particle System (leaves, dust, water ripples) — AFTER post-processing, BEFORE HUD
         if (particleSystem != null) {
             particleSystem.render();
         }
         GlStats.mark(GlStats.Phase.PARTICLES);
 
-        // 7. 2D HUD (always crisp, rendered AFTER post-processing)
-        capture.beforeHud(); // T7: pending F12 capture is taken here, without HUD
+        capture.beforeHud();
         if (!capture.hidesHud()) hud.render(player, activeMemorials, camera.getYaw(), camera.getCamera());
-        capture.afterHud(delta); // T7: photo-mode hint and capture toast, never captured
+        capture.afterHud(delta);
         GlStats.mark(GlStats.Phase.HUD);
 
-        // Process inputs and automated test screenshot triggers AFTER the frame is fully drawn!
         handleGameplayInputs(delta);
         GlStats.mark(GlStats.Phase.OTHER);
         GlStats.endFrame();
     }
 
     private void handleGameplayInputs(float delta) {
-        // T7: F10 photo mode, F11 gallery, F12 capture; photo-mode frames skip all gameplay keys
+
         if (capture.handleGameplayKeys(delta, camera, player.getPosition(), hud.isModalOpen(), photoFrame)) {
             return;
         }
 
-        // Toggle fullscreen with Alt+Enter (F11 now opens the gallery)
         if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)
                 && (Gdx.input.isKeyPressed(Input.Keys.ALT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.ALT_RIGHT))) {
             if (Gdx.graphics.isFullscreen()) {
@@ -631,9 +582,6 @@ public class SparkGame extends ApplicationAdapter {
             }
         }
 
-        // Automatic cursor capture management:
-        // In active gameplay (no modal/map/pause open), ALWAYS keep cursor captured
-        // so trackpad/mouse immediately controls camera without needing a click.
         if (!hud.isModalOpen()) {
             if (!Gdx.input.isCursorCatched()) {
                 Gdx.input.setCursorCatched(true);
@@ -644,20 +592,15 @@ public class SparkGame extends ApplicationAdapter {
             }
         }
 
-        // Developer-only shortcuts (F3, F4/O, F6) need -Dbd.spark36.devKeys=true, so players
-        // cannot hit the debug test card (O) or skip chapters (F6) by accident.
-        // F4 or O: Toggle Orientation Test Card on facade elements
         if (DEV_KEYS && (Gdx.input.isKeyJustPressed(Input.Keys.F4) || Gdx.input.isKeyJustPressed(Input.Keys.O))) {
             world.setTestCardActive(!world.isTestCardActive());
         }
 
-        // F3: Toggle Opening Outlines and Normal Vectors
         if (DEV_KEYS && Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
             DhakaCampusWorld.debugDrawNormals = !DhakaCampusWorld.debugDrawNormals;
             Gdx.app.log("SparkGame", "Debug Draw Normals toggled: " + DhakaCampusWorld.debugDrawNormals);
         }
 
-        // F5: Restart Current Level / F6: Next Level
         if (Gdx.input.isKeyJustPressed(Input.Keys.F5)) {
             if (levelManager != null) {
                 levelManager.restartCurrentLevel();
@@ -671,7 +614,6 @@ public class SparkGame extends ApplicationAdapter {
             }
         }
 
-        // F7: Cycle Dynamic Dhaka Summer Weather
         if (Gdx.input.isKeyJustPressed(Input.Keys.F7)) {
             DhakaCampusWorld activeW = (levelManager != null && levelManager.getActiveLevel() != null && levelManager.getActiveLevel().getWorld() != null) ?
                 levelManager.getActiveLevel().getWorld() : world;
@@ -681,13 +623,11 @@ public class SparkGame extends ApplicationAdapter {
             }
         }
 
-        // F8: Cycle Tone Mapping Curve (ACES Filmic -> Reinhard Extended -> Linear Clamp)
         if (Gdx.input.isKeyJustPressed(Input.Keys.F8)) {
             String modeName = RenderPipelineConfig.cycleToneMapping();
             hud.triggerMissionToast("TONE MAPPING: " + modeName, RenderPipelineConfig.toneMappingMode + 1);
         }
 
-        // Automated visual verification support
         if (System.getProperty("bd.spark36.testLevelScreenshot") != null) {
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
@@ -747,7 +687,7 @@ public class SparkGame extends ApplicationAdapter {
         } else if (System.getProperty("bd.spark36.testCombatScreenshot") != null) {
             hud.reset();
             player.setPosition(0f, 0f, 39.5f);
-            player.setHeadingDegrees(180f); // Face north directly towards Helmet Goon
+            player.setHeadingDegrees(180f);
             if (helmetGoon != null) {
                 helmetGoon.reset(0f, 36.0f);
                 helmetGoon.startFightDirectly();
@@ -763,7 +703,7 @@ public class SparkGame extends ApplicationAdapter {
         } else if (System.getProperty("bd.spark36.testPondScreenshot") != null) {
             hud.reset();
             player.setPosition(0f, 0.28f, 18.0f);
-            player.setHeadingDegrees(180f); // face north into the pond towards lotus pads and Curzon Hall
+            player.setHeadingDegrees(180f);
             testTimer += delta;
             if (!autoScreenshotTaken && testTimer >= 2.0f) {
                 takeScreenshot("curzon_pond_lotus_verified");
@@ -1043,11 +983,11 @@ public class SparkGame extends ApplicationAdapter {
             } else if ("curzon_dome".equalsIgnoreCase(viewpoint)) {
                 camera.setFixedView(0f, 16.0f, -8.0f, 0f, 19.0f, -22.5f);
             } else if ("gate_street".equalsIgnoreCase(viewpoint)) {
-                // T8: from inside the main gate, looking out at the Doel Chattar road and its street dressing
+
                 player.setPosition(0f, 0f, 70f);
                 camera.setFixedView(0f, 3.4f, 66f, 0f, 1.6f, 92f);
             } else if ("street_road".equalsIgnoreCase(viewpoint)) {
-                // T8: on the road outside the gate, looking east along the shopfronts
+
                 player.setPosition(-16f, 0f, 84f);
                 camera.setFixedView(-24f, 1.8f, 83f, 6f, 1.6f, 89f);
             }
@@ -1066,11 +1006,6 @@ public class SparkGame extends ApplicationAdapter {
         }
     }
 
-    /**
-     * Automated-harness capture with a deterministic name, written to
-     * {@code <screenshot folder>/<name>.png} (see bd.spark36.capture.ScreenshotService).
-     * Player F12 captures go through CaptureController and never overwrite.
-     */
     public static void takeScreenshot(String name) {
         bd.spark36.capture.CaptureController.captureHarness(name);
     }
@@ -1110,4 +1045,3 @@ public class SparkGame extends ApplicationAdapter {
         bd.spark36.audio.SoundManager.get().dispose();
     }
 }
-

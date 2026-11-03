@@ -1,3 +1,4 @@
+// ei file ta police escalation ar tear gas shomoyer level
 package bd.spark36.level;
 
 import com.badlogic.gdx.Gdx;
@@ -26,17 +27,10 @@ import bd.spark36.world.DhakaCampusWorld;
 import bd.spark36.world.TextureFactory;
 import bd.spark36.world.landmarks.BarricadeBuilder;
 
-/**
- * LEVEL 3: "A City on Edge" (উত্তাল শহর)
- * Period: July 18, 2024 (The "Complete Shutdown" — CS tear gas, sound grenades, and humanitarian aid).
- * Environment: Fog-shrouded Shahbagh / Campus perimeter road with police riot line and tire barricades.
- * Focus: Low-visibility gas navigation, delivering water/wet cloths ("পানি লাগবে, পানি?"), crowd evacuation.
- * Combat: Non-combat humanitarian aid and evasion.
- */
 public class Level3PoliceEscalation implements CampaignLevel {
 
     private DhakaCampusWorld world;
-    private final StreetDressing street = new StreetDressing(3); // T8 street identity
+    private final StreetDressing street = new StreetDressing(3);
     private CampusCrowd crowd;
     private Environment environment;
     private ShapeRenderer overlayRenderer;
@@ -45,19 +39,13 @@ public class Level3PoliceEscalation implements CampaignLevel {
     private final Array<ModelInstance> instances = new Array<>();
     private final java.util.List<float[]> colliders = new java.util.ArrayList<>();
 
-    // Objectives:
-    // 1. Collect water bottles from supply table
-    // 2. Distribute water to choking student group 1 (North Avenue)
-    // 3. Distribute water to choking student group 2 (Curzon Gate)
-    // 4. Distribute water to choking student group 3 (West Road)
-    // 5. Guide evacuated crowd to safe corridor
     private final boolean[] objectivesDone = new boolean[5];
     private final Vector3[] waypoints = {
-        new Vector3(0f, 0f, 64f),    // Water Supply Station
-        new Vector3(18f, 0f, 52f),   // Choking Group 1
-        new Vector3(-14f, 0f, 48f),  // Choking Group 2
-        new Vector3(-32f, 0f, 32f),  // Choking Group 3
-        new Vector3(0f, 0f, 76f)     // Safe Evacuation Exit
+        new Vector3(0f, 0f, 64f),
+        new Vector3(18f, 0f, 52f),
+        new Vector3(-14f, 0f, 48f),
+        new Vector3(-32f, 0f, 32f),
+        new Vector3(0f, 0f, 76f)
     };
 
     private static final String[] CHECKLIST = {
@@ -238,7 +226,7 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
     @Override
     public boolean isCombatEnabled() {
-        return false; // Level 3 is focused on humanitarian survival and evasion
+        return false;
     }
 
     @Override
@@ -256,13 +244,11 @@ public class Level3PoliceEscalation implements CampaignLevel {
         this.world = new DhakaCampusWorld(textures);
         this.overlayRenderer = new ShapeRenderer();
 
-        // Thick hazy atmosphere (white CS gas haze)
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.58f, 0.60f, 0.62f, 1f));
         DirectionalLight diffusedSun = new DirectionalLight().set(0.65f, 0.65f, 0.68f, -0.3f, -0.8f, -0.3f);
         environment.add(diffusedSun);
 
-        // Build water station & barricades
         ModelBuilder mb = new ModelBuilder();
         long attr = Usage.Position | Usage.Normal;
         Material tableMat = new Material(ColorAttribute.createDiffuse(new Color(0.42f, 0.30f, 0.18f, 1f)));
@@ -275,12 +261,10 @@ public class Level3PoliceEscalation implements CampaignLevel {
         models.add(waterTable);
         models.add(barricade);
 
-        // Water station instance
         ModelInstance wti = new ModelInstance(waterTable);
         wti.transform.setTranslation(waypoints[0]);
         instances.add(wti);
 
-        // Street barricades blocking Shahbagh arterial road
         Vector3[] bp = {
             new Vector3(-8f, 0f, 80f),
             new Vector3(0f, 0f, 82f),
@@ -296,7 +280,7 @@ public class Level3PoliceEscalation implements CampaignLevel {
         street.build(colliders);
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
-        LevelPbrMaterials.adopt(instances); // T8: legacy Diffuse colours -> PBR base colour
+        LevelPbrMaterials.adopt(instances);
         this.crowd = new CampusCrowd(16, player.getColliders());
         this.crowd.setLevelProfile(3);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
@@ -312,7 +296,6 @@ public class Level3PoliceEscalation implements CampaignLevel {
         smokeAnimTime += delta;
         gasShakeTimer += delta;
 
-        // Periodic distant sound grenade detonations shaking camera
         if (gasShakeTimer >= 6.5f) {
             gasShakeTimer = 0f;
             camera.addShake(0.12f);
@@ -338,7 +321,7 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
     @Override
     public void renderOverlays(CinematicCamera camera, float delta, int screenW, int screenH) {
-        // Volumetric white/grey CS tear gas fog overlay
+
         if (overlayRenderer != null) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
             Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -349,7 +332,6 @@ public class Level3PoliceEscalation implements CampaignLevel {
             overlayRenderer.setColor(0.92f, 0.94f, 0.96f, pulse);
             overlayRenderer.rect(0, 0, screenW, screenH);
 
-            // Ground-level thicker gas bank
             float groundGasH = screenH * 0.35f;
             Color gasBottom = new Color(0.95f, 0.96f, 0.98f, pulse * 1.8f);
             Color gasClear = new Color(0.95f, 0.96f, 0.98f, 0f);
@@ -366,15 +348,13 @@ public class Level3PoliceEscalation implements CampaignLevel {
 
     @Override
     public Environment getEnvironment() {
-        // T8: the campus world is lit by its daylight PBR environment (IBL, sun, fog, shadows) in every
-        // chapter; the old per-level environment had no IBL and rendered characters and props white.
+
         return world != null ? world.getEnvironment() : environment;
     }
 
     @Override
     public boolean onPlayerAttack(PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
-        // Backstop: combat is disabled in this level, but if a strike is ever resolved,
-        // hitting an unarmed civilian still disqualifies.
+
         String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
         if (violation != null) {
             hud.setDisqualified(true, violation);
@@ -383,12 +363,10 @@ public class Level3PoliceEscalation implements CampaignLevel {
         return false;
     }
 
-    /** Disqualification check for striking unarmed civilians (package-private for tests). */
     String checkCivilianStrike(Vector3 pos, float headingDeg) {
         return CivilianStrikeRule.check(crowd, pos, headingDeg, CivilianStrikeRule.CIVILIAN_VIOLATION);
     }
 
-    /** Test hook: inject a headless crowd without building the 3D world. */
     void setCrowdForTest(CampusCrowd crowd) {
         this.crowd = crowd;
     }

@@ -1,9 +1,6 @@
+// ei file ta dialogue settings ar preferences save kore
 package bd.spark36.app;
 
-/**
- * Read-only view of the dialogue display settings for the HUD. Kept as plain statics so the HUD
- * hook stays one line and tests can set them without a libGDX application.
- */
 public final class DialoguePrefs {
 
     private static volatile boolean subtitles = true;
@@ -30,15 +27,10 @@ public final class DialoguePrefs {
         return language;
     }
 
-    /**
-     * Whether the Bengali line of a dialogue box is drawn. The chosen language is always shown;
-     * the other language is the subtitle/translation line and follows the Subtitles switch.
-     */
     public static boolean showBengaliLine() {
         return language == GameSettings.Language.BN || subtitles;
     }
 
-    /** Whether the English line of a dialogue box is drawn (see {@link #showBengaliLine()}). */
     public static boolean showEnglishLine() {
         return language == GameSettings.Language.EN || subtitles;
     }

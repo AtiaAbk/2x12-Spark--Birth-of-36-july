@@ -1,3 +1,4 @@
+// ei file ta level checkpoint save ar restore test kore
 package bd.spark36.level;
 
 import com.badlogic.gdx.math.Vector3;
@@ -7,10 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Mid-level checkpoints (work order T5.5). Headless: Gdx.app is null, so only the
- * in-memory store is exercised; levels are constructed but never init()-ed.
- */
 public class CheckpointTest {
 
     @BeforeEach
@@ -25,7 +22,7 @@ public class CheckpointTest {
     public void testRoundTrip() {
         boolean[] flags = {true, false, true, false, false};
         CheckpointStore.save(3, flags);
-        flags[1] = true; // mutate caller copy: store must keep its own copy
+        flags[1] = true;
         assertArrayEquals(new boolean[] {true, false, true, false, false}, CheckpointStore.load(3));
         assertTrue(CheckpointStore.has(3));
         assertFalse(CheckpointStore.has(4));
@@ -76,7 +73,6 @@ public class CheckpointTest {
         assertEquals(3, fresh.getMissionTracker().getCompletedCount(), "mission tracker restored too");
         assertFalse(fresh.isLevelComplete());
 
-        // Play continues from the checkpoint
         assertTrue(fresh.onInteract(Level2ShelterObjectives.SHELTER_POS.cpy(), null, null));
         assertTrue(fresh.onInteract(Level2ShelterObjectives.SHELTER_POS.cpy(), null, null));
         assertTrue(fresh.isLevelComplete());

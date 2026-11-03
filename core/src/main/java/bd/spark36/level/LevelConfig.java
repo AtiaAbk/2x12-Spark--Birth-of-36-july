@@ -1,22 +1,14 @@
+// ei file ta active level, difficulty ar game mode config kore
 package bd.spark36.level;
 
 import com.badlogic.gdx.Gdx;
 
-/**
- * Global and per-level gameplay rules and configuration.
- * Governs combat state, game mode (Story, Arena, Exploration), and level progression.
- *
- * Project Rule (Fix Pack 01 Item 3):
- * Level 1 "Where It All Began" is peaceful: no combat, weapons, enemies or player death.
- * The combat system remains fully preserved in the codebase but is gated by this
- * configuration, being active in Arena Mode, Level 2+, or via command-line flags.
- */
 public class LevelConfig {
 
     public enum GameMode {
-        STORY,          // Peaceful campus exploration & archive recovery (Level 1)
-        ARENA,          // Technical martial arts combat arena & boss encounters
-        EXPLORATION     // Free campus tour without combat or mission constraints
+        STORY,
+        ARENA,
+        EXPLORATION
     }
 
     private static GameMode currentMode = GameMode.STORY;
@@ -27,13 +19,6 @@ public class LevelConfig {
         init();
     }
 
-    /**
-     * Initializes configuration from system properties and environment defaults.
-     * Supports:
-     *   -Dbd.spark36.mode=arena / story / exploration
-     *   -Dbd.spark36.combat=true / false
-     *   -Dbd.spark36.baseline=boss_fight
-     */
     public static void init() {
         String modeProp = System.getProperty("bd.spark36.mode");
         if (modeProp != null && !modeProp.trim().isEmpty()) {
@@ -99,19 +84,11 @@ public class LevelConfig {
         combatEnabled = true;
     }
 
-    // ==========================================
-    // CAMPAIGN PROGRESSION & UNLOCK MANAGEMENT
-    // ==========================================
     private static int unlockedLevel = 1;
 
-    /**
-     * Progress lives in spark36_save.json via {@link bd.spark36.app.GameProfile}; the old
-     * Preferences key "unlockedChapter" is only read there as a migration fallback.
-     * Without a running libGDX app (unit tests) progress stays in memory.
-     */
     public static int getUnlockedLevel() {
         if ("true".equalsIgnoreCase(System.getProperty("bd.spark36.unlockAll"))) {
-            return 6; // Developer test bypass
+            return 6;
         }
         if (Gdx.app != null) {
             try {

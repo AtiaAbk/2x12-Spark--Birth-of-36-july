@@ -1,3 +1,4 @@
+// ei file ta level 2 non lethal bhabe complete kora test kore
 package bd.spark36.level;
 
 import com.badlogic.gdx.math.Vector3;
@@ -7,10 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Level 2 must be completable with zero knockouts (reference section 8.3, work order T5).
- * Runs headlessly: the level is constructed but never init()-ed, and the HUD is null.
- */
 public class Level2NonLethalCompletionTest {
 
     private Level2StudentConfrontation level;

@@ -1,3 +1,4 @@
+// ei file ta bash jhar, pather pathor ar gash er jhar toiri kore
 package bd.spark36.world;
 
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
@@ -6,11 +7,6 @@ import com.badlogic.gdx.math.MathUtils;
 
 import java.util.Random;
 
-/**
- * Procedural forest-floor geometry: segmented bamboo canes that arch and carry hanging leaf
- * sprays, low leafy ground plants, and mossy boulders. Like {@link TreeGeometry} it writes into
- * shared mesh parts and never produces loose boxes or interpenetrating slabs.
- */
 final class GladeGeometry {
 
     private static final VertexInfo V0 = new VertexInfo();
@@ -25,22 +21,11 @@ final class GladeGeometry {
         MeshPartBuilder getPart(int needed);
     }
 
-    /**
-     * Dense Realistic Bamboo Clump (Dense_Realistic_Bamboo_Clump specification):
-     * - 5m x 5m footprint base.
-     * - 32 culms (range 24-42) clustered naturally (dense core, spreading outward).
-     * - Heights 4.5m to 10.0m (mostly 6.0m to 8.5m).
-     * - Diameters 0.035m to 0.095m (radii 0.0175m to 0.0475m) tapering toward top.
-     * - Raised nodal rings spaced every 0.22m to 0.48m.
-     * - Outward lean on perimeter culms, erect central culms.
-     * - Slender branch sprays with lanceolate bamboo leaf cards.
-     */
     static void denseBambooClump(PartSupplier culmSupplier, PartSupplier leafSupplier, float cx, float cz, long seed) {
         RNG.setSeed(TreeGeometry.mix(seed));
-        int culmCount = 32; // Specification: 24 to 42 culms
+        int culmCount = 32;
         for (int c = 0; c < culmCount; c++) {
-            // Clustered distribution within 5x5m footprint:
-            // Core culms (60%) within 1.35m radius, perimeter culms (40%) out to 2.35m
+
             float r = (c < 20) ? (0.20f + 1.15f * (float) Math.sqrt(RNG.nextFloat()))
                                : (1.35f + 1.00f * (float) Math.sqrt(RNG.nextFloat()));
             float theta = RNG.nextFloat() * MathUtils.PI2;
@@ -52,16 +37,13 @@ final class GladeGeometry {
                 if (DhakaCampusWorld.isRoadOrWalkway(x, z, 1.0f)) continue;
             }
 
-            // Heights: mostly 6.0m - 8.5m, range 4.5m - 10.0m
             float distNorm = r / 2.35f;
-            float baseH = 6.4f + (1.0f - distNorm) * 1.8f; // taller in core
+            float baseH = 6.4f + (1.0f - distNorm) * 1.8f;
             float height = MathUtils.clamp(baseH + (RNG.nextFloat() - 0.45f) * 2.4f, 4.8f, 9.6f);
 
-            // Diameters: 0.035m - 0.095m (radii: 0.0175m - 0.0475m)
             float radius = MathUtils.clamp(0.020f + (height / 10.0f) * 0.024f + (RNG.nextFloat() - 0.5f) * 0.006f, 0.018f, 0.048f);
 
-            // Natural lean: inner culms erect (lean 0.2 - 0.5m), outer culms lean outward (lean 0.8 - 1.6m)
-            float leanAngle = theta + (RNG.nextFloat() - 0.5f) * 0.4f; // radiating outward
+            float leanAngle = theta + (RNG.nextFloat() - 0.5f) * 0.4f;
             float lean = MathUtils.lerp(0.30f, 1.45f, distNorm) + RNG.nextFloat() * 0.30f;
             float tipX = x + MathUtils.cos(leanAngle) * lean;
             float tipZ = z + MathUtils.sin(leanAngle) * lean;
@@ -79,16 +61,10 @@ final class GladeGeometry {
         denseBambooClump(needed -> culm, needed -> leaves, cx, cz, seed);
     }
 
-    /**
-     * One bamboo cane: a tapering, slightly arching stem built from segments with a raised ring at
-     * every node (spaced 0.22m to 0.48m), carrying slender branches that end in hanging leaf sprays over its upper
-     * half. {@code culm} takes the stem meshes (bamboo bark texture), {@code leaves} the sprays
-     * (bamboo leaf atlas).
-     */
     static void bambooCane(MeshPartBuilder culm, MeshPartBuilder leaves, float x, float z,
                            float height, float lean, float leanAngle, float radius, long seed) {
         RNG.setSeed(TreeGeometry.mix(seed));
-        // Node spacing between 0.22m and 0.48m (target ~0.32m)
+
         int nodes = Math.max(12, Math.round(height / 0.32f));
         float lx = MathUtils.cos(leanAngle) * lean;
         float lz = MathUtils.sin(leanAngle) * lean;
@@ -96,7 +72,7 @@ final class GladeGeometry {
         float[] px = new float[nodes + 1], py = new float[nodes + 1], pz = new float[nodes + 1], pr = new float[nodes + 1];
         for (int i = 0; i <= nodes; i++) {
             float t = (float) i / nodes;
-            px[i] = x + lx * (t * t * 0.75f + t * 0.25f); // graceful upper arching
+            px[i] = x + lx * (t * t * 0.75f + t * 0.25f);
             py[i] = height * t;
             pz[i] = z + lz * (t * t * 0.75f + t * 0.25f);
             pr[i] = radius * (1f - 0.55f * t);
@@ -104,12 +80,11 @@ final class GladeGeometry {
 
         for (int i = 0; i < nodes; i++) {
             TreeGeometry.limb(culm, px[i], py[i], pz[i], pr[i], px[i + 1], py[i + 1], pz[i + 1], pr[i + 1], 6);
-            // Raised nodal ring: swollen band at each internode joint
+
             TreeGeometry.limb(culm, px[i], py[i] - 0.025f, pz[i], pr[i] * 1.35f,
                 px[i], py[i] + 0.025f, pz[i], pr[i] * 1.35f, 6);
         }
 
-        // Branching begins around 38% height (lower culm remains clean cane)
         int firstBranchNode = (int) (nodes * 0.38f);
         for (int i = firstBranchNode; i <= nodes; i++) {
             float t = (float) i / nodes;
@@ -128,11 +103,6 @@ final class GladeGeometry {
         }
     }
 
-    /**
-     * An authentic botanical bamboo leaf spray matching Image 2:
-     * Slopes outward and downward along the branchlet with graceful lateral spread,
-     * displaying the slender lanceolate blades with monocot parallel venation.
-     */
     private static void spray(MeshPartBuilder mpb, float x, float y, float z, float yaw, float size) {
         int cell = RNG.nextInt(4);
         float u0 = (cell % 2) * 0.5f, u1 = u0 + 0.5f;
@@ -142,14 +112,11 @@ final class GladeGeometry {
         float halfW = size * 0.45f;
         float droop = -size * 0.38f;
 
-        // Direction vectors
         float dx = MathUtils.cos(yaw), dz = MathUtils.sin(yaw);
-        float px = -dz, pz = dx; // perpendicular
+        float px = -dz, pz = dx;
 
-        // Upward-biased normal for rich daylight wrap
         float nx = -dx * 0.15f, ny = 0.96f, nz = -dz * 0.15f;
 
-        // Primary arching card extending along the branchlet
         float tipX = x + dx * reach, tipY = y + droop, tipZ = z + dz * reach;
         V0.setPos(tipX - px * halfW, tipY, tipZ - pz * halfW).setNor(nx, ny, nz).setUV(u0, v1);
         V1.setPos(tipX + px * halfW, tipY, tipZ + pz * halfW).setNor(nx, ny, nz).setUV(u1, v1);
@@ -157,12 +124,11 @@ final class GladeGeometry {
         V3.setPos(x - px * halfW * 0.35f, y + 0.05f * size, z - pz * halfW * 0.35f).setNor(nx, ny, nz).setUV(u0, v0);
         mpb.rect(V0, V1, V2, V3);
 
-        // Crossing volumetric card rotated ~60° with secondary cell
         int cell2 = (cell + 1) % 4;
         float u0b = (cell2 % 2) * 0.5f, u1b = u0b + 0.5f;
         float v0b = (cell2 / 2) * 0.5f, v1b = v0b + 0.5f;
 
-        float ang2 = yaw + 1.05f; // ~60 degrees
+        float ang2 = yaw + 1.05f;
         float dx2 = MathUtils.cos(ang2), dz2 = MathUtils.sin(ang2);
         float px2 = -dz2, pz2 = dx2;
         float tipX2 = x + dx2 * reach * 0.88f, tipY2 = y + droop * 0.92f, tipZ2 = z + dz2 * reach * 0.88f;
@@ -173,7 +139,6 @@ final class GladeGeometry {
         V3.setPos(x - px2 * halfW * 0.3f, y + 0.04f * size, z - px2 * halfW * 0.3f).setNor(nx, ny, nz).setUV(u0b, v0b);
         mpb.rect(V0, V1, V2, V3);
 
-        // Counter-crossing card rotated ~ -55°
         float ang3 = yaw - 0.95f;
         float dx3 = MathUtils.cos(ang3), dz3 = MathUtils.sin(ang3);
         float px3 = -dz3, pz3 = dx3;
@@ -186,15 +151,11 @@ final class GladeGeometry {
         mpb.rect(V0, V1, V2, V3);
     }
 
-    /**
-     * A low leafy plant: a rosette of leaf cards that rise from one point at random tilts, like the
-     * ground cover in a woodland. Uses cells 0 (single leaf) and 1 (leaf fan) of the leaf atlas.
-     */
     static void plant(MeshPartBuilder mpb, float x, float z, float size, int leafCount, long seed) {
         RNG.setSeed(TreeGeometry.mix(seed));
         for (int j = 0; j < leafCount; j++) {
             float yaw = (j + RNG.nextFloat() * 0.8f) * MathUtils.PI2 / leafCount;
-            float tilt = 0.30f + 0.55f * RNG.nextFloat();      // radians above the ground
+            float tilt = 0.30f + 0.55f * RNG.nextFloat();
             float len = size * (0.75f + 0.55f * RNG.nextFloat());
             float hw = len * 0.42f;
 
@@ -203,7 +164,6 @@ final class GladeGeometry {
             float az = MathUtils.sin(yaw) * MathUtils.cos(tilt);
             float wx = -MathUtils.sin(yaw), wz = MathUtils.cos(yaw);
 
-            // Slight upward-biased normal so the plant catches the sky, whatever its facing
             float nx = -ax * 0.2f, ny = 1f, nz = -az * 0.2f;
             int cell = RNG.nextFloat() < 0.7f ? 0 : 1;
             float u0 = (cell % 2) * 0.5f, u1 = u0 + 0.5f;
@@ -218,21 +178,13 @@ final class GladeGeometry {
         }
     }
 
-    /**
-     * A boulder with a moss cap: a lumpy ellipsoid sunk into the ground plus a smaller dark-green
-     * clump on top, so the rock reads as weathered and lived-in rather than a bare sphere.
-     */
     static void rock(MeshPartBuilder body, MeshPartBuilder moss, float x, float z,
                      float rx, float ry, float rz, float seed) {
-        float cy = ry * 0.42f; // the flattened lower half sinks below the ground line
+        float cy = ry * 0.42f;
         TreeGeometry.clump(body, x, cy, z, rx, ry, rz, seed);
         TreeGeometry.clump(moss, x, cy + ry * 0.62f, z, rx * 0.70f, ry * 0.34f, rz * 0.70f, seed + 2f);
     }
 
-    /**
-     * Flat ribbon along a polyline of (x, z) points, {@code halfWidth} to each side, for a path.
-     * U runs across the ribbon (0..1); V repeats every {@code tileLength} metres along it.
-     */
     static void ribbon(MeshPartBuilder mpb, float[][] points, float halfWidth, float y, float tileLength) {
         float run = 0f;
         for (int i = 0; i < points.length - 1; i++) {

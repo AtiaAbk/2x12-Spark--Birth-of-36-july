@@ -1,3 +1,4 @@
+// ei file ta curzon hall er daroan ar gate er structure banay
 package bd.spark36.world.landmarks;
 
 import com.badlogic.gdx.graphics.GL20;
@@ -9,29 +10,10 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 
-/**
- * Procedural 3D Architectural Opening Generator for Dhaka University Curzon Hall.
- * Constructs watertight Indo-Saracenic / Mughal-Gothic openings with:
- * - Structural reveal jambs (depth D = 0.22m)
- * - Multi-faceted arched soffit along two-centred pointed arch
- * - Graceful curved stone archivolt ring of constant thickness following the pointed arch
- * - Brick casing on front face and outer sides that seamlessly fuses with facade brickwork
- * - Projecting stone sill with chamfered drip edge & corbel brackets / stone threshold
- * - Recessed glazing plane or carved teak double doors set back inside the reveal
- */
 public class OpeningBuilder {
 
     private static final int ARCH_SEGMENTS = 16;
 
-    /**
-     * Builds a watertight 3D arched colonial window opening:
-     * - Recessed glazing plane at local Z = 0.01m
-     * - Left & right reveal jambs of depth revealDepth
-     * - 16-facet pointed arched soffit lining the arch head
-     * - Stone archivolt ring & jamb casings on front facade at Z = revealDepth
-     * - Exterior brick casing flush with wall
-     * - Projecting stone sill at base with twin carved corbel brackets
-     */
     public static Model build3DWindowOpening(ModelBuilder mb, float width, float height,
                                              float revealDepth, float architraveWidth,
                                              Material wallMat, Material trimMat, Material glassMat, long attr) {
@@ -42,7 +24,6 @@ public class OpeningBuilder {
         float yBot = -hh;
         float yTop = hh;
 
-        // Sub-millimeter calibrated inner void matching colonialWindow procedural texture
         float hwIn = 0.87f;
         float yBotIn = yBot + 0.28f;
         float ySpring = yBot + 2.42f;
@@ -53,7 +34,6 @@ public class OpeningBuilder {
         float r = hwIn + d;
         float aw = architraveWidth;
 
-        // Compute 2D contour points & outward unit normals along pointed arch
         Vector3[] archPoints = new Vector3[ARCH_SEGMENTS + 1];
         Vector3[] archOutVectors = new Vector3[ARCH_SEGMENTS + 1];
         for (int i = 0; i <= ARCH_SEGMENTS; i++) {
@@ -78,10 +58,8 @@ public class OpeningBuilder {
             archOutVectors[i] = new Vector3(ux, uy, 0f);
         }
 
-        // --- Part 1: Brick Outer Casing (Fuses seamlessly into wall) ---
         MeshPartBuilder mpbWall = mb.part("brick", GL20.GL_TRIANGLES, attr, wallMat);
 
-        // Outer Left Side (-X)
         buildQuad(mpbWall,
             -hw, yBot, 0f,
             -hw, yBot, revealDepth,
@@ -89,7 +67,6 @@ public class OpeningBuilder {
             -hw, yTop, 0f,
             -1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // Outer Right Side (+X)
         buildQuad(mpbWall,
             hw, yBot, revealDepth,
             hw, yBot, 0f,
@@ -97,7 +74,6 @@ public class OpeningBuilder {
             hw, yTop, revealDepth,
             1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // Outer Top Side (+Y)
         buildQuad(mpbWall,
             -hw, yTop, revealDepth,
             hw, yTop, revealDepth,
@@ -105,7 +81,6 @@ public class OpeningBuilder {
             -hw, yTop, 0f,
             0f, 1f, 0f, 0f, 1f, 0f, 1f);
 
-        // Outer Bottom Side (-Y)
         buildQuad(mpbWall,
             -hw, yBot, 0f,
             hw, yBot, 0f,
@@ -113,11 +88,9 @@ public class OpeningBuilder {
             -hw, yBot, revealDepth,
             0f, -1f, 0f, 0f, 1f, 0f, 1f);
 
-        // Front Face Brick Fill (at Z = revealDepth, filling between stone casing and outer bounds)
         float outerXLeft = -hwIn - aw;
         float outerXRight = hwIn + aw;
 
-        // Far-left brick strip
         if (-hw < outerXLeft) {
             buildQuad(mpbWall,
                 -hw, yBot, revealDepth,
@@ -126,7 +99,7 @@ public class OpeningBuilder {
                 -hw, yTop, revealDepth,
                 0f, 0f, 1f, 0f, 1f, 0f, 1f);
         }
-        // Far-right brick strip
+
         if (outerXRight < hw) {
             buildQuad(mpbWall,
                 outerXRight, yBot, revealDepth,
@@ -136,7 +109,6 @@ public class OpeningBuilder {
                 0f, 0f, 1f, 0f, 1f, 0f, 1f);
         }
 
-        // Left spandrel quads between archivolt and outerXLeft
         for (int i = 0; i < ARCH_SEGMENTS / 2; i++) {
             Vector3 p0 = archPoints[i];
             Vector3 p1 = archPoints[i + 1];
@@ -155,7 +127,6 @@ public class OpeningBuilder {
                 0f, 0f, 1f, 0f, 1f, 0f, 1f);
         }
 
-        // Right spandrel quads between archivolt and outerXRight
         for (int i = ARCH_SEGMENTS / 2; i < ARCH_SEGMENTS; i++) {
             Vector3 p0 = archPoints[i];
             Vector3 p1 = archPoints[i + 1];
@@ -174,7 +145,6 @@ public class OpeningBuilder {
                 0f, 0f, 1f, 0f, 1f, 0f, 1f);
         }
 
-        // Top brick spandrel above arch
         buildQuad(mpbWall,
             outerXLeft, yApex + aw, revealDepth,
             outerXRight, yApex + aw, revealDepth,
@@ -182,7 +152,6 @@ public class OpeningBuilder {
             outerXLeft, yTop, revealDepth,
             0f, 0f, 1f, 0f, 1f, 0f, 1f);
 
-        // Bottom brick apron below sill
         buildQuad(mpbWall,
             outerXLeft, yBot, revealDepth,
             outerXRight, yBot, revealDepth,
@@ -190,10 +159,8 @@ public class OpeningBuilder {
             outerXLeft, yBotIn, revealDepth,
             0f, 0f, 1f, 0f, 1f, 0f, 1f);
 
-        // --- Part 2: Stone Trim, Reveals, Soffit, Sill & Brackets ---
         MeshPartBuilder mpbTrim = mb.part("trim", GL20.GL_TRIANGLES, attr, trimMat);
 
-        // 1. Left Vertical Jamb (facing +X into the opening)
         buildQuad(mpbTrim,
             -hwIn, yBotIn, revealDepth,
             -hwIn, yBotIn, 0f,
@@ -201,7 +168,6 @@ public class OpeningBuilder {
             -hwIn, ySpring, revealDepth,
             1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // 2. Right Vertical Jamb (facing -X into the opening)
         buildQuad(mpbTrim,
             hwIn, yBotIn, 0f,
             hwIn, yBotIn, revealDepth,
@@ -209,7 +175,6 @@ public class OpeningBuilder {
             hwIn, ySpring, 0f,
             -1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // 3. Arched Soffit (underside of pointed arch head, normal pointing down/in)
         for (int i = 0; i < ARCH_SEGMENTS; i++) {
             Vector3 p0 = archPoints[i];
             Vector3 p1 = archPoints[i + 1];
@@ -226,8 +191,6 @@ public class OpeningBuilder {
                 (float) i / ARCH_SEGMENTS, (float) (i + 1) / ARCH_SEGMENTS, 0f, 1f);
         }
 
-        // 4. Front Face Continuous Stone Archivolt & Jamb Casings (at Z = revealDepth, facing +Z)
-        // Left jamb casing band
         buildQuad(mpbTrim,
             -hwIn - aw, yBotIn, revealDepth,
             -hwIn, yBotIn, revealDepth,
@@ -235,7 +198,6 @@ public class OpeningBuilder {
             -hwIn - aw, ySpring, revealDepth,
             0f, 0f, 1f, 0f, 1f, 0f, 1f);
 
-        // Right jamb casing band
         buildQuad(mpbTrim,
             hwIn, yBotIn, revealDepth,
             hwIn + aw, yBotIn, revealDepth,
@@ -243,7 +205,6 @@ public class OpeningBuilder {
             hwIn, ySpring, revealDepth,
             0f, 0f, 1f, 0f, 1f, 0f, 1f);
 
-        // Continuous curved stone archivolt ring following the pointed arch
         for (int i = 0; i < ARCH_SEGMENTS; i++) {
             Vector3 p0 = archPoints[i];
             Vector3 p1 = archPoints[i + 1];
@@ -263,38 +224,25 @@ public class OpeningBuilder {
                 0f, 0f, 1f, 0f, 1f, 0f, 1f);
         }
 
-        // 5. Carved Keystone at Arch Apex
         float kw = 0.22f, kh = 0.26f, kd = 0.04f;
         buildBox(mpbTrim, 0f, yApex + aw * 0.5f, revealDepth + kd * 0.5f, kw, kh, kd);
 
-        // 6. Projecting Stone Sill with Chamfered Drip Edge at Window Base
         float sillW = 2.36f;
         float sillH = 0.16f;
         float sillD = revealDepth + 0.14f;
         buildBox(mpbTrim, 0f, yBotIn - sillH * 0.5f, sillD * 0.5f - 0.02f, sillW, sillH, sillD);
 
-        // 7. Twin Carved Corbel Brackets beneath the Sill
         float cbW = 0.18f, cbH = 0.26f, cbD = revealDepth;
         float cbX = 0.70f;
         buildBox(mpbTrim, -cbX, yBotIn - sillH - cbH * 0.5f, cbD * 0.5f, cbW, cbH, cbD);
         buildBox(mpbTrim,  cbX, yBotIn - sillH - cbH * 0.5f, cbD * 0.5f, cbW, cbH, cbD);
 
-        // --- Part 3: Recessed Glazing Plane (facing +Z at local Z = 0.01m) ---
         MeshPartBuilder mpbGlass = mb.part("glazing", GL20.GL_TRIANGLES, attr, glassMat);
         buildUprightQuad(mpbGlass, width, height, 0.01f);
 
         return mb.end();
     }
 
-    /**
-     * Builds a watertight 3D arched colonial double door opening:
-     * - Recessed Burma teak door leaves at local Z = 0.01m
-     * - Left & right reveal jambs of depth revealDepth
-     * - 16-facet pointed arched soffit lining the arch head
-     * - Stone archivolt ring & jamb casings on front facade at Z = revealDepth
-     * - Exterior brick casing flush with wall
-     * - Stone threshold slab at ground level
-     */
     public static Model build3DDoorOpening(ModelBuilder mb, float width, float height,
                                            float revealDepth, float architraveWidth,
                                            Material wallMat, Material trimMat, Material doorMat, long attr) {
@@ -305,7 +253,6 @@ public class OpeningBuilder {
         float yBot = -hh;
         float yTop = hh;
 
-        // Sub-millimeter calibrated inner void matching teakDoorTexture procedural texture
         float hwIn = 0.87f;
         float yBotIn = yBot;
         float ySpring = yBot + 2.38f;
@@ -316,7 +263,6 @@ public class OpeningBuilder {
         float r = hwIn + d;
         float aw = architraveWidth;
 
-        // Compute 2D contour points & outward unit normals along pointed arch head
         Vector3[] archPoints = new Vector3[ARCH_SEGMENTS + 1];
         Vector3[] archOutVectors = new Vector3[ARCH_SEGMENTS + 1];
         for (int i = 0; i <= ARCH_SEGMENTS; i++) {
@@ -341,10 +287,8 @@ public class OpeningBuilder {
             archOutVectors[i] = new Vector3(ux, uy, 0f);
         }
 
-        // --- Part 1: Brick Outer Casing (Fuses seamlessly into wall) ---
         MeshPartBuilder mpbWall = mb.part("brick", GL20.GL_TRIANGLES, attr, wallMat);
 
-        // Outer Left Side (-X)
         buildQuad(mpbWall,
             -hw, yBot, 0f,
             -hw, yBot, revealDepth,
@@ -352,7 +296,6 @@ public class OpeningBuilder {
             -hw, yTop, 0f,
             -1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // Outer Right Side (+X)
         buildQuad(mpbWall,
             hw, yBot, revealDepth,
             hw, yBot, 0f,
@@ -360,7 +303,6 @@ public class OpeningBuilder {
             hw, yTop, revealDepth,
             1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // Outer Top Side (+Y)
         buildQuad(mpbWall,
             -hw, yTop, revealDepth,
             hw, yTop, revealDepth,
@@ -368,7 +310,6 @@ public class OpeningBuilder {
             -hw, yTop, 0f,
             0f, 1f, 0f, 0f, 1f, 0f, 1f);
 
-        // Outer Bottom Side (-Y)
         buildQuad(mpbWall,
             -hw, yBot, 0f,
             hw, yBot, 0f,
@@ -376,7 +317,6 @@ public class OpeningBuilder {
             -hw, yBot, revealDepth,
             0f, -1f, 0f, 0f, 1f, 0f, 1f);
 
-        // Front Face Brick Fill
         float outerXLeft = -hwIn - aw;
         float outerXRight = hwIn + aw;
 
@@ -397,7 +337,6 @@ public class OpeningBuilder {
                 0f, 0f, 1f, 0f, 1f, 0f, 1f);
         }
 
-        // Left spandrel quads between archivolt and outerXLeft
         for (int i = 0; i < ARCH_SEGMENTS / 2; i++) {
             Vector3 p0 = archPoints[i];
             Vector3 p1 = archPoints[i + 1];
@@ -416,7 +355,6 @@ public class OpeningBuilder {
                 0f, 0f, 1f, 0f, 1f, 0f, 1f);
         }
 
-        // Right spandrel quads between archivolt and outerXRight
         for (int i = ARCH_SEGMENTS / 2; i < ARCH_SEGMENTS; i++) {
             Vector3 p0 = archPoints[i];
             Vector3 p1 = archPoints[i + 1];
@@ -435,7 +373,6 @@ public class OpeningBuilder {
                 0f, 0f, 1f, 0f, 1f, 0f, 1f);
         }
 
-        // Top brick spandrel above arch
         buildQuad(mpbWall,
             outerXLeft, yApex + aw, revealDepth,
             outerXRight, yApex + aw, revealDepth,
@@ -443,10 +380,8 @@ public class OpeningBuilder {
             outerXLeft, yTop, revealDepth,
             0f, 0f, 1f, 0f, 1f, 0f, 1f);
 
-        // --- Part 2: Stone Trim, Reveals, Soffit & Threshold ---
         MeshPartBuilder mpbTrim = mb.part("trim", GL20.GL_TRIANGLES, attr, trimMat);
 
-        // 1. Left Vertical Jamb (facing +X into the opening)
         buildQuad(mpbTrim,
             -hwIn, yBotIn, revealDepth,
             -hwIn, yBotIn, 0f,
@@ -454,7 +389,6 @@ public class OpeningBuilder {
             -hwIn, ySpring, revealDepth,
             1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // 2. Right Vertical Jamb (facing -X into the opening)
         buildQuad(mpbTrim,
             hwIn, yBotIn, 0f,
             hwIn, yBotIn, revealDepth,
@@ -462,7 +396,6 @@ public class OpeningBuilder {
             hwIn, ySpring, 0f,
             -1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // 3. Arched Soffit (normal pointing down/in)
         for (int i = 0; i < ARCH_SEGMENTS; i++) {
             Vector3 p0 = archPoints[i];
             Vector3 p1 = archPoints[i + 1];
@@ -479,7 +412,6 @@ public class OpeningBuilder {
                 (float) i / ARCH_SEGMENTS, (float) (i + 1) / ARCH_SEGMENTS, 0f, 1f);
         }
 
-        // 4. Front Face Continuous Stone Archivolt & Jamb Casings (at Z = revealDepth, facing +Z)
         buildQuad(mpbTrim,
             -hwIn - aw, yBotIn, revealDepth,
             -hwIn, yBotIn, revealDepth,
@@ -513,29 +445,20 @@ public class OpeningBuilder {
                 0f, 0f, 1f, 0f, 1f, 0f, 1f);
         }
 
-        // Carved Keystone at Arch Apex
         float kw = 0.24f, kh = 0.28f, kd = 0.04f;
         buildBox(mpbTrim, 0f, yApex + aw * 0.5f, revealDepth + kd * 0.5f, kw, kh, kd);
 
-        // 5. Stone Threshold at Door Base
         float threshW = width + 0.16f;
         float threshH = 0.10f;
         float threshD = revealDepth + 0.08f;
         buildBox(mpbTrim, 0f, yBot + threshH * 0.5f, threshD * 0.5f - 0.02f, threshW, threshH, threshD);
 
-        // --- Part 3: Recessed Teak Double Door Plane (facing +Z at local Z = 0.01m) ---
         MeshPartBuilder mpbDoor = mb.part("door", GL20.GL_TRIANGLES, attr, doorMat);
         buildUprightQuad(mpbDoor, width, height, 0.01f);
 
         return mb.end();
     }
 
-    /**
-     * Builds the Grand Central Portal (Monumental Pointed Iwan Archway):
-     * - Monumental outer Iwan archway with deep jambs (depth revealDepth)
-     * - Outer molded stone architraves and archivolt
-     * - Recessed ceremonial double gates at local Z = 0.01m
-     */
     public static Model build3DGrandPortal(ModelBuilder mb, float width, float height,
                                            float revealDepth, float architraveWidth,
                                            Material frameMat, Material portalMat, long attr) {
@@ -556,7 +479,6 @@ public class OpeningBuilder {
 
         MeshPartBuilder mpbFrame = mb.part("frame", GL20.GL_TRIANGLES, attr, frameMat);
 
-        // Left Jamb
         buildQuad(mpbFrame,
             -hwIn, yBot, revealDepth,
             -hwIn, yBot, 0f,
@@ -564,7 +486,6 @@ public class OpeningBuilder {
             -hwIn, ySpring, revealDepth,
             1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // Right Jamb
         buildQuad(mpbFrame,
             hwIn, yBot, 0f,
             hwIn, yBot, revealDepth,
@@ -572,7 +493,6 @@ public class OpeningBuilder {
             hwIn, ySpring, 0f,
             -1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // Pointed Arch Soffit
         Vector3[] archPoints = new Vector3[ARCH_SEGMENTS + 1];
         Vector3[] archOutVectors = new Vector3[ARCH_SEGMENTS + 1];
         for (int i = 0; i <= ARCH_SEGMENTS; i++) {
@@ -612,7 +532,6 @@ public class OpeningBuilder {
                 inN.x, inN.y, inN.z, 0f, 1f, 0f, 1f);
         }
 
-        // Front Face Outer Archivolt & Jamb Casings
         buildQuad(mpbFrame,
             -hwIn - aw, yBot, revealDepth,
             -hwIn, yBot, revealDepth,
@@ -646,19 +565,12 @@ public class OpeningBuilder {
                 0f, 0f, 1f, 0f, 1f, 0f, 1f);
         }
 
-        // Recessed Portal Gates
         MeshPartBuilder mpbPortal = mb.part("portal", GL20.GL_TRIANGLES, attr, portalMat);
         buildUprightQuad(mpbPortal, width, height, 0.01f);
 
         return mb.end();
     }
 
-    /**
-     * Builds the Portico Triple Window 3D arcade:
-     * - Outer architrave surround and 2 dividing vertical stone colonnette piers
-     * - Deep reveal jambs and arched soffits
-     * - Recessed triple window glazing plane at local Z = 0.01m
-     */
     public static Model build3DPorticoTripleWindow(ModelBuilder mb, float totalWidth, float height,
                                                    float revealDepth, float architraveWidth,
                                                    Material frameMat, Material tripleWinMat, long attr) {
@@ -672,7 +584,6 @@ public class OpeningBuilder {
 
         MeshPartBuilder mpbFrame = mb.part("frame", GL20.GL_TRIANGLES, attr, frameMat);
 
-        // Outer Left Jamb
         buildQuad(mpbFrame,
             -hw, yBot, revealDepth,
             -hw, yBot, 0f,
@@ -680,7 +591,6 @@ public class OpeningBuilder {
             -hw, yTop, revealDepth,
             1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // Outer Right Jamb
         buildQuad(mpbFrame,
             hw, yBot, 0f,
             hw, yBot, revealDepth,
@@ -688,7 +598,6 @@ public class OpeningBuilder {
             hw, yTop, 0f,
             -1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // Top Soffit Header
         buildQuad(mpbFrame,
             -hw, yTop, revealDepth,
             hw, yTop, revealDepth,
@@ -696,21 +605,17 @@ public class OpeningBuilder {
             -hw, yTop, 0f,
             0f, -1f, 0f, 0f, 1f, 0f, 1f);
 
-        // Two Dividing Stone Colonnette Mullion Piers separating the 3 arches
         float pierWidth = 0.20f;
         float pier1X = -hw + totalWidth * 0.333f;
         float pier2X = -hw + totalWidth * 0.666f;
         buildBox(mpbFrame, pier1X, 0f, revealDepth * 0.5f, pierWidth, height, revealDepth);
         buildBox(mpbFrame, pier2X, 0f, revealDepth * 0.5f, pierWidth, height, revealDepth);
 
-        // Recessed Triple Window Glazing Plane
         MeshPartBuilder mpbWin = mb.part("window", GL20.GL_TRIANGLES, attr, tripleWinMat);
         buildUprightQuad(mpbWin, totalWidth, height, 0.01f);
 
         return mb.end();
     }
-
-    // --- Helper Utilities ---
 
     private static void buildUprightQuad(MeshPartBuilder mpb, float width, float height, float z) {
         float hw = width * 0.5f;
@@ -745,7 +650,6 @@ public class OpeningBuilder {
         float hh = h * 0.5f;
         float hd = d * 0.5f;
 
-        // Front (+Z)
         buildQuad(mpb,
             cx - hw, cy - hh, cz + hd,
             cx + hw, cy - hh, cz + hd,
@@ -753,7 +657,6 @@ public class OpeningBuilder {
             cx - hw, cy + hh, cz + hd,
             0f, 0f, 1f, 0f, 1f, 0f, 1f);
 
-        // Back (-Z)
         buildQuad(mpb,
             cx + hw, cy - hh, cz - hd,
             cx - hw, cy - hh, cz - hd,
@@ -761,7 +664,6 @@ public class OpeningBuilder {
             cx + hw, cy + hh, cz - hd,
             0f, 0f, -1f, 0f, 1f, 0f, 1f);
 
-        // Left (-X)
         buildQuad(mpb,
             cx - hw, cy - hh, cz - hd,
             cx - hw, cy - hh, cz + hd,
@@ -769,7 +671,6 @@ public class OpeningBuilder {
             cx - hw, cy + hh, cz - hd,
             -1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // Right (+X)
         buildQuad(mpb,
             cx + hw, cy - hh, cz + hd,
             cx + hw, cy - hh, cz - hd,
@@ -777,7 +678,6 @@ public class OpeningBuilder {
             cx + hw, cy + hh, cz + hd,
             1f, 0f, 0f, 0f, 1f, 0f, 1f);
 
-        // Top (+Y)
         buildQuad(mpb,
             cx - hw, cy + hh, cz + hd,
             cx + hw, cy + hh, cz + hd,
@@ -785,7 +685,6 @@ public class OpeningBuilder {
             cx - hw, cy + hh, cz - hd,
             0f, 1f, 0f, 0f, 1f, 0f, 1f);
 
-        // Bottom (-Y)
         buildQuad(mpb,
             cx - hw, cy - hh, cz - hd,
             cx + hw, cy - hh, cz - hd,

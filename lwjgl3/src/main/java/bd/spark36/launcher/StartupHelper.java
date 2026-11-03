@@ -1,3 +1,4 @@
+// ei file ta mac ar onno os e jvm ar lwjgl setup thik kore
 package bd.spark36.launcher;
 
 import com.badlogic.gdx.Version;
@@ -13,10 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Startup helper for LWJGL 3 desktop backend.
- * Ensures -XstartOnFirstThread is passed on macOS and handles driver workarounds on Linux/Windows.
- */
 public class StartupHelper {
 
     private StartupHelper() {}

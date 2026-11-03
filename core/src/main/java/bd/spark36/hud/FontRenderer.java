@@ -1,3 +1,4 @@
+// ei file ta screen e sundor bangla ar english font render kore
 package bd.spark36.hud;
 
 import com.badlogic.gdx.Gdx;
@@ -8,10 +9,6 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.utils.Disposable;
 
-/**
- * Manages crisp FreeType vector fonts for the Where Winds Meet HUD.
- * Renders multiple resolutions cleanly without pixelation.
- */
 public class FontRenderer implements Disposable {
 
     public BitmapFont titleFont;
@@ -55,7 +52,6 @@ public class FontRenderer implements Disposable {
 
                 String chars = EXTENDED_CHARS;
 
-                // Title: large bold for modal titles and headers
                 p.size = 28;
                 p.characters = chars;
                 p.color = Color.WHITE;
@@ -66,7 +62,6 @@ public class FontRenderer implements Disposable {
                 p.shadowColor = new Color(0f, 0f, 0f, 0.75f);
                 titleFont = boldGen.generateFont(p);
 
-                // Header: medium bold for quest cards and titles
                 p = new FreeTypeFontParameter();
                 p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
                 p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
@@ -78,7 +73,6 @@ public class FontRenderer implements Disposable {
                 p.borderColor = new Color(0f, 0f, 0f, 0.85f);
                 headerFont = boldGen.generateFont(p);
 
-                // Body: regular text for narrative stories
                 p = new FreeTypeFontParameter();
                 p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
                 p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
@@ -91,7 +85,6 @@ public class FontRenderer implements Disposable {
                 p.shadowColor = new Color(0f, 0f, 0f, 0.80f);
                 bodyFont = regularGen.generateFont(p);
 
-                // Small: UI badges, distance counters, sub-labels
                 p = new FreeTypeFontParameter();
                 p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
                 p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
@@ -104,7 +97,6 @@ public class FontRenderer implements Disposable {
                 p.shadowColor = new Color(0f, 0f, 0f, 0.80f);
                 smallFont = regularGen.generateFont(p);
 
-                // Prompt: interactive key prompts e.g. "[E] Inspect Memorial"
                 p = new FreeTypeFontParameter();
                 p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
                 p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
@@ -116,17 +108,15 @@ public class FontRenderer implements Disposable {
                 p.borderColor = new Color(0f, 0f, 0f, 0.85f);
                 promptFont = boldGen.generateFont(p);
 
-                // Key font: for keycaps icons [W], [SHIFT]
                 p = new FreeTypeFontParameter();
                 p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
                 p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
                 p.genMipMaps = true;
                 p.characters = chars;
                 p.size = 13;
-                p.color = new Color(1f, 0.88f, 0.45f, 1f); // Warm gold
+                p.color = new Color(1f, 0.88f, 0.45f, 1f);
                 keyFont = boldGen.generateFont(p);
 
-                // Load Noto Sans Bengali if present
                 if (benFile.exists()) {
                     bengaliGen = new FreeTypeFontGenerator(benFile);
                     FreeTypeFontParameter bp = new FreeTypeFontParameter();
@@ -152,7 +142,6 @@ public class FontRenderer implements Disposable {
             }
         }
 
-        // Fallback default fonts
         titleFont = new BitmapFont();
         titleFont.getData().setScale(1.5f);
         headerFont = new BitmapFont();
@@ -166,10 +155,6 @@ public class FontRenderer implements Disposable {
         bengaliTitleFont = titleFont;
     }
 
-    /**
-     * Scans critical HUD and dialogue strings against loaded font glyph sets
-     * to guarantee zero missing-glyph boxes ("▯") at runtime.
-     */
     public void runStartupGlyphCheck() {
         String[] testStrings = {
             "ACTIVE MISSION: 01 / 05",

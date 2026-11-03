@@ -1,3 +1,4 @@
+// ei file ta level er pbr material ar texture bind kore
 package bd.spark36.level;
 
 import com.badlogic.gdx.graphics.Color;
@@ -9,12 +10,6 @@ import bd.spark36.world.landmarks.StreetPropKit;
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 
-/**
- * T8: Level 3–6 props were built with legacy {@code ColorAttribute.Diffuse} materials, which the
- * gdx-gltf PBR shader ignores (it reads {@code BaseColorFactor}), so tables, barricades, sandbags
- * and the APC rendered white or flat grey. This gives each such material the equivalent PBR base
- * colour (the legacy values are sRGB picks, stored linear) and a matte roughness.
- */
 public final class LevelPbrMaterials {
 
     private LevelPbrMaterials() {}

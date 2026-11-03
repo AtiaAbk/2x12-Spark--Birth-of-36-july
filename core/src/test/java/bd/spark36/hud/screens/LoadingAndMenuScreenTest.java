@@ -1,3 +1,4 @@
+// ei file ta loading screen ar menu screen logic test kore
 package bd.spark36.hud.screens;
 
 import org.junit.jupiter.api.DisplayName;
@@ -5,9 +6,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for LoadingScreen state machine and MainMenuScreen chapter formatting.
- */
 public class LoadingAndMenuScreenTest {
 
     @Test

@@ -1,3 +1,4 @@
+// ei file ta photo mode er camera angle ar hud hide kora manage kore
 package bd.spark36.capture;
 
 import bd.spark36.camera.CinematicCamera;
@@ -7,17 +8,6 @@ import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 
-/**
- * F10 photo mode: a free orbit camera around the player while the simulation is frozen.
- *
- * <p>It drives the {@link PerspectiveCamera} owned by {@link CinematicCamera} directly and never
- * calls {@code CinematicCamera.update}, so the follow camera's own state (yaw, pitch, distance,
- * smoothing, fixed views) is untouched; on exit the camera's position, direction, up vector and
- * field of view are restored, and the next normal frame continues exactly where it left off.
- *
- * <p>Controls: mouse or WASD/arrows orbit, wheel or +/- (PgUp/PgDn) zoom, Q/E roll, R level the
- * horizon, H hide the hint line.
- */
 public final class PhotoMode {
 
     static final float MIN_DISTANCE = 0.8f;
@@ -33,7 +23,6 @@ public final class PhotoMode {
     private boolean hintVisible = true;
     private final Vector3 focus = new Vector3();
 
-    // Saved camera state for an exact restore
     private final Vector3 savedPosition = new Vector3();
     private final Vector3 savedDirection = new Vector3();
     private final Vector3 savedUp = new Vector3();
@@ -58,7 +47,6 @@ public final class PhotoMode {
         savedFov = cam.fieldOfView;
         savedCursorCatched = Gdx.input.isCursorCatched();
 
-        // Start from where the camera is now, expressed as an orbit around the player.
         focus.set(playerPos.x, playerPos.y + FOCUS_HEIGHT, playerPos.z);
         float dx = cam.position.x - focus.x, dy = cam.position.y - focus.y, dz = cam.position.z - focus.z;
         float len = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
@@ -69,7 +57,7 @@ public final class PhotoMode {
         roll = 0f;
 
         Gdx.input.setCursorCatched(true);
-        Gdx.input.getDeltaX(); // drop the jump accumulated before entering
+        Gdx.input.getDeltaX();
         Gdx.input.getDeltaY();
         active = true;
         apply();
@@ -86,7 +74,6 @@ public final class PhotoMode {
         Gdx.input.setCursorCatched(savedCursorCatched);
     }
 
-    /** Orbit/zoom/roll input; call once per frame while active, before the scene renders. */
     void update(float delta, float scrollY, boolean mouseLook) {
         if (!active) return;
         if (mouseLook) {
@@ -115,7 +102,6 @@ public final class PhotoMode {
         apply();
     }
 
-    /** Sets the orbit directly (used by the automated capture test). */
     void setOrbit(float yaw, float pitch, float distance, float roll) {
         this.yaw = yaw;
         this.pitch = pitch;
@@ -137,7 +123,6 @@ public final class PhotoMode {
         cam.update();
     }
 
-    /** Point on the orbit sphere: same convention as CinematicCamera (yaw 0 = behind on +Z). */
     static Vector3 orbitPosition(Vector3 focus, float yawDeg, float pitchDeg, float dist, Vector3 out) {
         float yr = yawDeg * MathUtils.degreesToRadians, pr = pitchDeg * MathUtils.degreesToRadians;
         float cp = MathUtils.cos(pr);

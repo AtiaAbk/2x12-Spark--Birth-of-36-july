@@ -1,14 +1,10 @@
+// ei file ta player profile ar settings load ar save kore
 package bd.spark36.app;
 
 import bd.spark36.audio.SoundManager;
 import bd.spark36.render.RenderPipelineConfig;
 import com.badlogic.gdx.Gdx;
 
-/**
- * The running game's settings and story progress, loaded once from {@link SaveManager} and written
- * back on every change. Main menu, pause menu, settings screen and level flow talk to this class
- * instead of touching files or libGDX Preferences directly.
- */
 public final class GameProfile {
 
     private static final String LEGACY_PREFS = "Spark36Preferences";
@@ -36,7 +32,6 @@ public final class GameProfile {
         return instance;
     }
 
-    /** Test hook: replace (or clear with null) the shared profile. */
     public static synchronized void install(GameProfile profile) {
         instance = profile;
     }
@@ -45,7 +40,6 @@ public final class GameProfile {
         return manager;
     }
 
-    /** Live settings object. Call {@link #settingsChanged()} after mutating it. */
     public GameSettings settings() {
         return settings;
     }
@@ -54,20 +48,17 @@ public final class GameProfile {
         return save;
     }
 
-    /** Applies the loaded settings to every subsystem and keeps tone-map hotkeys in sync with the file. */
     public void applyStartupSettings() {
         SettingsApplier.apply(settings);
         RenderPipelineConfig.setToneMappingListener(this::onToneMappingChangedElsewhere);
     }
 
-    /** Sanitises, applies live and persists. */
     public void settingsChanged() {
         settings.sanitize();
         SettingsApplier.apply(settings);
         if (!manager.saveSettings(settings)) log(manager.getLastError());
     }
 
-    /** Restores every setting to its default, then applies and persists. */
     public void resetSettings() {
         GameSettings d = GameSettings.defaults();
         settings.mouseSensitivity = d.mouseSensitivity;
@@ -82,8 +73,6 @@ public final class GameProfile {
         settings.language = d.language;
         settingsChanged();
     }
-
-    // ── Progress ──────────────────────────────────────────────────────────
 
     public boolean hasContinue() {
         return save.hasProgress();
@@ -105,10 +94,6 @@ public final class GameProfile {
         }
     }
 
-    /**
-     * Called whenever a level becomes active. Story levels become the Continue target; the
-     * ambience bed follows the level in every mode.
-     */
     public void onLevelActive(int level, boolean storyMode) {
         if (storyMode && level >= 1 && level <= save.unlockedLevel && save.lastPlayedLevel != level) {
             save.lastPlayedLevel = level;
@@ -119,7 +104,6 @@ public final class GameProfile {
         if (sm != null) sm.setAmbience(SoundManager.ambienceForLevel(level));
     }
 
-    /** Back on the main menu: silence the level ambience. */
     public void onMainMenu() {
         SoundManager sm = SoundManager.getIfCreated();
         if (sm != null) sm.setAmbience(SoundManager.Ambience.NONE);

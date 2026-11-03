@@ -1,3 +1,4 @@
+// ei file ta game er credits ar credits text data provide kore
 package bd.spark36.hud.screens;
 
 import bd.spark36.history.SourceCatalog;
@@ -8,15 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Text of the Credits &amp; Sources screen as a flat list of lines. Pure logic (no GL), so the
- * content is unit-tested and the screen only has to lay the lines out and scroll them.
- *
- * <p>Every statement here must be checkable in the repository: the author line is the one on the
- * main menu, licences come from {@code assets/fonts/LICENSE-*} and the Gradle build files, and the
- * source list is read from {@code assets/data/historical_sources.json}. Do not add names, roles or
- * quotes that are not in the project.</p>
- */
 public final class CreditsContent {
 
     public enum Kind { TITLE, HEADER, LABEL, TEXT, SMALL, LINK, GAP }
@@ -24,7 +16,7 @@ public final class CreditsContent {
     public static final class Line {
         public final Kind kind;
         public final String text;
-        /** Evidence label for {@link Kind#LABEL} lines, else null. */
+
         public final String label;
 
         Line(Kind kind, String text, String label) {
@@ -39,15 +31,12 @@ public final class CreditsContent {
         }
     }
 
-    /** Header text of the source section; the screenshot harness scrolls to it. */
     public static final String SOURCES_HEADER = "HISTORICAL SOURCES";
 
-    /** Same author line as the main menu footer. */
     public static final String AUTHOR_LINE = "Atia Sanjida  •  ICE, BAUET  •  Student Code: 2x12";
 
     private CreditsContent() {}
 
-    /** One-sentence meaning of each evidence label (from DECISIONS.md / RESEARCH_SOURCES.md scheme). */
     public static String labelMeaning(String label) {
         if (SourceCatalog.VERIFIED.equals(label)) return "Stated by a primary or authoritative source.";
         if (SourceCatalog.CORROBORATED.equals(label)) return "Supported by sources, but details (place, numbers, wording) are incomplete.";
@@ -139,7 +128,6 @@ public final class CreditsContent {
         return Collections.unmodifiableList(out);
     }
 
-    /** Rows of one label grouped by identical (title, publisher, date, url), keeping first-seen order. */
     static List<List<SourceCatalog.Source>> bySameSource(List<SourceCatalog.Source> rows) {
         Map<String, List<SourceCatalog.Source>> m = new LinkedHashMap<>();
         for (SourceCatalog.Source s : rows) {

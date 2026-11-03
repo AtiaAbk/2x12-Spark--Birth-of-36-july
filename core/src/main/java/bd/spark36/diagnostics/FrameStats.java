@@ -1,15 +1,8 @@
+// ei file ta game er fps, frame time ar performance stats hishab kore
 package bd.spark36.diagnostics;
 
 import java.util.Arrays;
 
-/**
- * Opt-in frame-time recorder used to replace claimed FPS numbers with measured ones.
- *
- * <p>Enabled only when {@code -Dbd.spark36.benchmarkSeconds=N} is set. Frames from the first
- * {@link #WARMUP_SECONDS} are discarded (shader compilation, IBL generation, first uploads).
- * After N measured seconds {@link #record(float)} returns {@code true} so the caller can log
- * {@link #summary()} and exit. The class has no libGDX dependency so it is unit-testable.
- */
 public final class FrameStats {
 
     public static final float WARMUP_SECONDS = 3f;
@@ -26,7 +19,6 @@ public final class FrameStats {
         this.measureSeconds = measureSeconds;
     }
 
-    /** Returns a recorder if the benchmark switch is set, otherwise {@code null}. */
     public static FrameStats fromSystemProperties() {
         String v = System.getProperty("bd.spark36.benchmarkSeconds");
         if (v == null) return null;
@@ -38,12 +30,6 @@ public final class FrameStats {
         }
     }
 
-    /**
-     * Records one frame.
-     *
-     * @param deltaSeconds raw (unclamped) frame delta
-     * @return true exactly once, when the measurement window has just completed
-     */
     public boolean record(float deltaSeconds) {
         if (finished || deltaSeconds <= 0f) return false;
         if (warmupElapsed < WARMUP_SECONDS) {
@@ -67,7 +53,6 @@ public final class FrameStats {
         return measuredElapsed > 0f ? count / measuredElapsed : 0f;
     }
 
-    /** Frame time (ms) at the given percentile, e.g. 99 for the slowest 1% boundary. */
     public float percentileMs(float percentile) {
         if (count == 0) return 0f;
         float[] sorted = Arrays.copyOf(frameMs, count);

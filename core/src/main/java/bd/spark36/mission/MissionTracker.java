@@ -1,17 +1,9 @@
+// ei file ta shob active objective track kore ar update kore
 package bd.spark36.mission;
 
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 
-/**
- * Manages an ordered sequence or set of mission objectives for a campaign level.
- * Features:
- * - Sequential or parallel progression modes.
- * - Automatic activation of next objective upon sequential completion.
- * - Distance and location proximity checks.
- * - Safe reset behavior on level replay.
- * - HUD data provider (active objective, checklist, progress count).
- */
 public class MissionTracker {
 
     public interface MissionListener {
@@ -24,7 +16,6 @@ public class MissionTracker {
     private boolean isSequential = true;
     private MissionListener listener = null;
 
-    // Cache array for checklist items to avoid per-frame garbage collection
     private String[] checklistCache = null;
 
     public MissionTracker(boolean sequential) {
@@ -38,15 +29,11 @@ public class MissionTracker {
     public MissionTracker addObjective(MissionObjective obj) {
         if (obj != null) {
             objectives.add(obj);
-            checklistCache = null; // Invalidate cache
+            checklistCache = null;
         }
         return this;
     }
 
-    /**
-     * Updates proximity checking for active objectives.
-     * @return true if any objective completed during this tick.
-     */
     public boolean update(float delta, Vector3 playerPos) {
         boolean anyCompleted = false;
 
@@ -56,7 +43,7 @@ public class MissionTracker {
                 if (obj.checkLocationProximity(playerPos)) {
                     anyCompleted = true;
                     handleObjectiveCompleted(i, obj);
-                    if (isSequential) break; // Advance one per frame in sequential mode
+                    if (isSequential) break;
                 }
             }
         }
@@ -64,9 +51,6 @@ public class MissionTracker {
         return anyCompleted;
     }
 
-    /**
-     * Completes an objective by ID. Returns true if state transitioned.
-     */
     public boolean completeObjective(String id) {
         if (id == null) return false;
         for (int i = 0; i < objectives.size; i++) {
@@ -81,9 +65,6 @@ public class MissionTracker {
         return false;
     }
 
-    /**
-     * Completes an objective by index. Returns true if state transitioned.
-     */
     public boolean completeObjective(int index) {
         if (index >= 0 && index < objectives.size) {
             MissionObjective obj = objectives.get(index);
@@ -101,7 +82,7 @@ public class MissionTracker {
         }
 
         if (isSequential) {
-            // Activate the next inactive objective in sequence
+
             int nextIndex = index + 1;
             if (nextIndex < objectives.size) {
                 MissionObjective nextObj = objectives.get(nextIndex);
@@ -121,7 +102,7 @@ public class MissionTracker {
             MissionObjective obj = objectives.get(i);
             if (obj.isActive()) return obj;
         }
-        // Fallback: if all completed, return last objective
+
         if (objectives.size > 0 && isAllCompleted()) {
             return objectives.get(objectives.size - 1);
         }
@@ -191,7 +172,7 @@ public class MissionTracker {
             objectives.get(i).reset();
         }
         if (isSequential && objectives.size > 0) {
-            // First objective must be active upon reset
+
             objectives.get(0).activate();
         }
     }
@@ -203,11 +184,6 @@ public class MissionTracker {
         }
     }
 
-    /**
-     * Restores completion state from a checkpoint: resets, then marks every flagged
-     * objective complete in order (sequential trackers activate the next one as usual).
-     * The listener is not notified, so no toasts or victory fire on restore.
-     */
     public void restoreCompleted(boolean[] flags) {
         reset();
         if (flags == null) return;

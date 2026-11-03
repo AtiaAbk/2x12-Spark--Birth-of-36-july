@@ -1,3 +1,4 @@
+// ei file ta level switch ar level life cycle manage kore
 package bd.spark36.level;
 
 import com.badlogic.gdx.Gdx;
@@ -9,15 +10,6 @@ import bd.spark36.character.PlayerController;
 import bd.spark36.hud.WhereWindsMeetHUD;
 import bd.spark36.world.TextureFactory;
 
-/**
- * Manages the lifecycle, transitions, and execution of the six-level campaign:
- * Level 1: "Where It All Began" (July 1–14, 2024: Peaceful Campus Exploration & Archive Recovery)
- * Level 2: "The Day the Streets Changed" (July 15, 2024: Student Confrontation & Martial Arts Defense)
- * Level 3: "A City on Edge" (July 18, 2024: Police Escalation, CS Tear Gas & Humanitarian Aid)
- * Level 4: "Voices in the Dark" (July 20–23, 2024: Blackout Curfew, Military Checkpoints & Covert Route)
- * Level 5: "The Wall of People" (August 3–4, 2024: Shaheed Minar Assembly & One-Point Demand)
- * Level 6: "36 July" (August 5, 2024: Long March Victory, Liberation Ceremony & Historic Epilogue)
- */
 public class LevelManager implements Disposable {
 
     private CampaignLevel activeLevel;
@@ -27,9 +19,8 @@ public class LevelManager implements Disposable {
     private CinematicCamera camera;
     private WhereWindsMeetHUD hud;
 
-    /** Objective flags already seen in the current run (for checkpoint saving). */
     private boolean[] runFlags = new boolean[0];
-    /** True once the active level reported completion (checkpoint cleared, polling stops). */
+
     private boolean completionHandled = false;
 
     public LevelManager(TextureFactory textures, PlayerController player, CinematicCamera camera, WhereWindsMeetHUD hud) {
@@ -39,10 +30,6 @@ public class LevelManager implements Disposable {
         this.hud = hud;
     }
 
-    /**
-     * Loads and initializes the specified level index (1 to 6).
-     * Disposes previous level geometry cleanly to avoid memory leaks.
-     */
     public void loadLevel(int levelIndex) {
         if (activeLevel != null) {
             activeLevel.dispose();
@@ -97,7 +84,6 @@ public class LevelManager implements Disposable {
         }
     }
 
-    /** Saves a checkpoint when an objective newly completes; clears it once the level is complete. */
     private void trackCheckpoint() {
         if (activeLevel == null || completionHandled) return;
         if (activeLevel.isLevelComplete()) completionHandled = true;
@@ -144,16 +130,11 @@ public class LevelManager implements Disposable {
         if (currentLevelIndex < 6) {
             loadLevel(currentLevelIndex + 1);
         } else {
-            // Replay from beginning
+
             loadLevel(1);
         }
     }
 
-    /**
-     * Restarts the active level. If "Restart from checkpoint" was requested
-     * ({@link CheckpointStore#requestRestore()}), the saved objective flags are re-applied;
-     * otherwise this is a full restart from the beginning.
-     */
     public void restartCurrentLevel() {
         if (CheckpointStore.consumeRestoreRequest()) {
             restartFromCheckpoint();
@@ -162,11 +143,6 @@ public class LevelManager implements Disposable {
         }
     }
 
-    /**
-     * Reloads the active level and restores its last checkpoint (objective flags).
-     * Falls back to a full restart when no checkpoint exists.
-     * @return true if a checkpoint was restored.
-     */
     public boolean restartFromCheckpoint() {
         loadLevel(currentLevelIndex);
         boolean[] restored = CheckpointStore.restore(activeLevel);

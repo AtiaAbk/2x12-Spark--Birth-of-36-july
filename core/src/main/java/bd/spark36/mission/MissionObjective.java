@@ -1,11 +1,8 @@
+// ei file ta ekti nirdishto mission objective er status rakhe
 package bd.spark36.mission;
 
 import com.badlogic.gdx.math.Vector3;
 
-/**
- * Encapsulates an individual, verifiable mission objective with explicit state,
- * target coordinates, proximity detection, and duplicate-completion prevention.
- */
 public class MissionObjective {
 
     private final String id;
@@ -20,11 +17,9 @@ public class MissionObjective {
     private final Vector3 targetPosition;
     private final float targetRadius;
 
-    // Optional countable progress (e.g. 3 of 5 archives collected)
     private int currentCount = 0;
     private int requiredCount = 1;
 
-    // Bound dialogue or event identifier
     private String boundActionId = null;
 
     public MissionObjective(String id, String title, String targetDescription, String checklistLabel,
@@ -92,11 +87,6 @@ public class MissionObjective {
         return false;
     }
 
-    /**
-     * Marks objective complete. Guaranteed to execute state transition only once,
-     * preventing duplicate triggers or double-credit.
-     * @return true if state transitioned to COMPLETED, false if already completed/inactive.
-     */
     public boolean complete() {
         if (state == ObjectiveState.ACTIVE) {
             currentCount = requiredCount;
@@ -151,10 +141,6 @@ public class MissionObjective {
         return boundActionId;
     }
 
-    /**
-     * Proximity check for REACH_LOCATION objectives.
-     * Automatically completes objective if the player is within targetRadius.
-     */
     public boolean checkLocationProximity(Vector3 playerPos) {
         if (state == ObjectiveState.ACTIVE && type == ObjectiveType.REACH_LOCATION && playerPos != null) {
             float distSq = playerPos.dst2(targetPosition);

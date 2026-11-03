@@ -1,3 +1,4 @@
+// ei file ta opengl frame buffer theke pixel capture kore image banay
 package bd.spark36.capture;
 
 import com.badlogic.gdx.Gdx;
@@ -10,20 +11,15 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import java.io.File;
 import java.nio.ByteBuffer;
 
-/**
- * Reads the current back buffer into a PNG. Call it at the point in the frame whose pixels you
- * want, e.g. after the 3D scene and before the HUD for a HUD-free capture.
- */
 public final class FrameGrabber {
 
     private FrameGrabber() {}
 
-    /** Snapshot of the back buffer as an opaque, top-row-first RGBA8888 pixmap. Caller disposes. */
     public static Pixmap grab() {
         int w = Gdx.graphics.getBackBufferWidth();
         int h = Gdx.graphics.getBackBufferHeight();
         byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, w, h, true);
-        // The default framebuffer's alpha is whatever blending left behind; a PNG must be opaque.
+
         for (int i = 3; i < pixels.length; i += 4) pixels[i] = (byte) 0xFF;
         Pixmap pixmap = new Pixmap(w, h, Pixmap.Format.RGBA8888);
         ByteBuffer dst = pixmap.getPixels();
@@ -31,11 +27,6 @@ public final class FrameGrabber {
         return pixmap;
     }
 
-    /**
-     * PNG sink that reads the back buffer when the service writes. The service writes
-     * synchronously, so the pixels are those of the moment the capture was requested; nothing is
-     * read (or allocated) when the service refuses the capture, e.g. on low disk space.
-     */
     public static ScreenshotService.PngSink currentFrameSink() {
         return new ScreenshotService.PngSink() {
             @Override

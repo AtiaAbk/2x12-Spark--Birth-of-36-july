@@ -1,3 +1,4 @@
+// ei file ta procedural texture jemon eet, pata ar bark generate kore
 package bd.spark36.world;
 
 import com.badlogic.gdx.graphics.Color;
@@ -10,10 +11,6 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 
-/**
- * Procedurally generates high-resolution textures for Dhaka University campus,
- * Curzon Hall architecture, brick pavements, vegetation, and student attire.
- */
 public class TextureFactory implements Disposable {
 
     private final Array<Texture> textures = new Array<>();
@@ -56,7 +53,6 @@ public class TextureFactory implements Disposable {
     public final Texture mapVisualTarget;
     public final Texture debugOrientationTestCard;
 
-    // ── Tangent-Space Normal Maps for PBR ──────────────────────────────────
     public final Texture brickPavementNormal;
     public final Texture curzonBrickNormal;
     public final Texture modernistConcreteNormal;
@@ -196,12 +192,10 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Mortar base color (weathered warm earthy joint)
         Color mortar = new Color(0.28f, 0.22f, 0.18f, 1f);
         pix.setColor(mortar);
         pix.fill();
 
-        // High-density authentic clay brick pavement (32 rows, 16 bricks per row)
         int rows = 32;
         int rowHeight = size / rows;
         int brickWidth = size / 16;
@@ -213,7 +207,6 @@ public class TextureFactory implements Disposable {
             for (int b = -1; b <= 17; b++) {
                 int x = b * brickWidth + xOffset;
 
-                // Authentic weathered terracotta clay brick with natural tone shifts
                 float var = (MathUtils.sin(r * 4.3f + b * 6.1f) + 1f) * 0.5f;
                 float wear = (MathUtils.sin(r * 11.7f - b * 5.9f) + 1f) * 0.5f;
                 float red = 0.50f + var * 0.12f - wear * 0.06f;
@@ -223,7 +216,6 @@ public class TextureFactory implements Disposable {
                 pix.setColor(red, green, blue, 1f);
                 pix.fillRectangle(x + 1, y + 1, brickWidth - 2, rowHeight - 2);
 
-                // Subtle edge highlight and shadow bevel
                 pix.setColor(red + 0.08f, green + 0.06f, blue + 0.04f, 0.55f);
                 pix.drawLine(x + 1, y + 1, x + brickWidth - 2, y + 1);
                 pix.drawLine(x + 1, y + 1, x + 1, y + rowHeight - 2);
@@ -246,11 +238,9 @@ public class TextureFactory implements Disposable {
         int size = 1024;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Aged deep terracotta lime-sand mortar base (warm dark joint, eliminating stark white lines)
-        pix.setColor(0.30f, 0.21f, 0.16f, 1f); // T8: less saturated joint (was 0.24/0.13/0.09)
+        pix.setColor(0.30f, 0.21f, 0.16f, 1f);
         pix.fill();
 
-        // Authentic fine-scale Dhaka University Curzon Hall brick courses (96 rows x 48 columns)
         int rows = 96;
         int rowH = size / rows;
         int brickW = size / 48;
@@ -264,8 +254,6 @@ public class TextureFactory implements Disposable {
                 float v = (MathUtils.sin(r * 3.7f + b * 5.3f) + 1f) * 0.5f;
                 float v2 = (MathUtils.cos(r * 7.1f - b * 4.1f) + 1f) * 0.5f;
 
-                // Terracotta burnt-red variation. T8: green/blue raised (was 0.20/0.13) so the brick
-                // reads as fired clay rather than pure red after tone mapping.
                 float rCol = MathUtils.clamp(0.58f + v * 0.14f - v2 * 0.08f, 0.44f, 0.74f);
                 float gCol = MathUtils.clamp(0.25f + v * 0.05f - v2 * 0.03f, 0.17f, 0.32f);
                 float bCol = MathUtils.clamp(0.17f + v * 0.04f - v2 * 0.03f, 0.12f, 0.22f);
@@ -273,7 +261,6 @@ public class TextureFactory implements Disposable {
                 pix.setColor(rCol, gCol, bCol, 1f);
                 pix.fillRectangle(x + 1, y + 1, brickW - 1, rowH - 1);
 
-                // Baked-clay micro-texture stipples
                 for (int s = 0; s < 3; s++) {
                     int sx = x + 1 + MathUtils.random(Math.max(1, brickW - 3));
                     int sy = y + 1 + MathUtils.random(Math.max(1, rowH - 3));
@@ -298,11 +285,9 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Lush tropical monsoon lawn grass base (healthy Bangladeshi July summer turf)
         pix.setColor(0.18f, 0.44f, 0.14f, 1f);
         pix.fill();
 
-        // Multi-frequency organic turf blades and warm alluvial soil undertones
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 float n1 = (MathUtils.sin(x * 0.18f) * MathUtils.cos(y * 0.20f)
@@ -310,7 +295,6 @@ public class TextureFactory implements Disposable {
                 float n2 = (MathUtils.sin(x * 0.65f + y * 0.35f) * 0.25f);
                 float speckle = MathUtils.random(-0.03f, 0.03f);
 
-                // Natural lush tropical greens with rich chlorophyll and subtle warm undertones
                 float r = MathUtils.clamp(0.18f + (n1 + n2) * 0.04f + speckle, 0.12f, 0.26f);
                 float g = MathUtils.clamp(0.44f + (n1 + n2) * 0.08f + speckle * 1.2f, 0.32f, 0.58f);
                 float b = MathUtils.clamp(0.14f + (n1 + n2) * 0.03f + speckle * 0.5f, 0.08f, 0.22f);
@@ -320,7 +304,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Fine blade striations
         for (int b = 0; b < 1600; b++) {
             int bx = MathUtils.random(size - 1);
             int by = MathUtils.random(size - 12);
@@ -332,7 +315,6 @@ public class TextureFactory implements Disposable {
             pix.drawLine(bx, by, bx + MathUtils.random(-1, 1), by + len);
         }
 
-        // Scattered fallen white blossom petals matching reference image
         for (int p = 0; p < 90; p++) {
             int px = MathUtils.random(size - 6);
             int py = MathUtils.random(size - 6);
@@ -355,11 +337,9 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Rich dark alluvial monsoon silt / humus base
         pix.setColor(0.18f, 0.13f, 0.09f, 1f);
         pix.fill();
 
-        // Multi-frequency organic loam texture (earth grain, moist silt, micro-pebbles)
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 float n1 = (MathUtils.sin(x * 0.12f) * MathUtils.cos(y * 0.15f)
@@ -376,7 +356,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Decomposed organic mulch specks and tiny river pebbles
         for (int i = 0; i < 600; i++) {
             int px = MathUtils.random(size - 2);
             int py = MathUtils.random(size - 2);
@@ -394,19 +373,13 @@ public class TextureFactory implements Disposable {
         return new Texture[]{tex, norm};
     }
 
-    /**
-     * Opaque, tileable canopy texture for the leaf-clump meshes:
-     * High-density painterly mosaic of hundreds of realistic overlapping leaf silhouettes
-     * with deep shadow underlayers, vibrant midtones, and sunlit leaf edges (matching Image 1 & 2).
-     */
     private Texture createLeafClump(boolean blossoms) {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
-        // Deep shaded forest green base
+
         pix.setColor(0.045f, 0.125f, 0.048f, 1f);
         pix.fill();
 
-        // 3-tier organic leaf layers: deep shadow -> midtone -> sunlit highlights
         int leafCount = 950;
         for (int i = 0; i < leafCount; i++) {
             float x = MathUtils.random(0, size - 1);
@@ -418,20 +391,19 @@ public class TextureFactory implements Disposable {
 
             float br, bg, bb, tr, tg, tb;
             if (layer < 0.35f) {
-                // Deep inner shadow leaf
+
                 br = 0.05f; bg = 0.14f; bb = 0.05f;
                 tr = 0.08f; tg = 0.22f; tb = 0.07f;
             } else if (layer < 0.75f) {
-                // Rich chlorophyll midtone leaf
+
                 br = 0.08f; bg = 0.26f; bb = 0.08f;
                 tr = 0.16f; tg = 0.44f; tb = 0.12f;
             } else {
-                // Sunlit golden-lime surface leaf
+
                 br = 0.14f; bg = 0.38f; bb = 0.10f;
                 tr = 0.32f; tg = 0.65f; tb = 0.18f;
             }
 
-            // Draw seamless toroidal wrapping so the texture tiles cleanly
             for (int ox = -size; ox <= size; ox += size) {
                 for (int oy = -size; oy <= size; oy += size) {
                     drawClumpLeafBlade(pix, x + ox, y + oy, len, hw, angle, br, bg, bb, tr, tg, tb);
@@ -440,7 +412,7 @@ public class TextureFactory implements Disposable {
         }
 
         if (blossoms) {
-            // Blazing scarlet-crimson Krishnachura blossoms scattered through the canopy
+
             int flowerCount = 180;
             for (int f = 0; f < flowerCount; f++) {
                 float fx = MathUtils.random(0, size - 1);
@@ -455,7 +427,7 @@ public class TextureFactory implements Disposable {
                             pix.setColor(0.96f, 0.14f + MathUtils.random(0.08f), 0.06f, 1f);
                             pix.fillCircle((int) px, (int) py, Math.max(3, petLen / 3));
                         }
-                        // Golden stamen
+
                         pix.setColor(1.0f, 0.88f, 0.22f, 1f);
                         pix.fillCircle((int) (fx + ox), (int) (fy + oy), 3);
                     }
@@ -497,18 +469,12 @@ public class TextureFactory implements Disposable {
         }
     }
 
-    /**
-     * Soft, dense canopy texture for White / Cherry Blossom tree (Image 2 style):
-     * Deep shaded spring green base overlaid with hundreds of soft white/ivory blossom petals
-     * and tender green spring leaves.
-     */
     private Texture createWhiteBlossomClump() {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
         pix.setColor(0.06f, 0.16f, 0.07f, 1f);
         pix.fill();
 
-        // 1. Layer of spring green interior leaves
         for (int i = 0; i < 600; i++) {
             float x = MathUtils.random(0, size - 1);
             float y = MathUtils.random(0, size - 1);
@@ -523,7 +489,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // 2. Cloud of soft white & blush cherry blossom petals
         for (int i = 0; i < 480; i++) {
             float fx = MathUtils.random(0, size - 1);
             float fy = MathUtils.random(0, size - 1);
@@ -534,12 +499,12 @@ public class TextureFactory implements Disposable {
                         float pAng = p * MathUtils.PI2 / 5f + i * 0.25f;
                         float px = fx + ox + MathUtils.cos(pAng) * petLen;
                         float py = fy + oy + MathUtils.sin(pAng) * petLen;
-                        // Crisp ivory/white petal with soft rose-pink blush
+
                         float blush = MathUtils.random(0.88f, 0.98f);
                         pix.setColor(0.99f, blush, blush * 0.96f, 1f);
                         pix.fillCircle((int) px, (int) py, Math.max(3, petLen / 3));
                     }
-                    // Golden central stamens
+
                     pix.setColor(1.0f, 0.88f, 0.25f, 1f);
                     pix.fillCircle((int) (fx + ox), (int) (fy + oy), 3);
                 }
@@ -553,39 +518,25 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /**
-     * 2x2 atlas of alpha-cut foliage card clusters (each cell 256px) matching Image 1:
-     * - Cell 0: Full Deciduous Leaf Spray with branching woody twig and 22+ stylized leaves in natural summer greens.
-     * - Cell 1: Lateral Sweeping Leaf Spray with open airy perimeter leaves and sunlit tips.
-     * - Cell 2: Feathery Compound Frond (bipinnate Delonix regia) with 16 pairs of delicate micro-leaflets.
-     * - Cell 3: Krishnachura Blossoming Spray with fiery scarlet petals and golden stamens over fresh green foliage.
-     */
-    /**
-     * 2x2 atlas of high-resolution alpha-cut foliage card clusters (1024x1024, each cell 512px)
-     * strictly matching Reference Images 1 & 2:
-     * - Cell 0: Full Deciduous Leaf Sprig (Image 1 Left Tree) with 28 stylized leaves, 3-tier colors, and pale midribs.
-     * - Cell 1: Lateral Sweeping Leaf Fan (Image 1 Left Tree) for dense perimeter and shoulder coverage.
-     * - Cell 2: Autumn Orange / Golden Leaf Cluster (Image 1 Middle Tree) in rich golds, amber-orange, and rust tones.
-     * - Cell 3: Krishnachura Scarlet Blossoms & Stylized Green Leaves (Dhaka University Heritage aesthetic).
-     */
     private Texture createLeafAtlas() {
         int cell = 512;
         Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
         pix.fill();
+        pix.setBlending(Pixmap.Blending.None);
 
-        // Pale chartreuse/lime midrib stem color (Image 1 signature feature)
-        float mR = 0.84f, mG = 0.98f, mB = 0.44f; // #D6FA70
+        // Luminous chartreuse/lime midrib stem color strictly matching Image 1
+        float mR = 0.88f, mG = 1.00f, mB = 0.45f; // #E0FF73
 
         // ── Cell 0: Primary Green Leaf Sprig (Image 1 Left Tree Style) ───────────
-        drawTwigSegment(pix, 0, 0, cell, 256, 508, 256, 350, 7.5f, 0.28f, 0.20f, 0.12f, 1f);
-        drawTwigSegment(pix, 0, 0, cell, 256, 350, 150, 240, 5.5f, 0.32f, 0.24f, 0.15f, 1f);
-        drawTwigSegment(pix, 0, 0, cell, 256, 350, 256, 140, 5.8f, 0.32f, 0.24f, 0.15f, 1f);
-        drawTwigSegment(pix, 0, 0, cell, 256, 350, 360, 230, 5.5f, 0.32f, 0.24f, 0.15f, 1f);
-        drawTwigSegment(pix, 0, 0, cell, 150, 240, 80, 150, 3.8f, 0.36f, 0.26f, 0.16f, 1f);
-        drawTwigSegment(pix, 0, 0, cell, 360, 230, 430, 140, 3.8f, 0.36f, 0.26f, 0.16f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 256, 508, 256, 350, 7.5f, 0.45f, 0.26f, 0.14f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 256, 350, 150, 240, 5.5f, 0.48f, 0.28f, 0.16f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 256, 350, 256, 140, 5.8f, 0.48f, 0.28f, 0.16f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 256, 350, 360, 230, 5.5f, 0.48f, 0.28f, 0.16f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 150, 240, 80, 150, 3.8f, 0.52f, 0.30f, 0.18f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 360, 230, 430, 140, 3.8f, 0.52f, 0.30f, 0.18f, 1f);
 
-        // 28 Stylized Deciduous Leaves: {bx, by, length, halfWidth, angleRad, tier (0=shadow, 1=mid, 2=highlight)}
+        // 28 Stylized Deciduous Leaves matching Image 1:
         float[][] cell0Leaves = {
             // Left twig cluster
             {256, 350, 105, 24, -2.10f, 0}, {220, 310, 110, 26, -2.45f, 1}, {180, 270, 112, 26, -2.05f, 1},
@@ -610,28 +561,28 @@ public class TextureFactory implements Disposable {
             int tier = (int) lf[5];
             float br, bg, bb, tr, tg, tb;
             if (tier == 0) {
-                // Tier 0: Deep forest green shadow underlayer
-                br = 0.08f; bg = 0.24f; bb = 0.08f;
-                tr = 0.16f; tg = 0.42f; tb = 0.11f;
+                // Tier 0: Deep forest green shadow underlayer (rich and vibrant, zero blackness)
+                br = 0.10f; bg = 0.32f; bb = 0.08f;
+                tr = 0.22f; tg = 0.55f; tb = 0.12f;
             } else if (tier == 1) {
-                // Tier 1: Vibrant emerald / apple green body
-                br = 0.14f; bg = 0.40f; bb = 0.11f;
-                tr = 0.38f; tg = 0.76f; tb = 0.18f;
+                // Tier 1: Vibrant emerald / grass green body (Image 1 median #3FA02A to #64C62C)
+                br = 0.20f; bg = 0.56f; bb = 0.12f;
+                tr = 0.45f; tg = 0.82f; tb = 0.18f;
             } else {
-                // Tier 2: Luminous sunlit mint / lime highlights (Image 1 canopy top)
-                br = 0.28f; bg = 0.62f; bb = 0.16f;
-                tr = 0.66f; tg = 0.94f; tb = 0.28f;
+                // Tier 2: Luminous sunlit chartreuse / lime highlights (Image 1 canopy top #98E237 to #C2F84E)
+                br = 0.40f; bg = 0.78f; bb = 0.18f;
+                tr = 0.76f; tg = 0.98f; tb = 0.30f;
             }
             drawDeciduousStylizedLeaf(pix, 0, 0, cell, lf[0], lf[1], lf[2], lf[3], lf[4],
                 br, bg, bb, tr, tg, tb, mR, mG, mB);
         }
 
         // ── Cell 1: Lateral Sweeping Leaf Fan (Image 1 Left Tree) ────────────────
-        drawTwigSegment(pix, cell, 0, cell, 256, 508, 280, 320, 7.0f, 0.28f, 0.20f, 0.12f, 1f);
-        drawTwigSegment(pix, cell, 0, cell, 280, 320, 140, 210, 5.0f, 0.32f, 0.24f, 0.15f, 1f);
-        drawTwigSegment(pix, cell, 0, cell, 280, 320, 410, 190, 5.0f, 0.32f, 0.24f, 0.15f, 1f);
-        drawTwigSegment(pix, cell, 0, cell, 140, 210, 60,  140, 3.5f, 0.36f, 0.26f, 0.16f, 1f);
-        drawTwigSegment(pix, cell, 0, cell, 410, 190, 460, 130, 3.5f, 0.36f, 0.26f, 0.16f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 256, 508, 280, 320, 7.0f, 0.45f, 0.26f, 0.14f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 280, 320, 140, 210, 5.0f, 0.48f, 0.28f, 0.16f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 280, 320, 410, 190, 5.0f, 0.48f, 0.28f, 0.16f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 140, 210, 60,  140, 3.5f, 0.52f, 0.30f, 0.18f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 410, 190, 460, 130, 3.5f, 0.52f, 0.30f, 0.18f, 1f);
 
         float[][] cell1Leaves = {
             {280, 350, 116, 26, -2.25f, 0}, {280, 350, 116, 26, -0.90f, 0},
@@ -649,46 +600,42 @@ public class TextureFactory implements Disposable {
 
         for (float[] lf : cell1Leaves) {
             int tier = (int) lf[5];
-            float br = (tier == 0) ? 0.08f : (tier == 1 ? 0.14f : 0.28f);
-            float bg = (tier == 0) ? 0.24f : (tier == 1 ? 0.40f : 0.62f);
-            float bb = (tier == 0) ? 0.08f : (tier == 1 ? 0.11f : 0.16f);
-            float tr = (tier == 0) ? 0.16f : (tier == 1 ? 0.38f : 0.66f);
-            float tg = (tier == 0) ? 0.42f : (tier == 1 ? 0.76f : 0.94f);
-            float tb = (tier == 0) ? 0.11f : (tier == 1 ? 0.18f : 0.28f);
+            float br = (tier == 0) ? 0.10f : (tier == 1 ? 0.20f : 0.40f);
+            float bg = (tier == 0) ? 0.32f : (tier == 1 ? 0.56f : 0.78f);
+            float bb = (tier == 0) ? 0.08f : (tier == 1 ? 0.12f : 0.18f);
+            float tr = (tier == 0) ? 0.22f : (tier == 1 ? 0.45f : 0.76f);
+            float tg = (tier == 0) ? 0.55f : (tier == 1 ? 0.82f : 0.98f);
+            float tb = (tier == 0) ? 0.12f : (tier == 1 ? 0.18f : 0.30f);
             drawDeciduousStylizedLeaf(pix, cell, 0, cell, lf[0], lf[1], lf[2], lf[3], lf[4],
                 br, bg, bb, tr, tg, tb, mR, mG, mB);
         }
 
         // ── Cell 2: Autumn Orange / Golden Leaf Cluster (Image 1 Middle Tree) ────
         int ox = 0, oy = cell;
-        drawTwigSegment(pix, ox, oy, cell, 256, 508, 256, 350, 7.5f, 0.28f, 0.15f, 0.07f, 1f);
-        drawTwigSegment(pix, ox, oy, cell, 256, 350, 150, 240, 5.5f, 0.32f, 0.18f, 0.09f, 1f);
-        drawTwigSegment(pix, ox, oy, cell, 256, 350, 256, 140, 5.8f, 0.32f, 0.18f, 0.09f, 1f);
-        drawTwigSegment(pix, ox, oy, cell, 256, 350, 360, 230, 5.5f, 0.32f, 0.18f, 0.09f, 1f);
-        drawTwigSegment(pix, ox, oy, cell, 150, 240, 80,  150, 3.8f, 0.36f, 0.20f, 0.10f, 1f);
-        drawTwigSegment(pix, ox, oy, cell, 360, 230, 430, 140, 3.8f, 0.36f, 0.20f, 0.10f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 508, 256, 350, 7.5f, 0.45f, 0.22f, 0.10f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 350, 150, 240, 5.5f, 0.48f, 0.24f, 0.12f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 350, 256, 140, 5.8f, 0.48f, 0.24f, 0.12f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 350, 360, 230, 5.5f, 0.48f, 0.24f, 0.12f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 150, 240, 80,  150, 3.8f, 0.52f, 0.26f, 0.14f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 360, 230, 430, 140, 3.8f, 0.52f, 0.26f, 0.14f, 1f);
 
-        // Autumn colors strictly from Image 1 middle tree:
-        // Deep rust brown underlayer: #80350B (0.50, 0.21, 0.04)
-        // Radiant amber-orange body:  #E66E19 (0.90, 0.43, 0.10)
-        // Luminous golden highlight:  #F5B82E (0.96, 0.72, 0.18)
-        // Pale golden midrib stem:    #FEE57A (0.99, 0.90, 0.48)
-        float aMR = 0.99f, aMG = 0.90f, aMB = 0.48f;
+        // Autumn colors strictly from Image 1 middle tree pixel samples:
+        float aMR = 1.00f, aMG = 0.94f, aMB = 0.55f; // Pale golden midrib
         for (float[] lf : cell0Leaves) {
             int tier = (int) lf[5];
             float br, bg, bb, tr, tg, tb;
             if (tier == 0) {
-                // Tier 0: Deep rust-brown shadow
-                br = 0.42f; bg = 0.16f; bb = 0.04f;
-                tr = 0.65f; tg = 0.28f; tb = 0.06f;
+                // Tier 0: Warm chestnut-mahogany shadow
+                br = 0.45f; bg = 0.15f; bb = 0.04f;
+                tr = 0.68f; tg = 0.28f; tb = 0.06f;
             } else if (tier == 1) {
-                // Tier 1: Radiant amber-orange body
-                br = 0.78f; bg = 0.32f; bb = 0.06f;
-                tr = 0.94f; tg = 0.52f; tb = 0.12f;
+                // Tier 1: Radiant pumpkin-orange body
+                br = 0.82f; bg = 0.35f; bb = 0.06f;
+                tr = 0.96f; tg = 0.56f; tb = 0.10f;
             } else {
                 // Tier 2: Warm golden-yellow canopy highlights
-                br = 0.88f; bg = 0.54f; bb = 0.10f;
-                tr = 0.98f; tg = 0.82f; tb = 0.24f;
+                br = 0.94f; bg = 0.68f; bb = 0.14f;
+                tr = 1.00f; tg = 0.86f; tb = 0.28f;
             }
             drawDeciduousStylizedLeaf(pix, ox, oy, cell, lf[0], lf[1], lf[2], lf[3], lf[4],
                 br, bg, bb, tr, tg, tb, aMR, aMG, aMB);
@@ -696,9 +643,9 @@ public class TextureFactory implements Disposable {
 
         // ── Cell 3: Blazing Scarlet Krishnachura Blossom & Leaf Cluster ───────────
         ox = cell; oy = cell;
-        drawTwigSegment(pix, ox, oy, cell, 256, 508, 256, 340, 7.0f, 0.28f, 0.20f, 0.12f, 1f);
-        drawTwigSegment(pix, ox, oy, cell, 256, 340, 150, 230, 5.0f, 0.32f, 0.24f, 0.15f, 1f);
-        drawTwigSegment(pix, ox, oy, cell, 256, 340, 370, 230, 5.0f, 0.32f, 0.24f, 0.15f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 508, 256, 340, 7.0f, 0.45f, 0.26f, 0.14f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 340, 150, 230, 5.0f, 0.48f, 0.28f, 0.16f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 340, 370, 230, 5.0f, 0.48f, 0.28f, 0.16f, 1f);
 
         float[][] krishnaBgLeaves = {
             {256, 360, 105, 23, -2.1f, 0}, {256, 360, 105, 23, -1.0f, 0},
@@ -708,7 +655,7 @@ public class TextureFactory implements Disposable {
         };
         for (float[] lf : krishnaBgLeaves) {
             drawDeciduousStylizedLeaf(pix, ox, oy, cell, lf[0], lf[1], lf[2], lf[3], lf[4],
-                0.09f, 0.28f, 0.10f, 0.32f, 0.68f, 0.16f, mR, mG, mB);
+                0.14f, 0.38f, 0.10f, 0.45f, 0.82f, 0.18f, mR, mG, mB);
         }
 
         // Fiery Krishnachura Scarlet Blossoms
@@ -741,38 +688,32 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /**
-     * 2x2 atlas of botanical bamboo leaf sprays strictly matching Image 2 (poaceae monocot morphology):
-     * - Cell 0: Direct Image 2 replica — authentic branching bamboo twig with 3 nodal clusters of lanceolate leaves.
-     * - Cell 1: Arching bamboo spray with graceful drooping lateral blades.
-     * - Cell 2: Dense cascading bamboo cluster with sharp hanging pointed leaves.
-     * - Cell 3: Young sunlit bamboo shoot spray with fresh lime-emerald venation.
-     */
     private Texture createBambooAtlas() {
         int cell = 512;
         Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
         pix.fill();
+        pix.setBlending(Pixmap.Blending.None);
 
         // Botanical Bamboo Colors strictly from Image 2
-        float bR = 0.105f, bG = 0.300f, bB = 0.130f; // Base #1B4D21 (deep forest green)
-        float tR = 0.510f, tG = 0.835f, tB = 0.255f; // Tip #82D541 (sunlit lime green)
-        float mR = 0.620f, mG = 0.900f, mB = 0.320f; // Midrib #9EE652 (light pale green)
+        float bR = 0.16f, bG = 0.44f, bB = 0.14f; // Base #297024 (deep forest green)
+        float tR = 0.58f, tG = 0.86f, tB = 0.28f; // Tip #94DC47 (sunlit lime green)
+        float mR = 0.72f, mG = 0.96f, mB = 0.38f; // Midrib #B8F561 (luminous pale translucent green)
 
         // ── Cell 0: Direct Image 2 Replica (Branch with 3 Nodal Clusters) ────────
-        drawTwigSegment(pix, 0, 0, cell, 150, 500, 230, 350, 6.5f, 0.28f, 0.44f, 0.18f, 1f);
-        drawTwigSegment(pix, 0, 0, cell, 230, 350, 290, 210, 5.2f, 0.28f, 0.44f, 0.18f, 1f);
-        drawTwigSegment(pix, 0, 0, cell, 290, 210, 350, 90,  4.0f, 0.28f, 0.44f, 0.18f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 150, 500, 230, 350, 6.5f, 0.35f, 0.55f, 0.22f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 230, 350, 290, 210, 5.2f, 0.35f, 0.55f, 0.22f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 290, 210, 350, 90,  4.0f, 0.35f, 0.55f, 0.22f, 1f);
 
         // Node 1 (lower): side twig + cluster of 4 lanceolate leaves
-        drawTwigSegment(pix, 0, 0, cell, 230, 350, 150, 310, 4.0f, 0.28f, 0.44f, 0.18f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 230, 350, 150, 310, 4.0f, 0.35f, 0.55f, 0.22f, 1f);
         drawBotanicalBambooLeaf(pix, 0, 0, cell, 150, 310, 230f, 18.0f, -2.35f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
         drawBotanicalBambooLeaf(pix, 0, 0, cell, 150, 310, 270f, 19.6f, -1.95f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
         drawBotanicalBambooLeaf(pix, 0, 0, cell, 150, 310, 240f, 18.4f, -1.50f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
         drawBotanicalBambooLeaf(pix, 0, 0, cell, 150, 310, 190f, 16.4f, -1.05f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
 
         // Node 2 (mid): side twig + cluster of 4 lanceolate leaves
-        drawTwigSegment(pix, 0, 0, cell, 290, 210, 370, 190, 4.0f, 0.28f, 0.44f, 0.18f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 290, 210, 370, 190, 4.0f, 0.35f, 0.55f, 0.22f, 1f);
         drawBotanicalBambooLeaf(pix, 0, 0, cell, 370, 190, 240f, 18.0f,  0.25f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
         drawBotanicalBambooLeaf(pix, 0, 0, cell, 370, 190, 280f, 19.6f, -0.25f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
         drawBotanicalBambooLeaf(pix, 0, 0, cell, 370, 190, 260f, 18.4f, -0.75f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
@@ -786,9 +727,9 @@ public class TextureFactory implements Disposable {
         drawBotanicalBambooLeaf(pix, 0, 0, cell, 350, 90, 220f, 17.0f,  0.35f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
 
         // ── Cell 1: Arching Lateral Bamboo Spray ─────────────────────────────────
-        drawTwigSegment(pix, cell, 0, cell, 256, 508, 290, 320, 5.6f, 0.28f, 0.44f, 0.18f, 1f);
-        drawTwigSegment(pix, cell, 0, cell, 290, 320, 160, 240, 4.0f, 0.28f, 0.44f, 0.18f, 1f);
-        drawTwigSegment(pix, cell, 0, cell, 290, 320, 410, 220, 4.0f, 0.28f, 0.44f, 0.18f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 256, 508, 290, 320, 5.6f, 0.35f, 0.55f, 0.22f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 290, 320, 160, 240, 4.0f, 0.35f, 0.55f, 0.22f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 290, 320, 410, 220, 4.0f, 0.35f, 0.55f, 0.22f, 1f);
 
         drawBotanicalBambooLeaf(pix, cell, 0, cell, 160, 240, 260f, 18.4f, -2.40f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
         drawBotanicalBambooLeaf(pix, cell, 0, cell, 160, 240, 290f, 19.2f, -2.00f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
@@ -800,7 +741,7 @@ public class TextureFactory implements Disposable {
 
         // ── Cell 2: Dense Cascading Bamboo Cluster (Hanging Spray) ───────────────
         int ox = 0, oy = cell;
-        drawTwigSegment(pix, ox, oy, cell, 256, 20, 256, 180, 5.6f, 0.28f, 0.44f, 0.18f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 20, 256, 180, 5.6f, 0.35f, 0.55f, 0.22f, 1f);
         float[] hangAngles = {-1.85f, -1.45f, -1.15f, -0.85f, -0.55f, -0.25f, 0.15f};
         float[] hangLens =   {270f,   310f,   360f,   390f,   350f,   300f,   250f};
         for (int i = 0; i < hangAngles.length; i++) {
@@ -811,10 +752,10 @@ public class TextureFactory implements Disposable {
 
         // ── Cell 3: Sunlit Young Bamboo Shoot Spray ──────────────────────────────
         ox = cell; oy = cell;
-        drawTwigSegment(pix, ox, oy, cell, 256, 508, 270, 300, 5.2f, 0.32f, 0.50f, 0.18f, 1f);
-        drawTwigSegment(pix, ox, oy, cell, 270, 300, 300, 150, 4.0f, 0.32f, 0.50f, 0.18f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 508, 270, 300, 5.2f, 0.38f, 0.60f, 0.24f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 270, 300, 300, 150, 4.0f, 0.38f, 0.60f, 0.24f, 1f);
 
-        float sTR = 0.584f, sTG = 0.880f, sTB = 0.320f; // Sunny lime #95E052
+        float sTR = 0.66f, sTG = 0.94f, sTB = 0.34f; // Bright sunny lime #A8F057
         drawBotanicalBambooLeaf(pix, ox, oy, cell, 270, 300, 230f, 17.6f, -2.25f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
         drawBotanicalBambooLeaf(pix, ox, oy, cell, 270, 300, 270f, 18.8f, -1.85f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
         drawBotanicalBambooLeaf(pix, ox, oy, cell, 300, 150, 280f, 19.2f, -1.35f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
@@ -828,10 +769,6 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /**
-     * 2x2 atlas of Cherry / Magnolia / Bokul white blossom clusters (1024x1024, each cell 512px):
-     * - Soft white/ivory 5-petaled flowers with blush centers, golden stamens, and fresh spring leaves.
-     */
     private Texture createWhiteBlossomAtlas() {
         int cell = 512;
         Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
@@ -890,17 +827,11 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /**
-     * Draws authentic feathery bipinnate foliage ("jira jira pata"):
-     * Central slender rachis stem flanked by numerous pairs of delicate micro-leaflets
-     * in rich chlorophyll greens and warm sunlit tips, exactly matching the red Krishnachura tree.
-     */
     private void drawFeatheryBipinnateBranch(Pixmap pix, int ox, int oy, float angle, float curve, int pairs) {
         final float up = -MathUtils.HALF_PI + angle;
         float baseR = 0.08f, baseG = 0.24f, baseB = 0.07f;
         float tipR = 0.18f, tipG = 0.42f, tipB = 0.11f;
 
-        // Pairs of delicate bipinnate leaflets ("jira jira pata")
         for (int i = 0; i < pairs; i++) {
             float t = 0.06f + (float) i / (float) pairs * 0.90f;
             float ry = 248f - t * 234f;
@@ -908,14 +839,12 @@ public class TextureFactory implements Disposable {
             float len = 78f * (1f - 0.44f * t);
             float hw = 13f * (1f - 0.22f * t);
 
-            // Alternate slight color variety for rich organic foliage depth
             float var = (i % 2 == 0) ? 0f : 0.03f;
             drawLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f,
                 baseR + var, baseG + var, baseB, tipR + var * 1.5f, tipG + var * 1.5f, tipB);
             drawLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f,
                 baseR + var, baseG + var, baseB, tipR + var * 1.5f, tipG + var * 1.5f, tipB);
 
-            // Secondary micro-leaflets near outer edges for lush fern-like feathery silhouette
             if (i > 3 && i < pairs - 4 && i % 2 == 0) {
                 float subLen = len * 0.48f;
                 float subHw = hw * 0.75f;
@@ -929,13 +858,9 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Main rachis stem (slender woody stalk)
         drawLeaf(pix, ox, oy, 128, 250, 240, 4, up, 0.16f, 0.22f, 0.08f, 0.22f, 0.34f, 0.11f);
     }
 
-    /**
-     * White flowering reed plumes (Kashful / Saccharum spontaneum) along the water edges.
-     */
     private Texture createKashfulAtlas() {
         int w = 256, h = 512;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
@@ -949,7 +874,6 @@ public class TextureFactory implements Disposable {
             float sx = stemX[s];
             float len = plumeH[s];
 
-            // Slender green stem
             pix.setColor(0.22f, 0.46f, 0.15f, 1f);
             for (int y = (int)(h - 1); y >= (int)(h - len); y--) {
                 float t = (float)(h - y) / len;
@@ -957,7 +881,6 @@ public class TextureFactory implements Disposable {
                 pix.fillCircle((int)(sx + curve), y, 2);
             }
 
-            // Silky fluffy white plume
             int plumeStart = (int)(h - len);
             int plumeEnd = (int)(h - len * 0.35f);
             for (int y = plumeStart; y < plumeEnd; y++) {
@@ -985,30 +908,18 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /**
-     * 2x2 atlas of floating lotus pads (water lilies) and sacred lotus blossoms (Nelumbo nucifera)
-     * matching reference image media_1791358203326.png:
-     * Cell 0: Large round peltate lotus pad with radial veins, notched sinus, and water drops
-     * Cell 1: Blooming white & pink sacred lotus blossom with golden receptacle
-     * Cell 2: Open lotus pad with gentle cup curvature and central dewdrop
-     * Cell 3: Water lily pad with pink blossom bud
-     */
     private Texture createLotusAtlas() {
         int cell = 256;
         Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
         pix.fill();
 
-        // Cell 0: Large round peltate lotus pad
         drawLotusPad(pix, 0, 0, 110, false);
 
-        // Cell 1: Blooming sacred lotus flower (white petals with soft pink tips and golden core)
         drawLotusBlossom(pix, cell, 0);
 
-        // Cell 2: Second lotus pad variant with prominent radial veins
         drawLotusPad(pix, 0, cell, 115, true);
 
-        // Cell 3: Water lily pad with pink blossom bud
         drawLotusPad(pix, cell, cell, 95, false);
         drawLotusBud(pix, cell + 165, cell + 95);
 
@@ -1023,10 +934,9 @@ public class TextureFactory implements Disposable {
         int cx = ox + 128;
         int cy = oy + 128;
 
-        // Base peltate disk (deep forest jade-green, matching reference image)
         for (int r = rad; r >= 1; r--) {
             float t = (float) r / (float) rad;
-            // Center is natural olive-jade, outer rim is rich deep forest jade
+
             float red = MathUtils.lerp(0.12f, 0.06f, t);
             float green = MathUtils.lerp(0.28f, 0.18f, t);
             float blue = MathUtils.lerp(0.10f, 0.06f, t);
@@ -1034,7 +944,6 @@ public class TextureFactory implements Disposable {
             pix.fillCircle(cx, cy, r);
         }
 
-        // Distinctive V-shaped leaf notch (sinus) from center to outer rim
         pix.setColor(0f, 0f, 0f, 0f);
         float notchAng = -0.45f;
         for (int d = 0; d <= rad + 2; d++) {
@@ -1045,24 +954,21 @@ public class TextureFactory implements Disposable {
             pix.drawLine((int)nx1, (int)ny1, (int)nx2, (int)ny2);
         }
 
-        // Radiating delicate leaf veins
         pix.setColor(0.14f, 0.32f, 0.11f, 0.70f);
         int veinCount = extraVeins ? 16 : 12;
         for (int v = 0; v < veinCount; v++) {
             float va = v * MathUtils.PI2 / (float) veinCount;
-            if (Math.abs(va - notchAng) < 0.35f) continue; // skip notch
+            if (Math.abs(va - notchAng) < 0.35f) continue;
             float vx = cx + MathUtils.cos(va) * (rad - 4);
             float vy = cy + MathUtils.sin(va) * (rad - 4);
             pix.drawLine(cx, cy, (int)vx, (int)vy);
         }
 
-        // Natural central petiole hub
         pix.setColor(0.22f, 0.38f, 0.15f, 1f);
         pix.fillCircle(cx, cy, 5);
         pix.setColor(0.30f, 0.48f, 0.20f, 1f);
         pix.fillCircle(cx, cy, 2);
 
-        // Glistening water dewdrops
         int drops = extraVeins ? 4 : 3;
         for (int d = 0; d < drops; d++) {
             int dx = cx + (int)(MathUtils.cos(d * 1.9f + 0.5f) * (rad * 0.45f));
@@ -1078,25 +984,21 @@ public class TextureFactory implements Disposable {
         int cx = ox + 128;
         int cy = oy + 128;
 
-        // Outer petals (pure ivory with soft magenta-pink tips, sacred lotus style)
         int petalCount = 14;
         for (int p = 0; p < petalCount; p++) {
             float ang = p * MathUtils.PI2 / (float) petalCount;
             float px = cx + MathUtils.cos(ang) * 52f;
             float py = cy + MathUtils.sin(ang) * 52f;
 
-            // Base white
             pix.setColor(0.98f, 0.96f, 0.96f, 0.95f);
             pix.fillCircle((int)px, (int)py, 22);
 
-            // Soft pink tip
             float tipX = cx + MathUtils.cos(ang) * 64f;
             float tipY = cy + MathUtils.sin(ang) * 64f;
             pix.setColor(0.95f, 0.65f, 0.78f, 0.85f);
             pix.fillCircle((int)tipX, (int)tipY, 12);
         }
 
-        // Inner petal ring
         for (int p = 0; p < 10; p++) {
             float ang = p * MathUtils.PI2 / 10f + 0.25f;
             float px = cx + MathUtils.cos(ang) * 32f;
@@ -1107,13 +1009,11 @@ public class TextureFactory implements Disposable {
             pix.fillCircle((int)(cx + MathUtils.cos(ang) * 40f), (int)(cy + MathUtils.sin(ang) * 40f), 8);
         }
 
-        // Golden center: flat-topped floral receptacle (torus)
         pix.setColor(1.0f, 0.85f, 0.18f, 1f);
         pix.fillCircle(cx, cy, 18);
         pix.setColor(0.92f, 0.72f, 0.12f, 1f);
         pix.drawCircle(cx, cy, 18);
 
-        // Ring of golden yellow stamens
         for (int s = 0; s < 18; s++) {
             float sa = s * MathUtils.PI2 / 18f;
             int sx = cx + (int)(MathUtils.cos(sa) * 14f);
@@ -1124,45 +1024,22 @@ public class TextureFactory implements Disposable {
     }
 
     private void drawLotusBud(Pixmap pix, int bx, int by) {
-        // Deep pink pointed bud
+
         pix.setColor(0.92f, 0.55f, 0.72f, 1f);
         pix.fillCircle(bx, by, 14);
         pix.setColor(0.98f, 0.75f, 0.85f, 1f);
         pix.fillCircle(bx, by - 4, 8);
-        // Green basal sepals
+
         pix.setColor(0.18f, 0.42f, 0.14f, 1f);
         pix.fillCircle(bx - 6, by + 8, 6);
         pix.fillCircle(bx + 6, by + 8, 6);
     }
 
-    /**
-     * Authentic British-Mughal colonial arched window texture (512x1024 with trilinear mipmaps):
-     * Multi-pane glazed window with pointed arch stone surround, central keystone, radial fanlight,
-     * deep reflective blue-grey glass with sky reflection, and carved stone sill.
-     */
-    /**
-     * Authentic Curzon Hall Indo-Saracenic Pointed Cusped Arch Window (512x1024 with trilinear mipmaps):
-     * - Multi-cusped pointed arch head with radiating fanlight tracery
-     * - Carved sandstone voussoirs and keystone at arch apex
-     * - Carved circular rosette medallions in terracotta spandrels
-     * - 8-pane colonial glazed window with clean white timber mullions and reflective glass
-     * - Projecting carved sandstone sill supported by twin corbel brackets
-     */
-    /**
-     * Authentic Curzon Hall Indo-Saracenic Pointed Arch Colonial Window (512x1024 with trilinear mipmaps):
-     * - Smooth 2-centered pointed Mughal arch (NO jagged sawtooth cusps)
-     * - Transparent spandrels (alpha=0) allowing Curzon Hall's red brickwork to show through seamlessly
-     * - Sandstone arch surround with radiating voussoirs and carved apex keystone
-     * - Deep reflective blue-grey architectural glass with subtle sky reflection
-     * - Graceful radiating fanlight tracery in arch head
-     * - Classic 8-pane colonial sash window with crisp cream timber mullions
-     * - Projecting carved sandstone sill with twin corbel brackets
-     */
     private Texture createColonialWindow() {
         int w = 512, h = 1024;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
-        pix.fill(); // 100% transparent base
+        pix.fill();
 
         Color stoneBase = new Color(0.80f, 0.74f, 0.65f, 1f);
         Color stoneHi = new Color(0.88f, 0.82f, 0.74f, 1f);
@@ -1181,13 +1058,11 @@ public class TextureFactory implements Disposable {
         int archTh = 30;
         int frameBot = 930;
 
-        // 1. Lower Window (below springline): vertical stone jambs and deep reflective glass
         for (int y = sy; y < frameBot; y++) {
             float t = (float)(y - sy) / (float)(frameBot - sy);
             pix.setColor(MathUtils.lerp(0.12f, 0.06f, t), MathUtils.lerp(0.16f, 0.08f, t), MathUtils.lerp(0.24f, 0.12f, t), 1f);
             pix.fillRectangle(x0, y, x1 - x0 + 1, 1);
 
-            // Left stone jamb
             pix.setColor(stoneBase);
             pix.fillRectangle(x0 - archTh, y, archTh, 1);
             pix.setColor(stoneHi);
@@ -1195,7 +1070,6 @@ public class TextureFactory implements Disposable {
             pix.setColor(stoneSh);
             pix.drawPixel(x0 - 1, y);
 
-            // Right stone jamb
             pix.setColor(stoneBase);
             pix.fillRectangle(x1 + 1, y, archTh, 1);
             pix.setColor(stoneSh);
@@ -1204,7 +1078,6 @@ public class TextureFactory implements Disposable {
             pix.drawPixel(x1 + 1, y);
         }
 
-        // 2. Smooth Pointed Arch Head (NO jagged sawtooth cusps)
         for (int y = ay; y < sy; y++) {
             float dy = sy - y;
             float radSqIn = R * R - dy * dy;
@@ -1214,7 +1087,6 @@ public class TextureFactory implements Disposable {
                 int xlIn = (int)((cx + d) - rxIn);
                 int xrIn = (int)((cx - d) + rxIn);
 
-                // Deep reflective glass in arch head
                 float tg = (float)(y - ay) / rise;
                 pix.setColor(MathUtils.lerp(0.14f, 0.08f, tg), MathUtils.lerp(0.20f, 0.11f, tg), MathUtils.lerp(0.30f, 0.15f, tg), 1f);
                 if (xrIn >= xlIn) {
@@ -1226,7 +1098,6 @@ public class TextureFactory implements Disposable {
                     int xlOut = (int)((cx + d) - rxOut);
                     int xrOut = (int)((cx - d) + rxOut);
 
-                    // Stone arch voussoirs with subtle masonry radial joints
                     float angL = MathUtils.atan2(dy, Math.abs(xlIn - cx));
                     float jointL = MathUtils.sin(angL * 14f);
                     float varL = (jointL > 0.94f) ? -0.15f : 0.0f;
@@ -1243,7 +1114,6 @@ public class TextureFactory implements Disposable {
                                  MathUtils.clamp(stoneBase.b + varR, 0.5f, 1f), 1f);
                     if (xrOut > xrIn) pix.fillRectangle(xrIn + 1, y, xrOut - xrIn, 1);
 
-                    // Inner and outer contour lines
                     pix.setColor(stoneSh);
                     pix.drawPixel(xlIn, y);
                     pix.drawPixel(xrIn, y);
@@ -1254,14 +1124,12 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // 3. Carved Sandstone Keystone at arch apex
         int kw = 44, kh = 48;
         pix.setColor(stoneBase);
         pix.fillRectangle(cx - kw / 2, ay - 24, kw, kh);
         pix.setColor(stoneHi);
         pix.drawRectangle(cx - kw / 2, ay - 24, kw, kh);
 
-        // 4. Horizontal Transom Bar at springline
         pix.setColor(stoneBase);
         pix.fillRectangle(x0, sy - 6, x1 - x0 + 1, 12);
         pix.setColor(stoneHi);
@@ -1269,7 +1137,6 @@ public class TextureFactory implements Disposable {
         pix.setColor(stoneSh);
         pix.drawLine(x0, sy + 5, x1, sy + 5);
 
-        // 5. Radiating Fanlight Tracery in arch head
         for (int spoke = 0; spoke < 7; spoke++) {
             float angle = MathUtils.PI * (0.15f + 0.70f * ((float) spoke / 6f));
             float cosA = MathUtils.cos(angle);
@@ -1292,7 +1159,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Concentric inner fanlight arc
         float rInnerFan = R * 0.55f;
         for (int fx = x0; fx <= x1; fx++) {
             float dx = fx - cx;
@@ -1305,8 +1171,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // 6. Lower 8-Pane Colonial Window Sash Grid
-        // Central vertical mullion
         pix.setColor(mullion);
         pix.fillRectangle(cx - 3, sy + 6, 6, frameBot - (sy + 6));
         pix.setColor(stoneHi);
@@ -1314,7 +1178,6 @@ public class TextureFactory implements Disposable {
         pix.setColor(mullionSh);
         pix.drawLine(cx + 3, sy + 6, cx + 3, frameBot);
 
-        // 3 horizontal transoms
         int lowerH = frameBot - (sy + 6);
         for (int row = 1; row <= 3; row++) {
             int hy = sy + 6 + (lowerH * row) / 4;
@@ -1326,7 +1189,6 @@ public class TextureFactory implements Disposable {
             pix.drawLine(x0, hy + 3, x1, hy + 3);
         }
 
-        // 7. Projecting Sandstone Sill & Twin Corbel Brackets
         pix.setColor(stoneBase);
         pix.fillRectangle(x0 - archTh - 12, frameBot, (x1 - x0) + (archTh + 12) * 2, 22);
         pix.setColor(stoneHi);
@@ -1353,20 +1215,11 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /**
-     * Authentic Curzon Hall Ground Floor Pointed Arched Doorway (512x1024 with trilinear mipmaps):
-     * - Transparent spandrels (alpha=0) seamlessly integrating with Curzon red brickwork
-     * - Smooth 2-centered pointed Mughal arch surround with cream sandstone voussoirs
-     * - Wrought-iron Arabesque lattice / jali fanlight in arch head with deep interior cavity
-     * - Carved Burma teak double doors with rich teak grain, bevelled panels, and central rosette medallions
-     * - Heavy iron strap hinges, burnished brass studs, and lion-head knockers
-     * - Sandstone threshold at base
-     */
     private Texture createTeakDoorTexture() {
         int w = 512, h = 1024;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
-        pix.fill(); // 100% transparent base
+        pix.fill();
 
         Color stoneBase = new Color(0.90f, 0.86f, 0.78f, 1f);
         Color stoneHi = new Color(0.98f, 0.96f, 0.90f, 1f);
@@ -1383,9 +1236,8 @@ public class TextureFactory implements Disposable {
         int archTh = 36;
         int frameBot = 970;
 
-        // 1. Lower section: Carved Burma Teak Doors
         for (int y = sy + 8; y < frameBot; y++) {
-            // Teak base with rich organic grain
+
             for (int x = x0; x <= x1; x++) {
                 float grain = MathUtils.sin(x * 0.45f) * 0.5f + MathUtils.sin(x * 1.8f) * 0.3f;
                 float n = grain + MathUtils.sin(y * 0.08f + x * 0.05f) * 0.2f;
@@ -1395,7 +1247,7 @@ public class TextureFactory implements Disposable {
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
             }
-            // Left stone jamb
+
             pix.setColor(stoneBase);
             pix.fillRectangle(x0 - archTh, y, archTh, 1);
             pix.setColor(stoneHi);
@@ -1403,7 +1255,6 @@ public class TextureFactory implements Disposable {
             pix.setColor(stoneSh);
             pix.drawPixel(x0 - 1, y);
 
-            // Right stone jamb
             pix.setColor(stoneBase);
             pix.fillRectangle(x1 + 1, y, archTh, 1);
             pix.setColor(stoneSh);
@@ -1412,13 +1263,11 @@ public class TextureFactory implements Disposable {
             pix.drawPixel(x1 + 1, y);
         }
 
-        // Center meeting stile between double doors
         pix.setColor(0.16f, 0.08f, 0.04f, 1f);
         pix.fillRectangle(cx - 10, sy + 8, 20, frameBot - (sy + 8));
         pix.setColor(0.08f, 0.04f, 0.02f, 1f);
         pix.drawLine(cx, sy + 8, cx, frameBot);
 
-        // Recessed carved wood panels (3 per door leaf = 6 tall panels)
         int doorPanelW = (cx - x0) - 24;
         int usableH = frameBot - sy - 48;
         int doorPanelH = usableH / 3 - 12;
@@ -1430,7 +1279,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // 2. Pointed Arch Head: Smooth curve & Wrought-Iron Arabesque Tracery Fanlight
         for (int y = ay; y < sy; y++) {
             float dy = sy - y;
             float radSqIn = R * R - dy * dy;
@@ -1440,7 +1288,6 @@ public class TextureFactory implements Disposable {
                 int xlIn = (int)((cx + d) - rxIn);
                 int xrIn = (int)((cx - d) + rxIn);
 
-                // Deep atmospheric interior vestibule cavity
                 float tCavity = (float)(y - ay) / rise;
                 pix.setColor(MathUtils.lerp(0.12f, 0.07f, tCavity), MathUtils.lerp(0.09f, 0.05f, tCavity), MathUtils.lerp(0.06f, 0.04f, tCavity), 1f);
                 if (xrIn >= xlIn) {
@@ -1452,7 +1299,6 @@ public class TextureFactory implements Disposable {
                     int xlOut = (int)((cx + d) - rxOut);
                     int xrOut = (int)((cx - d) + rxOut);
 
-                    // Stone arch voussoirs
                     float ang = MathUtils.atan2(dy, Math.abs(xlIn - cx));
                     float vLine = (MathUtils.sin(ang * 14f) > 0.94f) ? -0.14f : 0.0f;
                     pix.setColor(MathUtils.clamp(stoneBase.r + vLine, 0.5f, 1f),
@@ -1471,7 +1317,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Heavy carved transom bar separating door from fanlight
         pix.setColor(0.18f, 0.09f, 0.05f, 1f);
         pix.fillRectangle(x0, sy - 8, x1 - x0 + 1, 16);
         pix.setColor(stoneHi);
@@ -1479,7 +1324,6 @@ public class TextureFactory implements Disposable {
         pix.setColor(0.08f, 0.04f, 0.02f, 1f);
         pix.drawLine(x0, sy + 7, x1, sy + 7);
 
-        // Wrought iron arabesque lattice spokes & concentric arches in fanlight
         for (int rRing = 45; rRing <= 210; rRing += 48) {
             for (float a = 0.15f; a <= 2.99f; a += 0.035f) {
                 int fx = cx - (int)(MathUtils.cos(a) * rRing);
@@ -1497,14 +1341,12 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Carved Keystone at arch apex
         int kw = 48, kh = 52;
         pix.setColor(stoneBase);
         pix.fillRectangle(cx - kw / 2, ay - 24, kw, kh);
         pix.setColor(stoneHi);
         pix.drawRectangle(cx - kw / 2, ay - 24, kw, kh);
 
-        // Brass studs along door stiles
         for (int y = sy + 30; y < frameBot - 20; y += 48) {
             drawBrassStud(pix, x0 + 10, y);
             drawBrassStud(pix, x1 - 10, y);
@@ -1512,17 +1354,14 @@ public class TextureFactory implements Disposable {
             drawBrassStud(pix, cx + 6, y);
         }
 
-        // Heavy wrought iron decorative strap hinges
         drawIronHinge(pix, x0, sy + 70, 75);
         drawIronHinge(pix, x0, frameBot - 120, 75);
         drawIronHinge(pix, x1 - 75, sy + 70, 75);
         drawIronHinge(pix, x1 - 75, frameBot - 120, 75);
 
-        // Burnished brass door handles with lion-head knockers
         drawBrassDoorHandle(pix, cx - 28, sy + (usableH / 2) + 10);
         drawBrassDoorHandle(pix, cx + 28, sy + (usableH / 2) + 10);
 
-        // Sandstone threshold at base
         pix.setColor(stoneBase);
         pix.fillRectangle(x0 - archTh - 14, frameBot, (x1 - x0) + (archTh + 14) * 2, 24);
         pix.setColor(stoneHi);
@@ -1537,20 +1376,11 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /**
-     * Monumental Pointed Mughal Iwan Portal for Curzon Hall Grand Entrance (1024x2048 with trilinear mipmaps):
-     * - Transparent spandrels (alpha=0) allowing seamless integration with Curzon brick walls
-     * - Smooth, stately 2-centered pointed Mughal arch (NO pitch-black void, NO jagged sawtooth cusps)
-     * - Warm, illuminated architectural grand vestibule / foyer with soft ambient chandelier glow
-     * - Intricate wrought-iron and burnished brass Arabesque grand fanlight screen
-     * - Massive ceremonial Burma teak double gates with 8 deeply carved panels, brass studs, and lion knockers
-     * - Refined sandstone pilaster jambs, impost mouldings, and carved floral keystone
-     */
     private Texture createCurzonGrandPortal() {
         int w = 1024, h = 2048;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
-        pix.fill(); // 100% transparent base!
+        pix.fill();
 
         Color stoneBase = new Color(0.80f, 0.74f, 0.65f, 1f);
         Color stoneHi = new Color(0.88f, 0.82f, 0.74f, 1f);
@@ -1567,9 +1397,8 @@ public class TextureFactory implements Disposable {
         int archTh = 38;
         int frameBot = 1960;
 
-        // 1. Lower Ceremonial Burma Teak Double Gates (from sy + 12 to frameBot)
         for (int y = sy + 12; y < frameBot; y++) {
-            // Teak base with warm rich woodgrain
+
             for (int x = x0; x <= x1; x++) {
                 float grain = MathUtils.sin(x * 0.35f) * 0.5f + MathUtils.sin(x * 1.5f) * 0.3f;
                 float n = grain + MathUtils.sin(y * 0.05f + x * 0.03f) * 0.2f;
@@ -1579,7 +1408,7 @@ public class TextureFactory implements Disposable {
                 pix.setColor(r, g, b, 1f);
                 pix.drawPixel(x, y);
             }
-            // Left sandstone pilaster jamb
+
             pix.setColor(stoneBase);
             pix.fillRectangle(x0 - archTh, y, archTh, 1);
             pix.setColor(stoneHi);
@@ -1587,7 +1416,6 @@ public class TextureFactory implements Disposable {
             pix.setColor(stoneSh);
             pix.drawPixel(x0 - 1, y);
 
-            // Right sandstone pilaster jamb
             pix.setColor(stoneBase);
             pix.fillRectangle(x1 + 1, y, archTh, 1);
             pix.setColor(stoneSh);
@@ -1596,13 +1424,11 @@ public class TextureFactory implements Disposable {
             pix.drawPixel(x1 + 1, y);
         }
 
-        // Center meeting stile
         pix.setColor(0.16f, 0.08f, 0.04f, 1f);
         pix.fillRectangle(cx - 16, sy + 12, 32, frameBot - (sy + 12));
         pix.setColor(0.08f, 0.04f, 0.02f, 1f);
         pix.drawLine(cx, sy + 12, cx, frameBot);
 
-        // 8 Large deeply recessed carved panels (4 per door leaf)
         int gatePanelW = (cx - x0) - 40;
         int usableH = frameBot - sy - 50;
         int gatePanelH = usableH / 4 - 16;
@@ -1614,7 +1440,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // 2. Upper Arched Tympanum: Warm Architectural Grand Foyer Interior (NO BLACK HOLE!)
         for (int y = ay; y < sy; y++) {
             float dy = sy - y;
             float radSqIn = R * R - dy * dy;
@@ -1624,7 +1449,6 @@ public class TextureFactory implements Disposable {
                 int xlIn = (int)((cx + d) - rxIn);
                 int xrIn = (int)((cx - d) + rxIn);
 
-                // Warm illuminated foyer depth with soft amber ambient glow
                 float tFoyer = (float)(y - ay) / rise;
                 float rF = MathUtils.lerp(0.36f, 0.20f, tFoyer);
                 float gF = MathUtils.lerp(0.24f, 0.12f, tFoyer);
@@ -1639,7 +1463,6 @@ public class TextureFactory implements Disposable {
                     int xlOut = (int)((cx + d) - rxOut);
                     int xrOut = (int)((cx - d) + rxOut);
 
-                    // Multi-tiered sandstone arch moldings with subtle joint lines
                     float ang = MathUtils.atan2(dy, Math.abs(xlIn - cx));
                     float joint = (MathUtils.sin(ang * 16f) > 0.95f) ? -0.12f : 0.0f;
                     pix.setColor(MathUtils.clamp(stoneBase.r + joint, 0.5f, 1f),
@@ -1658,7 +1481,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Heavy carved Burma teak transom beam separating gate from fanlight
         pix.setColor(0.18f, 0.09f, 0.05f, 1f);
         pix.fillRectangle(x0, sy - 12, x1 - x0 + 1, 24);
         pix.setColor(stoneHi);
@@ -1666,7 +1488,6 @@ public class TextureFactory implements Disposable {
         pix.setColor(0.08f, 0.04f, 0.02f, 1f);
         pix.drawLine(x0, sy + 11, x1, sy + 11);
 
-        // Ornate wrought-iron and brass Arabesque grand fanlight tracery
         for (int rRing = 60; rRing <= 360; rRing += 60) {
             for (float a = 0.14f; a <= 3.00f; a += 0.02f) {
                 int fx = cx - (int)(MathUtils.cos(a) * rRing);
@@ -1677,14 +1498,13 @@ public class TextureFactory implements Disposable {
                 if (radSqF > 0f) {
                     float rxF = (float) Math.sqrt(radSqF);
                     if (fx > (cx + d) - rxF + 3 && fx < (cx - d) + rxF - 3) {
-                        pix.setColor(0.85f, 0.70f, 0.30f, 1f); // Brass accent
+                        pix.setColor(0.85f, 0.70f, 0.30f, 1f);
                         pix.drawPixel(fx, fy);
                     }
                 }
             }
         }
 
-        // Radial grand spokes in fanlight
         for (int spoke = 0; spoke < 11; spoke++) {
             float angle = MathUtils.PI * (0.12f + 0.76f * ((float) spoke / 10f));
             float cosA = MathUtils.cos(angle);
@@ -1705,7 +1525,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Hanging ceremonial brass lantern / chandelier glow in upper foyer
         int lanX = cx, lanY = ay + 170;
         pix.setColor(1.0f, 0.85f, 0.40f, 0.9f);
         pix.fillCircle(lanX, lanY, 14);
@@ -1715,13 +1534,11 @@ public class TextureFactory implements Disposable {
         pix.drawCircle(lanX, lanY, 15);
         pix.drawLine(lanX, ay + 30, lanX, lanY - 15);
 
-        // Sandstone Carved Keystone at apex
         pix.setColor(stoneBase);
         pix.fillRectangle(cx - 40, ay - 28, 80, 60);
         pix.setColor(stoneHi);
         pix.drawRectangle(cx - 40, ay - 28, 80, 60);
 
-        // Grand Brass Bosses (heavy ceremonial studs)
         for (int y = sy + 50; y < frameBot - 40; y += 75) {
             drawBrassStud(pix, x0 + 22, y);
             drawBrassStud(pix, x1 - 22, y);
@@ -1729,11 +1546,9 @@ public class TextureFactory implements Disposable {
             drawBrassStud(pix, cx + 10, y);
         }
 
-        // Heavy Brass Pull Handles with Lion Knocker Rings
         drawBrassDoorHandle(pix, cx - 50, sy + 420);
         drawBrassDoorHandle(pix, cx + 50, sy + 420);
 
-        // Sandstone threshold at base
         pix.setColor(stoneBase);
         pix.fillRectangle(x0 - archTh - 16, frameBot, (x1 - x0) + (archTh + 16) * 2, 28);
         pix.setColor(stoneHi);
@@ -1746,26 +1561,17 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /**
-     * Authentic Curzon Hall Portico Upper Storey Triple Pointed Mughal Windows (1024x1024 with trilinear mipmaps):
-     * - Transparent spandrels (alpha=0) seamlessly integrating with Curzon brick walls
-     * - Central tall pointed arch flanked by two balanced side pointed arches
-     * - Slender carved sandstone baluster colonnettes with molded capitals separating the arches
-     * - Deep reflective blue-grey architectural glass and clean white colonial muntins
-     * - Continuous carved sandstone sill at base
-     */
     private Texture createCurzonPorticoTripleWindow() {
         int w = 1024, h = 1024;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
-        pix.fill(); // 100% transparent base!
+        pix.fill();
 
         Color stoneBase = new Color(0.90f, 0.86f, 0.78f, 1f);
         Color stoneHi = new Color(0.98f, 0.96f, 0.90f, 1f);
         Color stoneSh = new Color(0.60f, 0.55f, 0.48f, 1f);
         Color mullion = new Color(0.92f, 0.90f, 0.84f, 1f);
 
-        // Three arch centers: Left=220, Center=512, Right=804
         int[] centers = {220, 512, 804};
         int[] halfWidths = {105, 135, 105};
         int[] apexY = {140, 70, 140};
@@ -1781,14 +1587,12 @@ public class TextureFactory implements Disposable {
             float aR = (float)ahw + aD;
             int aTh = 26;
 
-            // Lower glass
             for (int y = sy; y < frameBot; y++) {
                 float t = (float)(y - sy) / (float)(frameBot - sy);
                 pix.setColor(MathUtils.lerp(0.14f, 0.07f, t), MathUtils.lerp(0.18f, 0.09f, t), MathUtils.lerp(0.26f, 0.13f, t), 1f);
                 pix.fillRectangle(acx - ahw, y, ahw * 2 + 1, 1);
             }
 
-            // Smooth Pointed arch head (NO jagged sawtooth cusps)
             for (int y = aay; y < sy; y++) {
                 float dy = sy - y;
                 float radSqIn = aR * aR - dy * dy;
@@ -1798,7 +1602,6 @@ public class TextureFactory implements Disposable {
                     int xlIn = (int)((acx + aD) - rxIn);
                     int xrIn = (int)((acx - aD) + rxIn);
 
-                    // Deep reflective glass
                     float tg = (float)(y - aay) / aRise;
                     pix.setColor(MathUtils.lerp(0.16f, 0.08f, tg), MathUtils.lerp(0.22f, 0.11f, tg), MathUtils.lerp(0.32f, 0.15f, tg), 1f);
                     if (xrIn >= xlIn) pix.fillRectangle(xlIn, y, xrIn - xlIn + 1, 1);
@@ -1822,7 +1625,6 @@ public class TextureFactory implements Disposable {
                 }
             }
 
-            // Lower sash mullions
             pix.setColor(mullion);
             pix.fillRectangle(acx - 3, sy, 6, frameBot - sy);
             int subH = frameBot - sy;
@@ -1830,14 +1632,12 @@ public class TextureFactory implements Disposable {
                 pix.fillRectangle(acx - ahw, sy + (subH * r) / 4 - 3, ahw * 2 + 1, 6);
             }
 
-            // Keystone
             pix.setColor(stoneBase);
             pix.fillRectangle(acx - 22, aay - 18, 44, 38);
             pix.setColor(stoneHi);
             pix.drawRectangle(acx - 22, aay - 18, 44, 38);
         }
 
-        // Sandstone colonnettes separating the arches
         for (int px : new int[]{350, 674}) {
             pix.setColor(stoneBase);
             pix.fillRectangle(px - 14, 60, 28, frameBot - 60);
@@ -1846,13 +1646,11 @@ public class TextureFactory implements Disposable {
             pix.setColor(stoneSh);
             pix.drawLine(px + 13, 60, px + 13, frameBot);
 
-            // Molded capitals and bases
             pix.setColor(stoneHi);
             pix.fillRectangle(px - 18, 60, 36, 14);
             pix.fillRectangle(px - 18, frameBot - 14, 36, 14);
         }
 
-        // Projecting continuous stone sill
         pix.setColor(stoneBase);
         pix.fillRectangle(50, frameBot, w - 100, 26);
         pix.setColor(stoneHi);
@@ -1886,25 +1684,21 @@ public class TextureFactory implements Disposable {
     }
 
     private void drawCarvedDoorPanel(Pixmap pix, int x, int y, int pw, int ph) {
-        // Deep sunken bevel shadow
+
         pix.setColor(0.10f, 0.05f, 0.03f, 1f);
         pix.fillRectangle(x, y, pw, ph);
 
-        // Inner raised panel face with warm teak highlight
         pix.setColor(0.30f, 0.16f, 0.09f, 1f);
         pix.fillRectangle(x + 8, y + 8, pw - 16, ph - 16);
 
-        // Top and left bevel highlight
         pix.setColor(0.44f, 0.25f, 0.14f, 1f);
         pix.drawLine(x + 4, y + 4, x + pw - 4, y + 4);
         pix.drawLine(x + 4, y + 4, x + 4, y + ph - 4);
 
-        // Bottom and right bevel deep shadow
         pix.setColor(0.06f, 0.03f, 0.02f, 1f);
         pix.drawLine(x + 4, y + ph - 4, x + pw - 4, y + ph - 4);
         pix.drawLine(x + pw - 4, y + 4, x + pw - 4, y + ph - 4);
 
-        // Traditional diamond/rosette central carving in each panel
         int cx = x + pw / 2;
         int cy = y + ph / 2;
         int r = Math.min(pw, ph) / 5;
@@ -1915,17 +1709,15 @@ public class TextureFactory implements Disposable {
     }
 
     private void drawBrassDoorHandle(Pixmap pix, int cx, int cy) {
-        // Heavy brass decorative backplate
+
         pix.setColor(0.20f, 0.15f, 0.06f, 1f);
         pix.fillRectangle(cx - 14, cy - 28, 28, 56);
 
-        // Burnished warm gold brass body
         pix.setColor(0.92f, 0.78f, 0.24f, 1f);
         pix.fillRectangle(cx - 11, cy - 25, 22, 50);
         pix.setColor(1.0f, 0.94f, 0.58f, 1f);
         pix.drawLine(cx - 6, cy - 22, cx - 6, cy + 22);
 
-        // Ornate circular ring knocker
         pix.setColor(0.95f, 0.82f, 0.28f, 1f);
         pix.drawCircle(cx, cy + 8, 14);
         pix.drawCircle(cx, cy + 8, 13);
@@ -1933,10 +1725,6 @@ public class TextureFactory implements Disposable {
         pix.drawCircle(cx, cy + 8, 15);
     }
 
-    /**
-     * Worn dirt path, tileable along its length (V) and feathered to transparent at both sides
-     * (U) so a strip of it blends into the grass instead of showing a hard edge.
-     */
     private Texture[] createDirtPathWithNormal() {
         int size = 128;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
@@ -1950,7 +1738,7 @@ public class TextureFactory implements Disposable {
                 float n = MathUtils.random(-0.05f, 0.05f)
                     + 0.05f * MathUtils.sin(x * 0.4f) * MathUtils.cos(y * 0.33f);
                 float r = 0.52f + n, g = 0.40f + n * 0.9f, b = 0.27f + n * 0.7f;
-                if (MathUtils.random() < 0.02f) { r += 0.14f; g += 0.13f; b += 0.11f; } // pebbles
+                if (MathUtils.random() < 0.02f) { r += 0.14f; g += 0.13f; b += 0.11f; }
                 pix.setColor(MathUtils.clamp(r, 0f, 1f), MathUtils.clamp(g, 0f, 1f),
                     MathUtils.clamp(b, 0f, 1f), alpha);
                 pix.drawPixel(x, y);
@@ -1964,17 +1752,13 @@ public class TextureFactory implements Disposable {
         return new Texture[]{tex, norm};
     }
 
-    /**
-     * Smooth, low-frequency weathered rock: broad tonal clouds with a few darker streaks and pale
-     * speckle. Kept soft on purpose; the tiling stone texture read as a wire mesh on round boulders.
-     */
     private Texture createRockSurface() {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
                 float fx = x / (float) size * MathUtils.PI2, fy = y / (float) size * MathUtils.PI2;
-                // Periodic in both axes so the tile has no seam
+
                 float n = 0.5f * MathUtils.sin(fx * 2f + MathUtils.sin(fy * 3f) * 1.2f)
                     + 0.3f * MathUtils.sin(fy * 3f + MathUtils.cos(fx * 2f) * 1.5f)
                     + 0.2f * MathUtils.sin((fx + fy) * 5f);
@@ -1992,14 +1776,13 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /** Soft filmic gradient for volumetric light shafts: feathered across with smooth Gaussian curve, gently fading at both ends. */
     private Texture createLightBeam() {
         int w = 64, h = 256;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
         for (int y = 0; y < h; y++) {
             float v = y / (float) (h - 1);
             float along = MathUtils.sin(v * MathUtils.PI);
-            along = along * along; // smooth bell curve along length
+            along = along * along;
             for (int x = 0; x < w; x++) {
                 float u = x / (float) (w - 1);
                 float across = MathUtils.sin(u * MathUtils.PI);
@@ -2015,18 +1798,13 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /**
-     * Rasterises one pointed leaf into the atlas cell at (ox, oy). The leaf starts at the base
-     * point (bx, by) and runs {@code length} pixels toward {@code angle}; colour grades from the
-     * base colour to the tip colour, with a lighter midrib, faint side veins and a darker rim.
-     */
     private void drawLeaf(Pixmap pix, int ox, int oy, float bx, float by, float length, float halfWidth,
                           float angle, float br, float bg, float bb, float tr, float tg, float tb) {
         float dx = MathUtils.cos(angle), dy = MathUtils.sin(angle);
-        float px = -dy, py = dx; // perpendicular
+        float px = -dy, py = dx;
 
         float reach = length + halfWidth + 2f;
-        // Clip to this leaf's own 256px atlas cell so it can't bleed into its neighbours
+
         int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(255, (int) (bx + reach));
         int minY = Math.max(0, (int) (by - reach)), maxY = Math.min(255, (int) (by + reach));
 
@@ -2043,13 +1821,11 @@ public class TextureFactory implements Disposable {
                 float alpha = MathUtils.clamp(w - across + 0.5f, 0f, 1f);
                 float edge = w > 0.5f ? across / w : 1f;
 
-                // Deep, natural chlorophyll without artificial neon/catceta blow-out (Ghost of Tsushima & Where Winds Meet style)
                 float gain = 1.0f;
                 float r = MathUtils.lerp(br, tr, t) * gain;
                 float g = MathUtils.lerp(bg, tg, t) * gain;
                 float b = MathUtils.lerp(bb, tb, t) * gain;
 
-                // Subtle natural midrib and lateral veins; the rim darkens
                 float vein = 0f;
                 if (across < 1.6f) vein = 0.03f;
                 else {
@@ -2067,19 +1843,6 @@ public class TextureFactory implements Disposable {
         }
     }
 
-    /**
-     * Draws an authentic botanical bamboo leaf matching Image 3 (poaceae monocot morphology):
-     * - Slender lanceolate blade: narrow base, expands to maximum width at ~28% length, long graceful taper to acute needle tip.
-     * - Monocot parallel venation: fine longitudinal lines running parallel to the midrib from base to tip.
-     * - Rich chlorophyll bamboo green with lighter translucent midrib and sunny lime tip.
-     */
-    /**
-     * Draws an authentic botanical bamboo leaf strictly matching Image 2 (poaceae monocot morphology):
-     * - Slender lanceolate blade: narrow base, expands to maximum width at ~28% length, long graceful taper to acute needle tip.
-     * - Monocot parallel venation: fine longitudinal lines running parallel to the midrib from base to tip.
-     * - 3D crease across midrib: lit half (+8%) vs shaded half (-10%).
-     * - Rich chlorophyll bamboo green with lighter translucent midrib and sunny lime tip.
-     */
     private void drawBotanicalBambooLeaf(Pixmap pix, int ox, int oy, int cellSize,
                                          float bx, float by, float length, float halfWidth,
                                          float angleRad,
@@ -2087,7 +1850,7 @@ public class TextureFactory implements Disposable {
                                          float tr, float tg, float tb,
                                          float mr, float mg, float mb) {
         float dx = MathUtils.cos(angleRad), dy = MathUtils.sin(angleRad);
-        float px = -dy, py = dx; // perpendicular
+        float px = -dy, py = dx;
 
         float reach = length + halfWidth + 2f;
         int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(cellSize - 1, (int) (bx + reach));
@@ -2102,28 +1865,25 @@ public class TextureFactory implements Disposable {
 
                 float sideDist = rx * px + ry * py;
                 float across = Math.abs(sideDist);
-                // Botanical bamboo leaf profile (Image 2 poaceae monocot): widest at t=0.28, long acute taper
+
                 float w = halfWidth * (float) Math.sin(Math.PI * Math.pow(t, 0.62)) * (1.12f - 0.28f * t);
                 if (across > w + 0.5f) continue;
 
                 float alpha = MathUtils.clamp(w - across + 0.5f, 0f, 1f);
                 float normAcross = w > 0.01f ? across / w : 0f;
 
-                // Color gradient along blade: from dark base to vibrant blade to sunlit tip
                 float r = MathUtils.lerp(br, tr, t);
                 float g = MathUtils.lerp(bg, tg, t);
                 float b = MathUtils.lerp(bb, tb, t);
 
-                // 3D crease across midrib: one side catches direct light (+8%), other in slight shade (-10%)
                 float foldGain = (sideDist > 0f) ? 1.08f : 0.90f;
 
-                // Monocot parallel venation (fine longitudinal veins parallel to midrib)
                 if (across < 1.35f) {
-                    // Central translucent pale green midrib
+
                     r = mr; g = mg; b = mb;
                     foldGain = 1.0f;
                 } else {
-                    // 3 longitudinal parallel vein lines on either side
+
                     float vDist1 = Math.abs(normAcross - 0.32f);
                     float vDist2 = Math.abs(normAcross - 0.60f);
                     float vDist3 = Math.abs(normAcross - 0.84f);
@@ -2154,10 +1914,6 @@ public class TextureFactory implements Disposable {
             br, bg, bb, tr, tg, tb, mr, mg, mb);
     }
 
-    /**
-     * Draws one stylized deciduous leaf with pointed ovate silhouette, pale lime midrib stem,
-     * natural leaf color gradient, and 3D volume fold crease strictly matching Image 1.
-     */
     private void drawDeciduousStylizedLeaf(Pixmap pix, int ox, int oy, int cellSize,
                                           float bx, float by, float length, float halfWidth,
                                           float angleRad,
@@ -2180,22 +1936,19 @@ public class TextureFactory implements Disposable {
 
                 float sideDist = rx * px + ry * py;
                 float across = Math.abs(sideDist);
-                // Stylized deciduous leaf: teardrop / ovate with sharp tip matching Image 1
+
                 float w = halfWidth * (float) Math.pow(Math.sin(Math.PI * Math.pow(t, 0.72)), 0.82);
                 if (across > w + 0.5f) continue;
 
                 float alpha = MathUtils.clamp(w - across + 0.5f, 0f, 1f);
                 float edge = w > 0.01f ? across / w : 1f;
 
-                // Color gradient along blade: darker base to bright sunlit tip
                 float r = MathUtils.lerp(br, tr, t);
                 float g = MathUtils.lerp(bg, tg, t);
                 float b = MathUtils.lerp(bb, tb, t);
 
-                // 3D crease / volume fold: lit side vs shaded side
                 float foldGain = (sideDist > 0f) ? 1.09f : 0.91f;
 
-                // Pale chartreuse midrib stem (Image 1 signature feature)
                 if (across < 1.35f) {
                     r = mr; g = mg; b = mb;
                     foldGain = 1.0f;
@@ -2226,9 +1979,6 @@ public class TextureFactory implements Disposable {
             br, bg, bb, tr, tg, tb, 0.84f, 0.98f, 0.44f);
     }
 
-    /**
-     * Draws a woody twig segment connecting nodes and leaf clusters.
-     */
     private void drawTwigSegment(Pixmap pix, int ox, int oy, int cellSize,
                                 float x0, float y0, float x1, float y1, float thickness,
                                 float r, float g, float b, float a) {
@@ -2266,12 +2016,9 @@ public class TextureFactory implements Disposable {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Natural rough bark palette from reference specification:
-        // #34372A (deep shadow), #4A4A32 (dark olive brown), #62563A (natural brown), #81734B (sunlit bark)
-        pix.setColor(0.29f, 0.29f, 0.20f, 1f); // #4A4A32 base
+        pix.setColor(0.29f, 0.29f, 0.20f, 1f);
         pix.fill();
 
-        // Fine longitudinal grooves, small ridges, uneven color and subtle weathering
         for (int x = 0; x < size; x++) {
             float groove = MathUtils.sin(x * 0.42f) * 0.6f + MathUtils.sin(x * 1.15f) * 0.3f;
             for (int y = 0; y < size; y++) {
@@ -2298,9 +2045,8 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
-        pix.fill(); // Fully transparent background for crisp alpha cutout
+        pix.fill();
 
-        // Central woody branch network
         pix.setColor(0.28f, 0.18f, 0.12f, 1f);
         drawBranchLine(pix, 256, 512, 256, 320, 8);
         drawBranchLine(pix, 256, 320, 160, 200, 5);
@@ -2310,7 +2056,6 @@ public class TextureFactory implements Disposable {
         drawBranchLine(pix, 350, 190, 420, 100, 3);
         drawBranchLine(pix, 350, 190, 290, 90, 3);
 
-        // Clustered dense tropical leaf sprays with natural light gaps
         float[][] clusters = {
             {256, 120, 95}, {160, 180, 80}, {350, 170, 80},
             {100, 120, 65}, {410, 100, 65}, {220, 90, 70},
@@ -2341,7 +2086,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Distinct vibrant white and scarlet floral accents matching reference image
         int flowerCount = 65;
         for (int i = 0; i < flowerCount; i++) {
             float fx = MathUtils.random(80, 432);
@@ -2349,13 +2093,13 @@ public class TextureFactory implements Disposable {
             boolean isWhite = (i % 2 == 0);
 
             if (isWhite) {
-                // Crisp bright white blossom with ivory highlight
+
                 pix.setColor(0.99f, 0.99f, 0.96f, 1f);
                 pix.fillCircle((int)fx, (int)fy, MathUtils.random(3, 6));
                 pix.setColor(1.0f, 0.88f, 0.25f, 1f);
                 pix.fillCircle((int)fx, (int)fy, 2);
             } else {
-                // Saturated high-contrast scarlet-red floral cluster
+
                 pix.setColor(0.98f, 0.14f, 0.18f, 1f);
                 pix.fillCircle((int)fx, (int)fy, MathUtils.random(4, 7));
                 pix.setColor(1.0f, 0.90f, 0.30f, 1f);
@@ -2373,15 +2117,13 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
-        pix.fill(); // Fully transparent background
+        pix.fill();
 
-        // Delicate woody branchlets
         pix.setColor(0.30f, 0.20f, 0.12f, 1f);
         drawBranchLine(pix, 256, 512, 256, 300, 7);
         drawBranchLine(pix, 256, 300, 140, 180, 4);
         drawBranchLine(pix, 256, 300, 370, 170, 4);
 
-        // Feathery bipinnate green fronds
         for (int b = 0; b < 28; b++) {
             float fx = MathUtils.random(70, 442);
             float fy = MathUtils.random(50, 390);
@@ -2392,26 +2134,22 @@ public class TextureFactory implements Disposable {
             drawBambooBlade(pix, fx, fy, fLen, fAngle, 7.5f, fernCol, fernVein);
         }
 
-        // Iconic blazing high-contrast scarlet-orange Krishnachura flowers
         int flowerCount = 95;
         for (int i = 0; i < flowerCount; i++) {
             float fx = MathUtils.random(50, 462);
             float fy = MathUtils.random(40, 410);
             int petLen = MathUtils.random(11, 22);
 
-            // 5 fiery petals radiating outward with intense contrast against deep green
             for (int p = 0; p < 5; p++) {
                 float pAngle = p * 72f + MathUtils.random(-12f, 12f);
                 float px = fx + MathUtils.cosDeg(pAngle) * petLen;
                 float py = fy + MathUtils.sinDeg(pAngle) * petLen;
 
-                // Glowing scarlet red petal with fiery vermilion flame highlight
                 float shade = MathUtils.random(0.90f, 1.0f);
                 pix.setColor(0.99f * shade, 0.12f + MathUtils.random(-0.02f, 0.08f), 0.06f, 1f);
                 pix.fillCircle((int)px, (int)py, Math.max(4, petLen / 3));
             }
 
-            // High-contrast luminous gold central stamens
             pix.setColor(1.0f, 0.92f, 0.20f, 1f);
             pix.fillCircle((int)fx, (int)fy, 4);
         }
@@ -2427,25 +2165,19 @@ public class TextureFactory implements Disposable {
         int height = 512;
         Pixmap pix = new Pixmap(width, height, Format.RGBA8888);
 
-        // Bamboo culm palette from reference images (Ref 4 & 5):
-        // #B8A832 bright yellow-green young culm (top)
-        // #9AB020 natural yellow-green mid culm
-        // #7A9A20 deeper yellow-green mature culm (base)
-        // Cylindrical shading: bright center, shadowed edges
         for (int x = 0; x < width; x++) {
             float xNorm = (float) x / (float) width;
-            // Cylinder cross-section lighting: bright center, dark edges
+
             float cylLight = 0.55f + 0.50f * MathUtils.sin(xNorm * MathUtils.PI);
-            // Subtle vertical fiber grain
+
             float fiber = MathUtils.sin(x * 1.4f) * 0.025f + MathUtils.sin(x * 4.1f) * 0.012f;
 
-            // Slight color variation band along width (culm age/sun exposure)
             float culmVar = (MathUtils.sin(xNorm * MathUtils.PI2 * 1.5f) + 1f) * 0.5f;
 
             for (int y = 0; y < height; y++) {
-                // Height-gradient: slightly yellower at top (young growth), greener at base
+
                 float yNorm = (float) y / (float) height;
-                // Base yellow-green: lerp from #B8A832 (0.722, 0.659, 0.196) to #7A9A20 (0.478, 0.604, 0.125)
+
                 float rBase = MathUtils.lerp(0.722f, 0.478f, yNorm) + culmVar * 0.04f;
                 float gBase = MathUtils.lerp(0.659f, 0.604f, yNorm) + culmVar * 0.03f;
                 float bBase = MathUtils.lerp(0.196f, 0.125f, yNorm);
@@ -2459,21 +2191,18 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Horizontal bamboo joints / raised nodal rings — dark brown rings (#3D3010)
         int nodeInterval = 64;
         for (int y = nodeInterval; y < height; y += nodeInterval) {
-            // Swollen nodal bulge highlight (pale yellow-tan just above ring)
+
             pix.setColor(0.82f, 0.78f, 0.30f, 0.90f);
             pix.drawLine(0, y - 3, width, y - 3);
             pix.drawLine(0, y - 2, width, y - 2);
 
-            // Dark ring itself (#3D3010 dark brown-green)
             pix.setColor(0.239f, 0.188f, 0.063f, 1f);
             pix.drawLine(0, y - 1, width, y - 1);
             pix.drawLine(0, y,     width, y);
             pix.drawLine(0, y + 1, width, y + 1);
 
-            // Lower shadow below ring
             pix.setColor(0.38f, 0.42f, 0.14f, 0.80f);
             pix.drawLine(0, y + 2, width, y + 2);
         }
@@ -2489,14 +2218,12 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
-        pix.fill(); // 100% transparent background
+        pix.fill();
 
-        // Botanical Bamboo Colors from Image 3
-        float bR = 0.118f, bG = 0.302f, bB = 0.157f; // Base #1E4D28
-        float tR = 0.494f, tG = 0.796f, tB = 0.275f; // Tip #7ECB46
-        float mR = 0.447f, mG = 0.722f, mB = 0.251f; // Midrib #72B840
+        float bR = 0.118f, bG = 0.302f, bB = 0.157f;
+        float tR = 0.494f, tG = 0.796f, tB = 0.275f;
+        float mR = 0.447f, mG = 0.722f, mB = 0.251f;
 
-        // Slender bamboo twigs
         drawTwigSegment(pix, 0, 0, 256, 510, 256, 320, 5.0f, 0.267f, 0.431f, 0.165f, 1f);
         drawTwigSegment(pix, 0, 0, 256, 320, 160, 210, 3.5f, 0.267f, 0.431f, 0.165f, 1f);
         drawTwigSegment(pix, 0, 0, 256, 320, 360, 200, 3.5f, 0.267f, 0.431f, 0.165f, 1f);
@@ -2505,7 +2232,6 @@ public class TextureFactory implements Disposable {
         drawTwigSegment(pix, 0, 0, 360, 200, 430, 130, 2.4f, 0.267f, 0.431f, 0.165f, 1f);
         drawTwigSegment(pix, 0, 0, 360, 200, 290, 120, 2.4f, 0.267f, 0.431f, 0.165f, 1f);
 
-        // Nodal clusters radiating botanical bamboo leaves with parallel veins
         float[][] sprayNodes = {
             {256, 320}, {160, 210}, {360, 200},
             {90, 140}, {230, 130}, {430, 130}, {290, 120},
@@ -2535,9 +2261,8 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
-        pix.fill(); // Transparent background
+        pix.fill();
 
-        // Ground-hugging shrub dome with radiating rosettes of serrated leaves
         float[][] bushCenters = {
             {256, 320, 130}, {160, 360, 100}, {350, 350, 100},
             {200, 220, 95}, {310, 210, 95}, {256, 140, 80}
@@ -2566,7 +2291,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Tiny white and scarlet wildflowers matching reference image
         int flowerCount = 38;
         for (int i = 0; i < flowerCount; i++) {
             float fx = MathUtils.random(90, 420);
@@ -2580,7 +2304,6 @@ public class TextureFactory implements Disposable {
             }
             pix.fillCircle((int)fx, (int)fy, MathUtils.random(3, 6));
 
-            // Gold floral center
             pix.setColor(1.0f, 0.88f, 0.20f, 1f);
             pix.fillCircle((int)fx, (int)fy, 2);
         }
@@ -2595,7 +2318,6 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Granite base with mineral flecks
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 float n = MathUtils.sin(x * 0.15f) * MathUtils.cos(y * 0.18f)
@@ -2603,13 +2325,11 @@ public class TextureFactory implements Disposable {
                 float noise = (MathUtils.random(-0.06f, 0.06f));
                 float stone = MathUtils.clamp(0.50f + n * 0.08f + noise, 0.35f, 0.68f);
 
-                // Natural cool slate grey
                 pix.setColor(stone, stone * 0.98f, stone * 0.95f, 1f);
                 pix.drawPixel(x, y);
             }
         }
 
-        // Natural dark stone fissures and chisel cracks
         pix.setColor(0.22f, 0.20f, 0.18f, 0.85f);
         int[] cracksY = {90, 180, 275, 380};
         for (int cy : cracksY) {
@@ -2619,7 +2339,7 @@ public class TextureFactory implements Disposable {
                 int nextX = curX + MathUtils.random(12, 28);
                 int nextY = curY + MathUtils.random(-6, 6);
                 pix.drawLine(curX, curY, nextX, nextY);
-                // Subtle bright highlight edge underneath crack
+
                 pix.setColor(0.72f, 0.70f, 0.68f, 0.5f);
                 pix.drawLine(curX, curY + 1, nextX, nextY + 1);
                 pix.setColor(0.22f, 0.20f, 0.18f, 0.85f);
@@ -2628,7 +2348,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Velvety green moss and lichen creeping along crevices and base
         for (int x = 0; x < size; x++) {
             for (int y = 280; y < size; y++) {
                 float mossProb = (float)(y - 280) / (float)(size - 280);
@@ -2654,7 +2373,6 @@ public class TextureFactory implements Disposable {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Deep serene turquoise-blue pool water
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 float wave = (MathUtils.sin(x * 0.14f + y * 0.12f) + MathUtils.cos((x - y) * 0.18f)) * 0.5f;
@@ -2666,15 +2384,14 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Floating green water lily pads
         pix.setColor(0.18f, 0.48f, 0.16f, 0.95f);
         int[][] pads = {{45, 60, 14}, {180, 95, 18}, {90, 190, 16}, {210, 180, 15}, {130, 140, 12}};
         for (int[] p : pads) {
             pix.fillCircle(p[0], p[1], p[2]);
-            // Lily notch
+
             pix.setColor(0.14f, 0.36f, 0.46f, 1f);
             pix.fillTriangle(p[0], p[1], p[0] + p[2], p[1] - 4, p[0] + p[2], p[1] + 4);
-            // Delicate pink lotus bloom
+
             pix.setColor(0.96f, 0.62f, 0.78f, 1f);
             pix.fillCircle(p[0], p[1], 4);
             pix.setColor(0.18f, 0.48f, 0.16f, 0.95f);
@@ -2687,14 +2404,13 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /** Tileable caustic highlight lines on transparent black, scrolled over the pukur surface. */
     private Texture createWaterRipple() {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
         float k = MathUtils.PI2 / size;
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
-                // Integer frequencies keep every term periodic over the tile, so it wraps seamlessly
+
                 float a = MathUtils.sin(x * k * 3f + MathUtils.sin(y * k * 2f) * 1.6f);
                 float b = MathUtils.sin(y * k * 4f + MathUtils.sin(x * k * 3f) * 1.3f);
                 float c = MathUtils.sin((x + y) * k * 2f + MathUtils.cos(x * k * 5f) * 0.9f);
@@ -2711,16 +2427,13 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /**
-     * Seamless procedural water ripple normal map for dual-scrolling micro caustics on the pukur surface.
-     */
     private Texture createWaterRippleNormal() {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
         float k = MathUtils.PI2 / size;
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
-                // Periodic multi-frequency height variation
+
                 float a = MathUtils.sin(x * k * 3f + MathUtils.sin(y * k * 2f) * 1.2f);
                 float b = MathUtils.sin(y * k * 4f + MathUtils.sin(x * k * 3f) * 1.1f);
                 float c = MathUtils.sin((x + y) * k * 5f + MathUtils.cos((x - y) * k * 2f) * 0.8f);
@@ -2759,7 +2472,6 @@ public class TextureFactory implements Disposable {
             float px = startX + dirX * length * t;
             float py = startY + dirY * length * t;
 
-            // Bamboo leaf profile: slender, widest at t ~ 0.30, tapers to acute tip at t = 1.0
             float w = maxHalfWidth * MathUtils.sin(t * MathUtils.PI) * (1.1f - 0.35f * t);
 
             int span = (int) Math.ceil(w);
@@ -2786,11 +2498,9 @@ public class TextureFactory implements Disposable {
         int h = 300;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
 
-        // Bottle green field (#006A4E)
         pix.setColor(0.0f, 0.416f, 0.306f, 1f);
         pix.fill();
 
-        // Crimson red circle offset slightly to left (#F42A41)
         pix.setColor(0.957f, 0.165f, 0.255f, 1f);
         pix.fillCircle(225, 150, 100);
 
@@ -2804,7 +2514,6 @@ public class TextureFactory implements Disposable {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Chiseled white/grey sculpture stone
         pix.setColor(0.86f, 0.85f, 0.82f, 1f);
         pix.fill();
 
@@ -2828,12 +2537,10 @@ public class TextureFactory implements Disposable {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Canvas brown/khaki backpack matching mockup
         Color canvas = new Color(0.42f, 0.35f, 0.26f, 1f);
         pix.setColor(canvas);
         pix.fill();
 
-        // Cross-hatch fabric weave
         for (int x = 0; x < size; x += 4) {
             pix.setColor(0.38f, 0.31f, 0.22f, 0.3f);
             pix.drawLine(x, 0, x, size);
@@ -2843,18 +2550,16 @@ public class TextureFactory implements Disposable {
             pix.drawLine(0, y, size, y);
         }
 
-        // Pocket seam stitching lines
         pix.setColor(0.24f, 0.18f, 0.12f, 1f);
-        pix.fillRectangle(20, 110, 216, 6); // Pocket zipper seam
+        pix.fillRectangle(20, 110, 216, 6);
         pix.fillRectangle(40, 180, 176, 4);
 
-        // Circular enamel badges: "DU" and "36 July" pins on backpack!
-        pix.setColor(0.92f, 0.82f, 0.25f, 1f); // Gold pin
+        pix.setColor(0.92f, 0.82f, 0.25f, 1f);
         pix.fillCircle(75, 75, 18);
         pix.setColor(0.12f, 0.14f, 0.35f, 1f);
         pix.fillCircle(75, 75, 14);
 
-        pix.setColor(0.85f, 0.15f, 0.18f, 1f); // July red pin
+        pix.setColor(0.85f, 0.15f, 0.18f, 1f);
         pix.fillCircle(125, 82, 16);
         pix.setColor(1f, 1f, 1f, 1f);
         pix.fillCircle(125, 82, 12);
@@ -2869,18 +2574,15 @@ public class TextureFactory implements Disposable {
         int size = 256;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Earthy khaki/tan jacket color matching mockup character
         pix.setColor(0.62f, 0.56f, 0.46f, 1f);
         pix.fill();
 
-        // Fabric fold shading
         for (int y = 0; y < size; y++) {
             float fold = MathUtils.sin(y * 0.12f) * 0.08f;
             pix.setColor(0.62f + fold, 0.56f + fold, 0.46f + fold, 1f);
             pix.drawLine(0, y, size, y);
         }
 
-        // Collar & seam lines
         pix.setColor(0.42f, 0.36f, 0.28f, 1f);
         pix.fillRectangle(124, 0, 8, size);
 
@@ -2895,27 +2597,22 @@ public class TextureFactory implements Disposable {
         int h = 512;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
 
-        // Cream banner canvas
         pix.setColor(0.94f, 0.92f, 0.88f, 1f);
         pix.fill();
 
-        // Red top and bottom header bands
         pix.setColor(0.85f, 0.12f, 0.15f, 1f);
         pix.fillRectangle(0, 0, w, 40);
         pix.fillRectangle(0, h - 30, w, 30);
 
-        // Gold border lines
         pix.setColor(0.92f, 0.78f, 0.28f, 1f);
         pix.drawRectangle(8, 8, w - 16, h - 16);
         pix.drawRectangle(10, 10, w - 20, h - 20);
 
-        // Black typography representation (protest slogans)
         pix.setColor(0.12f, 0.12f, 0.15f, 1f);
-        pix.fillRectangle(30, 80, 196, 24);  // "36 JULY 2024"
-        pix.fillRectangle(40, 130, 176, 16); // "DHAKA UNIVERSITY"
-        pix.fillRectangle(30, 180, 196, 14); // "MERIT OVER PRIVILEGE"
+        pix.fillRectangle(30, 80, 196, 24);
+        pix.fillRectangle(40, 130, 176, 16);
+        pix.fillRectangle(30, 180, 196, 14);
 
-        // Red circular movement emblem in center
         pix.setColor(0.85f, 0.12f, 0.15f, 1f);
         pix.fillCircle(128, 280, 48);
         pix.setColor(0.95f, 0.92f, 0.86f, 1f);
@@ -2923,7 +2620,6 @@ public class TextureFactory implements Disposable {
         pix.setColor(0.85f, 0.12f, 0.15f, 1f);
         pix.fillCircle(128, 280, 20);
 
-        // Bottom text bar
         pix.setColor(0.12f, 0.12f, 0.15f, 1f);
         pix.fillRectangle(40, 380, 176, 14);
         pix.fillRectangle(50, 410, 156, 12);
@@ -2938,7 +2634,6 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Bitumen dark charcoal base
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
                 float noise = (MathUtils.sin(x * 12.3f + y * 7.9f) + MathUtils.cos(x * 5.1f - y * 14.2f)) * 0.5f;
@@ -2948,7 +2643,6 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // White dashed center line down the middle
         int stripeW = 12;
         int stripeH = 64;
         int gapH = 48;
@@ -2971,7 +2665,6 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Warm light-grey architectural concrete (Doxiadis modernist style)
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
                 float n = (MathUtils.sin(x * 18.2f + y * 9.1f) + MathUtils.cos(x * 7.5f - y * 19.3f)) * 0.5f;
@@ -2981,12 +2674,11 @@ public class TextureFactory implements Disposable {
             }
         }
 
-        // Shuttering panel seams every 128 pixels
         pix.setColor(0.62f, 0.60f, 0.58f, 0.7f);
         for (int p = 0; p < size; p += 128) {
             pix.drawLine(0, p, size - 1, p);
             pix.drawLine(p, 0, p, size - 1);
-            // Formwork tie-rod holes
+
             pix.setColor(0.45f, 0.42f, 0.40f, 0.9f);
             pix.fillCircle(p + 16, p + 16, 3);
             pix.fillCircle(p + 112, p + 16, 3);
@@ -3007,20 +2699,18 @@ public class TextureFactory implements Disposable {
         int size = 512;
         Pixmap pix = new Pixmap(size, size, Format.RGBA8888);
 
-        // Weathered reddish terracotta-tin roof base
         pix.setColor(0.62f, 0.28f, 0.22f, 1f);
         pix.fill();
 
-        // Corrugated vertical ridges
         int ridgeWidth = 16;
         for (int x = 0; x < size; x += ridgeWidth) {
-            // Highlight left edge
+
             pix.setColor(0.74f, 0.36f, 0.28f, 0.85f);
             pix.fillRectangle(x, 0, ridgeWidth / 2, size);
-            // Shadow right edge
+
             pix.setColor(0.48f, 0.18f, 0.14f, 0.85f);
             pix.fillRectangle(x + ridgeWidth / 2, 0, ridgeWidth / 2, size);
-            // Subtle horizontal weathering streaks
+
             for (int y = 0; y < size; y += 32) {
                 pix.setColor(0.40f, 0.20f, 0.16f, 0.3f);
                 pix.drawLine(x, y, x + ridgeWidth, y);
@@ -3039,43 +2729,36 @@ public class TextureFactory implements Disposable {
         int h = 256;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
 
-        // Sky background gradient (warm golden morning)
         for (int y = 0; y < h; y++) {
             float t = (float) y / h;
             pix.setColor(0.92f - t * 0.12f, 0.88f - t * 0.15f, 0.78f - t * 0.25f, 1f);
             pix.drawLine(0, y, w, y);
         }
 
-        // Lush green trees backdrop
         pix.setColor(0.18f, 0.42f, 0.16f, 1f);
         for (int x = 20; x < w - 20; x += 40) {
             pix.fillCircle(x, 140, 45);
         }
 
-        // Curzon Hall Facade Red Terracotta Block
         int bY = 110;
         int bH = 95;
         pix.setColor(0.74f, 0.24f, 0.18f, 1f);
         pix.fillRectangle(60, bY, w - 120, bH);
 
-        // White domes & finials
         pix.setColor(0.95f, 0.94f, 0.90f, 1f);
         pix.fillCircle(w / 2, bY - 15, 38);
         pix.setColor(1.0f, 0.84f, 0.30f, 1f);
-        pix.fillRectangle(w / 2 - 2, bY - 65, 4, 30); // Finial spire
+        pix.fillRectangle(w / 2 - 2, bY - 65, 4, 30);
 
-        // Side domes
         pix.setColor(0.95f, 0.94f, 0.90f, 1f);
         pix.fillCircle(120, bY, 18);
         pix.fillCircle(w - 120, bY, 18);
 
-        // Arched windows and white cusped portico
         pix.setColor(0.96f, 0.94f, 0.90f, 1f);
         pix.fillRectangle(w / 2 - 35, bY + 15, 70, bH - 15);
         pix.setColor(0.20f, 0.12f, 0.08f, 1f);
         pix.fillRectangle(w / 2 - 22, bY + 30, 44, bH - 30);
 
-        // Flanking arched windows
         for (int i = 0; i < 4; i++) {
             int wxL = 80 + i * 28;
             int wxR = w - 80 - i * 28;
@@ -3087,16 +2770,13 @@ public class TextureFactory implements Disposable {
             pix.fillRectangle(wxR - 14, bY + 38, 14, 38);
         }
 
-        // Green lawn in front
         pix.setColor(0.24f, 0.55f, 0.20f, 1f);
         pix.fillRectangle(0, bY + bH, w, h - (bY + bH));
 
-        // Central brick walkway
         pix.setColor(0.72f, 0.32f, 0.22f, 1f);
         pix.fillTriangle(w / 2 - 30, bY + bH, w / 2 + 30, bY + bH, w / 2 + 75, h);
         pix.fillTriangle(w / 2 - 30, bY + bH, w / 2 - 75, h, w / 2 + 75, h);
 
-        // Gold border framing
         pix.setColor(0.85f, 0.70f, 0.30f, 1f);
         pix.drawRectangle(0, 0, w, h);
         pix.drawRectangle(1, 1, w - 2, h - 2);
@@ -3107,26 +2787,13 @@ public class TextureFactory implements Disposable {
         return tex;
     }
 
-    /**
-     * Debug Orientation Test Card (Fix Pack 02)
-     * Provides an unambiguous, asymmetric visual reference to test UV mapping,
-     * winding order, and texture orientation on 3D meshes.
-     * Features:
-     *  - Corner markers: Top-Left (RED), Top-Right (GREEN), Bottom-Left (BLUE), Bottom-Right (YELLOW)
-     *  - Large asymmetric letter 'F' in the center
-     *  - Upward pointing arrow with "UP" indicator
-     *  - Explicit "TOP", "BOT", "LEFT", "RIGHT" boundary text
-     *  - Fine 32px alignment grid
-     */
     private Texture createDebugOrientationTestCard() {
         int w = 512, h = 512;
         Pixmap pix = new Pixmap(w, h, Format.RGBA8888);
 
-        // 1. Dark slate background
         pix.setColor(0.10f, 0.12f, 0.16f, 1f);
         pix.fill();
 
-        // 2. Alignment grid
         pix.setColor(0.18f, 0.22f, 0.28f, 1f);
         for (int x = 0; x < w; x += 32) {
             pix.drawLine(x, 0, x, h);
@@ -3135,61 +2802,49 @@ public class TextureFactory implements Disposable {
             pix.drawLine(0, y, w, y);
         }
 
-        // Center crosshairs
         pix.setColor(0.35f, 0.40f, 0.50f, 1f);
         pix.drawLine(w / 2, 0, w / 2, h);
         pix.drawLine(0, h / 2, w, h / 2);
 
-        // 3. Four Distinct Colored Corner Markers (80x80 px)
-        // Top-Left: RED (0,0 in Pixmap)
         pix.setColor(0.95f, 0.15f, 0.15f, 1f);
         pix.fillRectangle(0, 0, 80, 80);
 
-        // Top-Right: GREEN (w-80, 0)
         pix.setColor(0.15f, 0.90f, 0.25f, 1f);
         pix.fillRectangle(w - 80, 0, 80, 80);
 
-        // Bottom-Left: BLUE (0, h-80)
         pix.setColor(0.15f, 0.40f, 0.95f, 1f);
         pix.fillRectangle(0, h - 80, 80, 80);
 
-        // Bottom-Right: YELLOW (w-80, h-80)
         pix.setColor(0.95f, 0.85f, 0.15f, 1f);
         pix.fillRectangle(w - 80, h - 80, 80, 80);
 
-        // White perimeter border (6px)
         pix.setColor(Color.WHITE);
         for (int b = 0; b < 6; b++) {
             pix.drawRectangle(b, b, w - 2 * b, h - 2 * b);
         }
 
-        // 4. Large Asymmetric Center Letter 'F' (White with dark drop shadow)
         int cx = w / 2;
         int cy = h / 2;
 
-        // Shadow
         pix.setColor(0f, 0f, 0f, 0.6f);
         pix.fillRectangle(cx - 96, cy - 116, 36, 240);
         pix.fillRectangle(cx - 96, cy - 116, 150, 40);
         pix.fillRectangle(cx - 96, cy - 16, 95, 36);
 
-        // White letter 'F'
         pix.setColor(1f, 1f, 1f, 1f);
-        pix.fillRectangle(cx - 100, cy - 120, 36, 240); // vertical stem
-        pix.fillRectangle(cx - 100, cy - 120, 150, 40); // top bar
-        pix.fillRectangle(cx - 100, cy - 20, 95, 36);   // middle bar
+        pix.fillRectangle(cx - 100, cy - 120, 36, 240);
+        pix.fillRectangle(cx - 100, cy - 120, 150, 40);
+        pix.fillRectangle(cx - 100, cy - 20, 95, 36);
 
-        // 5. Directional Arrow Pointing UP (towards y = 0, Pixmap Top)
         pix.setColor(1.0f, 0.82f, 0.15f, 1f);
-        // Vertical shaft
+
         pix.fillRectangle(cx + 80, cy - 10, 24, 130);
-        // Arrow head pointing towards top
+
         for (int y = cy - 70; y <= cy - 10; y++) {
             int halfSpan = (int) ((y - (cy - 70)) * 0.75f);
             pix.drawLine(cx + 92 - halfSpan, y, cx + 92 + halfSpan, y);
         }
 
-        // 6. Explicit text labels
         drawPixelText(pix, "TOP", cx - 40, 24, 6, Color.WHITE);
         drawPixelText(pix, "BOT", cx - 40, h - 50, 6, Color.WHITE);
         drawPixelText(pix, "LEFT", 12, cy - 30, 5, Color.WHITE);

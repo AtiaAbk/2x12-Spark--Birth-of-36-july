@@ -1,3 +1,4 @@
+// ei file ta photo mode er camera ar hud toggle test kore
 package bd.spark36.capture;
 
 import com.badlogic.gdx.math.Vector3;

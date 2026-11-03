@@ -1,3 +1,4 @@
+// ei file ta rastar billboard ar dokaner bangla signboard banay
 package bd.spark36.world.landmarks;
 
 import com.badlogic.gdx.Gdx;
@@ -14,21 +15,10 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Disposable;
 
-/**
- * Renders the street signboards (Bengali name + optional English line) into one texture atlas,
- * using the bundled Noto Sans Bengali font. One material covers every sign in the street dressing.
- *
- * <p>libGDX's FreeType path draws glyphs one by one without OpenType shaping, so the shop names
- * avoid conjuncts and reph, and {@link #toVisualOrder(String)} moves the pre-base vowel signs
- * (ি, ে, ৈ and the split vowels ো, ৌ) in front of their consonant, as the shaper would.</p>
- *
- * <p>All names are generic and fictional (no real brands or businesses).</p>
- */
 public final class BengaliSignAtlas implements Disposable {
 
-    /** One atlas row per sign. Row 0 is at the bottom of the framebuffer texture. */
     public enum Sign {
-        // logical Bengali text, English line, background sRGB, text sRGB
+
         TEA_STALL("ভাই ভাই চা ঘর", "চা  কলা  পান", 0xB32821, 0xF7D23E),
         TELECOM("সাথী টেলিকম", "SATHI TELECOM  MOBILE RECHARGE", 0x1F4E9A, 0xFFFFFF),
         PHARMACY("সেবা ঔষধ ঘর", "SEBA PHARMACY", 0x1E7A45, 0xFFFFFF),
@@ -57,7 +47,6 @@ public final class BengaliSignAtlas implements Disposable {
     private FrameBuffer fbo;
     private Texture texture;
 
-    /** Builds the atlas; must run on the GL thread. Falls back to plain-colour boards without the font. */
     public BengaliSignAtlas() {
         build();
     }
@@ -66,21 +55,14 @@ public final class BengaliSignAtlas implements Disposable {
         return texture;
     }
 
-    /** Lower texture v of a sign's row (its bottom edge). */
     public static float vBottom(Sign s) {
         return (s.ordinal() * ROW_H + 4f) / SIZE;
     }
 
-    /** Upper texture v of a sign's row (its top edge). */
     public static float vTop(Sign s) {
         return ((s.ordinal() + 1) * ROW_H - 4f) / SIZE;
     }
 
-    /**
-     * Converts logical-order Bengali to the visual glyph order an OpenType shaper would produce,
-     * for text without conjuncts: pre-base vowel signs move before their consonant (with an
-     * optional nukta), and the two-part vowels split around it.
-     */
     public static String toVisualOrder(String logical) {
         StringBuilder out = new StringBuilder(logical.length() + 4);
         for (int i = 0; i < logical.length(); i++) {
@@ -166,8 +148,8 @@ public final class BengaliSignAtlas implements Disposable {
         for (Sign s : Sign.values()) {
             float y0 = s.ordinal() * ROW_H;
             Color.rgb888ToColor(tmp, s.background);
-            tmp.a = 1f; // rgb888ToColor leaves alpha untouched
-            // Faded flex print: a slightly darker border band and a lighter upper wash
+            tmp.a = 1f;
+
             shapes.setColor(tmp.r * 0.72f, tmp.g * 0.72f, tmp.b * 0.72f, 1f);
             shapes.rect(0, y0, SIZE, ROW_H);
             shapes.setColor(tmp);
@@ -203,7 +185,7 @@ public final class BengaliSignAtlas implements Disposable {
         batch.end();
         String dump = System.getProperty("bd.spark36.dumpSignAtlas");
         if (dump != null) {
-            // Developer aid: write the atlas as rendered (bottom row first, as in GL)
+
             Pixmap pm = Pixmap.createFromFrameBuffer(0, 0, SIZE, SIZE);
             com.badlogic.gdx.graphics.PixmapIO.writePNG(Gdx.files.absolute(dump), pm, -1, true);
             pm.dispose();
@@ -227,7 +209,7 @@ public final class BengaliSignAtlas implements Disposable {
     private static void drawCentered(SpriteBatch batch, BitmapFont font, GlyphLayout layout, String text,
                                      Color color, float centerY, float maxWidth) {
         float oldScaleX = font.getData().scaleX;
-        font.setColor(color); // GlyphLayout captures the font colour at setText time
+        font.setColor(color);
         layout.setText(font, text);
         if (layout.width > maxWidth) {
             font.getData().setScale(oldScaleX * maxWidth / layout.width);

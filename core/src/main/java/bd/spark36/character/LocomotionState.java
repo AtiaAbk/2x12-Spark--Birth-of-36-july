@@ -1,9 +1,6 @@
+// ei file ta character er haata ar douranor movement state rakhe
 package bd.spark36.character;
 
-/**
- * Character animation locomotion states for the University of Dhaka exploration
- * and mass movement events.
- */
 public enum LocomotionState {
     IDLE("Idle"),
     START_WALK("Starting Walk"),

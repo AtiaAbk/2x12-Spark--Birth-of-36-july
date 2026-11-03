@@ -1,3 +1,4 @@
+// ei file ta realistic sunlight, sky ibl ar ambient lighting banay
 package bd.spark36.render;
 
 import com.badlogic.gdx.Gdx;
@@ -11,19 +12,6 @@ import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 
-/**
- * Manages Image-Based Lighting (IBL) environment resources for the Spark 36 July PBR pipeline.
- *
- * <p>Builds and owns:
- * <ul>
- *   <li>Diffuse irradiance cubemap (32x32 target) for natural diffuse ambient lighting</li>
- *   <li>Prefiltered specular radiance cubemap (8 mip levels / 256x256 target) for rough-to-smooth reflections</li>
- *   <li>BRDF 2D integration lookup table (split-sum approximation)</li>
- * </ul>
- *
- * <p>Calibrated specifically for outdoor tropical daylight across Dhaka University campus,
- * capturing the azure sky zenith, hazy horizon, and warm terracotta/lawn ground bounce.</p>
- */
 public class PbrEnvironment implements Disposable {
 
     private static final String TAG = "PbrEnvironment";
@@ -35,12 +23,6 @@ public class PbrEnvironment implements Disposable {
 
     public PbrEnvironment() {}
 
-    /**
-     * Initializes IBL cubemaps and BRDF lookup table based on the outdoor sun lighting.
-     * Must be called on the GL render thread.
-     *
-     * @param sunLight Main directional sunlight driving the ambient hemisphere
-     */
     public void setupOutdoorIBL(DirectionalLight sunLight) {
         if (initialized) return;
 
@@ -53,25 +35,17 @@ public class PbrEnvironment implements Disposable {
             Gdx.app.log(TAG, "Generating outdoor IBL environment maps...");
             IBLBuilder ibl = IBLBuilder.createOutdoor(sunLight);
 
-            // Calibrated summer Dhaka campus atmosphere (linear radiance).
-            // T8: the old sky (0.24/0.42/0.66 zenith, 0.68/0.78/0.86 horizon) was cyan-green and fed a
-            // green cast into every shaded surface; these keep about the same brightness with a bluer,
-            // less green sky and a less yellow ground bounce.
-            // Sky zenith: clear July blue
             ibl.nearSkyColor.set(0.20f, 0.36f, 0.78f, 1f);
-            // Sky horizon: humid pale blue haze
+
             ibl.farSkyColor.set(0.56f, 0.66f, 0.84f, 1f);
-            // Ground bounce: brick paving and lawn, near neutral warm
+
             ibl.nearGroundColor.set(0.34f, 0.30f, 0.25f, 1f);
             ibl.farGroundColor.set(0.42f, 0.40f, 0.36f, 1f);
 
-            // Build 32x32 diffuse irradiance cubemap
             diffuseIrradianceMap = ibl.buildIrradianceMap(RenderPipelineConfig.IRRADIANCE_MAP_SIZE);
 
-            // Build prefiltered specular radiance cubemap (8 levels)
             specularRadianceMap = ibl.buildRadianceMap(RenderPipelineConfig.SPECULAR_MAP_LEVELS);
 
-            // Load precomputed BRDF integration LUT from gdx-gltf classpath
             brdfLut = new Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"));
 
             ibl.dispose();
@@ -84,11 +58,6 @@ public class PbrEnvironment implements Disposable {
         }
     }
 
-    /**
-     * Applies IBL attributes to the target LibGDX Environment.
-     *
-     * @param env Active 3D environment for the scene
-     */
     public void applyTo(Environment env) {
         if (!initialized || env == null) return;
 

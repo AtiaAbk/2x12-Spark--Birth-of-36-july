@@ -1,13 +1,10 @@
+// ei file ta screenshot thumbnail gular jonno lru memory cache banay
 package bd.spark36.capture;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Least-recently-used cache bounded by entry count and total weight (e.g. texture bytes). Evicted
- * values are handed to the listener so GPU resources can be disposed. Not thread-safe.
- */
 public final class BoundedLruCache<K, V> {
 
     public interface Weigher<V> { long weigh(V value); }
@@ -48,7 +45,7 @@ public final class BoundedLruCache<K, V> {
 
     private void trim() {
         Iterator<Map.Entry<K, V>> it = map.entrySet().iterator();
-        // Always keep the newest entry, even if it alone exceeds the weight budget.
+
         while (map.size() > 1 && (map.size() > maxEntries || totalWeight > maxWeight) && it.hasNext()) {
             V v = it.next().getValue();
             it.remove();

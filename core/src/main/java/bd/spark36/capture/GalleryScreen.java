@@ -1,3 +1,4 @@
+// ei file ta player er tola shob chobi gallery view te dekhay
 package bd.spark36.capture;
 
 import bd.spark36.hud.FontRenderer;
@@ -20,12 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Minimal in-game gallery: newest-first thumbnail grid, keyboard and mouse navigation, a large
- * viewer with zoom and pan, and an "Open folder" action. Thumbnails live in a session-only cache
- * bounded by count and bytes; every texture is disposed on eviction, on close (viewer) and on
- * {@link #dispose()}. Search and date grouping are intentionally out of scope.
- */
 final class GalleryScreen {
 
     static final int THUMB_MAX_WIDTH = 320;
@@ -56,14 +51,12 @@ final class GalleryScreen {
     private String notice;
     private float noticeTimer;
 
-    // Viewer
     private boolean viewerOpen;
     private Texture viewerTexture;
     private int viewerIndex = -1;
     private boolean viewerFailed;
     private float zoom = 1f, panX, panY;
 
-    // Layout of the last frame (pixels), used for mouse hit tests
     private float folderBtnX, folderBtnY, folderBtnW, folderBtnH;
     private float gridLeft, gridTop, cellW, cellH, gap;
     private int cols = 4, visibleRows = 3;
@@ -122,7 +115,6 @@ final class GalleryScreen {
         }
     }
 
-    /** @return true when the gallery asked to close this frame. */
     boolean render(float delta, float scrollY) {
         if (batch == null) {
             batch = new SpriteBatch();
@@ -159,8 +151,6 @@ final class GalleryScreen {
         }
         return closeRequested;
     }
-
-    // ── Grid ─────────────────────────────────────────────────────────
 
     private void layoutGrid(float w, float h, float s) {
         float margin = 48f * s;
@@ -244,7 +234,6 @@ final class GalleryScreen {
         return f.getAbsolutePath() + "|" + f.lastModified();
     }
 
-    /** Decodes at most one thumbnail per frame, visible cells first, to keep the gallery responsive. */
     private void loadOneMissingThumbnail() {
         int start = firstRow * cols, end = Math.min(files.size(), start + visibleRows * cols);
         for (int i = start; i < end; i++) {
@@ -350,9 +339,6 @@ final class GalleryScreen {
         batch.end();
     }
 
-    // ── Viewer ───────────────────────────────────────────────────────
-
-    /** @return true to go back to the grid. */
     private boolean handleViewerInput(float delta, float scrollY, float w, float h) {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Gdx.input.isKeyJustPressed(Input.Keys.BACKSPACE)
             || Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
@@ -420,8 +406,6 @@ final class GalleryScreen {
         }
         batch.end();
     }
-
-    // ── Text helpers (fonts are shared with the HUD, so scale and colour are restored) ──
 
     private void text(BitmapFont font, String str, float x, float y, float s, float r, float g, float b) {
         float ox = font.getData().scaleX, oy = font.getData().scaleY;

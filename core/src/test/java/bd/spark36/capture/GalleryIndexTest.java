@@ -1,3 +1,4 @@
+// ei file ta photo gallery er indexing test kore
 package bd.spark36.capture;
 
 import org.junit.jupiter.api.Test;
@@ -53,7 +54,7 @@ class GalleryIndexTest {
         png(dir, "keep.png", 1_000_000_000_000L);
         png(dir, "notes.txt", 1_000_000_000_000L);
         png(dir, "keep2.png.part", 1_000_000_000_000L);
-        Files.createFile(new File(dir, "placeholder.png").toPath()); // zero bytes: still being written
+        Files.createFile(new File(dir, "placeholder.png").toPath());
         File sub = new File(dir, "00_baseline");
         assertTrue(sub.mkdir());
         png(sub, "spawn.png", 1_000_000_000_000L);

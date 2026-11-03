@@ -1,3 +1,4 @@
+// ei file ta curzon hall er shantopurno campus exploration level
 package bd.spark36.level;
 
 import com.badlogic.gdx.Gdx;
@@ -24,18 +25,6 @@ import bd.spark36.mission.MissionObjective;
 import bd.spark36.mission.MissionTracker;
 import bd.spark36.mission.ObjectiveType;
 
-/**
- * LEVEL 1: "Where It All Began" (যেখান থেকে সব শুরু)
- * Period: July 1 – 14, 2024.
- * Environment: Dhaka University Curzon Hall, Pukur (Lotus Pond), verandas, and gardens.
- * Structure:
- * 1. Exploration Phase: Main character explores 5 accessible campus locations to uncover the 36 July movement archives.
- *    PEACE RULE: Striking any innocent campus student (সাধারণ শিক্ষার্থী) is strictly forbidden and results in INSTANT DISQUALIFICATION.
- * 2. Confrontation Phase: Upon completing the 5 exploration missions, helmet-wearing attackers armed with bamboo/hardwood lathis
- *    arrive to attack the students. The player engages them in technical martial arts self-defense.
- *    - If player's health reaches 0 (knocked out) -> Mission Failed with Retry.
- *    - If player subdues all helmeted attackers -> Mission Success / Victory!
- */
 public class Level1PeacefulCampus implements CampaignLevel {
 
     private DhakaCampusWorld world;
@@ -190,7 +179,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
     @Override
     public String getContextPrompt(Vector3 playerPos) {
-        if (combatPhase) return null; // Combat engaged: focus on self-defense
+        if (combatPhase) return null;
         if (memorials == null) return null;
         for (MemorialEntry entry : memorials.getEntries()) {
             if (!entry.inspected && playerPos.dst(entry.position) <= 3.8f) {
@@ -214,7 +203,6 @@ public class Level1PeacefulCampus implements CampaignLevel {
         if (combatPhase) return false;
         if (memorials == null) return false;
 
-        // 1. Inspect Memorial
         for (MemorialEntry entry : memorials.getEntries()) {
             if (!entry.inspected && playerPos.dst(entry.position) <= 3.8f) {
                 entry.inspected = true;
@@ -223,7 +211,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
                     hud.openMemorialModal(entry);
                     hud.triggerMissionToast(entry.title, getCompletedObjectiveCount());
                 }
-                // Check if all 5 exploration archives are completed
+
                 if (allExplorationsComplete()) {
                     triggerCombatEncounter(player, hud);
                 }
@@ -231,13 +219,11 @@ public class Level1PeacefulCampus implements CampaignLevel {
             }
         }
 
-        // 2. Inspect 1921 Boundary Stone
         if (playerPos.dst(DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
             if (hud != null) hud.openMemorialModal(hud.getBoundaryStoneEntry());
             return true;
         }
 
-        // 3. Water sitting at Pond Ghat
         if (world != null && world.isNearPondGhat(playerPos) && player != null) {
             boolean nextSit = !player.isSittingWater();
             player.setSittingWater(nextSit);
@@ -247,7 +233,6 @@ public class Level1PeacefulCampus implements CampaignLevel {
             return true;
         }
 
-        // 4. Talk to nearby DU Student in crowd
         if (crowd != null && player != null && crowd.interactWithClosest(playerPos, 2.6f, getLevelNumber(), hud)) {
             return true;
         }
@@ -255,17 +240,11 @@ public class Level1PeacefulCampus implements CampaignLevel {
         return false;
     }
 
-    /**
-     * Checks whether all 5 initial campus exploration missions have been inspected.
-     */
     public boolean allExplorationsComplete() {
         if (memorials == null) return false;
         return memorials.isAllInspected();
     }
 
-    /**
-     * Spawns the helmeted attackers armed with lathis after the 5 archives are explored.
-     */
     public void triggerCombatEncounter(PlayerController player, WhereWindsMeetHUD hud) {
         if (combatPhase) return;
         combatPhase = true;
@@ -273,14 +252,12 @@ public class Level1PeacefulCampus implements CampaignLevel {
         Vector3 pPos = (player != null) ? player.getPosition() : new Vector3(0f, 0f, 36f);
         float hDeg = (player != null) ? player.getHeadingDegrees() : 180f;
 
-        // Ensure 3 helmeted aggressors exist
         while (aggressors.size < 3) {
             HelmetGoon g = (textures != null) ? new HelmetGoon(textures) : new HelmetGoon();
             g.setRole(HelmetGoon.Role.HELMETED_AGGRESSOR);
             aggressors.add(g);
         }
 
-        // Spawn 3 helmeted attackers directly in front of the player (facing the player)
         float[] angles = { 0f, -30f, 30f };
         float[] dists = { 12f, 14f, 14f };
         for (int i = 0; i < aggressors.size; i++) {
@@ -293,7 +270,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
             HelmetGoon g = aggressors.get(i);
             g.reset(spawnX, spawnZ);
             g.startFightDirectly();
-            g.setHeading(hDeg + 180f); // Turn to face the player directly
+            g.setHeading(hDeg + 180f);
         }
 
         MissionObjective m6 = missionTracker.getObjectiveById("m6");
@@ -322,12 +299,12 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
     @Override
     public Vector3 getSpawnPosition() {
-        return new Vector3(0f, 0f, 72.0f); // Main promenade gate
+        return new Vector3(0f, 0f, 72.0f);
     }
 
     @Override
     public float getSpawnHeading() {
-        return 180.0f; // Facing north toward Curzon Hall
+        return 180.0f;
     }
 
     @Override
@@ -350,9 +327,8 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
         this.campusSecurity = new HelmetGoon(textures);
         this.campusSecurity.setRole(HelmetGoon.Role.CAMPUS_SECURITY);
-        this.campusSecurity.reset(0f, 60.0f); // Positioned prominently on the promenade ahead of spawn (0, 72)
+        this.campusSecurity.reset(0f, 60.0f);
 
-        // Pre-create the 3 Helmeted Aggressors
         aggressors.clear();
         for (int i = 0; i < 3; i++) {
             HelmetGoon g = new HelmetGoon(textures);
@@ -370,7 +346,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
     @Override
     public void update(float delta, PlayerController player, CinematicCamera camera, boolean canMove, WhereWindsMeetHUD hud) {
-        // Debug / Fast-test shortcut: Press F6 or X to instantly trigger Chhatra League combat encounter
+
         if ((Gdx.input.isKeyJustPressed(Input.Keys.F6) || Gdx.input.isKeyJustPressed(Input.Keys.X)) && !combatPhase) {
             if (memorials != null) {
                 for (MemorialEntry entry : memorials.getEntries()) {
@@ -390,7 +366,6 @@ public class Level1PeacefulCampus implements CampaignLevel {
             campusSecurity.update(delta, player);
         }
 
-        // Proximity Exploration: Discover memorial when walking near (<= 6.5m)
         if (!combatPhase && memorials != null && player != null) {
             Vector3 pPos = player.getPosition();
             for (MemorialEntry entry : memorials.getEntries()) {
@@ -431,12 +406,10 @@ public class Level1PeacefulCampus implements CampaignLevel {
                 player.clearCombatTarget();
             }
 
-            // Knockout check for player (Failure / Retry)
             if (player.isKnockedOut() && hud != null && !hud.isDefeated()) {
                 hud.setDefeated(true);
             }
 
-            // Check if all aggressors are subdued (Victory)
             if (allAggressorsSubdued() && !victoryTriggered) {
                 victoryTriggered = true;
                 missionTracker.completeObjective("m6");
@@ -499,7 +472,6 @@ public class Level1PeacefulCampus implements CampaignLevel {
         if (prog >= 0.40f && prog <= 0.68f && !attackHitProcessed) {
             attackHitProcessed = true;
 
-            // STRICT RULE: Striking innocent campus students (সাধারণ শিক্ষার্থী) is strictly forbidden!
             String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
             if (violation != null) {
                 if (hud != null) {
@@ -508,7 +480,6 @@ public class Level1PeacefulCampus implements CampaignLevel {
                 return true;
             }
 
-            // In combat phase, resolve strikes on active helmeted goons
             if (combatPhase) {
                 for (int i = 0; i < aggressors.size; i++) {
                     HelmetGoon g = aggressors.get(i);
@@ -547,12 +518,10 @@ public class Level1PeacefulCampus implements CampaignLevel {
         return false;
     }
 
-    /** Disqualification check for striking unarmed students (package-private for tests). */
     public String checkCivilianStrike(Vector3 pos, float headingDeg) {
         return CivilianStrikeRule.check(crowd, pos, headingDeg, CivilianStrikeRule.STUDENT_VIOLATION);
     }
 
-    /** Test hook: inject a headless crowd without building the 3D world. */
     public void setCrowdForTest(CampusCrowd crowd) {
         this.crowd = crowd;
     }

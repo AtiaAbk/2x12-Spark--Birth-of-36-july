@@ -1,3 +1,4 @@
+// ei file ta lakho manusher mass mobilization er level
 package bd.spark36.level;
 
 import com.badlogic.gdx.Gdx;
@@ -23,17 +24,10 @@ import bd.spark36.world.TextureFactory;
 import bd.spark36.world.landmarks.BarricadeBuilder;
 import bd.spark36.world.landmarks.ShaheedMinarBuilder;
 
-/**
- * LEVEL 5: "The Wall of People" (জনসমুদ্র)
- * Period: August 3 – 4, 2024 (Central Shaheed Minar historic mass assembly & One-Point Demand).
- * Environment: Central Shaheed Minar Plaza with crimson solar disk and massive gathered assemblies.
- * Focus: High-density crowd navigation, forming defensive human chains, frontline medical logistics.
- * Combat: Mass collective solidarity & frontline civilian protection.
- */
 public class Level5MassMobilization implements CampaignLevel {
 
     private DhakaCampusWorld world;
-    private final StreetDressing street = new StreetDressing(5); // T8 street identity
+    private final StreetDressing street = new StreetDressing(5);
     private CampusCrowd crowd;
     private Environment sunsetEnvironment;
 
@@ -41,20 +35,14 @@ public class Level5MassMobilization implements CampaignLevel {
     private final Array<ModelInstance> instances = new Array<>();
     private final java.util.List<float[]> colliders = new java.util.ArrayList<>();
 
-    // Shaheed Minar monument position
     private final Vector3 minarPos = new Vector3(0f, 0f, -8f);
 
-    // Objectives:
-    // 1. Ascend Shaheed Minar central staircase to the main dais
-    // 2. Link arms to form the defensive human chain (East flank)
-    // 3. Deliver emergency medical supplies to volunteer clinic
-    // 4. Stand with leaders on dais to declare the One-Point Demand
     private final boolean[] objectivesDone = new boolean[4];
     private final Vector3[] waypoints = {
-        new Vector3(0f, 1.2f, 0.5f),   // Main Dais Staircase
-        new Vector3(12f, 0f, 8f),       // Human Chain East Flank
-        new Vector3(-16f, 0f, 12f),     // Medical Volunteer Clinic
-        new Vector3(0f, 1.4f, -4f)      // Central Speakers' Podium
+        new Vector3(0f, 1.2f, 0.5f),
+        new Vector3(12f, 0f, 8f),
+        new Vector3(-16f, 0f, 12f),
+        new Vector3(0f, 1.4f, -4f)
     };
 
     private static final String[] CHECKLIST = {
@@ -216,25 +204,23 @@ public class Level5MassMobilization implements CampaignLevel {
 
     @Override
     public Vector3 getSpawnPosition() {
-        return new Vector3(0f, 0f, 32f); // Approaching Shaheed Minar from south
+        return new Vector3(0f, 0f, 32f);
     }
 
     @Override
     public float getSpawnHeading() {
-        return 180f; // Facing north toward Shaheed Minar
+        return 180f;
     }
 
     @Override
     public void init(TextureFactory textures, PlayerController player, CinematicCamera camera) {
         this.world = new DhakaCampusWorld(textures);
 
-        // Majestic dusk/sunset lighting: warm golden-orange and crimson tones
         sunsetEnvironment = new Environment();
         sunsetEnvironment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.48f, 0.38f, 0.42f, 1f));
         DirectionalLight sunsetSun = new DirectionalLight().set(0.98f, 0.62f, 0.38f, -0.4f, -0.6f, -0.4f);
         sunsetEnvironment.add(sunsetSun);
 
-        // Build Central Shaheed Minar Monument
         ModelBuilder mb = new ModelBuilder();
         long attr = Usage.Position | Usage.Normal;
         Material marbleMat = new Material(ColorAttribute.createDiffuse(new Color(0.96f, 0.96f, 0.94f, 1f)));
@@ -252,7 +238,6 @@ public class Level5MassMobilization implements CampaignLevel {
         mi.transform.setTranslation(minarPos);
         instances.add(mi);
 
-        // Add medical clinic tent
         Material canvasMat = new Material(ColorAttribute.createDiffuse(new Color(0.92f, 0.90f, 0.85f, 1f)));
         Material frameMat = new Material(ColorAttribute.createDiffuse(new Color(0.25f, 0.28f, 0.32f, 1f)));
         Material redCrossMat = new Material(ColorAttribute.createDiffuse(new Color(0.85f, 0.12f, 0.14f, 1f)));
@@ -263,14 +248,13 @@ public class Level5MassMobilization implements CampaignLevel {
         ti.transform.setTranslation(waypoints[2]);
         instances.add(ti);
 
-        // Colliders for Shaheed Minar base plinth
         colliders.add(new float[] { minarPos.x - 11f, 0f, minarPos.z - 8f,
                                     minarPos.x + 11f, 1.5f, minarPos.z + 8f });
 
         street.build(colliders);
         for (float[] b : world.getColliders()) colliders.add(b);
         player.setExtraColliders(colliders);
-        LevelPbrMaterials.adopt(instances); // T8: legacy Diffuse colours -> PBR base colour
+        LevelPbrMaterials.adopt(instances);
         this.crowd = new CampusCrowd(24, player.getColliders());
         this.crowd.setLevelProfile(5);
         player.setPosition(getSpawnPosition().x, getSpawnPosition().y, getSpawnPosition().z);
@@ -312,8 +296,7 @@ public class Level5MassMobilization implements CampaignLevel {
 
     @Override
     public Environment getEnvironment() {
-        // T8: the campus world is lit by its daylight PBR environment (IBL, sun, fog, shadows) in every
-        // chapter; the old per-level environment had no IBL and rendered characters and props white.
+
         return world != null ? world.getEnvironment() : sunsetEnvironment;
     }
 

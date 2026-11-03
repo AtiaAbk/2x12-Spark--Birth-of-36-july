@@ -1,3 +1,4 @@
+// ei file ta civilian der marle disqualify howar rule test kore
 package bd.spark36.level;
 
 import com.badlogic.gdx.math.Vector3;
@@ -9,10 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * QA: striking an unarmed student / civilian disqualifies the player in Levels 2 and 3.
- * Uses a headless CampusCrowd with one student placed directly in front of the player.
- */
 public class CivilianStrikeDisqualificationTest {
 
     private static final float[][] COLLIDERS = { {-19f, 0f, -40.5f, 19f, 14f, -23.5f} };
@@ -26,9 +23,9 @@ public class CivilianStrikeDisqualificationTest {
         crowd = new CampusCrowd(3, COLLIDERS);
         StudentNPC[] students = crowd.getStudents();
         for (int i = 0; i < students.length; i++) {
-            students[i].getPosition().set(200f + i * 10f, 0f, 200f); // far away
+            students[i].getPosition().set(200f + i * 10f, 0f, 200f);
         }
-        // One unarmed student 1.5 m in front of the player (heading 0 faces +Z)
+
         students[0].getPosition().set(PLAYER.x, 0f, PLAYER.z + 1.5f);
     }
 
@@ -52,7 +49,6 @@ public class CivilianStrikeDisqualificationTest {
         assertFalse(level.isCombatPhase(), "combat phase begins only after the 5 archives are explored");
         assertFalse(level.isLevelComplete(), "level is not complete at start");
 
-        // Complete all objectives via test hook
         level.completeAllObjectivesForTest();
         assertTrue(level.isCombatPhase(), "combat phase must activate");
         assertTrue(level.allAggressorsSubdued(), "all aggressors must be knocked out");
@@ -97,7 +93,6 @@ public class CivilianStrikeDisqualificationTest {
         StudentNPC[] students = promenadeCrowd.getStudents();
         assertTrue(students.length >= 6);
 
-        // Check the first 6 seeded promenade students
         int walkingCount = 0;
         for (int i = 0; i < 6; i++) {
             StudentNPC s = students[i];
@@ -116,7 +111,7 @@ public class CivilianStrikeDisqualificationTest {
         Level1PeacefulCampus level = new Level1PeacefulCampus();
         bd.spark36.character.PlayerController player = new bd.spark36.character.PlayerController();
         player.setPosition(0f, 0f, 72f);
-        player.setHeadingDegrees(180f); // Facing north (towards negative Z)
+        player.setHeadingDegrees(180f);
 
         level.triggerCombatEncounter(player, null);
         assertTrue(level.isCombatPhase(), "Combat phase must be active");

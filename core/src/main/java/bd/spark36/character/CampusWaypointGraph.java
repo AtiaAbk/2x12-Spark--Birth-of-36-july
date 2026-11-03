@@ -1,3 +1,4 @@
+// ei file ta campus er walkway gulate navigation waypoint graph banay
 package bd.spark36.character;
 
 import com.badlogic.gdx.math.MathUtils;
@@ -5,15 +6,8 @@ import com.badlogic.gdx.math.Vector3;
 import java.util.Arrays;
 import java.util.PriorityQueue;
 
-/**
- * Validated waypoint navigation network for the University of Dhaka campus.
- * Provides lane-offset path clearance checking against solid campus colliders,
- * collision avoidance against buildings, trees, and water boundaries, and
- * Dijkstra shortest-path routing between campus landmarks.
- */
 public class CampusWaypointGraph {
 
-    // Named landmark node indices for AI goals
     public static final int NODE_MAIN_GATE = 0;
     public static final int NODE_PROMENADE = 1;
     public static final int NODE_CROSS_AVENUE = 2;
@@ -36,29 +30,28 @@ public class CampusWaypointGraph {
     public static final int NODE_TSC = 19;
     public static final int NODE_WEST_POND_DETOUR = 20;
 
-    /** Path junctions {x, z}, on the pavings laid out in DhakaCampusWorld, clear of buildings. */
     public static final float[][] NODES = {
-        {0f, 72f},      // 0  inside the main gate
-        {0f, 50f},      // 1  promenade
-        {0f, 29.5f},    // 2  cross avenue junction
-        {0f, 24f},      // 3  pond-ring link, south
-        {-14f, 24f},    // 4  west pond ring, south
-        {-14f, -10.8f}, // 5  west pond ring, north
-        {14f, 24f},     // 6  east pond ring, south
-        {14f, -10.8f},  // 7  east pond ring, north
-        {0f, -12f},     // 8  pond-ring link, north
-        {0f, -14.2f},   // 9  Curzon Hall steps & front verandah promenade
-        {-30f, -16.5f}, // 10 verandah walk, west
-        {30f, -16.5f},  // 11 verandah walk, east
-        {-30f, 31f},    // 12 Arts Plaza (Aparajeyo Bangla)
-        {-46f, 31f},    // 13 west avenue, east of the Central Library
-        {-45f, -8f},    // 14 by Madhur Canteen
-        {-46f, 45f},    // 15 south of the library
-        {-52f, 47.5f},  // 16 Hakim Chattar
-        {30f, 31f},     // 17 east avenue
-        {42f, 31f},     // 18 between Raju roundabout and TSC
-        {42f, -4f},     // 19 towards the sculpture garden / TSC
-        {-6f, 20.8f},   // 20 detour south of the bench and bicycle on the west pond link
+        {0f, 72f},
+        {0f, 50f},
+        {0f, 29.5f},
+        {0f, 24f},
+        {-14f, 24f},
+        {-14f, -10.8f},
+        {14f, 24f},
+        {14f, -10.8f},
+        {0f, -12f},
+        {0f, -14.2f},
+        {-30f, -16.5f},
+        {30f, -16.5f},
+        {-30f, 31f},
+        {-46f, 31f},
+        {-45f, -8f},
+        {-46f, 45f},
+        {-52f, 47.5f},
+        {30f, 31f},
+        {42f, 31f},
+        {42f, -4f},
+        {-6f, 20.8f},
     };
 
     public static final int[][] EDGES = {
@@ -70,14 +63,13 @@ public class CampusWaypointGraph {
     public static final float BODY_RADIUS = 0.35f;
     public static final float MAX_LANE = 1.4f;
     public static final float LANE_STEP = 0.35f;
-    public static final float STEP_UP = 0.75f; // stairs, plinths, terraces
+    public static final float STEP_UP = 0.75f;
 
     private final float[][] colliders;
     private final float[][] edgeLanes = new float[EDGES.length][];
     private final int[][] nodeEdges;
     private final float[] edgeLengths = new float[EDGES.length];
 
-    // Pre-allocated buffers for pathfinding (Zero per-frame allocation)
     private final float[] dist = new float[NODES.length];
     private final int[] prev = new int[NODES.length];
     private final boolean[] visited = new boolean[NODES.length];
@@ -128,10 +120,9 @@ public class CampusWaypointGraph {
         return true;
     }
 
-    /** Returns the first solid collider box a circle of radius r at (x, z) overlaps, or null. */
     public float[] insideSolid(float x, float z, float r) {
         for (float[] b : colliders) {
-            if (b[4] <= STEP_UP || b[1] > 1.6f) continue; // low enough to step onto, or overhead
+            if (b[4] <= STEP_UP || b[1] > 1.6f) continue;
             if (x + r > b[0] && x - r < b[3] && z + r > b[2] && z - r < b[5]) return b;
         }
         return null;
@@ -151,11 +142,6 @@ public class CampusWaypointGraph {
         return out;
     }
 
-    /**
-     * Finds the shortest path between two nodes using Dijkstra's algorithm.
-     * Writes node indices into {@code outPath} in forward order (starting from startNode's neighbor to goalNode).
-     * Returns the number of path nodes written, or 0 if unreachable or start==goal.
-     */
     public synchronized int findPath(int startNode, int goalNode, int[] outPath) {
         if (startNode < 0 || startNode >= NODES.length || goalNode < 0 || goalNode >= NODES.length) {
             return 0;
@@ -197,10 +183,9 @@ public class CampusWaypointGraph {
         }
 
         if (dist[goalNode] == Float.POSITIVE_INFINITY) {
-            return 0; // No valid path
+            return 0;
         }
 
-        // Reconstruct path backward
         int count = 0;
         int curr = goalNode;
         while (curr != -1 && curr != startNode) {
@@ -221,7 +206,6 @@ public class CampusWaypointGraph {
         return count;
     }
 
-    /** Returns the nearest node index to a 3D world coordinate. */
     public int getNearestNode(float x, float z) {
         int best = 0;
         float bestDistSq = Float.MAX_VALUE;
@@ -249,7 +233,6 @@ public class CampusWaypointGraph {
         return edgeLengths[edgeIndex];
     }
 
-    /** Height of the highest step-up surface (plinth, stair, terrace) under (x, z). */
     public float supportHeight(float x, float z) {
         float h = 0f;
         for (float[] b : colliders) {

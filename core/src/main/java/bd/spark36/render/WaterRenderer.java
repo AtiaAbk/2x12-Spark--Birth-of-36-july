@@ -1,3 +1,4 @@
+// ei file ta curzon hall er pukurer realistic pani shader diye render kore
 package bd.spark36.render;
 
 import com.badlogic.gdx.Gdx;
@@ -15,11 +16,6 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Disposable;
 import bd.spark36.world.WaterConfig;
 
-/**
- * Dedicated high-performance water renderer for the Dhaka University campus pond.
- * Renders a tessellated dynamic wave mesh with dual-scrolling ripple normals,
- * Fresnel reflections, IBL cubemap sampling, and Beer-Lambert depth absorption.
- */
 public class WaterRenderer implements Disposable {
 
     private static final String TAG = "WaterRenderer";
@@ -31,9 +27,8 @@ public class WaterRenderer implements Disposable {
     private final Matrix4 worldTransform = new Matrix4();
     private final Vector3 tmpSunDir = new Vector3();
 
-    // Subdivision counts for smooth wave curvature (tuned for 60 FPS on Apple Silicon M4)
-    private static final int GRID_COLS = 48; // along width X
-    private static final int GRID_ROWS = 64; // along length Z
+    private static final int GRID_COLS = 48;
+    private static final int GRID_ROWS = 64;
 
     public WaterRenderer() {
         initMesh();
@@ -44,7 +39,7 @@ public class WaterRenderer implements Disposable {
         int numVerts = (GRID_COLS + 1) * (GRID_ROWS + 1);
         int numIndices = GRID_COLS * GRID_ROWS * 6;
 
-        float[] vertices = new float[numVerts * 8]; // pos(3) + nor(3) + uv(2)
+        float[] vertices = new float[numVerts * 8];
         short[] indices = new short[numIndices];
 
         float halfW = WaterConfig.WATER_WIDTH * 0.5f;
@@ -60,17 +55,14 @@ public class WaterRenderer implements Disposable {
                 float x = -halfW + c * dx;
                 float u = (float) c / (float) GRID_COLS;
 
-                // Position (X, Y, Z) - Y initialized to base height
                 vertices[vertIdx++] = x;
                 vertices[vertIdx++] = 0f;
                 vertices[vertIdx++] = z;
 
-                // Normal (Nx, Ny, Nz) - pointing upward
                 vertices[vertIdx++] = 0f;
                 vertices[vertIdx++] = 1f;
                 vertices[vertIdx++] = 0f;
 
-                // UV (U, V)
                 vertices[vertIdx++] = u;
                 vertices[vertIdx++] = v;
             }
@@ -85,12 +77,10 @@ public class WaterRenderer implements Disposable {
                 short v2 = (short) ((r + 1) * rowStride + c);
                 short v3 = (short) (v2 + 1);
 
-                // Triangle 1
                 indices[indexIdx++] = v0;
                 indices[indexIdx++] = v2;
                 indices[indexIdx++] = v1;
 
-                // Triangle 2
                 indices[indexIdx++] = v1;
                 indices[indexIdx++] = v2;
                 indices[indexIdx++] = v3;
@@ -133,38 +123,31 @@ public class WaterRenderer implements Disposable {
         }
     }
 
-    /**
-     * Renders the water surface inside the active FBO or screen pass.
-     */
     public void render(Camera camera, PbrEnvironment pbrEnv, DirectionalShadowLight sunLight,
                        Texture normalTexture, float animTime, GraphicsTier tier) {
         if (!shaderValid || waterMesh == null) return;
 
-        // OpenGL state configuration for transparent water surface
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
-        Gdx.gl.glDepthMask(false); // Read depth to avoid covering underwater objects, do not write depth
+        Gdx.gl.glDepthMask(false);
 
         shader.bind();
 
-        // Transforms & Camera
         shader.setUniformMatrix("u_projViewTrans", camera.combined);
         shader.setUniformMatrix("u_worldTrans", worldTransform);
         shader.setUniformf("u_time", animTime);
         shader.setUniformf("u_camPos", camera.position);
 
-        // Water Colors & Depth Absorption
         Color shallow = WaterConfig.SHALLOW_COLOR;
         Color deep = WaterConfig.DEEP_COLOR;
         shader.setUniformf("u_shallowColor", shallow.r, shallow.g, shallow.b, shallow.a);
         shader.setUniformf("u_deepColor", deep.r, deep.g, deep.b, deep.a);
-        float waterDepth = 1.6f; // Effective optical water depth in meters
+        float waterDepth = 1.6f;
         shader.setUniformf("u_waterDepth", waterDepth);
 
-        // Sun Direction & Color
         if (sunLight != null) {
-            tmpSunDir.set(sunLight.direction).scl(-1f).nor(); // direction toward sun
+            tmpSunDir.set(sunLight.direction).scl(-1f).nor();
             shader.setUniformf("u_sunDir", tmpSunDir);
             shader.setUniformf("u_sunColor", sunLight.color.r, sunLight.color.g, sunLight.color.b);
         } else {
@@ -172,17 +155,14 @@ public class WaterRenderer implements Disposable {
             shader.setUniformf("u_sunColor", 1.0f, 0.98f, 0.94f);
         }
 
-        // Sky fallback colors
         shader.setUniformf("u_skyZenith", 0.52f, 0.72f, 0.94f);
         shader.setUniformf("u_skyHorizon", 0.80f, 0.86f, 0.92f);
 
-        // Normal Map Texture (Texture unit 0)
         if (normalTexture != null) {
             normalTexture.bind(0);
             shader.setUniformi("u_normalTexture", 0);
         }
 
-        // Specular Radiance Cubemap (Texture unit 1)
         boolean hasCubemap = (tier != GraphicsTier.LOW) && (pbrEnv != null) &&
                              (pbrEnv.getSpecularRadianceMap() != null);
         if (hasCubemap) {
@@ -193,10 +173,8 @@ public class WaterRenderer implements Disposable {
             shader.setUniformi("u_hasCubemap", 0);
         }
 
-        // Draw tessellated water surface mesh
         waterMesh.render(shader, GL20.GL_TRIANGLES);
 
-        // Restore OpenGL state
         Gdx.gl.glDepthMask(true);
         Gdx.gl.glDisable(GL20.GL_BLEND);
         Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);

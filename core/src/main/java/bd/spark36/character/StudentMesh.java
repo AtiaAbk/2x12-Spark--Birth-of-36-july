@@ -1,3 +1,4 @@
+// ei file ta procedural 3d student model ar dress mesh toiri kore
 package bd.spark36.character;
 
 import com.badlogic.gdx.Gdx;
@@ -21,28 +22,8 @@ import bd.spark36.world.TextureFactory;
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 
-/**
- * Procedural 3D university student (Level 1: an ordinary Dhaka University student at the
- * very start of the movement - no protest gear).
- * <ul>
- *   <li>Male (gender 0): neat short black hair, light button-up shirt with collar and sleeves
- *       rolled to the elbow, jeans, sneakers, backpack with two shoulder straps, and a DU ID card
- *       on a lanyard.</li>
- *   <li>Female (gender 1): shoulder-length black hair, kurti with an orna draped over the
- *       shoulders, light trousers, sandals, backpack and DU ID card on a lanyard.</li>
- * </ul>
- * Colours of skin / hair / shirt / trousers / shoes / bag / accent (orna) can be varied per
- * instance for NPC students via {@link #render(ModelBatch, Environment, Vector3, float, float,
- * boolean, boolean, boolean, boolean, int, float, boolean, float, int, int)} (preset variant
- * index) or the {@link Appearance} overload. Model geometry is shared; each variant only adds
- * ModelInstances with recoloured material copies.
- *
- * Facing: local +Z is forward. Animations: idle breathing, walk / sprint, crouch, 3-hit combo,
- * sitting on the ghat steps. Works with a depth-only ModelBatch and a null Environment.
- */
 public class StudentMesh implements Disposable {
 
-    // Material colour slots that an Appearance can override
     private static final int SLOT_FIXED = -1;
     private static final int SLOT_SKIN = 0;
     private static final int SLOT_HAIR = 1;
@@ -52,17 +33,14 @@ public class StudentMesh implements Disposable {
     private static final int SLOT_BAG = 5;
     private static final int SLOT_ACCENT = 6;
 
-    // Optional accessory groups (can be left off per variant)
     private static final int GROUP_BODY = 0;
     private static final int GROUP_BAG = 1;
     private static final int GROUP_ID = 2;
 
-    /** Number of pre-built colour variants (0 = protagonist, 1..VARIANT_COUNT-1 = NPC students). */
     public static final int VARIANT_COUNT = 8;
     private static final boolean[] VARIANT_BAG = {true, true, false, true, false, true, true, false};
     private static final boolean[] VARIANT_ID = {true, false, true, true, false, true, false, true};
 
-    /** Per-instance colour set. Treat as immutable once passed to render(). */
     public static final class Appearance {
         public final Color skin = new Color();
         public final Color hair = new Color();
@@ -70,9 +48,9 @@ public class StudentMesh implements Disposable {
         public final Color trousers = new Color();
         public final Color shoes = new Color();
         public final Color bag = new Color();
-        /** Female: orna colour. Male: unused. */
+
         public final Color accent = new Color();
-        /** Whether this student carries the backpack / wears the ID card lanyard. */
+
         public boolean hasBag = true;
         public boolean hasIdCard = true;
 
@@ -107,24 +85,23 @@ public class StudentMesh implements Disposable {
             return this;
         }
 
-        /** The protagonist's look for the given gender (0 = male, 1 = female). */
         public static Appearance defaultLook(int gender) {
             Appearance a = new Appearance();
             if (gender == 1) {
                 a.skin.set(0.83f, 0.66f, 0.54f, 1f);
                 a.hair.set(0.12f, 0.10f, 0.09f, 1f);
-                a.shirt.set(0.16f, 0.45f, 0.48f, 1f);     // teal kurti
-                a.trousers.set(0.90f, 0.87f, 0.80f, 1f);  // cream salwar
-                a.shoes.set(0.55f, 0.35f, 0.22f, 1f);     // tan sandal straps
-                a.bag.set(0.45f, 0.20f, 0.25f, 1f);       // maroon backpack
-                a.accent.set(0.95f, 0.91f, 0.82f, 1f);    // off-white orna
+                a.shirt.set(0.16f, 0.45f, 0.48f, 1f);
+                a.trousers.set(0.90f, 0.87f, 0.80f, 1f);
+                a.shoes.set(0.55f, 0.35f, 0.22f, 1f);
+                a.bag.set(0.45f, 0.20f, 0.25f, 1f);
+                a.accent.set(0.95f, 0.91f, 0.82f, 1f);
             } else {
                 a.skin.set(0.80f, 0.62f, 0.49f, 1f);
                 a.hair.set(0.12f, 0.10f, 0.09f, 1f);
-                a.shirt.set(0.72f, 0.81f, 0.91f, 1f);     // light sky-blue shirt
-                a.trousers.set(0.18f, 0.25f, 0.40f, 1f);  // blue jeans
-                a.shoes.set(0.16f, 0.16f, 0.18f, 1f);     // dark sneakers
-                a.bag.set(0.16f, 0.20f, 0.28f, 1f);       // navy/charcoal backpack
+                a.shirt.set(0.72f, 0.81f, 0.91f, 1f);
+                a.trousers.set(0.18f, 0.25f, 0.40f, 1f);
+                a.shoes.set(0.16f, 0.16f, 0.18f, 1f);
+                a.bag.set(0.16f, 0.20f, 0.28f, 1f);
                 a.accent.set(0.92f, 0.92f, 0.90f, 1f);
             }
             return a;
@@ -158,10 +135,6 @@ public class StudentMesh implements Disposable {
             {0.95f, 0.91f, 0.82f}, {0.85f, 0.40f, 0.45f}, {0.95f, 0.80f, 0.40f},
             {0.35f, 0.55f, 0.60f}, {0.93f, 0.93f, 0.93f}, {0.55f, 0.30f, 0.55f}};
 
-        /**
-         * Deterministic NPC look. Variant 0 (or negative) returns {@link #defaultLook(int)};
-         * any other index gives a stable pseudo-random mix of plausible student colours.
-         */
         public static Appearance preset(int variant, int gender) {
             if (variant <= 0) return defaultLook(gender);
             int s = variant * 7919 + 104729;
@@ -210,7 +183,6 @@ public class StudentMesh implements Disposable {
         }
     }
 
-    /** One complete body (one gender, one colour set). */
     private static final class Rig {
         final Array<Part> pelvis = new Array<>();
         final Array<Part> chest = new Array<>();
@@ -221,9 +193,9 @@ public class StudentMesh implements Disposable {
         final Array<Part>[] thigh = pair();
         final Array<Part>[] shin = pair();
         final Array<Part>[] foot = pair();
-        /** Same body with same-material parts merged per segment (see RigMerger); built lazily. */
+
         Rig baked;
-        /** Same body and colours built with coarser tessellation (shadow pass, far bodies). */
+
         Rig lod;
 
         @SuppressWarnings("unchecked")
@@ -236,9 +208,9 @@ public class StudentMesh implements Disposable {
     private final Array<Model> models = new Array<>();
     private final IdentityMap<Material, float[]> slotInfo = new IdentityMap<>();
     private final long attr = Usage.Position | Usage.Normal | Usage.TextureCoordinates;
-    private Appearance cur; // look used while building materials
-    private boolean lowDetail; // true while building the coarse LOD rigs
-    /** Beyond this camera distance (m) a body is drawn from its coarse rig. */
+    private Appearance cur;
+    private boolean lowDetail;
+
     private static final float LOD_DISTANCE = 20f;
     private int curGroup = GROUP_BODY;
 
@@ -260,16 +232,14 @@ public class StudentMesh implements Disposable {
         buildMale(baseRigs[0]);
         cur = Appearance.defaultLook(1);
         buildFemale(baseRigs[1]);
-        // Pre-build every NPC variant once: own ModelInstances + own Material copies, so any
-        // number of students can be queued in one ModelBatch without sharing colours.
+
         variantRigs[0] = baseRigs;
         for (int v = 1; v < VARIANT_COUNT; v++) {
             variantRigs[v] = new Rig[]{
                 recolor(baseRigs[0], Appearance.preset(v, 0)),
                 recolor(baseRigs[1], Appearance.preset(v, 1))};
         }
-        // Coarse-tessellation twins, used where the extra facets cannot be seen: the sun's shadow
-        // map (~3 cm texels on HIGH) and bodies beyond LOD_DISTANCE (under ~80 px tall at 1080p).
+
         lowDetail = true;
         for (int g = 0; g < 2; g++) {
             cur = Appearance.defaultLook(g);
@@ -289,14 +259,9 @@ public class StudentMesh implements Disposable {
         }
     }
 
-    /** Number of pre-built variants accepted by the variant render overload. */
     public static int getVariantCount() {
         return VARIANT_COUNT;
     }
-
-    // =====================================================================
-    // Primitive helpers
-    // =====================================================================
 
     private int divFor(float maxDim) {
         if (lowDetail) return maxDim > 0.12f ? 12 : (maxDim > 0.05f ? 10 : 8);
@@ -329,7 +294,6 @@ public class StudentMesh implements Disposable {
         return m;
     }
 
-    /** Material bound to an Appearance slot, tinted by (tr,tg,tb) relative to the slot colour. */
     private Material m(int slot, float tr, float tg, float tb) {
         Color c = cur.slot(slot);
         Color col = new Color(
@@ -392,7 +356,6 @@ public class StudentMesh implements Disposable {
         list.add(part(m, l));
     }
 
-    /** Same model on both limbs; x is mirrored (list 0 = -x side). */
     private void putPair(Array<Part>[] lists, Model m, float x, float y, float z) {
         put(lists[0], m, -x, y, z);
         put(lists[1], m, x, y, z);
@@ -403,20 +366,18 @@ public class StudentMesh implements Disposable {
         put(lists[1], m, x, y, z, rx, ry, rz);
     }
 
-    /** Flat strap (w wide, t thick) from a to b. */
     private void strap(Array<Part> list, float ax, float ay, float az, float bx, float by, float bz,
                        float w, float t, Material mat) {
         tv.set(bx - ax, by - ay, bz - az);
         float len = tv.len();
         if (len < 1e-4f) return;
         tv.scl(1f / len);
-        Model mdl = box(w, len + t, t, mat); // slight overlap hides the joints
+        Model mdl = box(w, len + t, t, mat);
         Matrix4 l = new Matrix4().translate((ax + bx) * 0.5f, (ay + by) * 0.5f, (az + bz) * 0.5f)
             .rotate(tq.setFromCross(Vector3.Y, tv));
         list.add(part(mdl, l));
     }
 
-    /** Strap along a polyline of xyz triples; if mirror, also adds the -x copy. */
     private void strapPath(Array<Part> list, float[] p, float w, float t, Material mat, boolean mirror) {
         for (int s = 0; s < (mirror ? 2 : 1); s++) {
             float sx = s == 0 ? 1f : -1f;
@@ -426,7 +387,6 @@ public class StudentMesh implements Disposable {
         }
     }
 
-    /** Rectangle with rounded corners in the XY plane, depth d along Z. */
     private void roundedBlock(Array<Part> list, float cx, float cy, float cz,
                               float w, float h, float d, float r, Material mat) {
         put(list, box(w - 2f * r, h, d, mat), cx, cy, cz);
@@ -439,14 +399,6 @@ public class StudentMesh implements Disposable {
         put(list, corner, cx + ox, cy + oy, cz, 90f, 0f, 0f);
     }
 
-    // =====================================================================
-    // Shared accessories
-    // =====================================================================
-
-    /**
-     * DU ID card on a lanyard. path = one side of the lanyard (xyz triples, +x side, from the back
-     * of the neck down to the clip); card hangs below (0, cardTop) at depth cardZ.
-     */
     private void addIdCard(Array<Part> chest, float[] path, float cardTop, float cardZ) {
         Material lanyard = flat(0.10f, 0.15f, 0.42f);
         Material lanyardRed = flat(0.78f, 0.12f, 0.14f);
@@ -460,7 +412,7 @@ public class StudentMesh implements Disposable {
 
         strapPath(chest, path, 0.013f, 0.004f, lanyard, true);
         float ex = path[path.length - 3], ey = path[path.length - 2], ez = path[path.length - 1];
-        // red tab joining both lanyard ends, then the metal clip
+
         put(chest, box(ex * 2f + 0.016f, 0.012f, 0.006f, lanyardRed), 0f, ey - 0.002f, ez);
         put(chest, box(0.010f, 0.014f, 0.006f, metal), 0f, cardTop + 0.006f, cardZ + 0.001f);
 
@@ -479,11 +431,6 @@ public class StudentMesh implements Disposable {
         curGroup = GROUP_BODY;
     }
 
-    /**
-     * Backpack worn on both shoulders. Body is a rounded block behind the torso with a padded back,
-     * front pocket, zip and grab handle. strap = one shoulder strap path (+x side, xyz triples) from
-     * the top of the bag, over the shoulder, down the chest and back round to the bag's side.
-     */
     private void addBackpack(Array<Part> chest, float w, float h, float d, float cy, float cz, float[] strap) {
         Material bag = m(SLOT_BAG);
         Material bagPanel = m(SLOT_BAG, 0.84f);
@@ -495,31 +442,27 @@ public class StudentMesh implements Disposable {
         float r = 0.05f;
         roundedBlock(chest, 0f, cy, cz, w, h, d, r, bag);
         float back = cz - d * 0.5f;
-        // soft bulge on the outer face so it doesn't read as a crate
+
         put(chest, ell(w * 0.92f, h * 0.90f, 0.05f, bag), 0f, cy + 0.005f, back);
-        // front pocket
+
         float ph = h * 0.42f, pw = w * 0.74f, pd = 0.045f;
         float py = cy - h * 0.5f + ph * 0.5f + 0.035f;
         float pz = back - 0.012f - pd * 0.5f;
         roundedBlock(chest, 0f, py, pz, pw, ph, pd, 0.035f, bagPanel);
         put(chest, box(pw - 0.03f, 0.006f, 0.006f, zip), 0f, py + ph * 0.5f - 0.014f, pz - pd * 0.5f - 0.002f);
         put(chest, box(0.010f, 0.022f, 0.006f, metal), pw * 0.30f, py + ph * 0.5f - 0.026f, pz - pd * 0.5f - 0.004f);
-        // main zip along the top
+
         put(chest, box(w - 0.06f, 0.006f, 0.008f, zip), 0f, cy + h * 0.5f + 0.001f, back + 0.02f);
-        // grab handle
+
         put(chest, cap(0.010f, 0.08f, bagStrap), 0f, cy + h * 0.5f + 0.012f, cz + 0.02f, 0f, 0f, 90f);
-        // shoulder straps + buckles
+
         strapPath(chest, strap, 0.038f, 0.012f, bagStrap, true);
         Model buckle = box(0.044f, 0.020f, 0.016f, zip);
-        int bi = 9; // 4th point = chest-strap buckle position
+        int bi = 9;
         put(chest, buckle, strap[bi], strap[bi + 1], strap[bi + 2] + 0.004f);
         put(chest, buckle, -strap[bi], strap[bi + 1], strap[bi + 2] + 0.004f);
         curGroup = GROUP_BODY;
     }
-
-    // =====================================================================
-    // MALE (gender 0)
-    // =====================================================================
 
     private void buildMale(Rig r) {
         Material skin = m(SLOT_SKIN);
@@ -544,28 +487,26 @@ public class StudentMesh implements Disposable {
         Material watchBand = flat(0.12f, 0.12f, 0.13f);
         Material watchFace = flat(0.70f, 0.72f, 0.75f);
 
-        // ---- Pelvis (frame y = 0.87): jeans seat; shirt hem hangs over the waist ----
         put(r.pelvis, cyl(0.33f, 0.14f, 0.23f, jeans), 0f, 0.02f, 0f);
         put(r.pelvis, ell(0.34f, 0.20f, 0.24f, jeans), 0f, -0.015f, 0f);
         put(r.pelvis, box(0.012f, 0.08f, 0.004f, jeansShade), 0f, -0.045f, 0.115f);
 
-        // ---- Chest (frame y = 1.13): casual button-up shirt, natural athletic V-taper ----
         put(r.chest, cyl(0.34f, 0.40f, 0.22f, shirt), 0f, 0f, -0.005f);
         put(r.chest, ell(0.36f, 0.22f, 0.23f, shirt), 0f, 0.12f, 0.005f);
         put(r.chest, ell(0.31f, 0.15f, 0.19f, shirt), 0f, 0.20f, -0.010f);
         Model shoulder = ell(0.135f, 0.105f, 0.140f, shirt);
         put(r.chest, shoulder, -0.195f, 0.19f, 0f, 0f, 0f, -12f);
         put(r.chest, shoulder, 0.195f, 0.19f, 0f, 0f, 0f, 12f);
-        put(r.chest, cyl(0.345f, 0.06f, 0.230f, shirtShade), 0f, -0.20f, -0.005f);   // hem
-        put(r.chest, box(0.022f, 0.25f, 0.008f, shirtShade), 0f, -0.085f, 0.108f);  // placket
+        put(r.chest, cyl(0.345f, 0.06f, 0.230f, shirtShade), 0f, -0.20f, -0.005f);
+        put(r.chest, box(0.022f, 0.25f, 0.008f, shirtShade), 0f, -0.085f, 0.108f);
         Model btn = ell(0.009f, 0.009f, 0.005f, button);
         put(r.chest, btn, 0f, 0.165f, 0.114f);
         put(r.chest, btn, 0f, 0.085f, 0.116f);
         put(r.chest, btn, 0f, -0.140f, 0.112f);
         put(r.chest, btn, 0f, -0.200f, 0.116f);
-        // collar band round the neck + two pointed collar wings
+
         put(r.chest, cyl(0.125f, 0.040f, 0.120f, shirtShade), 0f, 0.232f, 0.004f);
-        put(r.chest, ell(0.150f, 0.045f, 0.090f, shirtShade), 0f, 0.215f, -0.060f); // collar back
+        put(r.chest, ell(0.150f, 0.045f, 0.090f, shirtShade), 0f, 0.215f, -0.060f);
         strap(r.chest, 0.018f, 0.236f, 0.065f, 0.070f, 0.188f, 0.088f, 0.038f, 0.010f, shirtSeam);
         strap(r.chest, -0.018f, 0.236f, 0.065f, -0.070f, 0.188f, 0.088f, 0.038f, 0.010f, shirtSeam);
 
@@ -575,7 +516,6 @@ public class StudentMesh implements Disposable {
             0.020f, 0.090f, 0.122f,
             0.008f, 0.012f, 0.112f}, 0.006f, 0.111f);
 
-        // Backpack sits comfortably on upper-mid back, clearly below neckline
         addBackpack(r.chest, 0.28f, 0.35f, 0.13f, -0.075f, -0.185f, new float[]{
             0.095f, 0.190f, -0.112f,
             0.095f, 0.262f, -0.030f,
@@ -585,20 +525,18 @@ public class StudentMesh implements Disposable {
             0.165f, -0.090f, 0.020f,
             0.145f, -0.110f, -0.115f});
 
-        // ---- Neck (frame y = 1.34) — sculpted with trapezius slope ----
         put(r.neck, cyl(0.100f, 0.11f, 0.098f, skin), 0f, 0f, 0.004f);
-        put(r.neck, ell(0.180f, 0.065f, 0.135f, skinShade), 0f, -0.045f, -0.010f); // trapezius contour
+        put(r.neck, ell(0.180f, 0.065f, 0.135f, skinShade), 0f, -0.045f, -0.010f);
 
-        // ---- Head (frame y = 1.45) ----
-        put(r.head, ell(0.162f, 0.195f, 0.176f, skin), 0f, 0.022f, -0.008f);   // cranium
-        put(r.head, ell(0.138f, 0.105f, 0.130f, skin), 0f, -0.030f, 0.012f);   // jaw & cheeks
-        put(r.head, ell(0.055f, 0.038f, 0.044f, skin), 0f, -0.068f, 0.048f);   // chin
-        // Ears with distinct outer helix and lobe visible in silhouette from rear
+        put(r.head, ell(0.162f, 0.195f, 0.176f, skin), 0f, 0.022f, -0.008f);
+        put(r.head, ell(0.138f, 0.105f, 0.130f, skin), 0f, -0.030f, 0.012f);
+        put(r.head, ell(0.055f, 0.038f, 0.044f, skin), 0f, -0.068f, 0.048f);
+
         put(r.head, ell(0.020f, 0.045f, 0.030f, skinShade), -0.084f, 0.005f, -0.008f, 0f, -12f, 5f);
         put(r.head, ell(0.020f, 0.045f, 0.030f, skinShade),  0.084f, 0.005f, -0.008f, 0f,  12f, -5f);
         put(r.head, ell(0.014f, 0.030f, 0.020f, skin), -0.086f, 0.002f, -0.006f, 0f, -12f, 5f);
         put(r.head, ell(0.014f, 0.030f, 0.020f, skin),  0.086f, 0.002f, -0.006f, 0f,  12f, -5f);
-        // eyes
+
         Model white = ell(0.024f, 0.013f, 0.010f, eyeWhite);
         Model irisM = ell(0.012f, 0.012f, 0.006f, iris);
         Model lid = cap(0.0030f, 0.026f, lash);
@@ -609,58 +547,53 @@ public class StudentMesh implements Disposable {
             put(r.head, lid, s * 0.032f, 0.0245f, 0.0755f, 0f, 0f, 90f);
             put(r.head, browM, s * 0.033f, 0.038f, 0.077f, 0f, s * 6f, 90f - s * 6f);
         }
-        // nose & mouth
+
         put(r.head, cap(0.0075f, 0.034f, skin), 0f, 0.002f, 0.080f, 16f, 0f, 0f);
         put(r.head, ell(0.018f, 0.014f, 0.015f, skin), 0f, -0.013f, 0.085f);
         put(r.head, ell(0.028f, 0.008f, 0.010f, lips), 0f, -0.036f, 0.072f);
         put(r.head, ell(0.025f, 0.010f, 0.010f, lips), 0f, -0.043f, 0.070f);
 
-        // Neat short haircut with tapered scissor-cut neckline exposing neck skin
-        put(r.head, ell(0.168f, 0.124f, 0.174f, hair), 0f, 0.065f, -0.010f);    // crown & top
-        put(r.head, ell(0.152f, 0.096f, 0.114f, hair), 0f, 0.024f, -0.038f);    // mid-back
-        put(r.head, ell(0.120f, 0.058f, 0.058f, hair), 0f, -0.016f, -0.044f);   // tapered lower neckline
-        put(r.head, ell(0.085f, 0.028f, 0.070f, hairSheen), 0f, 0.105f, -0.025f, 8f, 0f, 0f); // rear crown sheen
+        put(r.head, ell(0.168f, 0.124f, 0.174f, hair), 0f, 0.065f, -0.010f);
+        put(r.head, ell(0.152f, 0.096f, 0.114f, hair), 0f, 0.024f, -0.038f);
+        put(r.head, ell(0.120f, 0.058f, 0.058f, hair), 0f, -0.016f, -0.044f);
+        put(r.head, ell(0.085f, 0.028f, 0.070f, hairSheen), 0f, 0.105f, -0.025f, 8f, 0f, 0f);
         Model side = ell(0.030f, 0.062f, 0.086f, hair);
         put(r.head, side, -0.076f, 0.042f, -0.006f);
         put(r.head, side,  0.076f, 0.042f, -0.006f);
-        put(r.head, ell(0.145f, 0.050f, 0.078f, hair), 0.006f, 0.104f, 0.046f, -14f, 0f, -5f);   // fringe
+        put(r.head, ell(0.145f, 0.050f, 0.078f, hair), 0.006f, 0.104f, 0.046f, -14f, 0f, -5f);
         put(r.head, ell(0.075f, 0.032f, 0.065f, hairSheen), -0.020f, 0.128f, 0.030f, -10f, 0f, 8f);
-        put(r.head, box(0.004f, 0.006f, 0.070f, skinShade), -0.030f, 0.137f, 0.010f, -8f, 0f, 10f); // part line
+        put(r.head, box(0.004f, 0.006f, 0.070f, skinShade), -0.030f, 0.137f, 0.010f, -8f, 0f, 10f);
         Model burn = ell(0.012f, 0.030f, 0.018f, hair);
         put(r.head, burn, -0.078f, 0.004f, 0.024f);
         put(r.head, burn,  0.078f, 0.004f, 0.024f);
 
-        // ---- Arms (shoulder frame; forearm frame at elbow) ----
         putPair(r.upperArm, ell(0.115f, 0.115f, 0.120f, shirt), 0f, -0.010f, 0f);
         putPair(r.upperArm, cap(0.058f, 0.25f, shirt), 0f, -0.120f, 0f);
-        putPair(r.upperArm, cyl(0.122f, 0.045f, 0.122f, shirtShade), 0f, -0.225f, 0f);   // rolled cuff
+        putPair(r.upperArm, cyl(0.122f, 0.045f, 0.122f, shirtShade), 0f, -0.225f, 0f);
 
-        putPair(r.foreArm, ell(0.080f, 0.078f, 0.080f, skin), 0f, 0f, 0f);             // elbow
+        putPair(r.foreArm, ell(0.080f, 0.078f, 0.080f, skin), 0f, 0f, 0f);
         putPair(r.foreArm, cap(0.042f, 0.24f, skin), 0f, -0.110f, 0f);
         put(r.foreArm[0], cyl(0.085f, 0.020f, 0.085f, watchBand), 0f, -0.195f, 0f);
         put(r.foreArm[0], cyl(0.034f, 0.008f, 0.034f, watchFace), -0.042f, -0.195f, 0f, 0f, 0f, 90f);
         addHands(r, skin, 0.062f, 0.088f, 0.036f, -0.255f);
 
-        // ---- Legs: Realistic adult male proportions (quads, hamstrings, gastrocnemius calves) ----
-        putPair(r.thigh, ell(0.165f, 0.160f, 0.170f, jeans), 0f, -0.020f, 0f);           // hip joint
-        putPair(r.thigh, cap(0.076f, 0.36f, jeans), 0f, -0.190f, 0f);                   // muscular thigh
-        putPair(r.thigh, ell(0.150f, 0.240f, 0.155f, jeansShade), 0f, -0.170f, 0.008f); // quad contour
+        putPair(r.thigh, ell(0.165f, 0.160f, 0.170f, jeans), 0f, -0.020f, 0f);
+        putPair(r.thigh, cap(0.076f, 0.36f, jeans), 0f, -0.190f, 0f);
+        putPair(r.thigh, ell(0.150f, 0.240f, 0.155f, jeansShade), 0f, -0.170f, 0.008f);
 
-        putPair(r.shin, ell(0.122f, 0.115f, 0.130f, jeans), 0f, 0f, 0.006f);             // patella / knee
-        putPair(r.shin, cap(0.066f, 0.35f, jeans), 0f, -0.175f, -0.002f);                 // shin bone
-        putPair(r.shin, ell(0.138f, 0.220f, 0.145f, jeansShade), 0f, -0.130f, -0.015f); // calf muscle bulge
-        putPair(r.shin, cyl(0.130f, 0.045f, 0.135f, jeansShade), 0f, -0.335f, -0.002f); // ankle hem
+        putPair(r.shin, ell(0.122f, 0.115f, 0.130f, jeans), 0f, 0f, 0.006f);
+        putPair(r.shin, cap(0.066f, 0.35f, jeans), 0f, -0.175f, -0.002f);
+        putPair(r.shin, ell(0.138f, 0.220f, 0.145f, jeansShade), 0f, -0.130f, -0.015f);
+        putPair(r.shin, cyl(0.130f, 0.045f, 0.135f, jeansShade), 0f, -0.335f, -0.002f);
 
-        // athletic sneakers with wide stable profile
-        putPair(r.foot, cyl(0.115f, 0.050f, 0.125f, shoeShade), 0f, 0f, 0f);             // padded collar
-        putPair(r.foot, ell(0.125f, 0.095f, 0.270f, shoe), 0f, -0.022f, 0.055f);         // sneaker upper
-        putPair(r.foot, box(0.130f, 0.028f, 0.275f, sole), 0f, -0.058f, 0.055f);         // thick rubber outsole
-        putPair(r.foot, ell(0.125f, 0.038f, 0.095f, sole), 0f, -0.054f, 0.155f);         // toe guard
-        putPair(r.foot, ell(0.120f, 0.065f, 0.080f, shoeShade), 0f, -0.015f, -0.055f);   // reinforced heel
-        putPair(r.foot, box(0.055f, 0.012f, 0.090f, sole), 0f, 0.024f, 0.085f, 14f, 0f, 0f); // laces
+        putPair(r.foot, cyl(0.115f, 0.050f, 0.125f, shoeShade), 0f, 0f, 0f);
+        putPair(r.foot, ell(0.125f, 0.095f, 0.270f, shoe), 0f, -0.022f, 0.055f);
+        putPair(r.foot, box(0.130f, 0.028f, 0.275f, sole), 0f, -0.058f, 0.055f);
+        putPair(r.foot, ell(0.125f, 0.038f, 0.095f, sole), 0f, -0.054f, 0.155f);
+        putPair(r.foot, ell(0.120f, 0.065f, 0.080f, shoeShade), 0f, -0.015f, -0.055f);
+        putPair(r.foot, box(0.055f, 0.012f, 0.090f, sole), 0f, 0.024f, 0.085f, 14f, 0f, 0f);
     }
 
-    /** Palm, curled fingers and a thumb pointing forward, at forearm-frame height y. */
     private void addHands(Rig r, Material skin, float w, float h, float d, float y) {
         putPair(r.foreArm, ell(w, h, d, skin), 0f, y, 0f);
         putPair(r.foreArm, ell(w * 0.92f, h * 0.60f, d * 0.95f, skin), 0f, y - h * 0.48f, 0.004f, 10f, 0f, 0f);
@@ -668,10 +601,6 @@ public class StudentMesh implements Disposable {
         put(r.foreArm[0], thumb, w * 0.18f, y + h * 0.10f, d * 0.55f, 25f, 0f, -20f);
         put(r.foreArm[1], thumb, -w * 0.18f, y + h * 0.10f, d * 0.55f, 25f, 0f, 20f);
     }
-
-    // =====================================================================
-    // FEMALE (gender 1)
-    // =====================================================================
 
     private void buildFemale(Rig r) {
         Material skin = m(SLOT_SKIN);
@@ -694,11 +623,9 @@ public class StudentMesh implements Disposable {
         Material sole = flat(0.62f, 0.48f, 0.34f);
         Material gold = flat(0.90f, 0.74f, 0.32f);
 
-        // ---- Pelvis ----
         put(r.pelvis, cyl(0.27f, 0.12f, 0.19f, pants), 0f, 0.02f, 0f);
         put(r.pelvis, ell(0.28f, 0.17f, 0.20f, pants), 0f, -0.015f, 0f);
 
-        // ---- Chest: kurti to the hip ----
         put(r.chest, cyl(0.28f, 0.40f, 0.185f, kurti), 0f, 0.01f, -0.005f);
         put(r.chest, ell(0.29f, 0.17f, 0.19f, kurti), 0f, 0.13f, 0.006f);
         put(r.chest, ell(0.235f, 0.13f, 0.155f, kurti), 0f, 0.19f, -0.008f);
@@ -706,11 +633,10 @@ public class StudentMesh implements Disposable {
         put(r.chest, shoulder, -0.152f, 0.18f, 0f, 0f, 0f, -12f);
         put(r.chest, shoulder, 0.152f, 0.18f, 0f, 0f, 0f, 12f);
         put(r.chest, cyl(0.305f, 0.08f, 0.210f, kurti), 0f, -0.18f, -0.005f);
-        put(r.chest, cyl(0.330f, 0.10f, 0.232f, kurti), 0f, -0.25f, -0.005f);           // flared hem
-        put(r.chest, cyl(0.334f, 0.018f, 0.236f, kurtiTrim), 0f, -0.292f, -0.005f);      // hem border
-        put(r.chest, cyl(0.106f, 0.020f, 0.100f, kurtiTrim), 0f, 0.232f, 0.002f);        // neckline
+        put(r.chest, cyl(0.330f, 0.10f, 0.232f, kurti), 0f, -0.25f, -0.005f);
+        put(r.chest, cyl(0.334f, 0.018f, 0.236f, kurtiTrim), 0f, -0.292f, -0.005f);
+        put(r.chest, cyl(0.106f, 0.020f, 0.100f, kurtiTrim), 0f, 0.232f, 0.002f);
 
-        // Orna: V over the chest, over both shoulders, ends falling behind
         float[] ornaPath = {
             0.125f, 0.235f, -0.015f,
             0.070f, 0.190f, 0.070f,
@@ -720,7 +646,7 @@ public class StudentMesh implements Disposable {
         put(r.chest, ell(0.060f, 0.034f, 0.024f, ornaShade), 0f, 0.062f, 0.100f);
         strapPath(r.chest, new float[]{0.125f, 0.235f, -0.015f, 0.112f, 0.195f, -0.088f},
             0.075f, 0.012f, ornaShade, true);
-        put(r.chest, cap(0.004f, 0.10f, gold), 0f, 0.175f, 0.082f, -30f, 0f, 0f);        // necklace hint
+        put(r.chest, cap(0.004f, 0.10f, gold), 0f, 0.175f, 0.082f, -30f, 0f, 0f);
 
         addIdCard(r.chest, new float[]{
             0.045f, 0.235f, 0.040f,
@@ -737,11 +663,9 @@ public class StudentMesh implements Disposable {
             0.150f, -0.090f, 0.015f,
             0.130f, -0.110f, -0.105f});
 
-        // ---- Neck ----
         put(r.neck, cyl(0.088f, 0.10f, 0.086f, skin), 0f, 0f, 0.004f);
-        put(r.neck, ell(0.145f, 0.055f, 0.110f, skinShade), 0f, -0.042f, -0.008f); // trapezius contour
+        put(r.neck, ell(0.145f, 0.055f, 0.110f, skinShade), 0f, -0.042f, -0.008f);
 
-        // ---- Head ----
         put(r.head, ell(0.145f, 0.178f, 0.158f, skin), 0f, 0.018f, -0.006f);
         put(r.head, ell(0.118f, 0.088f, 0.110f, skin), 0f, -0.030f, 0.012f);
         put(r.head, ell(0.040f, 0.028f, 0.032f, skin), 0f, -0.064f, 0.044f);
@@ -765,48 +689,40 @@ public class StudentMesh implements Disposable {
         put(r.head, ell(0.024f, 0.007f, 0.008f, lips), 0f, -0.033f, 0.067f);
         put(r.head, ell(0.022f, 0.009f, 0.009f, lips), 0f, -0.040f, 0.065f);
 
-        // shoulder-length black hair, side-swept fringe
-        put(r.head, ell(0.158f, 0.132f, 0.170f, hair), 0f, 0.056f, -0.012f);            // crown
-        put(r.head, ell(0.152f, 0.240f, 0.112f, hair), 0f, -0.060f, -0.046f);           // back fall
+        put(r.head, ell(0.158f, 0.132f, 0.170f, hair), 0f, 0.056f, -0.012f);
+        put(r.head, ell(0.152f, 0.240f, 0.112f, hair), 0f, -0.060f, -0.046f);
         Model sideHair = ell(0.036f, 0.150f, 0.092f, hair);
         put(r.head, sideHair, -0.068f, -0.010f, -0.006f, 0f, 0f, -4f);
         put(r.head, sideHair, 0.068f, -0.010f, -0.006f, 0f, 0f, 4f);
         Model lock = cap(0.017f, 0.17f, hair);
         put(r.head, lock, -0.066f, -0.050f, 0.012f, 6f, 0f, 3f);
         put(r.head, lock, 0.066f, -0.050f, 0.012f, 6f, 0f, -3f);
-        put(r.head, ell(0.128f, 0.046f, 0.064f, hair), 0.010f, 0.084f, 0.050f, -12f, 0f, -8f);   // fringe
+        put(r.head, ell(0.128f, 0.046f, 0.064f, hair), 0.010f, 0.084f, 0.050f, -12f, 0f, -8f);
         put(r.head, ell(0.064f, 0.028f, 0.056f, hairSheen), -0.018f, 0.112f, 0.026f, -10f, 0f, 8f);
 
-        // ---- Arms: 3/4 kurti sleeves ----
         putPair(r.upperArm, ell(0.100f, 0.100f, 0.105f, kurti), 0f, -0.010f, 0f);
         putPair(r.upperArm, cap(0.048f, 0.25f, kurti), 0f, -0.120f, 0f);
         putPair(r.foreArm, ell(0.084f, 0.076f, 0.086f, kurti), 0f, 0f, 0f);
         putPair(r.foreArm, cap(0.042f, 0.12f, kurti), 0f, -0.050f, 0f);
         putPair(r.foreArm, cyl(0.088f, 0.020f, 0.088f, kurtiTrim), 0f, -0.105f, 0f);
         putPair(r.foreArm, cap(0.036f, 0.20f, skin), 0f, -0.135f, 0f);
-        put(r.foreArm[0], cyl(0.072f, 0.010f, 0.072f, gold), 0f, -0.195f, 0f);           // bangle
+        put(r.foreArm[0], cyl(0.072f, 0.010f, 0.072f, gold), 0f, -0.195f, 0f);
         addHands(r, skin, 0.054f, 0.076f, 0.030f, -0.245f);
 
-        // ---- Legs: salwar / churidar ----
         putPair(r.thigh, ell(0.145f, 0.150f, 0.150f, pants), 0f, -0.015f, 0f);
         putPair(r.thigh, cap(0.068f, 0.36f, pants), 0f, -0.190f, 0f);
         putPair(r.thigh, ell(0.135f, 0.220f, 0.140f, pantsShade), 0f, -0.170f, 0.006f);
         putPair(r.shin, ell(0.110f, 0.105f, 0.115f, pants), 0f, 0f, 0f);
         putPair(r.shin, cap(0.058f, 0.30f, pants), 0f, -0.150f, -0.004f);
-        putPair(r.shin, ell(0.122f, 0.190f, 0.126f, pantsShade), 0f, -0.125f, -0.012f); // calf drape
+        putPair(r.shin, ell(0.122f, 0.190f, 0.126f, pantsShade), 0f, -0.125f, -0.012f);
         putPair(r.shin, cap(0.048f, 0.12f, pantsShade), 0f, -0.300f, -0.004f);
 
-        // sandals
-        putPair(r.foot, cap(0.036f, 0.07f, skin), 0f, 0.012f, 0f);                        // ankle
+        putPair(r.foot, cap(0.036f, 0.07f, skin), 0f, 0.012f, 0f);
         putPair(r.foot, ell(0.088f, 0.050f, 0.220f, skin), 0f, -0.030f, 0.040f);
         putPair(r.foot, box(0.098f, 0.018f, 0.235f, sole), 0f, -0.055f, 0.040f);
         putPair(r.foot, box(0.094f, 0.016f, 0.042f, strapMat), 0f, -0.012f, 0.090f, 12f, 0f, 0f);
         putPair(r.foot, cyl(0.082f, 0.012f, 0.082f, strapMat), 0f, -0.004f, 0f);
     }
-
-    // =====================================================================
-    // Variants
-    // =====================================================================
 
     private Rig recolor(Rig src, Appearance look) {
         Rig r = new Rig();
@@ -829,7 +745,7 @@ public class StudentMesh implements Disposable {
             Part p = from.get(i);
             if (p.group == GROUP_BAG && !look.hasBag) continue;
             if (p.group == GROUP_ID && !look.hasIdCard) continue;
-            ModelInstance inst = new ModelInstance(p.model); // copies materials
+            ModelInstance inst = new ModelInstance(p.model);
             if (p.slot != SLOT_FIXED) {
                 Color c = look.slot(p.slot);
                 Color tint = new Color(
@@ -863,14 +779,6 @@ public class StudentMesh implements Disposable {
         return arr[g];
     }
 
-    // =====================================================================
-    // Rendering
-    // =====================================================================
-
-    /**
-     * Picks the rig to draw: the coarse twin in the shadow pass (orthographic sun camera) and for
-     * bodies farther than {@link #LOD_DISTANCE} from the camera; otherwise the full rig.
-     */
     private Rig detailFor(ModelBatch batch, Rig rig, Vector3 pos) {
         com.badlogic.gdx.graphics.Camera cam = batch.getCamera();
         boolean coarse = rig.lod != null && cam != null
@@ -879,13 +787,11 @@ public class StudentMesh implements Disposable {
         return baked(coarse ? rig.lod : rig);
     }
 
-    /** True when a body at {@code pos} cannot touch the batch camera's view (or the sun's shadow map). */
     private static boolean outsideView(ModelBatch batch, Vector3 pos) {
         com.badlogic.gdx.graphics.Camera cam = batch.getCamera();
         return cam != null && !cam.frustum.sphereInFrustum(pos.x, pos.y + 0.9f, pos.z, 1.7f);
     }
 
-    /** Draw-call-merged copy of {@code src}; built once per rig, then cached on it. */
     private Rig baked(Rig src) {
         if (src.baked != null) return src.baked;
         Rig r = new Rig();
@@ -913,7 +819,6 @@ public class StudentMesh implements Disposable {
         }
     }
 
-    /** Advances the idle clock once per frame, however many times render() is called. */
     private void tick() {
         if (Gdx.graphics == null) {
             idleTime += 0.016f;
@@ -971,11 +876,6 @@ public class StudentMesh implements Disposable {
                isSittingWater, sitProgress, gender, 0);
     }
 
-    /**
-     * Full render with a colour variant: 0 = protagonist, 1..{@link #VARIANT_COUNT}-1 = NPC students
-     * (values wrap modulo VARIANT_COUNT). All variants are pre-built in the constructor with their own
-     * instances/materials, so many students can share one ModelBatch begin/end; no per-call allocation.
-     */
     public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
                        float walkCycle, boolean isMoving, boolean isSprinting,
                        boolean isCrouching, boolean isAttacking, int attackCombo, float attackProgress,
@@ -1009,17 +909,11 @@ public class StudentMesh implements Disposable {
              isSittingWater, sitProgress, variant * 1.37f);
     }
 
-    /**
-     * High-fidelity render path using an evaluated CharacterPose from the AnimationStateMachine.
-     */
     public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
                        CharacterPose pose, boolean isCrouching, boolean isSittingWater, int gender) {
         render(batch, env, pos, headingDegrees, pose, isCrouching, isSittingWater, gender, 0);
     }
 
-    /**
-     * High-fidelity render path using an evaluated CharacterPose and NPC variant index.
-     */
     public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
                        CharacterPose pose, boolean isCrouching, boolean isSittingWater, int gender, int variant) {
         tick();
@@ -1028,9 +922,6 @@ public class StudentMesh implements Disposable {
         drawPose(batch, env, rigFor(g, variant), g, pos, headingDegrees, pose, isCrouching, isSittingWater);
     }
 
-    /**
-     * High-fidelity render path using an evaluated CharacterPose and custom Appearance.
-     */
     public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
                        CharacterPose pose, boolean isCrouching, boolean isSittingWater, int gender, Appearance look) {
         tick();
@@ -1040,11 +931,6 @@ public class StudentMesh implements Disposable {
         drawPose(batch, env, rig, g, pos, headingDegrees, pose, isCrouching, isSittingWater);
     }
 
-    /**
-     * Full render with a custom {@link Appearance}. The rig is cached per Appearance object
-     * (identity) and built on first use, so reuse the same instance each frame and don't mutate it
-     * afterwards. Prefer the int-variant overload for crowds.
-     */
     public void render(ModelBatch batch, Environment env, Vector3 pos, float headingDegrees,
                        float walkCycle, boolean isMoving, boolean isSprinting,
                        boolean isCrouching, boolean isAttacking, int attackCombo, float attackProgress,
@@ -1089,7 +975,6 @@ public class StudentMesh implements Disposable {
         rootTransform.translate(pos.x, pos.y + pose.bobOffset, pos.z);
         rootTransform.rotate(Vector3.Y, headingDegrees);
 
-        // Pelvis
         segment.set(rootTransform)
             .translate(0f, pose.pelvisHeight, 0f)
             .rotate(Vector3.Y, pose.pelvisTwist)
@@ -1097,7 +982,6 @@ public class StudentMesh implements Disposable {
             .rotate(Vector3.X, pose.pelvisPitch);
         drawParts(batch, env, rig.pelvis, segment);
 
-        // Chest & Torso (incl. backpack, lanyard, orna)
         float chestY = isCrouching ? 0.72f : (isSittingWater ? 0.65f : 1.13f);
         float chestZ = isCrouching ? 0.12f : 0f;
         segment.set(rootTransform)
@@ -1107,7 +991,6 @@ public class StudentMesh implements Disposable {
             .rotate(Vector3.X, pose.torsoPitch);
         drawParts(batch, env, rig.chest, segment);
 
-        // Neck
         float neckY = isCrouching ? 0.90f : (isSittingWater ? 0.84f : 1.34f);
         float neckZ = isCrouching ? 0.20f : 0f;
         segment.set(rootTransform)
@@ -1116,7 +999,6 @@ public class StudentMesh implements Disposable {
             .rotate(Vector3.X, pose.neckPitch);
         drawParts(batch, env, rig.neck, segment);
 
-        // Head
         float headY = isCrouching ? 0.99f : (isSittingWater ? 0.93f : 1.45f);
         float headZ = isCrouching ? 0.25f : 0f;
         segment.set(rootTransform)
@@ -1126,11 +1008,9 @@ public class StudentMesh implements Disposable {
             .rotate(Vector3.X, pose.headPitch);
         drawParts(batch, env, rig.head, segment);
 
-        // Limbs (both sides)
         for (int side = 0; side < 2; side++) {
             float sx = side == 0 ? -1f : 1f;
 
-            // Thigh
             segment.set(rootTransform)
                 .translate(sx * 0.105f, pose.pelvisHeight - 0.04f + pose.footGroundOffset[side] * 0.3f, 0f)
                 .rotate(Vector3.X, pose.thighPitch[side])
@@ -1138,19 +1018,16 @@ public class StudentMesh implements Disposable {
                 .rotate(Vector3.Y, pose.thighYaw[side]);
             drawParts(batch, env, rig.thigh[side], segment);
 
-            // Shin
             segment.translate(0f, -0.38f, 0f)
                 .rotate(Vector3.X, pose.kneePitch[side]);
             drawParts(batch, env, rig.shin[side], segment);
 
-            // Foot
             tmp.set(segment)
                 .translate(0f, -0.37f, 0f)
                 .rotate(Vector3.X, pose.footPitch[side])
                 .rotate(Vector3.Z, pose.footRoll[side]);
             drawParts(batch, env, rig.foot[side], tmp);
 
-            // Upper Arm
             segment.set(rootTransform)
                 .translate(sx * (g == 1 ? 0.178f : 0.205f), chestY + 0.18f + pose.breathe, chestZ)
                 .rotate(Vector3.X, pose.upperArmPitch[side])
@@ -1158,7 +1035,6 @@ public class StudentMesh implements Disposable {
                 .rotate(Vector3.Y, pose.upperArmYaw[side]);
             drawParts(batch, env, rig.upperArm[side], segment);
 
-            // Forearm
             segment.translate(0f, -0.27f, 0f)
                 .rotate(Vector3.X, pose.foreArmPitch[side])
                 .rotate(Vector3.Y, pose.foreArmYaw[side]);
@@ -1201,7 +1077,7 @@ public class StudentMesh implements Disposable {
         }
 
         if (isDodging) {
-            // Tactical slip/sidestep: lowered athletic center of gravity, evasive body angle
+
             float slipCurve = MathUtils.sin(dodgeProgress * MathUtils.PI);
             pelvisHeight = MathUtils.lerp(0.87f, 0.54f, slipCurve);
             torsoPitch = 24f * slipCurve;
@@ -1210,7 +1086,7 @@ public class StudentMesh implements Disposable {
         }
 
         if (staggerTimer > 0f) {
-            // Hit reel / stagger reaction: torso leans backward, head snaps back
+
             float stRatio = Math.min(1.0f, staggerTimer / 0.28f);
             torsoPitch -= 24f * stRatio;
             headPitch -= 22f * stRatio;
@@ -1226,14 +1102,14 @@ public class StudentMesh implements Disposable {
         float attackLegR = 0f, attackKneeR = 0f;
 
         if (isBlocking) {
-            // Defensive martial arts guard / parry: both arms raised in front of face
+
             attackArmL = -82f;
             attackForeArmL = -95f;
             attackArmR = -82f;
             attackForeArmR = -95f;
             torsoPitch += 8f;
         } else if (isDodging) {
-            // Evasive slip arm tuck: hands protect head/body during slip
+
             float slipCurve = MathUtils.sin(dodgeProgress * MathUtils.PI);
             attackArmL = -68f * slipCurve;
             attackForeArmL = -92f * slipCurve;
@@ -1244,7 +1120,7 @@ public class StudentMesh implements Disposable {
             float strikePower = MathUtils.sin(t * MathUtils.PI);
 
             if (attackCombo == 1) {
-                // Crisp Left Jab: fast snap, right fist protecting jaw
+
                 float jabPower = (float) Math.sin(Math.pow(t, 0.75) * MathUtils.PI);
                 torsoTwist = 24f * jabPower;
                 torsoPitch = 8f * jabPower;
@@ -1253,7 +1129,7 @@ public class StudentMesh implements Disposable {
                 attackArmR = -68f;
                 attackForeArmR = -86f;
             } else if (attackCombo == 2) {
-                // Heavy Right Cross: full kinetic torso drive, left fist protecting jaw
+
                 float crossPower = (float) Math.sin(Math.pow(t, 0.8) * MathUtils.PI);
                 torsoTwist = -40f * crossPower;
                 torsoPitch = 14f * crossPower;
@@ -1262,7 +1138,7 @@ public class StudentMesh implements Disposable {
                 attackArmL = -70f;
                 attackForeArmL = -88f;
             } else if (attackCombo == 3) {
-                // High Martial Arts Kick: Snap front/thrust kick with balance lean
+
                 torsoPitch = -20f * strikePower;
                 torsoTwist = -35f * strikePower;
                 attackLegR = -105f * strikePower;
@@ -1270,7 +1146,7 @@ public class StudentMesh implements Disposable {
                 attackArmL = -55f * strikePower;
                 attackArmR = -48f * strikePower;
             } else if (attackCombo == 4) {
-                // Spinning / Roundhouse Crescent Kick: High rotational whip
+
                 torsoPitch = -10f * strikePower;
                 torsoTwist = 72f * strikePower;
                 attackLegR = -88f * strikePower;
@@ -1278,7 +1154,7 @@ public class StudentMesh implements Disposable {
                 attackArmL = -62f * strikePower;
                 attackArmR = -38f * strikePower;
             } else if (attackCombo == 5) {
-                // Low Crouch Dragon Sweep (Bosepora Sweep): Drops low, sweeps floor
+
                 pelvisHeight = 0.32f;
                 torsoPitch = 38f * strikePower;
                 torsoTwist = -75f * strikePower;
@@ -1297,11 +1173,9 @@ public class StudentMesh implements Disposable {
 
         float twist = isAttacking ? torsoTwist : (swing * 0.12f);
 
-        // Pelvis
         segment.set(rootTransform).translate(0f, pelvisHeight, 0f).rotate(Vector3.Y, twist);
         drawParts(batch, env, rig.pelvis, segment);
 
-        // Chest & torso (incl. backpack, lanyard, orna)
         float chestY = isCrouching ? 0.72f : (isSittingWater ? 0.65f : 1.13f);
         float chestZ = isCrouching ? 0.12f : 0f;
         segment.set(rootTransform).translate(0f, chestY + breathe, chestZ)
@@ -1309,7 +1183,6 @@ public class StudentMesh implements Disposable {
             .rotate(Vector3.X, torsoPitch);
         drawParts(batch, env, rig.chest, segment);
 
-        // Neck
         float neckY = isCrouching ? 0.90f : (isSittingWater ? 0.84f : 1.34f);
         float neckZ = isCrouching ? 0.20f : 0f;
         segment.set(rootTransform).translate(0f, neckY + breathe, neckZ)
@@ -1317,7 +1190,6 @@ public class StudentMesh implements Disposable {
             .rotate(Vector3.X, torsoPitch * 0.7f);
         drawParts(batch, env, rig.neck, segment);
 
-        // Head
         float sprintHeadLean = isSprinting && isMoving ? 8f : 0f;
         float headY = isCrouching ? 0.99f : (isSittingWater ? 0.93f : 1.45f);
         float headZ = isCrouching ? 0.25f : 0f;
@@ -1326,7 +1198,6 @@ public class StudentMesh implements Disposable {
             .rotate(Vector3.Y, -twist * 0.3f);
         drawParts(batch, env, rig.head, segment);
 
-        // Limbs
         for (int side = 0; side < 2; side++) {
             float sx = side == 0 ? -1f : 1f;
 

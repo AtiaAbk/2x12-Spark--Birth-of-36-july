@@ -1,3 +1,4 @@
+// ei file ta dhakar rasta gulate rickshaw ar barricade sajiye dey
 package bd.spark36.level;
 
 import com.badlogic.gdx.Gdx;
@@ -23,24 +24,6 @@ import bd.spark36.world.landmarks.TeaStallBuilder;
 
 import java.util.List;
 
-/**
- * Street identity for Levels 3–6 (reference §6.3): the Doel Chattar road outside the main gate
- * (z 79–91) gets a row of shop buildings with Bengali signboards on its far side, a footpath,
- * a run of electric poles with Dhaka's tangled cables, a tea stall against the campus wall and
- * rickshaws, CNG auto-rickshaws and a bus, arranged per chapter:
- * <ul>
- *   <li>Level 3 (police escalation): traffic pulled over, half the shutters coming down.</li>
- *   <li>Level 4 (curfew): every shutter down, tea stall boarded, rickshaws abandoned on the road,
- *       one tipped over; no bus.</li>
- *   <li>Level 5 (mass mobilisation): rickshaws and CNGs parked along the kerb, a bus that brought
- *       people in, shops open.</li>
- *   <li>Level 6 (5 August): traffic back on the road, every shop open.</li>
- * </ul>
- * Shop names are generic and fictional; no political graffiti, no damage to real landmarks.
- *
- * <p>Everything is static and goes into one {@link ModelCache}, so the whole street costs about
- * one draw call per shared material (around 20) in the colour pass and again in the shadow pass.</p>
- */
 public final class StreetDressing implements Disposable {
 
     private static final float SHOP_FRONT_Z = 93.6f;
@@ -57,9 +40,8 @@ public final class StreetDressing implements Disposable {
         this.level = level;
     }
 
-    /** Builds and places the street props for this level and appends their collision boxes. GL thread only. */
     public void build(List<float[]> colliders) {
-        // A/B switch for performance measurements: -Dbd.spark36.streetDressing=false
+
         if ("false".equalsIgnoreCase(System.getProperty("bd.spark36.streetDressing"))) return;
         try {
             atlas = new BengaliSignAtlas();
@@ -76,7 +58,7 @@ public final class StreetDressing implements Disposable {
             cache.end();
             logCost();
         } catch (Throwable t) {
-            // Street dressing is decoration: never let it break a level
+
             Gdx.app.error("StreetDressing", "Street dressing for level " + level + " skipped: " + t.getMessage(), t);
             disposeCache();
         }
@@ -90,12 +72,9 @@ public final class StreetDressing implements Disposable {
         if (cache != null) shadowBatch.render(cache);
     }
 
-    /** Number of placed props (for tests and logs). */
     public int getPropCount() {
         return instances.size;
     }
-
-    // ── Shop row ────────────────────────────────────────────────────────────
 
     private static final class Building {
         final int bays, floors, plaster; final Sign[] signs;
@@ -104,7 +83,6 @@ public final class StreetDressing implements Disposable {
         }
     }
 
-    /** West to east along the far side of the road; the 5-bay block faces the main gate. */
     private static final Building[] ROW = {
         new Building(3, 2, 0, Sign.BOOKS, Sign.PHOTOCOPY, null),
         new Building(2, 1, 1, Sign.HOTEL, null),
@@ -120,10 +98,10 @@ public final class StreetDressing implements Disposable {
 
     private boolean shopOpen(int building, int bay) {
         switch (level) {
-            case 4: return false;                                        // curfew: all shutters down
-            case 3: return ((building + bay) % 2) == 0;                 // shutters coming down
-            case 5: return ((building * 3 + bay) % 5) != 0;             // most open
-            default: return true;                                        // level 6: everything open
+            case 4: return false;
+            case 3: return ((building + bay) % 2) == 0;
+            case 5: return ((building * 3 + bay) % 5) != 0;
+            default: return true;
         }
     }
 
@@ -132,7 +110,7 @@ public final class StreetDressing implements Disposable {
         float total = 0f;
         for (Building b : ROW) total += ShopfrontBuilder.width(b.bays) + GAP;
         total -= GAP;
-        // Centre the 5-bay block on the gate (x = 0)
+
         float centreOffset = 0f;
         for (int i = 0; i < 4; i++) centreOffset += ShopfrontBuilder.width(ROW[i].bays) + GAP;
         final float rowStart = -centreOffset - ShopfrontBuilder.width(ROW[4].bays) * 0.5f;
@@ -154,8 +132,6 @@ public final class StreetDressing implements Disposable {
         add(footpath, rowStart + total * 0.5f, 0f, FOOTPATH_Z, 180f);
     }
 
-    // ── Electric poles ──────────────────────────────────────────────────────
-
     private void placePoles(ModelBuilder mb, StreetPropKit kit, List<float[]> colliders) {
         float[][] poles = { {-46f, 91.6f}, {-30f, 91.6f}, {-14f, 91.6f}, {6f, 91.6f}, {22f, 91.6f}, {38f, 91.6f}, {54f, 91.6f} };
         boolean[] transformer = { false, true, false, false, true, false, false };
@@ -163,8 +139,6 @@ public final class StreetDressing implements Disposable {
         add(run, 0f, 0f, 0f, 0f);
         for (float[] p : poles) colliders.add(new float[] { p[0] - 0.2f, 0f, p[1] - 0.2f, p[0] + 0.2f, 9f, p[1] + 0.2f });
     }
-
-    // ── Tea stall against the campus wall, west of the gate ─────────────────
 
     private void placeTeaStall(ModelBuilder mb, StreetPropKit kit, List<float[]> colliders) {
         Model stall = TeaStallBuilder.build(mb, kit, level != 4);
@@ -174,15 +148,12 @@ public final class StreetDressing implements Disposable {
         colliders.add(new float[] { sx - 0.9f, 0f, sz + 1.5f, sx + 0.9f, 0.5f, sz + 1.95f });
     }
 
-    // ── Vehicles ────────────────────────────────────────────────────────────
-
     private void placeVehicles(ModelBuilder mb, StreetPropKit kit, List<float[]> colliders) {
         Model rickshawUp = RickshawBuilder.build(mb, kit, true);
         Model rickshawDown = RickshawBuilder.build(mb, kit, false);
         Model cng = CngAutoRickshawBuilder.build(mb, kit);
         Model bus = (level == 4) ? null : BusBuilder.build(mb, kit);
 
-        // {x, z, yaw}; rickshaw/CNG origin is the rear axle, front toward +Z before yaw
         switch (level) {
             case 3:
                 rickshaw(rickshawUp, -22f, KERB_PARK_Z, 90f, colliders);
@@ -198,7 +169,7 @@ public final class StreetDressing implements Disposable {
                 rickshaw(rickshawDown, 6.8f, 87.6f, -110f, colliders);
                 rickshaw(rickshawDown, 21f, 84.2f, 160f, colliders);
                 rickshaw(rickshawUp, -27f, KERB_PARK_Z - 0.6f, 80f, colliders);
-                rickshaw(rickshawDown, -7.6f, 73.4f, 12f, colliders);   // inside the gate, left behind
+                rickshaw(rickshawDown, -7.6f, 73.4f, 12f, colliders);
                 tipped(rickshawDown, 13.5f, 81.8f, 70f, colliders);
                 vehicle(cng, 31f, 86f, 70f, 0.7f, 2.1f, 1.8f, colliders);
                 break;
@@ -213,7 +184,7 @@ public final class StreetDressing implements Disposable {
                 vehicle(cng, -34f, KERB_PARK_Z - 0.2f, 90f, 0.7f, 2.1f, 1.8f, colliders);
                 vehicle(bus, -50f, 86.4f, 90f, 1.3f, 5.0f, 3.1f, colliders);
                 break;
-            default: // 6
+            default:
                 rickshaw(rickshawUp, -18f, 82.8f, 90f, colliders);
                 rickshaw(rickshawUp, 12f, 87.0f, -90f, colliders);
                 rickshaw(rickshawUp, 24f, 82.6f, 90f, colliders);
@@ -234,13 +205,12 @@ public final class StreetDressing implements Disposable {
         vehicle(m, x, z, yaw, 0.6f, 2.1f, 2.0f, colliders);
     }
 
-    /** Places a vehicle and adds an axis-aligned box around its rotated footprint. */
     private void vehicle(Model m, float x, float z, float yaw, float halfW, float front, float h, List<float[]> colliders) {
         if (m == null) return;
         ModelInstance mi = new ModelInstance(m);
         mi.transform.setToTranslation(x, 0f, z).rotate(Vector3.Y, yaw);
         instances.add(mi);
-        // The local footprint runs from z = -back to z = front, x = ±halfW
+
         float back = (front > 4f) ? front : 0.7f;
         float c = (float) Math.cos(Math.toRadians(yaw)), s = (float) Math.sin(Math.toRadians(yaw));
         float minX = Float.MAX_VALUE, maxX = -Float.MAX_VALUE, minZ = Float.MAX_VALUE, maxZ = -Float.MAX_VALUE;
@@ -254,7 +224,6 @@ public final class StreetDressing implements Disposable {
         colliders.add(new float[] { minX, 0f, minZ, maxX, h, maxZ });
     }
 
-    /** A rickshaw knocked onto its side during the curfew. */
     private void tipped(Model m, float x, float z, float yaw, List<float[]> colliders) {
         ModelInstance mi = new ModelInstance(m);
         mi.transform.setToTranslation(x, 0.58f, z).rotate(Vector3.Y, yaw).rotate(Vector3.Z, 78f);
@@ -269,7 +238,6 @@ public final class StreetDressing implements Disposable {
         instances.add(mi);
     }
 
-    /** Logs what the street costs per pass: merged renderables (draw calls) and vertices. */
     private void logCost() {
         Array<com.badlogic.gdx.graphics.g3d.Renderable> out = new Array<>();
         com.badlogic.gdx.utils.Pool<com.badlogic.gdx.graphics.g3d.Renderable> pool =

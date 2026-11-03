@@ -1,12 +1,9 @@
+// ei file ta ektar por ekta dialogue line er sequence manage kore
 package bd.spark36.dialogue;
 
 import com.badlogic.gdx.utils.Array;
 import bd.spark36.level.DialogueRepository.DialogueLine;
 
-/**
- * Encapsulates a multi-line conversation sequence with speaker tags,
- * bilingual subtitles, and an optional completion event callback.
- */
 public class DialogueSequence {
 
     private final String id;

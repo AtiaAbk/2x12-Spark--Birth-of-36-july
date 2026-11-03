@@ -1,3 +1,4 @@
+// ei file ta character er running, walking ar combat animation blend kore
 package bd.spark36.character;
 
 import com.badlogic.gdx.math.MathUtils;
@@ -5,23 +6,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import bd.spark36.world.TerrainSurface;
 
-/**
- * High-performance, allocation-free Animation State Machine and Cross-Fade Blending Engine
- * for 2x12: Spark — Birth of 36 July.
- *
- * <p>Key capabilities:
- * <ul>
- *   <li>Continuous pose generation with Hermite smoothstep cross-fading between locomotion states</li>
- *   <li>Foot sliding elimination via speed-synchronized stride phase scaling</li>
- *   <li>Dynamic directional banking and centrifugal torso lean during turns</li>
- *   <li>Full athletic jump arc with tuck ascent, extended fall, and landing impact cushion</li>
- *   <li>Lightweight terrain adaptation / foot placement for stairs, curbs, and slopes</li>
- *   <li>Stationary idle breathing with natural weight shift and organic fidgets</li>
- * </ul>
- */
 public class AnimationStateMachine {
 
-    // States and Cross-fading
     private LocomotionState currentState = LocomotionState.IDLE;
     private LocomotionState previousState = LocomotionState.IDLE;
     private float stateTime = 0f;
@@ -29,25 +15,21 @@ public class AnimationStateMachine {
     private float transitionDuration = 0.18f;
     private boolean isTransitioning = false;
 
-    // Stride and Locomotion timing
     private float stridePhase = 0f;
     private float prevHeading = Float.NaN;
-    private float angularVelocity = 0f; // degrees/sec
+    private float angularVelocity = 0f;
     private float currentBankingRoll = 0f;
     private float landingTimer = 0f;
     private float landingImpactVelocity = 0f;
     private static final float LANDING_DURATION = 0.22f;
 
-    // Idle fidgets
     private float idleDuration = 0f;
-    private int currentFidget = 0; // 0 = none, 1 = glance left/right, 2 = strap adjust, 3 = weight shift
+    private int currentFidget = 0;
 
-    // Pre-allocated pose buffers (Zero garbage collection during runtime)
     private final CharacterPose sourcePose = new CharacterPose();
     private final CharacterPose targetPose = new CharacterPose();
     private final CharacterPose finalBlendedPose = new CharacterPose();
 
-    // Reusable math vectors
     private final Vector3 tempFootL = new Vector3();
     private final Vector3 tempFootR = new Vector3();
 
@@ -73,28 +55,6 @@ public class AnimationStateMachine {
         finalBlendedPose.reset();
     }
 
-    /**
-     * Updates state selection, transition timers, stride progression, and pose blending.
-     *
-     * @param delta time step in seconds
-     * @param rootPos world position of character
-     * @param headingDegrees character heading in degrees
-     * @param velocity character velocity vector
-     * @param isGrounded whether player is in contact with the ground
-     * @param isMoving whether movement input is active
-     * @param isSprinting whether sprint modifier is held
-     * @param isCrouching whether crouching
-     * @param isClimbing whether climbing a wall
-     * @param isWading whether wading in the pond
-     * @param isSittingWater whether sitting on ghat steps
-     * @param isBlocking whether in combat guard
-     * @param isAttacking whether performing attack
-     * @param attackCombo attack combo stage (1..5)
-     * @param attackProgress attack animation progress (0..1)
-     * @param isDodging whether dodging
-     * @param dodgeProgress dodge progress (0..1)
-     * @param staggerTimer hit stagger timer
-     */
     public void update(float delta, Vector3 rootPos, float headingDegrees, Vector3 velocity,
                        boolean isGrounded, boolean isMoving, boolean isSprinting,
                        boolean isCrouching, boolean isClimbing, boolean isWading,
@@ -105,7 +65,6 @@ public class AnimationStateMachine {
         float safeDelta = Math.min(delta, 0.1f);
         stateTime += safeDelta;
 
-        // 1. Calculate turn rate and centrifugal banking
         if (Float.isNaN(prevHeading)) {
             prevHeading = headingDegrees;
         }
@@ -119,7 +78,6 @@ public class AnimationStateMachine {
         float targetRoll = MathUtils.clamp(-angularVelocity * 0.045f, -8.0f, 8.0f);
         currentBankingRoll = MathUtils.lerp(currentBankingRoll, targetRoll, 10f * safeDelta);
 
-        // 2. Compute horizontal speed & synchronized stride progression
         float horizontalSpeed = (float) Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
         float strideLength = isSprinting ? 2.35f : (isCrouching ? 1.15f : 1.45f);
 
@@ -139,29 +97,25 @@ public class AnimationStateMachine {
             }
         }
 
-        // 3. Landing detection and impact compression
         if (landingTimer > 0f) {
             landingTimer -= safeDelta;
         }
 
-        // 4. Determine desired target LocomotionState based on game physics & actions
         LocomotionState desiredState = selectTargetState(
             velocity, horizontalSpeed, isGrounded, isMoving, isSprinting,
             isCrouching, isClimbing, isWading, isSittingWater, isBlocking,
             isAttacking, isDodging, staggerTimer
         );
 
-        // 5. Trigger smooth cross-fade transition if state changed
         if (desiredState != currentState) {
             transitionTo(desiredState, calculateTransitionDuration(currentState, desiredState));
         }
 
-        // 6. Advance transition progress
         float t = 1.0f;
         if (isTransitioning) {
             transitionTime += safeDelta;
             float rawAlpha = Math.min(1.0f, transitionTime / Math.max(0.001f, transitionDuration));
-            // Hermite smoothstep for natural organic blending
+
             t = rawAlpha * rawAlpha * (3.0f - 2.0f * rawAlpha);
             if (rawAlpha >= 1.0f) {
                 isTransitioning = false;
@@ -169,7 +123,6 @@ public class AnimationStateMachine {
             }
         }
 
-        // 7. Evaluate poses for both states and blend
         evaluatePose(
             previousState, sourcePose, stateTime, stridePhase, horizontalSpeed,
             rootPos, headingDegrees, isSprinting, isCrouching, isAttacking, attackCombo,
@@ -184,7 +137,6 @@ public class AnimationStateMachine {
 
         finalBlendedPose.lerp(sourcePose, targetPose, t);
 
-        // 8. Apply Lightweight Foot Placement / Ground Adaptation (IK)
         applyTerrainFootPlacement(rootPos, headingDegrees, finalBlendedPose);
     }
 
@@ -201,7 +153,6 @@ public class AnimationStateMachine {
         if (isSittingWater) return LocomotionState.SITTING_WATER;
         if (isClimbing) return LocomotionState.WALL_CLIMB;
 
-        // Airborne states
         if (!isGrounded) {
             if (velocity.y > 1.5f) {
                 return LocomotionState.AIRBORNE_JUMP;
@@ -210,27 +161,22 @@ public class AnimationStateMachine {
             }
         }
 
-        // Landing cushion state
         if (landingTimer > 0f) {
             return LocomotionState.LANDING;
         }
 
-        // Crouching locomotion
         if (isCrouching) {
             return isMoving ? LocomotionState.CROUCH_WALK : LocomotionState.CROUCH_IDLE;
         }
 
-        // Water wading
         if (isWading && isMoving) {
             return LocomotionState.WADING;
         }
 
-        // Turning on the spot
         if (!isMoving && Math.abs(angularVelocity) > 28.0f) {
             return LocomotionState.TURN_IN_PLACE;
         }
 
-        // Ground locomotion
         if (isMoving) {
             if (isSprinting && speed > 5.5f) {
                 return LocomotionState.SPRINT;
@@ -243,7 +189,6 @@ public class AnimationStateMachine {
             }
         }
 
-        // Settling from fast movement
         if (previousState == LocomotionState.SPRINT && stateTime < 0.24f) {
             return LocomotionState.STOPPING;
         }
@@ -265,7 +210,6 @@ public class AnimationStateMachine {
     public void transitionTo(LocomotionState newState, float duration) {
         if (newState == currentState) return;
 
-        // Snapshot current blended pose as source of new transition
         sourcePose.set(finalBlendedPose);
         previousState = currentState;
         currentState = newState;
@@ -275,19 +219,12 @@ public class AnimationStateMachine {
         stateTime = 0f;
     }
 
-    /**
-     * Informs state machine that the character hit the ground with downward velocity.
-     * Triggers dynamic landing impact compression.
-     */
     public void notifyLanded(float verticalVel) {
         landingImpactVelocity = Math.abs(verticalVel);
         landingTimer = LANDING_DURATION;
         transitionTo(LocomotionState.LANDING, 0.06f);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Articulated Joint Kinematics Evaluator
-    // ─────────────────────────────────────────────────────────────────────────
     private void evaluatePose(LocomotionState state, CharacterPose out, float time,
                               float phase, float speed, Vector3 rootPos, float headingDegrees,
                               boolean isSprinting, boolean isCrouching, boolean isAttacking,
@@ -300,26 +237,24 @@ public class AnimationStateMachine {
 
         switch (state) {
             case IDLE: {
-                // Natural breathing oscillation
+
                 float breatheOsc = MathUtils.sin(time * 2.2f);
                 out.breathe = breatheOsc * 0.007f;
                 out.torsoPitch = 1.8f + breatheOsc * 0.4f;
 
-                // Subtle organic weight shift between left and right foot (0.45 Hz)
                 float weightShift = MathUtils.sin(time * 0.9f);
                 out.pelvisRoll = weightShift * 1.5f;
                 out.pelvisTwist = weightShift * 2.0f;
                 out.thighRoll[0] = -weightShift * 1.2f;
                 out.thighRoll[1] = -weightShift * 1.2f;
 
-                // Idle fidgets
                 if (currentFidget == 1) {
-                    // Glance across promenade (looking left then right)
+
                     float glance = MathUtils.sin(time * 1.4f);
                     out.headYaw = glance * 24f;
                     out.neckYaw = glance * 12f;
                 } else if (currentFidget == 2) {
-                    // Adjust backpack shoulder strap with right hand
+
                     float strapT = (float) Math.sin((time % 3.8f) / 3.8f * MathUtils.PI);
                     out.upperArmPitch[1] = -45f * strapT;
                     out.upperArmRoll[1] = -18f * strapT;
@@ -340,36 +275,31 @@ public class AnimationStateMachine {
             }
 
             case WALK: {
-                // Pelvis bounce (2x step frequency)
+
                 out.bobOffset = Math.abs(swing) * 0.022f;
                 out.pelvisHeight = 0.87f;
 
-                // Pelvic sway & spinal twist
                 out.pelvisRoll = swing * 2.5f + currentBankingRoll * 0.5f;
                 out.pelvisTwist = swing * 3.8f;
                 out.torsoTwist = -swing * 4.2f;
                 out.torsoPitch = 4.2f;
                 out.torsoRoll = currentBankingRoll;
 
-                // Head look-ahead into turn
                 out.headYaw = MathUtils.clamp(-angularVelocity * 0.08f, -15f, 15f);
 
-                // Legs: hip flexion, knee swing, foot flex
                 for (int side = 0; side < 2; side++) {
                     float s = (side == 0) ? swing : -swing;
                     out.thighPitch[side] = s * 32f;
                     out.thighRoll[side] = (side == 0 ? -1f : 1f) * 1.5f;
 
-                    // Knee bends only during rearward swing phase
                     if (s < 0f) {
                         out.kneePitch[side] = -s * 42f;
-                        out.footPitch[side] = -s * 15f; // Toe push-off
+                        out.footPitch[side] = -s * 15f;
                     } else {
                         out.kneePitch[side] = 4f;
-                        out.footPitch[side] = -s * 12f; // Heel strike dorsiflexion
+                        out.footPitch[side] = -s * 12f;
                     }
 
-                    // Arm swing with elbow lag
                     float armDir = (side == 0) ? -swing : swing;
                     out.upperArmPitch[side] = 3f + armDir * 28f;
                     out.upperArmRoll[side] = (side == 0 ? 3.5f : -3.5f);
@@ -380,34 +310,31 @@ public class AnimationStateMachine {
 
             case START_SPRINT:
             case SPRINT: {
-                // High athletic bounce
+
                 out.bobOffset = Math.abs(swing) * 0.038f;
                 out.pelvisHeight = 0.85f;
 
-                // Strong forward torso drive and counter-twist
                 out.torsoPitch = 14.5f;
                 out.torsoTwist = -swing * 8.5f;
                 out.pelvisTwist = swing * 6.5f;
                 out.pelvisRoll = swing * 3.5f + currentBankingRoll * 0.7f;
                 out.torsoRoll = currentBankingRoll;
-                out.headPitch = -4.0f; // Head stays level focused forward
+                out.headPitch = -4.0f;
                 out.headYaw = MathUtils.clamp(-angularVelocity * 0.12f, -18f, 18f);
 
-                // High knee lift and athletic stride
                 for (int side = 0; side < 2; side++) {
                     float s = (side == 0) ? swing : -swing;
                     out.thighPitch[side] = s * 45f;
                     out.thighRoll[side] = (side == 0 ? -1f : 1f) * 2.2f;
 
                     if (s < 0f) {
-                        out.kneePitch[side] = -s * 65f; // High knee lift
-                        out.footPitch[side] = -s * 22f; // Strong toe push-off
+                        out.kneePitch[side] = -s * 65f;
+                        out.footPitch[side] = -s * 22f;
                     } else {
                         out.kneePitch[side] = 8f;
                         out.footPitch[side] = -s * 16f;
                     }
 
-                    // Pronounced arm pump
                     float armDir = (side == 0) ? -swing : swing;
                     out.upperArmPitch[side] = 6f + armDir * 52f;
                     out.upperArmRoll[side] = (side == 0 ? 5.5f : -5.5f);
@@ -417,7 +344,7 @@ public class AnimationStateMachine {
             }
 
             case STOPPING: {
-                // Inertial settle: back torso recovery
+
                 float settleT = Math.min(1.0f, stateTime / 0.24f);
                 float brakePitch = MathUtils.lerp(-4f, 1.8f, settleT);
                 out.torsoPitch = brakePitch;
@@ -429,7 +356,7 @@ public class AnimationStateMachine {
             }
 
             case TURN_IN_PLACE: {
-                // Turning on the spot
+
                 float turnSwing = MathUtils.sin(stateTime * 10f);
                 out.pelvisHeight = 0.86f;
                 out.torsoTwist = MathUtils.clamp(angularVelocity * 0.15f, -25f, 25f);
@@ -442,7 +369,7 @@ public class AnimationStateMachine {
             }
 
             case AIRBORNE_JUMP: {
-                // Ascent: tuck legs, arms out for flight balance
+
                 out.pelvisHeight = 0.83f;
                 out.torsoPitch = 8.0f;
                 out.thighPitch[0] = -24f;
@@ -452,7 +379,6 @@ public class AnimationStateMachine {
                 out.footPitch[0] = -15f;
                 out.footPitch[1] = -15f;
 
-                // Arms raised for aerodynamic balance
                 out.upperArmPitch[0] = -38f;
                 out.upperArmRoll[0] = 16f;
                 out.foreArmPitch[0] = -42f;
@@ -463,7 +389,7 @@ public class AnimationStateMachine {
             }
 
             case AIRBORNE_FALL: {
-                // Descent: legs extend downward ready to absorb contact
+
                 out.pelvisHeight = 0.86f;
                 out.torsoPitch = 3.5f;
                 out.thighPitch[0] = -10f;
@@ -483,7 +409,7 @@ public class AnimationStateMachine {
             }
 
             case LANDING: {
-                // Dynamic ground impact cushion
+
                 float landT = MathUtils.clamp(1.0f - (landingTimer / LANDING_DURATION), 0f, 1f);
                 float cushionCurve = (float) Math.sin(landT * MathUtils.PI);
                 float maxDip = Math.min(0.18f, 0.06f + landingImpactVelocity * 0.012f);
@@ -495,7 +421,6 @@ public class AnimationStateMachine {
                 out.kneePitch[0] = cushionCurve * 38f;
                 out.kneePitch[1] = cushionCurve * 38f;
 
-                // Arms lower to cushion momentum
                 out.upperArmPitch[0] = 12f + cushionCurve * 18f;
                 out.upperArmPitch[1] = 12f + cushionCurve * 18f;
                 out.foreArmPitch[0] = -25f - cushionCurve * 30f;
@@ -533,7 +458,7 @@ public class AnimationStateMachine {
             }
 
             case WADING: {
-                // High leg lift through pond water
+
                 out.bobOffset = Math.abs(swing) * 0.028f;
                 out.pelvisHeight = 0.86f;
                 out.torsoPitch = 8.5f;
@@ -542,20 +467,20 @@ public class AnimationStateMachine {
                     float s = (side == 0) ? swing : -swing;
                     out.thighPitch[side] = s * 38f;
                     if (s < 0f) {
-                        out.kneePitch[side] = -s * 55f; // High knee lift above water
+                        out.kneePitch[side] = -s * 55f;
                     } else {
                         out.kneePitch[side] = 8f;
                     }
                     float armDir = (side == 0) ? -swing : swing;
                     out.upperArmPitch[side] = armDir * 32f;
-                    out.upperArmRoll[side] = (side == 0 ? 8f : -8f); // Spread arms for balance
+                    out.upperArmRoll[side] = (side == 0 ? 8f : -8f);
                     out.foreArmPitch[side] = -24f;
                 }
                 break;
             }
 
             case WALL_CLIMB: {
-                // Scaling campus walls
+
                 float climbPhase = time * 7.5f;
                 float cSwing = MathUtils.sin(climbPhase);
                 out.pelvisHeight = 0.85f;
@@ -574,13 +499,12 @@ public class AnimationStateMachine {
             }
 
             case SITTING_WATER: {
-                // Relaxed posture on ghat steps
+
                 out.pelvisHeight = 0.38f;
                 out.torsoPitch = -8f;
                 out.thighPitch[0] = -85f;
                 out.thighPitch[1] = -85f;
 
-                // Dangle shins into water with gentle kicking
                 float kick0 = MathUtils.sin(time * 2.8f) * 12f;
                 float kick1 = MathUtils.sin(time * 2.8f + MathUtils.PI) * 12f;
                 out.kneePitch[0] = 82f + kick0;
@@ -605,7 +529,6 @@ public class AnimationStateMachine {
                 out.kneePitch[0] = 20f;
                 out.kneePitch[1] = 18f;
 
-                // Guard parry hands protecting jaw
                 out.upperArmPitch[0] = -82f;
                 out.foreArmPitch[0] = -95f;
                 out.upperArmPitch[1] = -82f;
@@ -685,9 +608,6 @@ public class AnimationStateMachine {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Lightweight Foot IK & Terrain Slope Adaptation
-    // ─────────────────────────────────────────────────────────────────────────
     private void applyTerrainFootPlacement(Vector3 rootPos, float headingDegrees, CharacterPose pose) {
         if (currentState == LocomotionState.AIRBORNE_JUMP ||
             currentState == LocomotionState.AIRBORNE_FALL ||
@@ -703,7 +623,6 @@ public class AnimationStateMachine {
         float rightZ = -MathUtils.sin(headingRad);
         float legSpread = 0.12f;
 
-        // Sample ground elevation under left foot and right foot
         tempFootL.set(rootPos.x - rightX * legSpread, 0f, rootPos.z - rightZ * legSpread);
         tempFootR.set(rootPos.x + rightX * legSpread, 0f, rootPos.z + rightZ * legSpread);
 
@@ -717,7 +636,6 @@ public class AnimationStateMachine {
         pose.footGroundOffset[0] = diffL;
         pose.footGroundOffset[1] = diffR;
 
-        // Adapt knee bend and pelvis roll to uneven slope
         if (Math.abs(diffL - diffR) > 0.02f) {
             float slopeAngle = MathUtils.atan2(diffR - diffL, legSpread * 2.0f) * MathUtils.radiansToDegrees;
             pose.pelvisRoll += MathUtils.clamp(slopeAngle * 0.5f, -6f, 6f);

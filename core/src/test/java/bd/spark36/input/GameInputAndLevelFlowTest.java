@@ -1,3 +1,4 @@
+// ei file ta input handling ar level progression test kore
 package bd.spark36.input;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -11,13 +12,6 @@ import bd.spark36.level.LevelConfig;
 import bd.spark36.render.GraphicsTier;
 import bd.spark36.render.RenderPipelineConfig;
 
-/**
- * Automated Test Suite for Gameplay Master Overhaul:
- * 1. Action-to-Key mapping fidelity in GameInput.
- * 2. Virtual mouse scaling robustness.
- * 3. Level Progression & Campaign Unlocking (Level 1 through 6).
- * 4. Graphics Tier cycling and Tone Mapping modes.
- */
 public class GameInputAndLevelFlowTest {
 
     @BeforeEach
@@ -104,28 +98,23 @@ public class GameInputAndLevelFlowTest {
         assertFalse(LevelConfig.isLevelUnlocked(2));
         assertFalse(LevelConfig.isLevelUnlocked(3));
 
-        // Complete Level 1 -> Unlocks Level 2
         LevelConfig.unlockNextLevel(1);
         assertEquals(2, LevelConfig.getUnlockedLevel());
         assertTrue(LevelConfig.isLevelUnlocked(2));
         assertFalse(LevelConfig.isLevelUnlocked(3));
 
-        // Complete Level 2 -> Unlocks Level 3
         LevelConfig.unlockNextLevel(2);
         assertEquals(3, LevelConfig.getUnlockedLevel());
         assertTrue(LevelConfig.isLevelUnlocked(3));
 
-        // Complete Level 3 -> Unlocks Level 4
         LevelConfig.unlockNextLevel(3);
         assertEquals(4, LevelConfig.getUnlockedLevel());
         assertTrue(LevelConfig.isLevelUnlocked(4));
 
-        // Complete Level 4 -> Unlocks Level 5
         LevelConfig.unlockNextLevel(4);
         assertEquals(5, LevelConfig.getUnlockedLevel());
         assertTrue(LevelConfig.isLevelUnlocked(5));
 
-        // Complete Level 5 -> Unlocks Level 6
         LevelConfig.unlockNextLevel(5);
         assertEquals(6, LevelConfig.getUnlockedLevel());
         assertTrue(LevelConfig.isLevelUnlocked(6));

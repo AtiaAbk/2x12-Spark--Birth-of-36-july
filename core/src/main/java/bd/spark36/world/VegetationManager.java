@@ -1,3 +1,4 @@
+// ei file ta campus er shob gach manage ar update kore
 package bd.spark36.world;
 
 import bd.spark36.render.GraphicsTier;
@@ -14,10 +15,6 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 
-/**
- * Coordinates all campus trees, wind animation, frustum culling, and level-of-detail (LOD).
- * All trees are instantiated with local geometry and rooted firmly into the turf at y <= 0.
- */
 public class VegetationManager implements Disposable {
 
     private final WindModel windModel = new WindModel();
@@ -34,9 +31,6 @@ public class VegetationManager implements Disposable {
         return trees;
     }
 
-    /**
-     * Builds all campus trees in local space using system graphics tier.
-     */
     public void buildCampusTrees(float[][] treeLocations,
                                  Material barkTwoSidedMat,
                                  Material leafClumpMat,
@@ -51,10 +45,6 @@ public class VegetationManager implements Disposable {
                          foliageMat, colliders, GraphicsTier.fromSystemProperty());
     }
 
-    /**
-     * Builds all campus trees in local space and anchors them to the campus grounds,
-     * scaled according to the specified GraphicsTier.
-     */
     public void buildCampusTrees(float[][] treeLocations,
                                  Material barkTwoSidedMat,
                                  Material leafClumpMat,
@@ -73,29 +63,25 @@ public class VegetationManager implements Disposable {
             float tz = loc[1];
             int type = (int) loc[2];
 
-            // Deterministic per-tree variety
             float seed = treeIndex * 2.399f;
             float scale = 0.9f + 0.28f * (0.5f + 0.5f * MathUtils.sin(treeIndex * 1.7f));
             treeIndex++;
 
-            // Every third broadleaf tree has a thinner, airier canopy, scaled by graphics tier density
             float baseDensity = (treeIndex % 3 == 1) ? 0.55f : 1f;
             TreeGeometry.leafDensity = baseDensity * (tier != null ? tier.vegetationDensity : 1.0f);
 
-            // Trunk footprint collider
             float trunkHalf = (type == 2) ? 0.45f : 0.75f * scale;
             if (colliders != null) {
                 colliders.add(new float[]{tx - trunkHalf, 0f, tz - trunkHalf, tx + trunkHalf, 6f, tz + trunkHalf});
             }
 
             if (type == 3) {
-                // White Blossom Tree (Magnolia / Bokul)
+
                 ModelBuilder limbsB = new ModelBuilder();
                 ModelBuilder coreB = new ModelBuilder();
                 ModelBuilder cardsB = new ModelBuilder();
                 limbsB.begin(); coreB.begin(); cardsB.begin();
 
-                // Generate in local coordinates (0, 0)
                 TreeGeometry.whiteBlossomTree(
                     limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
                     coreB.part("blossomCore", GL20.GL_TRIANGLES, attr, whiteBlossomClumpMat),
@@ -120,13 +106,12 @@ public class VegetationManager implements Disposable {
                 trees.add(tree);
 
             } else if (type == 1) {
-                // Krishnachura Tree (Delonix regia)
+
                 ModelBuilder limbsB = new ModelBuilder();
                 ModelBuilder coreB = new ModelBuilder();
                 ModelBuilder cardsB = new ModelBuilder();
                 limbsB.begin(); coreB.begin(); cardsB.begin();
 
-                // Generate in local coordinates (0, 0)
                 TreeGeometry.krishnaTree(
                     limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
                     coreB.part("core", GL20.GL_TRIANGLES, attr, blossomClumpMat),
@@ -151,13 +136,12 @@ public class VegetationManager implements Disposable {
                 trees.add(tree);
 
             } else if (type == 0) {
-                // Rain Tree (Samanea saman)
+
                 ModelBuilder limbsB = new ModelBuilder();
                 ModelBuilder coreB = new ModelBuilder();
                 ModelBuilder cardsB = new ModelBuilder();
                 limbsB.begin(); coreB.begin(); cardsB.begin();
 
-                // Generate in local coordinates (0, 0)
                 TreeGeometry.rainTree(
                     limbsB.part("limbs", GL20.GL_TRIANGLES, attr, barkTwoSidedMat),
                     coreB.part("core", GL20.GL_TRIANGLES, attr, leafClumpMat),
@@ -182,7 +166,7 @@ public class VegetationManager implements Disposable {
                 trees.add(tree);
 
             } else {
-                // Royal Palm (Roystonea regia)
+
                 TreeGeometry.leafDensity = 1f * (tier != null ? tier.vegetationDensity : 1.0f);
                 ModelBuilder trunkB = new ModelBuilder();
                 ModelBuilder frondsB = new ModelBuilder();
@@ -213,31 +197,22 @@ public class VegetationManager implements Disposable {
         TreeGeometry.leafDensity = 1f;
     }
 
-    /**
-     * Updates wind simulation and LOD for all campus trees.
-     */
     public void update(float animTime, GraphicsTier tier, Camera camera) {
         for (int i = 0; i < trees.size; i++) {
             trees.get(i).update(animTime, windModel, tier, camera);
         }
     }
 
-    /**
-     * Renders visible trees with frustum culling.
-     */
     public void render(ModelBatch batch, Environment env, Camera camera) {
         for (int i = 0; i < trees.size; i++) {
             TreeEntity tree = trees.get(i);
             if (camera != null && !camera.frustum.boundsInFrustum(tree.bounds)) {
-                continue; // Frustum culled
+                continue;
             }
             tree.render(batch, env);
         }
     }
 
-    /**
-     * Renders shadow casters for all trees in range.
-     */
     public void renderShadowCasters(ModelBatch depthBatch) {
         for (int i = 0; i < trees.size; i++) {
             trees.get(i).renderShadowCaster(depthBatch);

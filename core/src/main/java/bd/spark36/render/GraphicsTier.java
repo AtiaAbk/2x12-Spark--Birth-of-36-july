@@ -1,9 +1,6 @@
+// ei file ta low, medium ar high graphics quality tier set kore
 package bd.spark36.render;
 
-/**
- * Graphics quality presets tuned for hardware profiles (Low, Medium, High).
- * Medium is the target default for fanless Apple Silicon MacBook Air M4 (60 FPS lock).
- */
 public enum GraphicsTier {
     LOW(1024, 0.0f, false, false, false, true, 0.5f, 40.0f, false, false, 10.0f, 80, false, true, 0, 0.0f, "Low (Maximum Performance)"),
     MEDIUM(2048, 0.22f, true, true, true, true, 1.0f, 65.0f, true, true, 5.0f, 180, true, true, 1, 0.0035f, "Medium (Recommended for M4 Air)"),
@@ -93,6 +90,6 @@ public enum GraphicsTier {
                 }
             }
         }
-        return MEDIUM; // Default tier
+        return MEDIUM;
     }
 }

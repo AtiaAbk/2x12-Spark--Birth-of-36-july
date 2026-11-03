@@ -1,3 +1,4 @@
+// ei file ta screenshot tolar por screen e notification dekhay
 package bd.spark36.capture;
 
 import com.badlogic.gdx.Gdx;
@@ -8,7 +9,6 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
-/** Short notification line for capture results; drawn after the HUD so it never appears in a capture. */
 final class CaptureToast {
 
     private static final float DURATION = 3.0f;
@@ -35,7 +35,7 @@ final class CaptureToast {
         float oldX = font.getData().scaleX, oldY = font.getData().scaleY;
         oldColor.set(font.getColor());
         font.getData().setScale(oldX * scale, oldY * scale);
-        font.setColor(1f, 1f, 1f, alpha); // GlyphLayout takes the colour at setText time
+        font.setColor(1f, 1f, 1f, alpha);
         layout.setText(font, message);
         float padX = 18f * scale, padY = 10f * scale;
         float bw = layout.width + padX * 2f, bh = layout.height + padY * 2f;

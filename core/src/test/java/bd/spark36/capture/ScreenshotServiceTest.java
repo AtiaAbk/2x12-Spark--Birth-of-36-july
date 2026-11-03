@@ -1,3 +1,4 @@
+// ei file ta screenshot file save howar service test kore
 package bd.spark36.capture;
 
 import org.junit.jupiter.api.Test;
@@ -145,7 +146,6 @@ class ScreenshotServiceTest {
         File override = new File(home, "custom");
         assertEquals(override.getAbsoluteFile(), ScreenshotService.resolveDirectory(override.getPath(), home.getPath()));
 
-        // No Pictures folder: fall back to <home>/Spark36Screenshots
         assertEquals(new File(home, "Spark36Screenshots").getAbsoluteFile(),
             ScreenshotService.resolveDirectory(null, home.getPath()));
         assertEquals(new File(home, "Spark36Screenshots").getAbsoluteFile(),

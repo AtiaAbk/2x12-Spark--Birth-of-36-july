@@ -1,3 +1,4 @@
+// ei file ta keyboard ar mouse diye main player ke control kore
 package bd.spark36.character;
 
 import com.badlogic.gdx.Gdx;
@@ -9,81 +10,57 @@ import bd.spark36.input.GameInput;
 import bd.spark36.input.GameInput.GameAction;
 import bd.spark36.world.TerrainSurface;
 
-/**
- * Professional-grade Player Controller for 2x12: Spark — Birth of 36 July.
- * Features:
- * - Dual scheme inputs: WASD + Arrow Keys (↑↓←→)
- * - Space bar = SPRINT (Run with stamina)
- * - Shift key = JUMP (Realistic physics arc, jump onto platforms/benches)
- * - Robust Axis-Separated AABB Collision (X, Y, Z resolved independently)
- * - Guaranteed Zero Penetration: CANNOT phase into buildings, trees, pillars, or monuments
- * - Smooth Wall Sliding: fluidly slides along walls/obstacles when running diagonally
- * - Platform Landing: jumping onto benches, steps, or monument bases lands on top
- * - Step-Up: low curbs and stairs (<= 0.65m) smoothly stepped onto without snagging
- * - Edge Detection: walking off platforms triggers realistic gravity fall
- */
 public class PlayerController {
 
-    // Position and Physics
-    private final Vector3 position = new Vector3(0f, 0f, 49.4f); // Start on central avenue facing Curzon Hall
+    private final Vector3 position = new Vector3(0f, 0f, 49.4f);
     private final Vector3 velocity = new Vector3();
     private float verticalVelocity = 0f;
     private boolean isGrounded = true;
 
-    // Orientation
-    private float headingDegrees = 180f; // Facing Curzon Hall (north: -Z, south: +Z)
+    private float headingDegrees = 180f;
     private float targetHeadingDegrees = 180f;
 
-    // Movement Speeds (m/s)
     public static final float WALK_SPEED = 4.8f;
     public static final float SPRINT_SPEED = 9.2f;
     public static final float ACCELERATION = 14f;
-    public static final float JUMP_VELOCITY = 13.5f;        // High single jump reaches ~4.6m (half a tree!)
-    public static final float DOUBLE_JUMP_VELOCITY = 14.5f; // Second mid-air jump reaches ~9.5-10.5m!
+    public static final float JUMP_VELOCITY = 13.5f;
+    public static final float DOUBLE_JUMP_VELOCITY = 14.5f;
     public static final float GRAVITY = -20.0f;
 
-    // Jump mechanics (Double-tap for double height)
     private int jumpCount = 0;
     private static final int MAX_JUMPS = 2;
 
-    // Collision Dimensions
-    public static final float PLAYER_RADIUS = 0.38f; // wide enough that the backpack never enters a wall
+    public static final float PLAYER_RADIUS = 0.38f;
     public static final float PLAYER_HEIGHT = 1.70f;
-    public static final float STEP_UP_HEIGHT = 0.65f; // Auto step-up for obstacles <= this height (stairs, curbs)
+    public static final float STEP_UP_HEIGHT = 0.65f;
 
-    // The pukur water inside the curbs can be waded: its floor sits below the ground plane so the
-    // legs sink under the surface.
     private static final float POND_MIN_X = -8.7f;
     private static final float POND_MAX_X = 8.7f;
     private static final float POND_MIN_Z = -5.7f;
     private static final float POND_MAX_Z = 17.7f;
     public static final float POND_FLOOR_Y = -0.45f;
     private static final float WADE_SPEED_FACTOR = 0.55f;
-    private static final float WADE_STEP_UP_HEIGHT = 1.0f; // climbing out over the curb
+    private static final float WADE_STEP_UP_HEIGHT = 1.0f;
 
-    // Wall climbing: hold jump while pushing into a wall to scale it and vault onto the roof
     private static final float CLIMB_SPEED = 4.2f;
-    private static final float MIN_CLIMB_WALL_WIDTH = 1.5f; // skip tree trunks and lamp posts
+    private static final float MIN_CLIMB_WALL_WIDTH = 1.5f;
     private boolean isClimbing = false;
     private boolean wallBlocked = false;
     private float wallTopY = 0f;
     private float wallPushX = 0f;
     private float wallPushZ = 0f;
 
-    // Stamina & Vitality
     private float health = 100f;
     private final float maxHealth = 100f;
     private float stamina = 100f;
     private final float maxStamina = 100f;
-    private final float staminaDrainRate = 26f; // per second sprinting
-    private final float staminaRegenRate = 22f; // per second recovering
+    private final float staminaDrainRate = 26f;
+    private final float staminaRegenRate = 22f;
     private float staminaCooldown = 0f;
     private boolean staminaExhausted = false;
 
-    // Gender: 0 = Male, 1 = Female
     private int gender = 0;
 
-    // Animation & State Machine
     private final AnimationStateMachine animStateMachine = new AnimationStateMachine();
     private boolean isMoving = false;
     private boolean isSprinting = false;
@@ -98,7 +75,6 @@ public class PlayerController {
     private boolean isSittingWater = false;
     private float sitProgress = 0f;
 
-    // Combat Dodge & Evasion (Tactical Martial Arts Slip/Sidestep)
     private boolean isDodging = false;
     private float dodgeProgress = 0f;
     private float dodgeTimer = 0f;
@@ -107,54 +83,40 @@ public class PlayerController {
     private static final float DODGE_DURATION = 0.22f;
     private static final float DODGE_SPEED = 7.4f;
 
-    // Combat Target Soft Lock-on & Auto-Facing Alignment
     private final Vector3 combatTarget = new Vector3();
     private boolean hasCombatTarget = false;
 
-    // Fluid Combo Buffering (No dropped inputs)
-    private int bufferedAttack = 0; // 0 = none, 1 = punch, 2 = kick
+    private int bufferedAttack = 0;
 
-    // Hit Stagger & Dynamic Knockback Physics
     private float staggerTimer = 0f;
     private final Vector3 knockbackVel = new Vector3();
 
-    // Temp vectors for math
     private final Vector2 moveDir = new Vector2();
     private final Vector3 prevPosition = new Vector3();
 
-    /**
-     * Complete AABB collision boxes covering ALL solid geometry in the campus.
-     * Each box: {minX, minY, minZ, maxX, maxY, maxZ}.
-     * Total: 50 boxes covering Curzon Hall, benches, bicycles, trees, lampposts, and memorials.
-     */
     private static final float[][] COLLISION_BOXES = {
 
-        // ======== CURZON HALL INDO-SARACENIC COMPLEX ========
-        // Main Central Block: (0, 7, -32), size (38, 14, 17)
         {-19f, 0f, -40.5f, 19f, 14f, -23.5f},
-        // East Wing: (32, 5.75, -31), size (28, 11.5, 15)
+
         {18f, 0f, -38.5f, 46f, 11.5f, -23.5f},
-        // West Wing: (-32, 5.75, -31), size (28, 11.5, 15)
+
         {-46f, 0f, -38.5f, -18f, 11.5f, -23.5f},
-        // Central Facade Portico Projection: (0, 7.8, -22.5), size (15, 15.6, 3.8)
+
         {-7.5f, 0f, -24.4f, 7.5f, 15.6f, -20.6f},
-        // Grand Access Steps: (0, 0.3, -19.5), size (16, 0.6, 4.2)
+
         {-8f, 0f, -21.6f, 8f, 0.6f, -17.4f},
-        // Continuous Raised Wing Plinth Bases: height 0.60m matching Grand Access Steps
+
         {-46f, 0f, -23.5f, -8f, 0.6f, -21.7f},
         {8f, 0f, -23.5f, 46f, 0.6f, -21.7f},
 
-        // ======== BENCHES (3) — height 0.8m (JUMPABLE!) ========
         {-17.95f, 0f, 4.9f, -17.25f, 0.8f, 7.1f},
         {-7.4f, 0f, 22.9f, -6.6f, 0.8f, 25.1f},
         {-7.4f, 0f, 40.9f, -6.6f, 0.8f, 43.1f},
 
-        // ======== BICYCLES (3) — height 1.0m (JUMPABLE!) ========
         {-19.4f, 0f, 6.6f, -18.2f, 1.0f, 7.8f},
         {-8.8f, 0f, 24.6f, -7.6f, 1.0f, 25.8f},
         {-8.8f, 0f, 42.6f, -7.6f, 1.0f, 43.8f},
 
-        // ======== 19 RAIN TREE TRUNKS — solid trunks height 6.0m ========
         {-20f, 0f, -2.5f, -19f, 6f, -1.5f},
         {19f, 0f, -2.5f, 20f, 6f, -1.5f},
         {-20f, 0f, 13.5f, -19f, 6f, 14.5f},
@@ -173,9 +135,8 @@ public class PlayerController {
         {31.5f, 0f, -12.5f, 32.5f, 6f, -11.5f},
         {-22.5f, 0f, 67.5f, -21.5f, 6f, 68.5f},
         {21.5f, 0f, 67.5f, 22.5f, 6f, 68.5f},
-        {-12f, 0f, 70.5f, -11f, 6f, 71.5f},    // moved out of the main gateway
+        {-12f, 0f, 70.5f, -11f, 6f, 71.5f},
 
-        // ======== 10 CAST-IRON LAMPPOSTS — solid posts height 4.0m ========
         {-5.55f, 0f, -10.15f, -5.25f, 4.0f, -9.85f},
         {5.25f, 0f, -10.15f, 5.55f, 4.0f, -9.85f},
         {-16.65f, 0f, 7.85f, -16.35f, 4.0f, 8.15f},
@@ -187,110 +148,86 @@ public class PlayerController {
         {-5.55f, 0f, 59.85f, -5.25f, 4.0f, 60.15f},
         {5.25f, 0f, 59.85f, 5.55f, 4.0f, 60.15f},
 
-        // ======== 5 JULY HISTORICAL MEMORIALS (Bases + Solid Pillars) ========
-        // Memorial 1 at (0, 0, -16) — Curzon Central Arcade
-        {-1.1f, 0f, -17.1f, 1.1f, 0.4f, -14.9f},    // Base (jumpable! height 0.4m)
-        {-0.5f, 0.4f, -16.5f, 0.5f, 3.0f, -15.5f},  // Central Pillar (solid! height 3.0m)
+        {-1.1f, 0f, -17.1f, 1.1f, 0.4f, -14.9f},
+        {-0.5f, 0.4f, -16.5f, 0.5f, 3.0f, -15.5f},
 
-        // Memorial 2 at (-45, 0, 18) — Language Monument Plaza
         {-46.1f, 0f, 16.9f, -43.9f, 0.4f, 19.1f},
         {-45.5f, 0.4f, 17.5f, -44.5f, 3.0f, 18.5f},
 
-        // Memorial 3 at (-6.5, 0, 48) — Raju Sculpture Intersection
         {-7.6f, 0f, 46.9f, -5.4f, 0.4f, 49.1f},
         {-7.0f, 0.4f, 47.5f, -6.0f, 3.0f, 48.5f},
 
-        // Memorial 4 at (48, 0, 18) — Women's Hall Quadrangle
         {46.9f, 0f, 16.9f, 49.1f, 0.4f, 19.1f},
         {47.5f, 0.4f, 17.5f, 48.5f, 3.0f, 18.5f},
 
-        // Memorial 5 at (28, 0, -10) — 36 July Gateway
         {26.9f, 0f, -11.1f, 29.1f, 0.4f, -8.9f},
         {27.5f, 0.4f, -10.5f, 28.5f, 3.0f, -9.5f},
 
-        // ======== HISTORICAL BOUNDARY STONE (1921) & BOULDERS (Mountable!) ========
-        {7.1f, 0f, 35.8f, 8.5f, 0.35f, 37.2f},  // Plinth base (0.35m)
-        {7.3f, 0f, 36.1f, 8.3f, 1.85f, 36.9f},  // Monolith pillar (1.85m - Jump & land on top!)
-        {8.6f, 0f, 34.8f, 10.5f, 0.95f, 36.4f}, // Boulder East (0.95m)
-        {5.6f, 0f, 37.0f, 7.0f, 0.85f, 38.4f},  // Boulder West (0.85m)
-        {8.2f, 0f, 37.1f, 10.4f, 1.25f, 39.0f}, // Boulder South (1.25m)
-        {9.7f, 0f, 32.5f, 12.1f, 1.40f, 34.6f}, // Boulder North-East (1.40m)
+        {7.1f, 0f, 35.8f, 8.5f, 0.35f, 37.2f},
+        {7.3f, 0f, 36.1f, 8.3f, 1.85f, 36.9f},
+        {8.6f, 0f, 34.8f, 10.5f, 0.95f, 36.4f},
+        {5.6f, 0f, 37.0f, 7.0f, 0.85f, 38.4f},
+        {8.2f, 0f, 37.1f, 10.4f, 1.25f, 39.0f},
+        {9.7f, 0f, 32.5f, 12.1f, 1.40f, 34.6f},
 
-        // ======== CURZON HALL PUKUR PERIMETER CURBS (0.45m - Step-up & jumpable!) ========
-        // Pukur center: X=0m, Z=+6m  |  size: 18m wide (X) x 24m deep (Z)
-        // West curb: X=-9.3 to -8.7, Z=-6.3 to +18.3
         {-9.3f, 0f, -6.3f, -8.7f, 0.45f, 18.3f},
-        // East curb: X=+8.7 to +9.3
+
         {8.7f, 0f, -6.3f, 9.3f, 0.45f, 18.3f},
-        // North curb: Z=-6.3 to -5.7
+
         {-9.3f, 0f, -6.3f, 9.3f, 0.45f, -5.7f},
-        // South curb: Z=+17.7 to +18.3
+
         {-9.3f, 0f, 17.7f, 9.3f, 0.45f, 18.3f},
 
-        // ======== SOUTH BOUNDARY WALL & MAIN GATE ========
-        {-110f, 0f, 77.2f, -4.2f, 2.8f, 78.8f},   // West perimeter wall
-        {4.2f, 0f, 77.2f, 110f, 2.8f, 78.8f},     // East perimeter wall
-        {-4.4f, 0f, 76.6f, -2.2f, 7.2f, 79.4f},   // Main Gate Left Arch Pillar
-        {2.2f, 0f, 76.6f, 4.4f, 7.2f, 79.4f},     // Main Gate Right Arch Pillar
-        {7.0f, 0f, 74.0f, 10.0f, 3.2f, 77.0f},    // Security Guard Kiosk
+        {-110f, 0f, 77.2f, -4.2f, 2.8f, 78.8f},
+        {4.2f, 0f, 77.2f, 110f, 2.8f, 78.8f},
+        {-4.4f, 0f, 76.6f, -2.2f, 7.2f, 79.4f},
+        {2.2f, 0f, 76.6f, 4.4f, 7.2f, 79.4f},
+        {7.0f, 0f, 74.0f, 10.0f, 3.2f, 77.0f},
 
-        // ======== NORTH BOUNDARY WALL (FULLER ROAD) ========
         {-100f, 0f, -45.0f, 100f, 2.8f, -43.8f},
 
-        // ======== CENTRAL LIBRARY BUILDING (X=-68m, Z=22m) ========
-        {-86f, 0f, 29.8f, -50f, 11.5f, 38.2f},    // South wing
-        {-86f, 0f, 5.8f, -50f, 11.5f, 14.2f},     // North wing
-        {-86.2f, 0f, 14.0f, -77.8f, 11.5f, 30.0f},// West wing
-        {-58.2f, 0f, 14.0f, -49.8f, 11.5f, 30.0f},// East wing
-        {-52f, 0f, 17f, -46f, 0.6f, 27f},          // Entrance steps (0.6m, jumpable!)
+        {-86f, 0f, 29.8f, -50f, 11.5f, 38.2f},
+        {-86f, 0f, 5.8f, -50f, 11.5f, 14.2f},
+        {-86.2f, 0f, 14.0f, -77.8f, 11.5f, 30.0f},
+        {-58.2f, 0f, 14.0f, -49.8f, 11.5f, 30.0f},
+        {-52f, 0f, 17f, -46f, 0.6f, 27f},
 
-        // ======== HAKIM CHATTAR PAVILION (X=-58m, Z=54m) ========
-        {-62.5f, 0f, 49.5f, -53.5f, 0.6f, 58.5f}, // Stepped base plinth (0.6m, jumpable!)
-        {-58.8f, 0.6f, 53.2f, -57.2f, 3.2f, 54.8f},// Center table/column
+        {-62.5f, 0f, 49.5f, -53.5f, 0.6f, 58.5f},
+        {-58.8f, 0.6f, 53.2f, -57.2f, 3.2f, 54.8f},
 
-        // ======== MADHUR CANTEEN (X=-56m, Z=-16m) ========
-        {-65f, 0f, -23f, -47f, 0.6f, -9f},         // Verandah plinth (0.6m, jumpable!)
-        {-64.2f, 0.6f, -22.2f, -49.8f, 4.2f, -11.8f},// Main canteen walls
+        {-65f, 0f, -23f, -47f, 0.6f, -9f},
+        {-64.2f, 0.6f, -22.2f, -49.8f, 4.2f, -11.8f},
 
-        // ======== BOOK STALLS (X=-42m, Z=38m) ========
         {-43.5f, 0f, 32.5f, -40.5f, 2.6f, 35.5f},
         {-43.5f, 0f, 36.5f, -40.5f, 2.6f, 39.5f},
         {-43.5f, 0f, 40.5f, -40.5f, 2.6f, 43.5f},
 
-        // ======== ARTS PLAZA & APARAJEYO BANGLA (X=-32m, Z=26m) ========
-        {-35.1f, 0f, 22.9f, -28.9f, 0.4f, 29.1f}, // Step 1 (0.4m, jumpable!)
-        {-34.5f, 0f, 23.5f, -29.5f, 0.65f, 28.5f},// Step 2 (0.65m, jumpable!)
-        {-33.9f, 0f, 24.1f, -30.1f, 1.35f, 27.9f},// Pedestal (1.35m, jumpable!)
+        {-35.1f, 0f, 22.9f, -28.9f, 0.4f, 29.1f},
+        {-34.5f, 0f, 23.5f, -29.5f, 0.65f, 28.5f},
+        {-33.9f, 0f, 24.1f, -30.1f, 1.35f, 27.9f},
 
-        // ======== WEST ACADEMIC BUILDING (X=-26m, Z=52m) ========
         {-36.2f, 0f, 45.8f, -15.8f, 9.0f, 58.2f},
 
-        // ======== EAST ACADEMIC BUILDING (X=+26m, Z=52m) ========
         {15.8f, 0f, 45.8f, 36.2f, 9.0f, 58.2f},
 
-        // ======== RAJU MEMORIAL SCULPTURE (X=+44m, Z=42m) ========
-        {36.5f, 0f, 34.5f, 51.5f, 0.35f, 49.5f},   // Roundabout curb (0.35m, jumpable!)
-        {41.6f, 0f, 39.6f, 46.4f, 1.15f, 44.4f},   // Base pedestal (1.15m, jumpable!)
-        {43.2f, 1.15f, 41.2f, 44.8f, 6.2f, 42.8f}, // Central monument column
+        {36.5f, 0f, 34.5f, 51.5f, 0.35f, 49.5f},
+        {41.6f, 0f, 39.6f, 46.4f, 1.15f, 44.4f},
+        {43.2f, 1.15f, 41.2f, 44.8f, 6.2f, 42.8f},
 
-        // ======== TEACHER-STUDENT CENTRE (TSC) (X=+68m, Z=20m) ========
-        {49.0f, 0f, 4.8f, 87.0f, 10.5f, 35.2f},    // Main modernist complex
-        {44.8f, 0f, 12.0f, 49.0f, 0.5f, 28.0f},   // Terrace steps (0.5m, jumpable!)
+        {49.0f, 0f, 4.8f, 87.0f, 10.5f, 35.2f},
+        {44.8f, 0f, 12.0f, 49.0f, 0.5f, 28.0f},
 
-        // ======== SWADHINATA SANGRAM SCULPTURE GARDEN (X=+56m, Z=-16m) ========
-        {44.8f, 0f, -25.2f, 67.2f, 0.5f, -6.8f},  // Low perimeter wall (0.5m, jumpable!)
-        {52.5f, 0f, -18.5f, 54.5f, 1.2f, -16.5f}, // Pedestal 1 (1.2m, jumpable!)
-        {57.5f, 0f, -18.5f, 59.5f, 1.0f, -16.5f}, // Pedestal 2 (1.0m, jumpable!)
-        {54.5f, 0f, -14.5f, 57.5f, 1.5f, -11.5f}, // Pedestal 3 (1.5m, jumpable!)
+        {44.8f, 0f, -25.2f, 67.2f, 0.5f, -6.8f},
+        {52.5f, 0f, -18.5f, 54.5f, 1.2f, -16.5f},
+        {57.5f, 0f, -18.5f, 59.5f, 1.0f, -16.5f},
+        {54.5f, 0f, -14.5f, 57.5f, 1.5f, -11.5f},
     };
 
-    /** Hand-authored boxes plus everything the world generated; what the collision loops read. */
     private float[][] boxes = COLLISION_BOXES;
 
     public PlayerController() {
     }
 
-    /** Adds world-generated solids ({minX, minY, minZ, maxX, maxY, maxZ}) to the hand-authored ones. */
     public void setExtraColliders(java.util.List<float[]> extra) {
         float[][] all = new float[COLLISION_BOXES.length + extra.size()][];
         System.arraycopy(COLLISION_BOXES, 0, all, 0, COLLISION_BOXES.length);
@@ -300,20 +237,12 @@ public class PlayerController {
         boxes = all;
     }
 
-    /** Every collision box in use, for systems that must not pass through solids (the camera). */
     public float[][] getColliders() {
         return boxes;
     }
 
-    /**
-     * Updates physics, stamina, input, jump arc, and collision resolution.
-     *
-     * @param delta time step in seconds
-     * @param cameraYawDegrees horizontal yaw angle of the camera in degrees
-     * @param inputEnabled whether player controls are active
-     */
     public void update(float delta, float cameraYawDegrees, boolean inputEnabled) {
-        if (delta > 0.1f) delta = 0.1f; // Cap delta spikes
+        if (delta > 0.1f) delta = 0.1f;
 
         boolean wasGrounded = isGrounded;
         float prevVerticalVelocity = verticalVelocity;
@@ -321,7 +250,6 @@ public class PlayerController {
         if (dodgeCooldown > 0f) dodgeCooldown -= delta;
         if (staggerTimer > 0f) staggerTimer -= delta;
 
-        // 1. Read input: Dual scheme (WASD + Arrow Keys)
         moveDir.setZero();
         boolean sprintKey = false;
         boolean jumpKey = false;
@@ -333,12 +261,10 @@ public class PlayerController {
             boolean left = GameInput.isPressed(GameAction.MOVE_LEFT);
             boolean right = GameInput.isPressed(GameAction.MOVE_RIGHT);
 
-            // SPRINT / RUN: SHIFT, CONTROL, or R key
             sprintKey = GameInput.isPressed(GameAction.SPRINT) ||
                         Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) ||
                         Gdx.input.isKeyPressed(Input.Keys.R);
 
-            // CROUCH / DUCK (Bosepora): 'C' key toggles or holding crouch
             if (GameInput.isJustPressed(GameAction.CROUCH)) {
                 isCrouching = !isCrouching;
             }
@@ -346,15 +272,13 @@ public class PlayerController {
                 isCrouching = true;
             }
 
-            // TACTICAL COMBAT DODGE / SLIP EVASION: Only when combat enabled
             if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
                 dodgeKey = GameInput.isJustPressed(GameAction.DODGE);
 
-                // MARTIAL ARTS BLOCK / GUARD & FLASH PARRY: 'B' key holds guard
                 boolean blockHeld = GameInput.isPressed(GameAction.DEFEND_BLOCK);
                 if (blockHeld) {
                     if (!isBlocking) {
-                        blockTimer = 0f; // Fresh activation: 0.25s parry window
+                        blockTimer = 0f;
                         bd.spark36.audio.SoundManager.get().playBlock();
                     } else {
                         blockTimer += delta;
@@ -370,12 +294,10 @@ public class PlayerController {
                 blockTimer = 0f;
             }
 
-            // GENDER SWITCH: 'G' key toggles Male / Female student
             if (GameInput.isJustPressed(GameAction.TOGGLE_GENDER)) {
                 gender = (gender == 0) ? 1 : 0;
             }
 
-            // COMBAT PUNCHES & KICKS (Only when combat enabled)
             boolean punchPressed = false;
             boolean kickPressed = false;
             if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
@@ -383,7 +305,6 @@ public class PlayerController {
                 kickPressed = GameInput.isJustPressed(GameAction.ATTACK_KICK);
             }
 
-            // Movement vector relative to camera
             if (up) moveDir.y += 1f;
             if (down) moveDir.y -= 1f;
             if (left) moveDir.x -= 1f;
@@ -393,13 +314,12 @@ public class PlayerController {
                 moveDir.nor();
             }
 
-            // Tactical Dodge Activation (Martial arts slip with i-frames)
             if (dodgeKey && dodgeCooldown <= 0f && !isSittingWater && isGrounded) {
                 isDodging = true;
                 dodgeTimer = DODGE_DURATION;
                 dodgeProgress = 0f;
                 dodgeCooldown = 0.38f;
-                isAttacking = false; // Evasive slip cancels attack recovery
+                isAttacking = false;
                 bufferedAttack = 0;
                 attackProgress = 0f;
                 bd.spark36.audio.SoundManager.get().playWhoosh();
@@ -413,28 +333,27 @@ public class PlayerController {
                 if (moveDir.len2() > 0.001f) {
                     dodgeDir.set(forwardX * moveDir.y + rightX * moveDir.x, forwardZ * moveDir.y + rightZ * moveDir.x).nor();
                 } else {
-                    // Quick slip backward if stationary
+
                     dodgeDir.set(-forwardX, -forwardZ).nor();
                 }
             }
 
-            // Punches with fluid buffering and soft lock-on orientation
             if (punchPressed && !isSittingWater && !isDodging) {
                 if (!isAttacking) {
                     isAttacking = true;
                     attackProgress = 0f;
                     bufferedAttack = 0;
                     if (isCrouching) {
-                        attackCombo = 5; // Low Sweep Counter (Tripping leg kick)
+                        attackCombo = 5;
                     } else if (comboWindowTimer > 0f) {
                         attackCombo = (attackCombo == 1) ? 2 : 1;
                     } else {
-                        attackCombo = 1; // Left Jab
+                        attackCombo = 1;
                     }
                     applyCombatFacing();
                     bd.spark36.audio.SoundManager.get().playWhoosh();
                 } else if (attackProgress >= 0.45f) {
-                    bufferedAttack = 1; // Buffer next punch
+                    bufferedAttack = 1;
                 }
             } else if (kickPressed && !isSittingWater && !isDodging) {
                 if (!isAttacking) {
@@ -442,20 +361,19 @@ public class PlayerController {
                     attackProgress = 0f;
                     bufferedAttack = 0;
                     if (isCrouching) {
-                        attackCombo = 5; // Low Sweep Counter
+                        attackCombo = 5;
                     } else if (comboWindowTimer > 0f && (attackCombo == 3 || attackCombo == 4)) {
                         attackCombo = (attackCombo == 3) ? 4 : 3;
                     } else {
-                        attackCombo = 3; // High Martial Arts Kick
+                        attackCombo = 3;
                     }
                     applyCombatFacing();
                     bd.spark36.audio.SoundManager.get().playWhoosh();
                 } else if (attackProgress >= 0.45f) {
-                    bufferedAttack = 2; // Buffer next kick
+                    bufferedAttack = 2;
                 }
             }
 
-            // JUMP / DOUBLE JUMP: 'J' or 'SPACE' or 'V'
             jumpKey = GameInput.isJustPressed(GameAction.JUMP) ||
                       Gdx.input.isKeyJustPressed(Input.Keys.V);
         } else {
@@ -464,12 +382,10 @@ public class PlayerController {
 
         isMoving = moveDir.len2() > 0.001f;
 
-        // 2. Sprint and Unlimited Stamina (free running for smooth exploration)
         stamina = maxStamina;
         staminaExhausted = false;
         isSprinting = isMoving && sprintKey;
 
-        // Handle Dodge duration & progress
         if (isDodging) {
             dodgeTimer -= delta;
             dodgeProgress = 1.0f - Math.max(0f, dodgeTimer / DODGE_DURATION);
@@ -479,7 +395,6 @@ public class PlayerController {
             }
         }
 
-        // Handle combat attack timing & combo buffering
         if (isAttacking) {
             attackProgress += delta * 3.4f;
             if (attackProgress >= 1.0f) {
@@ -515,7 +430,6 @@ public class PlayerController {
             }
         }
 
-        // Handle water sitting state
         if (isSittingWater) {
             sitProgress = Math.min(1.0f, sitProgress + delta * 3.5f);
             velocity.set(0f, 0f, 0f);
@@ -529,7 +443,6 @@ public class PlayerController {
             sitProgress = Math.max(0f, sitProgress - delta * 4.0f);
         }
 
-        // 3. Movement direction relative to camera angle
         float currentSpeed = isCrouching ? (isSprinting ? 2.6f : 1.8f) : (isSprinting ? SPRINT_SPEED : WALK_SPEED);
         if (isWading()) currentSpeed *= WADE_SPEED_FACTOR;
         if (isSittingWater) currentSpeed = 0f;
@@ -556,12 +469,11 @@ public class PlayerController {
                 targetHeadingDegrees = MathUtils.atan2(worldMoveX, worldMoveZ) * MathUtils.radiansToDegrees;
             }
 
-            // Kinetic forward footwork step-in based on active martial arts combo
             if (isAttacking && isGrounded) {
                 float baseLungeSpeed = (attackCombo == 1) ? 2.4f :
                                        (attackCombo == 2) ? 3.6f :
                                        (attackCombo == 3) ? 3.2f :
-                                       (attackCombo == 4) ? 3.8f : 4.4f; // Combo 5 low sweep slide
+                                       (attackCombo == 4) ? 3.8f : 4.4f;
                 float stepFactor = Math.max(0f, 1.0f - (attackProgress / 0.58f));
                 float lungeSpeed = baseLungeSpeed * stepFactor;
 
@@ -578,26 +490,23 @@ public class PlayerController {
             }
         }
 
-        // Apply knockback decay with physical friction
         if (knockbackVel.len2() > 0.001f) {
             velocity.x += knockbackVel.x;
             velocity.z += knockbackVel.z;
             knockbackVel.scl(Math.max(0f, 1f - 14f * delta));
         }
 
-        // Smooth horizontal acceleration with mid-air steering control
         if (isGrounded) {
             velocity.x = MathUtils.lerp(velocity.x, targetVx, ACCELERATION * delta);
             velocity.z = MathUtils.lerp(velocity.z, targetVz, ACCELERATION * delta);
         } else {
-            // Mid-air air control: maintain forward velocity while allowing steering
+
             if (isMoving) {
                 velocity.x = MathUtils.lerp(velocity.x, targetVx * 1.25f, (ACCELERATION * 0.6f) * delta);
                 velocity.z = MathUtils.lerp(velocity.z, targetVz * 1.25f, (ACCELERATION * 0.6f) * delta);
             }
         }
 
-        // Smooth character heading turn with snappy combat alignment
         if (isMoving || (isAttacking && attackProgress < 0.35f)) {
             float diff = (targetHeadingDegrees - headingDegrees) % 360f;
             if (diff > 180f) diff -= 360f;
@@ -606,30 +515,29 @@ public class PlayerController {
             headingDegrees += diff * Math.min(1f, turnSpeed * delta);
         }
 
-        // 4. Jump & Athletic DOUBLE JUMP Physics (Primary Key: 'J')
         if (jumpKey && inputEnabled) {
             if (isGrounded) {
-                // First Jump (reaches ~4.6m, half a tree!)
+
                 jumpCount = 1;
                 isGrounded = false;
                 verticalVelocity = JUMP_VELOCITY;
 
                 if (isSprinting && isMoving) {
-                    // Running / Sprinting Long Jump forward (boost trajectory!)
+
                     velocity.x *= 1.45f;
                     velocity.z *= 1.45f;
                 } else if (isMoving) {
-                    // Moving Jump forward
+
                     velocity.x *= 1.30f;
                     velocity.z *= 1.30f;
                 }
             } else if (jumpCount < MAX_JUMPS) {
-                // Mid-air DOUBLE JUMP (Double Tap = Double Height, reaching ~9.5-10.5m!)
+
                 jumpCount = 2;
-                verticalVelocity = DOUBLE_JUMP_VELOCITY; // Explosive second vertical boost!
+                verticalVelocity = DOUBLE_JUMP_VELOCITY;
 
                 if (isMoving) {
-                    // Re-energize forward velocity in current camera direction
+
                     float yawRad = cameraYawDegrees * MathUtils.degreesToRadians;
                     float forwardX = -MathUtils.sin(yawRad);
                     float forwardZ = -MathUtils.cos(yawRad);
@@ -645,7 +553,6 @@ public class PlayerController {
             }
         }
 
-        // 4b. Wall climbing: jump held + pushing into a wall found blocking us last frame
         boolean climbHeld = inputEnabled && isMoving && !isSittingWater &&
             (Gdx.input.isKeyPressed(Input.Keys.J) || Gdx.input.isKeyPressed(Input.Keys.SPACE));
         if (climbHeld && wallBlocked && wallTopY > position.y + STEP_UP_HEIGHT) {
@@ -653,7 +560,7 @@ public class PlayerController {
             isGrounded = false;
             float remaining = wallTopY - position.y;
             if (remaining < 1.1f) {
-                // Vault over the lip: just enough upward speed to clear the top, carried forward
+
                 verticalVelocity = (float) Math.sqrt(2f * -GRAVITY * (remaining + 0.35f));
                 velocity.x = wallPushX * WALK_SPEED;
                 velocity.z = wallPushZ * WALK_SPEED;
@@ -664,18 +571,15 @@ public class PlayerController {
             isClimbing = false;
         }
 
-        // 5. Physics and Collision Resolution
         prevPosition.set(position);
         boolean airborneBeforeResolution = !isGrounded;
         float fallingVelocityBeforeResolution = verticalVelocity;
         resolveMovementAndCollisions(delta);
 
-        // Detect landing impact and trigger dynamic ground cushion compression
         if (airborneBeforeResolution && isGrounded && fallingVelocityBeforeResolution < -1.8f) {
             animStateMachine.notifyLanded(fallingVelocityBeforeResolution);
         }
 
-        // 6. Update Character Animation State Machine & Procedural Locomotion
         animStateMachine.update(
             delta, position, headingDegrees, velocity, isGrounded, isMoving,
             isSprinting, isCrouching, isClimbing, isWading(), isSittingWater,
@@ -685,27 +589,16 @@ public class PlayerController {
         walkCycle = animStateMachine.getStridePhase();
     }
 
-    /**
-     * Professional Axis-Separated Physics & Collision Engine.
-     * Resolves:
-     * 1. Vertical Gravity & Platform/Ground Landing
-     * 2. Independent X Axis Collision & Wall Sliding
-     * 3. Independent Z Axis Collision & Wall Sliding
-     * 4. Step-Up for stairs/curbs (<= STEP_UP_HEIGHT)
-     * 5. Edge Detection for platform fall-off
-     * 6. Campus Boundary Clamping
-     */
     private void resolveMovementAndCollisions(float delta) {
-        // --- A. Vertical Gravity & Landing ---
+
         if (!isGrounded) {
             verticalVelocity += GRAVITY * delta;
         }
 
         float proposedY = position.y + verticalVelocity * delta;
 
-        // Find the highest solid ground surface directly beneath player's footprint
         float baseGround = groundLevelAt(position.x, position.z);
-        float highestGround = baseGround; // ground plane Y=0, or the pond floor
+        float highestGround = baseGround;
         float stepUp = isWading() ? WADE_STEP_UP_HEIGHT : STEP_UP_HEIGHT;
         wallBlocked = false;
 
@@ -713,12 +606,11 @@ public class PlayerController {
             float bMinX = box[0], bMinZ = box[2];
             float bMaxX = box[3], bMaxY = box[4], bMaxZ = box[5];
 
-            // Does player horizontal footprint overlap this box?
             boolean overlapX = (position.x + PLAYER_RADIUS > bMinX) && (position.x - PLAYER_RADIUS < bMaxX);
             boolean overlapZ = (position.z + PLAYER_RADIUS > bMinZ) && (position.z - PLAYER_RADIUS < bMaxZ);
 
             if (overlapX && overlapZ) {
-                // If player was at or above this surface (or within landing reach), it's a valid landing surface
+
                 if (position.y >= bMaxY - 0.40f || prevPosition.y >= bMaxY - 0.40f || (proposedY <= bMaxY + 0.15f && position.y >= bMaxY - 0.50f)) {
                     if (bMaxY > highestGround) {
                         highestGround = bMaxY;
@@ -727,18 +619,16 @@ public class PlayerController {
             }
         }
 
-        // Apply landing or falling
         if (proposedY <= highestGround) {
             position.y = highestGround;
             verticalVelocity = 0f;
             isGrounded = true;
-            jumpCount = 0; // Reset jumps upon landing on any surface!
+            jumpCount = 0;
         } else {
             position.y = proposedY;
             isGrounded = false;
         }
 
-        // --- B. Horizontal Movement: X Axis Resolution ---
         float moveX = velocity.x * delta;
         float proposedX = position.x + moveX;
 
@@ -746,25 +636,22 @@ public class PlayerController {
             float bMinX = box[0], bMinY = box[1], bMinZ = box[2];
             float bMaxX = box[3], bMaxY = box[4], bMaxZ = box[5];
 
-            // If player's feet are completely on top of this box, ignore horizontal wall collision
             if (position.y >= bMaxY - 0.05f) continue;
-            // If player is completely below this box, ignore
+
             if (position.y + PLAYER_HEIGHT <= bMinY) continue;
 
-            // Check if current Z overlaps
             boolean overlapZ = (position.z + PLAYER_RADIUS > bMinZ) && (position.z - PLAYER_RADIUS < bMaxZ);
             if (!overlapZ) continue;
 
-            // Check if proposed X enters the box
             boolean overlapX = (proposedX + PLAYER_RADIUS > bMinX) && (proposedX - PLAYER_RADIUS < bMaxX);
             if (overlapX) {
-                // Check if within step-up height
+
                 if (bMaxY <= position.y + stepUp && (bMaxY - bMinY) <= STEP_UP_HEIGHT) {
-                    // Allowed to enter; vertical step-up will elevate player
+
                 } else if (!isGrounded && (position.y + 0.65f >= bMaxY || (verticalVelocity > 0f && position.y + (verticalVelocity * verticalVelocity / (2 * -GRAVITY)) >= bMaxY))) {
-                    // Airborne and jumping high enough to clear or land on top of surface! Allow horizontal entry
+
                 } else {
-                    // Firm wall collision! Push outside box along X
+
                     if (position.x <= (bMinX + bMaxX) / 2f) {
                         proposedX = bMinX - PLAYER_RADIUS;
                         recordWall(box, 1f, 0f);
@@ -778,7 +665,6 @@ public class PlayerController {
         }
         position.x = proposedX;
 
-        // --- C. Horizontal Movement: Z Axis Resolution ---
         float moveZ = velocity.z * delta;
         float proposedZ = position.z + moveZ;
 
@@ -786,25 +672,22 @@ public class PlayerController {
             float bMinX = box[0], bMinY = box[1], bMinZ = box[2];
             float bMaxX = box[3], bMaxY = box[4], bMaxZ = box[5];
 
-            // If player's feet are completely on top of this box, ignore horizontal wall collision
             if (position.y >= bMaxY - 0.05f) continue;
-            // If player is completely below this box, ignore
+
             if (position.y + PLAYER_HEIGHT <= bMinY) continue;
 
-            // Check if current X overlaps
             boolean overlapX = (position.x + PLAYER_RADIUS > bMinX) && (position.x - PLAYER_RADIUS < bMaxX);
             if (!overlapX) continue;
 
-            // Check if proposed Z enters the box
             boolean overlapZ = (proposedZ + PLAYER_RADIUS > bMinZ) && (proposedZ - PLAYER_RADIUS < bMaxZ);
             if (overlapZ) {
-                // Check if within step-up height
+
                 if (bMaxY <= position.y + stepUp && (bMaxY - bMinY) <= STEP_UP_HEIGHT) {
-                    // Allowed to enter; vertical step-up will elevate player
+
                 } else if (!isGrounded && (position.y + 0.65f >= bMaxY || (verticalVelocity > 0f && position.y + (verticalVelocity * verticalVelocity / (2 * -GRAVITY)) >= bMaxY))) {
-                    // Airborne and jumping high enough to clear or land on top of surface! Allow horizontal entry
+
                 } else {
-                    // Firm wall collision! Push outside box along Z
+
                     if (position.z <= (bMinZ + bMaxZ) / 2f) {
                         proposedZ = bMinZ - PLAYER_RADIUS;
                         recordWall(box, 0f, 1f);
@@ -818,7 +701,6 @@ public class PlayerController {
         }
         position.z = proposedZ;
 
-        // --- D. Post-Move Step-Up & Edge Detection ---
         float surfaceUnderFoot = groundLevelAt(position.x, position.z);
         for (float[] box : boxes) {
             float bMinX = box[0], bMinZ = box[2];
@@ -828,7 +710,7 @@ public class PlayerController {
             boolean overlapZ = (position.z + PLAYER_RADIUS > bMinZ) && (position.z - PLAYER_RADIUS < bMaxZ);
 
             if (overlapX && overlapZ) {
-                // Can step up onto this box if it's within reach or landing on top
+
                 if (bMaxY >= position.y && bMaxY <= position.y + stepUp) {
                     if (bMaxY > surfaceUnderFoot) {
                         surfaceUnderFoot = bMaxY;
@@ -841,7 +723,6 @@ public class PlayerController {
             }
         }
 
-        // Apply step up
         if (surfaceUnderFoot > position.y) {
             position.y = surfaceUnderFoot;
             verticalVelocity = 0f;
@@ -849,24 +730,20 @@ public class PlayerController {
             jumpCount = 0;
         }
 
-        // Edge detection: if standing on an elevated surface and walked off
         if (isGrounded && position.y > surfaceUnderFoot + 0.05f) {
             if (surfaceUnderFoot < position.y - 0.10f) {
-                isGrounded = false; // Walked off the edge! Start falling
+                isGrounded = false;
             }
         }
 
-        // --- E. Campus Boundary Clamping ---
         position.x = MathUtils.clamp(position.x, -95f, 95f);
         position.z = MathUtils.clamp(position.z, -55f, 85f);
     }
 
-    /** Height of the bare ground at (x, z): the ground plane, or the floor inside the pukur. */
     public static float groundLevelAt(float x, float z) {
         return TerrainSurface.getGroundHeight(x, z);
     }
 
-    /** Remembers the wall we just ran into so holding jump next frame can climb it. */
     private void recordWall(float[] box, float pushX, float pushZ) {
         float width = Math.max(box[3] - box[0], box[5] - box[2]);
         if (width < MIN_CLIMB_WALL_WIDTH) return;
@@ -876,7 +753,6 @@ public class PlayerController {
         wallPushZ = pushZ;
     }
 
-    /** True while standing or walking in the pukur water. */
     public boolean isWading() {
         return groundLevelAt(position.x, position.z) < 0f && position.y < 0.2f;
     }
@@ -1010,9 +886,6 @@ public class PlayerController {
         hasCombatTarget = false;
     }
 
-    /**
-     * Soft lock-on: Aligns character heading directly towards active combat target.
-     */
     public void applyCombatFacing() {
         if (hasCombatTarget && isGrounded) {
             float dst = position.dst(combatTarget);
@@ -1037,7 +910,7 @@ public class PlayerController {
 
     public void takeDamage(float amount, float knockbackDirX, float knockbackDirZ, float knockbackStrength) {
         if (!bd.spark36.level.LevelConfig.isCombatEnabled()) {
-            return; // No damage or player death in peaceful levels!
+            return;
         }
         this.health = Math.max(0f, this.health - amount);
         this.staggerTimer = isBlocking ? 0.08f : 0.28f;

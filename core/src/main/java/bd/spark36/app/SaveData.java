@@ -1,18 +1,12 @@
+// ei file ta player er progress ar unlock kora level save kore
 package bd.spark36.app;
 
-/**
- * Story progress persisted to {@code spark36_save.json}.
- *
- * <p>{@code lastPlayedLevel == 0} means "no story level has been played yet", which hides the
- * main-menu Continue entry.</p>
- */
 public final class SaveData {
 
     public static final int MAX_LEVEL = 6;
 
-    /** Highest chapter the player may start (1..6). */
     public int unlockedLevel = 1;
-    /** Chapter Continue resumes (0 = none yet, else 1..6). */
+
     public int lastPlayedLevel = 0;
 
     public static SaveData empty() {

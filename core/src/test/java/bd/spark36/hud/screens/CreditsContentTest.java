@@ -1,3 +1,4 @@
+// ei file ta credits screen er text content test kore
 package bd.spark36.hud.screens;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -11,7 +12,6 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
-/** Headless check of the Credits &amp; Sources text (the screen itself needs GL). */
 class CreditsContentTest {
 
     private static String joined(List<CreditsContent.Line> lines) {
@@ -53,7 +53,7 @@ class CreditsContentTest {
             if (!s.url.isEmpty()) assertTrue(all.contains(s.url), "url missing: " + s.id);
             if (!s.date.isEmpty()) assertTrue(all.contains(s.date), "date missing: " + s.id);
         }
-        // Label order follows the scheme
+
         int last = -1;
         for (String label : SourceCatalog.LABELS) {
             int at = all.indexOf(label + "  (");

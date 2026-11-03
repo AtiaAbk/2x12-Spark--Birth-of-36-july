@@ -1,3 +1,4 @@
+// ei file ta game settings application logic test kore
 package bd.spark36.app;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,7 +23,7 @@ class SettingsApplyTest {
 
     @BeforeAll
     static void loadNatives() {
-        com.badlogic.gdx.utils.GdxNativesLoader.load(); // PerspectiveCamera.update uses native Matrix4.prj
+        com.badlogic.gdx.utils.GdxNativesLoader.load();
     }
 
     @AfterEach

@@ -1,3 +1,4 @@
+// ei file ta game er credit screen render kore
 package bd.spark36.hud.screens;
 
 import bd.spark36.audio.SoundManager;
@@ -19,20 +20,11 @@ import com.badlogic.gdx.utils.Align;
 
 import java.util.List;
 
-/**
- * Credits &amp; Sources overlay, opened from the main menu (CREDITS) and by the last Level 6
- * objective. Content comes from {@link CreditsContent}; the source list is read at run time from
- * {@code assets/data/historical_sources.json}.
- *
- * <p>Keyboard: W/S or Up/Down scroll, Page Up/Down and Home/End jump, Esc/Backspace closes.
- * Mouse: wheel scrolls, click BACK closes. The caller passes virtual coordinates (origin
- * bottom-left), as with {@link SettingsScreen}.</p>
- */
 public final class CreditsScreen {
 
     private static final float LINE_GAP = 6f;
     private static final float GAP_H = 14f;
-    private static final float SCROLL_SPEED = 620f;   // virtual units per second while a key is held
+    private static final float SCROLL_SPEED = 620f;
     private static final float WHEEL_STEP = 70f;
 
     private final Color glassBg = new Color(0.05f, 0.07f, 0.10f, 0.98f);
@@ -55,7 +47,6 @@ public final class CreditsScreen {
     private float scroll = 0f;
     private float viewH = 1f;
 
-    // Layout (virtual units), recomputed each frame
     private float px, py, pw, ph, cx, cy, cw, ch, backX, backY, backW, backH;
 
     public void open(String fromLabel) {
@@ -90,8 +81,8 @@ public final class CreditsScreen {
         py = (h - ph) / 2f;
         cx = px + 44f;
         cw = pw - 88f;
-        cy = py + 64f;                 // content bottom (above the hint bar)
-        ch = ph - 64f - 92f;           // below the title bar
+        cy = py + 64f;
+        ch = ph - 64f - 92f;
         backW = 150f;
         backH = 34f;
         backX = px + pw - 44f - backW;
@@ -129,7 +120,7 @@ public final class CreditsScreen {
             else {
                 layout.setText(fontFor(l, fonts), l.text, Color.WHITE, cw, Align.left, true);
                 lh = layout.height + LINE_GAP + (l.kind == CreditsContent.Kind.HEADER ? 10f : 0f)
-                    + (l.kind == CreditsContent.Kind.LINK ? 6f : 0f); // breathing room after each source
+                    + (l.kind == CreditsContent.Kind.LINK ? 6f : 0f);
             }
             heights[i] = lh;
             total += lh;
@@ -142,7 +133,6 @@ public final class CreditsScreen {
         return Math.max(0f, contentH - viewH + 20f);
     }
 
-    /** Scroll offset at which the first line with this text is at the top of the view. */
     public float offsetOf(String text) {
         if (heights == null) return 0f;
         float y = 0f;
@@ -156,8 +146,6 @@ public final class CreditsScreen {
     public void scrollTo(float s) {
         scroll = Math.max(0f, Math.min(maxScroll(), s));
     }
-
-    // ── Input ─────────────────────────────────────────────────────────────
 
     public void update(float w, float h, float mouseX, float mouseY, float delta) {
         if (!open) return;
@@ -181,8 +169,6 @@ public final class CreditsScreen {
         }
     }
 
-    // ── Rendering ─────────────────────────────────────────────────────────
-
     public void render(ShapeRenderer shapes, SpriteBatch batch, FontRenderer fonts, float w, float h) {
         if (!open) return;
         computeLayout(w, h);
@@ -204,7 +190,7 @@ public final class CreditsScreen {
         shapes.setColor(goldBorder.r, goldBorder.g, goldBorder.b, 0.45f);
         shapes.rect(px + 36f, cy + ch + 8f, pw - 72f, 1.5f);
         shapes.rect(px + 36f, cy - 8f, pw - 72f, 1.5f);
-        // Scroll bar
+
         float max = maxScroll();
         if (max > 0f) {
             float trackX = px + pw - 22f, trackH = ch;
@@ -215,7 +201,7 @@ public final class CreditsScreen {
             shapes.setColor(gold);
             shapes.rect(trackX, cy + (trackH - thumbH) * (1f - t), 4f, thumbH);
         }
-        // Label chips
+
         float y = cy + ch + scroll;
         for (int i = 0; i < lines.size(); i++) {
             CreditsContent.Line l = lines.get(i);
@@ -249,7 +235,6 @@ public final class CreditsScreen {
         fonts.headerFont.draw(batch, "BACK", backX + (backW - layout.width) / 2f, backY + backH / 2f + 9f);
         batch.flush();
 
-        // Clip the scrolling text to the content box
         int bbW = Gdx.graphics.getBackBufferWidth(), bbH = Gdx.graphics.getBackBufferHeight();
         float sx = bbW / w, sy = bbH / h;
         Gdx.gl.glEnable(GL20.GL_SCISSOR_TEST);
@@ -282,26 +267,17 @@ public final class CreditsScreen {
         }
     }
 
-    // ── Screenshot harness ───────────────────────────────────────────────
-
     private int testStep = 0;
     private float testTime = 0f;
 
-    /** {@code -Dbd.spark36.testCreditsScreenshot}: open credits from the main menu and capture. */
     public static boolean screenshotTestRequested() {
         return System.getProperty("bd.spark36.testCreditsScreenshot") != null;
     }
 
-    /** {@code -Dbd.spark36.testEpilogueCredits}: Level 6 completes its last objective and captures. */
     public static boolean epilogueTestRequested() {
         return System.getProperty("bd.spark36.testEpilogueCredits") != null;
     }
 
-    /**
-     * Captures t4/credits_top, then t4/credits_sources (scrolled to the source list) and
-     * t4/credits_sources_more (further down), then exits when {@code bd.spark36.autoExit=true}.
-     * Runs only under one of the two test switches; called after the frame is drawn.
-     */
     private void tickTest() {
         if (!screenshotTestRequested() && !epilogueTestRequested()) return;
         testTime += Math.min(0.1f, Gdx.graphics.getDeltaTime());
@@ -321,7 +297,6 @@ public final class CreditsScreen {
         }
     }
 
-    /** Mouse-wheel collector, installed in front of the game's input processor while open. */
     private static final class Wheel extends InputAdapter {
         private InputProcessor previous, installed;
         private float pending;

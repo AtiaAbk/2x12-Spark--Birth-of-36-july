@@ -1,3 +1,4 @@
+// ei file ta student npc crowd movement test kore
 package bd.spark36.character;
 
 import com.badlogic.gdx.math.Vector3;
@@ -13,9 +14,9 @@ public class NpcCrowdTest {
     private CampusWaypointGraph graph;
     private CampusCrowd crowd;
     private static final float[][] SAMPLE_COLLIDERS = {
-        // Curzon Hall Main Central Block
+
         {-19f, 0f, -40.5f, 19f, 14f, -23.5f},
-        // Curzon Portico
+
         {-7.5f, 0f, -24.4f, 7.5f, 15.6f, -20.6f}
     };
 
@@ -46,7 +47,6 @@ public class NpcCrowdTest {
         assertTrue(count > 0, "Dijkstra must find a valid path between Main Gate and Curzon Steps");
         assertEquals(CampusWaypointGraph.NODE_CURZON_STEPS, path[count - 1], "Last node in path must be the destination");
 
-        // Verify that consecutive nodes in the path share a valid edge
         int prev = CampusWaypointGraph.NODE_MAIN_GATE;
         for (int i = 0; i < count; i++) {
             int curr = path[i];
@@ -65,11 +65,10 @@ public class NpcCrowdTest {
     @Test
     @DisplayName("CampusWaypointGraph: Nearest node query maps coordinates to correct landmark")
     public void testNearestNodeQuery() {
-        // Coordinate right near Raju Memorial Sculpture (42, 31)
+
         int nearest = graph.getNearestNode(41.5f, 30.8f);
         assertEquals(CampusWaypointGraph.NODE_RAJU_SCULPTURE, nearest);
 
-        // Coordinate near Main Gate (0, 72)
         nearest = graph.getNearestNode(0.5f, 71.5f);
         assertEquals(CampusWaypointGraph.NODE_MAIN_GATE, nearest);
     }
@@ -82,13 +81,11 @@ public class NpcCrowdTest {
         assertEquals(NpcBehaviorState.IDLE, student.getState());
         assertTrue(student.isInteractable());
 
-        // Transition to walking
         student.transitionTo(NpcBehaviorState.WALKING, 10f);
         assertEquals(NpcBehaviorState.WALKING, student.getState());
         assertTrue(student.getState().isMoving());
 
-        // Update movement
-        student.enterEdge(graph, 0, 0); // Edge 0: {0, 1}
+        student.enterEdge(graph, 0, 0);
         student.update(0.05f, graph, new Vector3(50f, 0f, 50f), 0.05f);
 
         assertTrue(student.getSpeed() > 0f, "Student speed must accelerate while walking");
@@ -103,7 +100,7 @@ public class NpcCrowdTest {
         student.setPosition(10f, 0f, 20f);
         student.setHeading(0f);
 
-        Vector3 playerPos = new Vector3(10f, 0f, 22f); // Player is directly north (+Z)
+        Vector3 playerPos = new Vector3(10f, 0f, 22f);
 
         student.startPlayerInteraction(1);
 
@@ -112,11 +109,9 @@ public class NpcCrowdTest {
         assertNotNull(student.getActiveDialogue().getTextBengali(), "Student dialogue must contain authentic Bengali text");
         assertNotNull(student.getActiveDialogue().getTextEnglish(), "Student dialogue must contain English subtitle");
 
-        // Update interaction frame: student turns toward player (+Z -> heading 0)
         student.update(0.1f, graph, playerPos, 0.1f);
         assertEquals(0f, student.getHeading(), 2.0f, "Student must turn to face player during interaction");
 
-        // End interaction
         student.endInteraction();
         assertNull(student.getActiveDialogue());
         assertNotEquals(NpcBehaviorState.INTERACTING_PLAYER, student.getState());
@@ -135,7 +130,6 @@ public class NpcCrowdTest {
             assertFalse(Float.isNaN(pos.y));
             assertFalse(Float.isNaN(pos.z));
 
-            // Must not be inside solid buildings
             float[] hit = graph.insideSolid(pos.x, pos.z, CampusWaypointGraph.BODY_RADIUS);
             assertNull(hit, "Student spawned inside solid collider at (" + pos.x + ", " + pos.z + ")");
         }
@@ -144,7 +138,7 @@ public class NpcCrowdTest {
     @Test
     @DisplayName("CampusCrowd: Level profiles configure crowd behavior appropriately")
     public void testLevelProfiles() {
-        // Level 1: Peaceful Academic Life
+
         crowd.setLevelProfile(1);
         int peacefulCount = 0;
         for (StudentNPC s : crowd.getStudents()) {
@@ -155,7 +149,6 @@ public class NpcCrowdTest {
         }
         assertTrue(peacefulCount > 12, "Level 1 must feature overwhelmingly peaceful strolling & observing students");
 
-        // Level 5: Mass Mobilization
         crowd.setLevelProfile(5);
         int mobilizationCount = 0;
         for (StudentNPC s : crowd.getStudents()) {
@@ -165,7 +158,6 @@ public class NpcCrowdTest {
         }
         assertTrue(mobilizationCount >= 6, "Level 5 must feature chanting and grouping protest students");
 
-        // Level 3: Police Escalation
         crowd.setLevelProfile(3);
         int alertCount = 0;
         for (StudentNPC s : crowd.getStudents()) {
@@ -186,13 +178,12 @@ public class NpcCrowdTest {
         students[1].setPosition(20f, 0f, 20f);
         students[1].transitionTo(NpcBehaviorState.IDLE, 5f);
 
-        Vector3 playerPos = new Vector3(0f, 0f, 11f); // 1 meter away from student 0
+        Vector3 playerPos = new Vector3(0f, 0f, 11f);
 
         StudentNPC nearest = crowd.getClosestInteractable(playerPos, 2.5f);
         assertNotNull(nearest);
         assertEquals(students[0].getId(), nearest.getId());
 
-        // Out of range query
         Vector3 farPos = new Vector3(100f, 0f, 100f);
         assertNull(crowd.getClosestInteractable(farPos, 2.5f));
     }
@@ -201,13 +192,12 @@ public class NpcCrowdTest {
     @DisplayName("CampusCrowd: Local avoidance applies separation repulsion between nearby agents")
     public void testCrowdAvoidanceSeparation() {
         StudentNPC[] students = crowd.getStudents();
-        // Place two students very close together (0.4m apart)
+
         students[0].setPosition(0f, 0f, 0f);
         students[1].setPosition(0.3f, 0f, 0f);
 
         float initialDist = students[0].getPosition().dst(students[1].getPosition());
 
-        // Run crowd update
         for (int i = 0; i < 10; i++) {
             crowd.update(0.016f, new Vector3(100f, 0f, 100f));
         }
@@ -221,15 +211,15 @@ public class NpcCrowdTest {
     @DisplayName("CampusCrowd: CheckHitByPlayer detects attacks against students")
     public void testCheckHitByPlayer() {
         StudentNPC[] students = crowd.getStudents();
-        students[0].setPosition(0f, 0f, 2.0f); // In front of player facing north
+        students[0].setPosition(0f, 0f, 2.0f);
 
         Vector3 playerPos = new Vector3(0f, 0f, 0f);
-        float headingNorth = 0f; // facing +Z
+        float headingNorth = 0f;
 
         boolean hit = crowd.checkHitByPlayer(playerPos, headingNorth, 2.5f);
         assertTrue(hit, "Attack facing toward student within range must register hit");
 
-        boolean hitOpposite = crowd.checkHitByPlayer(playerPos, 180f, 2.5f); // facing away (-Z)
+        boolean hitOpposite = crowd.checkHitByPlayer(playerPos, 180f, 2.5f);
         assertFalse(hitOpposite, "Attack facing away from student must not register hit");
     }
 

@@ -1,3 +1,4 @@
+// ei file ta desktop e game launch korar main entry point
 package bd.spark36.launcher;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
@@ -11,8 +12,6 @@ public class DesktopLauncher {
             return;
         }
 
-        // Ensure macOS brings this game window to the absolute front and gives it full
-        // keyboard focus
         if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
             Thread focusThread = new Thread(new Runnable() {
                 @Override
@@ -53,10 +52,8 @@ public class DesktopLauncher {
 
         configuration.setTitle("2x12: Spark — Birth of 36 July");
 
-        // Native Retina Display 1:1 Pixel HDPI Mode for razor-sharp rendering on macOS
         configuration.setHdpiMode(com.badlogic.gdx.graphics.glutils.HdpiMode.Pixels);
 
-        // Launch mode: windowed with optional custom dimensions or fullscreen
         int customW = Integer.getInteger("bd.spark36.width", 0);
         int customH = Integer.getInteger("bd.spark36.height", 0);
         if (customW > 0 && customH > 0) {
@@ -72,7 +69,6 @@ public class DesktopLauncher {
         }
         configuration.setResizable(true);
 
-        // Immediate window focus grab upon creation
         configuration.setWindowListener(new com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowAdapter() {
             @Override
             public void created(com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window window) {
@@ -84,13 +80,9 @@ public class DesktopLauncher {
             }
         });
 
-        // Anti-aliasing (8x MSAA) and 24-bit depth buffer for crisp clean polygon edges
-        // Override with -Dbd.spark36.msaa=N (some AMD drivers crash on 8x at window
-        // creation)
         int msaaSamples = Integer.getInteger("bd.spark36.msaa", 8);
         configuration.setBackBufferConfig(8, 8, 8, 8, 24, 0, msaaSamples);
 
-        // Render through ANGLE (DirectX) instead of the native OpenGL driver
         if (Boolean.getBoolean("bd.spark36.angle")) {
             configuration.setOpenGLEmulation(Lwjgl3ApplicationConfiguration.GLEmulation.ANGLE_GLES20, 0, 0);
         }
@@ -105,11 +97,10 @@ public class DesktopLauncher {
         configuration.setInitialVisible(true);
         configuration.disableAudio(false);
 
-        // Standard libGDX icons if available
         try {
             configuration.setWindowIcon("libgdx128.png", "libgdx64.png", "libgdx32.png", "libgdx16.png");
         } catch (Exception ignored) {
-            // Icon fallback
+
         }
 
         return configuration;

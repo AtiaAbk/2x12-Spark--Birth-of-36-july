@@ -1,3 +1,4 @@
+// ei file ta save manager er save ar load functionality test kore
 package bd.spark36.app;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.io.TempDir;
 
 class SaveManagerTest {
 
-    /** In-memory storage so tests never touch the player's real profile folder. */
     static final class MapStorage implements SaveStorage {
         final Map<String, String> files = new HashMap<>();
 
@@ -114,13 +114,12 @@ class SaveManagerTest {
     @Test
     void legacyPreferencesAreMigratedWhenNoSaveFileExists() {
         MapStorage st = new MapStorage();
-        SaveManager m = new SaveManager(st, () -> 4); // old build had unlocked Chapter 4
+        SaveManager m = new SaveManager(st, () -> 4);
         SaveData d = m.loadSave();
         assertEquals(4, d.unlockedLevel);
         assertEquals(4, d.lastPlayedLevel, "Continue resumes the furthest migrated chapter");
         assertTrue(st.files.containsKey(SaveManager.SAVE_FILE), "migration writes the JSON save");
 
-        // Once migrated, the JSON file is the source of truth
         SaveData again = new SaveManager(st, () -> 0).loadSave();
         assertEquals(d, again);
     }
@@ -199,12 +198,12 @@ class SaveManagerTest {
         p.onLevelActive(1, true);
         assertTrue(p.hasContinue());
         assertEquals(1, p.continueLevel());
-        p.onLevelActive(3, true); // not unlocked yet: ignored
+        p.onLevelActive(3, true);
         assertEquals(1, p.continueLevel());
         p.unlockLevel(3);
         p.onLevelActive(3, true);
         assertEquals(3, p.continueLevel());
-        p.onLevelActive(2, false); // arena does not move Continue
+        p.onLevelActive(2, false);
         assertEquals(3, p.continueLevel());
 
         GameProfile reloaded = new GameProfile(new SaveManager(st, () -> 0));

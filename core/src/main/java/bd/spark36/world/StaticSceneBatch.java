@@ -1,3 +1,4 @@
+// ei file ta static 3d model chunk gulo ke optimize kore render kore
 package bd.spark36.world;
 
 import com.badlogic.gdx.graphics.Camera;
@@ -20,25 +21,10 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.Pool;
 
-/**
- * Static world geometry baked into few large meshes, drawn with per-chunk frustum culling.
- *
- * <p>The campus is built from ~1000 small {@link ModelInstance}s (plinths, railings, lamp posts,
- * window frames ...). Drawing them one by one costs a draw call each, twice per frame (sun shadow
- * pass and main pass), and nothing was culled. Here every renderable of the static instances is
- * transformed into world space and appended to a chunk keyed by (identical material, 32 m grid
- * cell). Each chunk is one mesh, one draw call and one bounding box tested against the camera of
- * whichever batch draws it (the player camera or the sun's shadow camera).
- *
- * <p>Same triangles, same material objects (the first of each identical group), same shader, so
- * the image is unchanged. Instances that are animated or have materials changed at runtime must
- * be left out by the caller and drawn as before. Transparent (blended) parts are never merged so
- * the back-to-front sort still sees them individually.
- */
 public final class StaticSceneBatch implements RenderableProvider, Disposable {
 
     private static final float CELL = 32f;
-    private static final int MAX_VERTS = 65535; // 16-bit indices
+    private static final int MAX_VERTS = 65535;
 
     private static final class Chunk {
         final Material material;
@@ -61,7 +47,7 @@ public final class StaticSceneBatch implements RenderableProvider, Disposable {
 
     private final Array<Chunk> chunks = new Array<>();
     private final Array<Mesh> meshes = new Array<>();
-    /** Renderables that could not be merged (blended, non-triangle, odd layout); drawn as-is. */
+
     private final Array<Renderable> passthrough = new Array<>();
     private final com.badlogic.gdx.utils.BooleanArray passthroughCaster = new com.badlogic.gdx.utils.BooleanArray();
     private boolean shadowPass;
@@ -70,10 +56,6 @@ public final class StaticSceneBatch implements RenderableProvider, Disposable {
     private Camera cullCamera;
     private int lastVisible;
 
-    /**
-     * @param sources    static instances to bake (their transforms and materials must not change later)
-     * @param nonCasters instances among {@code sources} that are skipped in the shadow pass
-     */
     public StaticSceneBatch(Array<ModelInstance> sources, java.util.Set<ModelInstance> nonCasters) {
         Array<Renderable> rs = new Array<>();
         Pool<Renderable> pool = new Pool<Renderable>() {
@@ -100,14 +82,9 @@ public final class StaticSceneBatch implements RenderableProvider, Disposable {
         for (int i = 0; i < chunks.size; i++) {
             build(chunks.get(i));
         }
-        // Single-source chunks stay merged too: they are already world-space and cullable.
+
     }
 
-    /**
-     * Splits {@code all} into a baked batch and the instances that must stay live: every
-     * {@code dynamic} argument (a ModelInstance or an Array of them, nulls ignored) goes to
-     * {@code dynamicOut} in original order; the rest is baked.
-     */
     public static StaticSceneBatch split(Array<ModelInstance> all, Array<ModelInstance> dynamicOut,
                                          java.util.Set<ModelInstance> nonCasters, Object... dynamic) {
         java.util.Set<ModelInstance> live = new java.util.HashSet<>();
@@ -267,7 +244,6 @@ public final class StaticSceneBatch implements RenderableProvider, Disposable {
         v[o + 2] = nz;
     }
 
-    /** Tangents follow the model matrix (not the normal matrix); w (handedness) is kept. */
     private static void transformTangent(float[] m, float[] v, int o) {
         float x = v[o], y = v[o + 1], z = v[o + 2];
         float tx = m[Matrix4.M00] * x + m[Matrix4.M01] * y + m[Matrix4.M02] * z;
@@ -284,12 +260,10 @@ public final class StaticSceneBatch implements RenderableProvider, Disposable {
         v[o + 2] = tz;
     }
 
-    /** Queues visible chunks (culled against the batch camera) plus the pass-through parts. */
     public void render(ModelBatch batch, Environment env) {
         render(batch, env, false);
     }
 
-    /** Shadow pass: only shadow casters, culled against the batch (sun) camera. */
     public void renderShadowCasters(ModelBatch depthBatch) {
         render(depthBatch, null, true);
     }

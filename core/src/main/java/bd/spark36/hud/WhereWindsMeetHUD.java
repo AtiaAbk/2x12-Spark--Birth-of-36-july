@@ -1,3 +1,4 @@
+// ei file ta compass, mission objective ar gameplay hud draw kore
 package bd.spark36.hud;
 
 import com.badlogic.gdx.Gdx;
@@ -19,21 +20,12 @@ import bd.spark36.world.JulyMemorials;
 import bd.spark36.world.JulyMemorials.MemorialEntry;
 import bd.spark36.world.TextureFactory;
 
-/**
- * 1:1 Recreation of the Where Winds Meet HUD matching game_exact_ui_design_1790197130736.jpg:
- * - Top-Left: Active mission card with glowing gold progress bar, distance meter, and waypoint compass.
- * - Top-Right: 8-point antique faceted 3D nautical compass star with CURZON HALL waypoint ticker.
- * - Bottom-Left: Fluid curved tapered health bar with gold filigree wing and stamina bar.
- * - Center: Speech-bubble prompt [E] INSPECT HISTORICAL ARCHIVE — 36 JULY MOVEMENT with pointer beak.
- * - Bottom-Right: Individual glassmorphic keycaps for WASD, Shift, Space, and E.
- */
 public class WhereWindsMeetHUD implements Disposable {
 
     private final ShapeRenderer shapeRenderer = new ShapeRenderer();
     private final SpriteBatch spriteBatch = new SpriteBatch();
     private final FontRenderer fonts;
 
-    // Theme Colors (Ultra-Transparent Glassmorphism matching concept board)
     private final Color glassBg = new Color(0.02f, 0.04f, 0.06f, 0.16f);
     private final Color goldBorder = new Color(0.92f, 0.76f, 0.32f, 0.88f);
     private final Color goldAccent = new Color(1.0f, 0.85f, 0.40f, 1f);
@@ -41,17 +33,15 @@ public class WhereWindsMeetHUD implements Disposable {
     private final Color goldMuted = new Color(0.68f, 0.58f, 0.32f, 0.70f);
     private final Color healthRed = new Color(0.85f, 0.16f, 0.18f, 1f);
     private final Color healthBg = new Color(0.25f, 0.06f, 0.06f, 0.85f);
-    private final Color staminaGreen = new Color(0.18f, 0.85f, 0.62f, 1f); // Jade cyan
+    private final Color staminaGreen = new Color(0.18f, 0.85f, 0.62f, 1f);
     private final Color staminaBg = new Color(0.06f, 0.22f, 0.16f, 0.85f);
 
-    // ── Glass HUD panel theme (mission card, checklist, compass tag, map button, keycaps) ──
-    // Luxurious smoked obsidian glass: vertical gradient ~0.78 at top to ~0.65 at bottom
     private final Color panelGlassTop = new Color(0.04f, 0.06f, 0.09f, 0.78f);
     private final Color panelGlassBottom = new Color(0.02f, 0.03f, 0.05f, 0.65f);
-    private final Color panelSheen = new Color(1.0f, 0.86f, 0.45f, 0.05f);      // faint warm top sheen
+    private final Color panelSheen = new Color(1.0f, 0.86f, 0.45f, 0.05f);
     private final Color panelSheenClear = new Color(1.0f, 0.86f, 0.45f, 0f);
-    private final Color panelGlow = new Color(1.0f, 0.80f, 0.35f, 0.07f);       // soft outer gold halo
-    private final Color panelBorder = new Color(0.98f, 0.80f, 0.36f, 0.90f);    // crisp thin gold line
+    private final Color panelGlow = new Color(1.0f, 0.80f, 0.35f, 0.07f);
+    private final Color panelBorder = new Color(0.98f, 0.80f, 0.36f, 0.90f);
     private final Color textShadow = new Color(0f, 0f, 0f, 0.92f);
     private final Color textOutline = new Color(0f, 0f, 0f, 0.45f);
     private final Color activeRowGold = new Color(1.0f, 0.86f, 0.38f, 1f);
@@ -68,7 +58,6 @@ public class WhereWindsMeetHUD implements Disposable {
         "5. Teacher-Student Centre (TSC)"
     };
 
-    // States
     private MemorialEntry activeModalEntry = null;
     private boolean isMapOpen = false;
     private boolean parametersVisible = true;
@@ -87,14 +76,14 @@ public class WhereWindsMeetHUD implements Disposable {
     private boolean isPauseMenuOpen = false;
     private boolean isHelpControlsOpen = false;
     private boolean isExitConfirmOpen = false;
-    private int pauseMenuSelection = 0; // 0=Resume, 1=Codex, 2=Settings, 3=ToneMap, 4=Restart, 5=MainMenu, 6=Quit, 7=Checkpoint
+    private int pauseMenuSelection = 0;
     private static final int PAUSE_ITEM_COUNT = 8;
-    private static final int PAUSE_ITEM_CHECKPOINT = 7; // T5: restart from mid-level checkpoint
-    // Settings screen opened from the pause menu (bd.spark36.hud.screens.SettingsScreen); pause stays open underneath.
+    private static final int PAUSE_ITEM_CHECKPOINT = 7;
+
     private final bd.spark36.hud.screens.SettingsScreen settingsScreen = new bd.spark36.hud.screens.SettingsScreen();
-    private final bd.spark36.hud.screens.CreditsScreen creditsScreen = new bd.spark36.hud.screens.CreditsScreen(); // T4
+    private final bd.spark36.hud.screens.CreditsScreen creditsScreen = new bd.spark36.hud.screens.CreditsScreen();
     private boolean pauseSettingsTestDone = false;
-    private int exitConfirmSelection = 0; // 0=Cancel, 1=Quit Game
+    private int exitConfirmSelection = 0;
     private boolean isVictoryOpen = false;
     private boolean victoryShown = false;
     private boolean congratulationsPopupActive = false;
@@ -103,15 +92,12 @@ public class WhereWindsMeetHUD implements Disposable {
     private float victoryAutoAdvanceTimer = 0f;
     private float animTime = 0f;
 
-    // Toast Notification Banner (triggered on memorial inspection)
     private float missionBannerTime = 0f;
     private String missionBannerTitle = "";
     private int missionBannerCount = 0;
 
-    // Exit actions: 0=none, 1=return to main menu, 2=quit game, 3=replay level
     private int exitAction = 0;
 
-    // Boundary Stone (1921) Heritage Marker
     private final MemorialEntry boundaryStoneEntry = new MemorialEntry(
         99,
         "HISTORIC DU BOUNDARY STONE (1921)",
@@ -125,13 +111,11 @@ public class WhereWindsMeetHUD implements Disposable {
     private com.badlogic.gdx.graphics.Texture campusMapTex = null;
     private boolean campusMapLoadTried = false;
 
-    // Antagonist Boss and Combat status
     private bd.spark36.character.HelmetGoon helmetGoon = null;
     private boolean isDisqualified = false;
     private String disqualifyReason = "VIOLATION: You assaulted an innocent campus student!";
     private boolean isDefeated = false;
 
-    // Active campaign level integration
     private bd.spark36.level.CampaignLevel activeLevel = null;
 
     public void setActiveLevel(bd.spark36.level.CampaignLevel level) {
@@ -146,33 +130,26 @@ public class WhereWindsMeetHUD implements Disposable {
         return boundaryStoneEntry;
     }
 
-    // ── HUD Scaled Viewport & Anchor Layout (Fix Pack 01 Item 2) ──
     public static class HUDLayout {
         public float virtW;
         public float virtH;
         public float safeMarginX;
         public float safeMarginY;
 
-        // Top-Left: Mission Card
         public float cardX, cardY, cardW, cardH;
 
-        // Top-Center: Boss / Event Health Bar
         public float bossX, bossY, bossW, bossH;
 
-        // Top-Right: Compass Rose
         public float compassCx, compassCy, compassR;
-        // Top-Right: Waypoint Pill
+
         public float pillX, pillY, pillW, pillH;
-        // Top-Right: Tactical Map HUD Button
+
         public float mapBtnX, mapBtnY, mapBtnW, mapBtnH;
 
-        // Bottom-Left: Mission Parameters Checklist
         public float checkX, checkY, checkW, checkH;
 
-        // Bottom-Center: Dialogue / Challenge Subtitle Box
         public float dialX, dialY, dialW, dialH;
 
-        // Bottom-Right: Keycaps Cluster
         public float keyBaseX, keyBaseY, keyClusterW, keyClusterH;
         public float hintLineY;
 
@@ -182,52 +159,43 @@ public class WhereWindsMeetHUD implements Disposable {
             l.virtW = 1920f / s;
             l.virtH = (1920f * (backbufferH / Math.max(1f, backbufferW))) / s;
 
-            // Safe margins: at least 3.5% of virtual width & height
             l.safeMarginX = Math.max(50f, l.virtW * 0.035f);
             l.safeMarginY = Math.max(38f, l.virtH * 0.035f);
 
-            // 1. Top-Left Mission Card
             l.cardW = 520f;
             l.cardH = 158f;
             l.cardX = l.safeMarginX;
             l.cardY = l.virtH - l.safeMarginY - l.cardH;
 
-            // 2. Top-Center Boss Bar
             l.bossW = 540f;
             l.bossH = 46f;
             l.bossX = (l.virtW - l.bossW) / 2f;
             l.bossY = l.virtH - l.safeMarginY - l.bossH;
 
-            // 3. Top-Right Compass Rose & Controls
             l.compassR = 64f;
             l.compassCx = l.virtW - l.safeMarginX - l.compassR;
             l.compassCy = l.virtH - l.safeMarginY - l.compassR - 4f;
 
-            // Waypoint Ticker Pill (left of compass, aligned on compass equator)
             l.pillW = 168f;
             l.pillH = 28f;
             l.pillX = l.compassCx - l.compassR - l.pillW - 14f;
             l.pillY = l.compassCy - l.pillH / 2f;
 
-            // Tactical Map HUD Button (stacked vertically below compass rose with generous margin)
             l.mapBtnW = 180f;
             l.mapBtnH = 34f;
             l.mapBtnX = l.compassCx + l.compassR - l.mapBtnW;
             l.mapBtnY = l.compassCy - l.compassR - 48f;
 
-            // 4. Bottom-Left Mission Parameters Checklist
             l.checkW = 400f;
             l.checkH = 162f;
             l.checkX = l.safeMarginX;
             l.checkY = l.safeMarginY;
 
-            // 5. Bottom-Center Cinematic Subtitle / Challenge Dialogue
             l.dialW = 860f;
             l.dialH = 82f;
             l.dialX = (l.virtW - l.dialW) / 2f;
             l.dialY = l.safeMarginY + 20f;
 
-            // 6. Bottom-Right Keycaps Cluster
             l.keyClusterW = 285f;
             l.keyClusterH = 118f;
             l.keyBaseX = l.virtW - l.safeMarginX - l.keyClusterW;
@@ -262,7 +230,6 @@ public class WhereWindsMeetHUD implements Disposable {
         this.debugOverlayEnabled = enabled;
     }
 
-    // Cinematic finish screen background texture
     private com.badlogic.gdx.graphics.Texture cinematicFinishTex = null;
     private boolean cinematicFinishLoadTried = false;
 
@@ -329,7 +296,6 @@ public class WhereWindsMeetHUD implements Disposable {
         bd.spark36.audio.SoundManager.get().playObjective();
     }
 
-    /** Pause menu "Restart from checkpoint": LevelManager restores on the restart action (3). */
     private void requestCheckpointRestart() {
         bd.spark36.level.CheckpointStore.requestRestore();
         exitAction = 3;
@@ -368,20 +334,14 @@ public class WhereWindsMeetHUD implements Disposable {
         return cinematicFinishTex;
     }
 
-    // ── AAA Visual FX Fields ──────────────────────────────────────────────────
-    // Checkpoint flash: brief full-screen gold flash when a memorial is inspected
     private float checkpointFlashAlpha = 0f;
-    private float checkpointFlashDecay = 3.5f;    // alpha/sec decay rate
+    private float checkpointFlashDecay = 3.5f;
 
-    // Sprint side-trail: subtle screen-edge blur/darkening while sprinting
     private float sprintTrailIntensity = 0f;
 
-    // Objective ring spin angle
     private float objectiveRingAngle = 0f;
 
-    // Crosshair breath pulse
     private float breathPhase = 0f;
-
 
     public WhereWindsMeetHUD(FontRenderer fontRenderer) {
         this.fonts = fontRenderer;
@@ -409,26 +369,22 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        // ── VFX Animations ─────────────────────────────────────────────────
-        // Checkpoint flash decay
         if (checkpointFlashAlpha > 0f) {
             checkpointFlashAlpha -= checkpointFlashDecay * delta;
             if (checkpointFlashAlpha < 0f) checkpointFlashAlpha = 0f;
         }
-        // Sprint trail: build up when sprinting, fade when not
+
         float sprintTarget = player.isSprinting() && player.isMoving() ? 1f : 0f;
         sprintTrailIntensity += (sprintTarget - sprintTrailIntensity) * Math.min(1f, 5f * delta);
-        // Objective ring spin
-        objectiveRingAngle = (objectiveRingAngle + 35f * delta) % 360f;
-        // Breath pulse
-        breathPhase += delta * 1.8f;
 
+        objectiveRingAngle = (objectiveRingAngle + 35f * delta) % 360f;
+
+        breathPhase += delta * 1.8f;
 
         if (missionBannerTime > 0f && activeModalEntry == null) {
             missionBannerTime -= delta;
         }
 
-        // Celebratory Congratulations Toast & Victory Screen transition
         if (congratulationsPopupActive) {
             congratulationsPopupTimer -= delta;
             if (victoryTransitionTimer > 0f) {
@@ -446,12 +402,10 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        // Debug overlay toggle
         if (Gdx.input.isKeyJustPressed(Input.Keys.F3) || Gdx.input.isKeyJustPressed(Input.Keys.GRAVE)) {
             toggleDebugOverlay();
         }
 
-        // Mouse click navigation for Tactical Map button and Close buttons
         float backbufferW = (float) Gdx.graphics.getBackBufferWidth();
         float backbufferH = (float) Gdx.graphics.getBackBufferHeight();
         currentLayout = HUDLayout.compute(backbufferW, backbufferH, uiScale);
@@ -461,12 +415,11 @@ public class WhereWindsMeetHUD implements Disposable {
         float mouseX = vMouse[0];
         float mouseY = vMouse[1];
 
-        // Settings screen (from the pause menu) owns input while open; Esc returns to the pause menu.
         if (isPauseMenuOpen && !pauseSettingsTestDone && System.getProperty("bd.spark36.testPauseSettings") != null) {
             settingsScreen.open("Pause Menu");
             pauseSettingsTestDone = true;
         }
-        if (creditsScreen.isOpen()) { creditsScreen.update(virtW, virtH, mouseX, mouseY, delta); return; } // T4
+        if (creditsScreen.isOpen()) { creditsScreen.update(virtW, virtH, mouseX, mouseY, delta); return; }
         if (settingsScreen.isOpen()) {
             if (!isPauseMenuOpen) settingsScreen.close();
             else {
@@ -487,17 +440,17 @@ public class WhereWindsMeetHUD implements Disposable {
                 float b2X = vx + 315f, b2W = 230f;
                 float b3X = vx + 585f, b3W = 230f;
                 if (mouseX >= b1X && mouseX <= b1X + b1W && mouseY >= btnY && mouseY <= btnY + btnH) {
-                    exitAction = 1; // Return to Main Menu
+                    exitAction = 1;
                     isVictoryOpen = false;
                     victoryShown = false;
                     bd.spark36.audio.SoundManager.get().playClick();
                 } else if (mouseX >= b2X && mouseX <= b2X + b2W && mouseY >= btnY && mouseY <= btnY + btnH) {
-                    exitAction = 4; // Advance to next level
+                    exitAction = 4;
                     isVictoryOpen = false;
                     victoryShown = false;
                     bd.spark36.audio.SoundManager.get().playClick();
                 } else if (mouseX >= b3X && mouseX <= b3X + b3W && mouseY >= btnY && mouseY <= btnY + btnH) {
-                    exitAction = 2; // Quit Game
+                    exitAction = 2;
                     isVictoryOpen = false;
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
@@ -509,18 +462,18 @@ public class WhereWindsMeetHUD implements Disposable {
                 float btnY = dy + 35f;
                 float btnH = 46f;
                 if (mouseX >= dx + 90f && mouseX <= dx + 330f && mouseY >= btnY && mouseY <= btnY + btnH) {
-                    exitAction = 3; // Retry
+                    exitAction = 3;
                     isDisqualified = false;
                     isDefeated = false;
                     bd.spark36.audio.SoundManager.get().playClick();
                 } else if (mouseX >= dx + 450f && mouseX <= dx + 690f && mouseY >= btnY && mouseY <= btnY + btnH) {
-                    exitAction = 1; // Menu
+                    exitAction = 1;
                     isDisqualified = false;
                     isDefeated = false;
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
             } else if (isExitConfirmOpen) {
-                // Click Cancel or Quit to desktop in Exit Confirmation modal
+
                 float cw = 640f, ch = 280f;
                 float cx = (virtW - cw) / 2f, cy = (virtH - ch) / 2f;
                 float btnY = cy + 34f, btnH = 48f;
@@ -530,7 +483,7 @@ public class WhereWindsMeetHUD implements Disposable {
                     isExitConfirmOpen = false;
                     bd.spark36.audio.SoundManager.get().playClick();
                 } else if (mouseX >= b1X && mouseX <= b1X + b1W && mouseY >= btnY && mouseY <= btnY + btnH) {
-                    exitAction = 2; // Quit Game
+                    exitAction = 2;
                     isPauseMenuOpen = false;
                     isExitConfirmOpen = false;
                     bd.spark36.audio.SoundManager.get().playClick();
@@ -565,10 +518,10 @@ public class WhereWindsMeetHUD implements Disposable {
                         } else if (i == 3) {
                             RenderPipelineConfig.cycleToneMapping();
                         } else if (i == 4) {
-                            exitAction = 3; // Restart level
+                            exitAction = 3;
                             isPauseMenuOpen = false;
                         } else if (i == 5) {
-                            exitAction = 1; // Return to main menu
+                            exitAction = 1;
                             isPauseMenuOpen = false;
                         } else if (i == 6) {
                             isExitConfirmOpen = true;
@@ -580,7 +533,7 @@ public class WhereWindsMeetHUD implements Disposable {
                     }
                 }
             } else if (isMapOpen) {
-                // Click close button on map
+
                 float cbX = virtW - 200f;
                 float cbY = virtH - 65f;
                 if (mouseX >= cbX && mouseX <= cbX + 170f && mouseY >= cbY && mouseY <= cbY + 45f) {
@@ -588,7 +541,7 @@ public class WhereWindsMeetHUD implements Disposable {
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
             } else if (activeModalEntry == null && !isPauseMenuOpen && !isVictoryOpen && !isDisqualified && !isDefeated && !isHelpControlsOpen) {
-                // Click tactical map HUD button
+
                 if (mouseX >= currentLayout.mapBtnX && mouseX <= currentLayout.mapBtnX + currentLayout.mapBtnW &&
                     mouseY >= currentLayout.mapBtnY && mouseY <= currentLayout.mapBtnY + currentLayout.mapBtnH) {
                     isMapOpen = true;
@@ -597,7 +550,6 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        // Mouse hover tracking for pause menu & exit confirmation
         if (isExitConfirmOpen) {
             float cw = 640f, ch = 280f;
             float cx = (virtW - cw) / 2f, cy = (virtH - ch) / 2f;
@@ -625,38 +577,34 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        // Handle Disqualification Screen input
         if (isDisqualified) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
-                exitAction = 3; // Replay Level
+                exitAction = 3;
                 isDisqualified = false;
             }
             if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-                exitAction = 1; // Return to Main Menu
+                exitAction = 1;
                 isDisqualified = false;
             }
             return;
         }
 
-        // Handle Defeat Screen input
         if (isDefeated) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
-                exitAction = 3; // Retry combat
+                exitAction = 3;
                 isDefeated = false;
             }
             if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-                exitAction = 1; // Return to Main Menu
+                exitAction = 1;
                 isDefeated = false;
             }
             return;
         }
 
-        // Handle Victory Screen input & auto-advance timer
         if (isVictoryOpen) {
             victoryAutoAdvanceTimer -= delta;
             int lvlNum = (activeLevel != null) ? activeLevel.getLevelNumber() : 1;
 
-            // Auto-advance when countdown expires
             if (victoryAutoAdvanceTimer <= 0f) {
                 exitAction = (lvlNum < 6) ? 4 : 1;
                 isVictoryOpen = false;
@@ -665,7 +613,6 @@ public class WhereWindsMeetHUD implements Disposable {
                 return;
             }
 
-            // [ENTER], [SPACE], or [N] immediately advances to next level / finishes campaign
             if (GameInput.isJustPressed(GameInput.GameAction.CONFIRM) || Gdx.input.isKeyJustPressed(Input.Keys.N)) {
                 exitAction = (lvlNum < 6) ? 4 : 1;
                 isVictoryOpen = false;
@@ -673,7 +620,7 @@ public class WhereWindsMeetHUD implements Disposable {
                 bd.spark36.audio.SoundManager.get().playClick();
                 return;
             }
-            // [M] or [ESCAPE] returns to Main Menu
+
             if (Gdx.input.isKeyJustPressed(Input.Keys.M) || GameInput.isJustPressed(GameInput.GameAction.CANCEL) || GameInput.isJustPressed(GameInput.GameAction.PAUSE)) {
                 exitAction = 1;
                 isVictoryOpen = false;
@@ -681,7 +628,7 @@ public class WhereWindsMeetHUD implements Disposable {
                 bd.spark36.audio.SoundManager.get().playClick();
                 return;
             }
-            // [R] replays current chapter
+
             if (GameInput.isJustPressed(GameInput.GameAction.RESTART)) {
                 exitAction = 3;
                 isVictoryOpen = false;
@@ -689,7 +636,7 @@ public class WhereWindsMeetHUD implements Disposable {
                 bd.spark36.audio.SoundManager.get().playClick();
                 return;
             }
-            // [X] exits game
+
             if (Gdx.input.isKeyJustPressed(Input.Keys.X)) {
                 exitAction = 2;
                 isVictoryOpen = false;
@@ -699,7 +646,6 @@ public class WhereWindsMeetHUD implements Disposable {
             return;
         }
 
-        // Shortcut key [K] for instant mission completion / testing victory
         if (Gdx.input.isKeyJustPressed(Input.Keys.K) && !isVictoryOpen && activeModalEntry == null) {
             for (MemorialEntry e : memorials.getEntries()) {
                 e.inspected = true;
@@ -812,14 +758,13 @@ public class WhereWindsMeetHUD implements Disposable {
 
         if (isDisqualified || isDefeated) {
             if (GameInput.isJustPressed(GameInput.GameAction.RESTART) || GameInput.isJustPressed(GameInput.GameAction.CONFIRM)) {
-                exitAction = 3; // Retry / Reset
+                exitAction = 3;
             }
             if (GameInput.isJustPressed(GameInput.GameAction.CANCEL) || GameInput.isJustPressed(GameInput.GameAction.PAUSE)) {
-                exitAction = 1; // Return to main menu
+                exitAction = 1;
             }
         }
 
-        // Pause menu actions & shortcuts
         if (isPauseMenuOpen) {
             if (isExitConfirmOpen) {
                 if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.A)
@@ -832,7 +777,7 @@ public class WhereWindsMeetHUD implements Disposable {
                         isExitConfirmOpen = false;
                         bd.spark36.audio.SoundManager.get().playClick();
                     } else {
-                        exitAction = 2; // Quit Game -> Gdx.app.exit()
+                        exitAction = 2;
                         isPauseMenuOpen = false;
                         isExitConfirmOpen = false;
                         bd.spark36.audio.SoundManager.get().playClick();
@@ -859,10 +804,10 @@ public class WhereWindsMeetHUD implements Disposable {
                     } else if (pauseMenuSelection == 3) {
                         RenderPipelineConfig.cycleToneMapping();
                     } else if (pauseMenuSelection == 4) {
-                        exitAction = 3; // Restart level
+                        exitAction = 3;
                         isPauseMenuOpen = false;
                     } else if (pauseMenuSelection == 5) {
-                        exitAction = 1; // Return to main menu
+                        exitAction = 1;
                         isPauseMenuOpen = false;
                     } else if (pauseMenuSelection == 6) {
                         isExitConfirmOpen = true;
@@ -887,7 +832,7 @@ public class WhereWindsMeetHUD implements Disposable {
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
                 if (GameInput.isJustPressed(GameInput.GameAction.RESTART)) {
-                    exitAction = 3; // Restart Level
+                    exitAction = 3;
                     isPauseMenuOpen = false;
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
@@ -896,7 +841,7 @@ public class WhereWindsMeetHUD implements Disposable {
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
                 if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
-                    exitAction = 1; // Return to main menu
+                    exitAction = 1;
                     isPauseMenuOpen = false;
                     bd.spark36.audio.SoundManager.get().playClick();
                 }
@@ -913,10 +858,6 @@ public class WhereWindsMeetHUD implements Disposable {
         }
     }
 
-    /**
-     * Returns and clears the pending exit action.
-     * @return 0=none, 1=return to main menu, 2=quit game
-     */
     public int consumeExitAction() {
         int action = exitAction;
         exitAction = 0;
@@ -944,7 +885,6 @@ public class WhereWindsMeetHUD implements Disposable {
         MemorialEntry nearest = memorials.getNextObjective(player.getPosition());
         float dstToNearest = nearest != null ? player.getPosition().dst(nearest.position) : 65.4f;
 
-        // 0. Draw 3D In-World Waypoint Pin directly above next objective
         if (camera != null && !isModalOpen()) {
             if (activeLevel != null && !activeLevel.isLevelComplete()) {
                 Vector3 wp = activeLevel.getActiveWaypoint();
@@ -956,25 +896,22 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        // ── AAA VFX: Sprint Motion Trail + Checkpoint Flash ──────────────────
         beginShapes(ShapeType.Filled);
 
-        // Sprint vignette: dark edges when sprinting for speed blur effect
         if (sprintTrailIntensity > 0.01f) {
             float trailAlpha = sprintTrailIntensity * 0.36f;
-            // Left edge
+
             shapeRenderer.setColor(0.02f, 0.02f, 0.04f, trailAlpha);
             shapeRenderer.rect(0, 0, w * 0.12f, h);
-            // Right edge
+
             shapeRenderer.rect(w * 0.88f, 0, w * 0.12f, h);
-            // Bottom edge
+
             shapeRenderer.setColor(0.02f, 0.02f, 0.04f, trailAlpha * 0.6f);
             shapeRenderer.rect(0, 0, w, h * 0.08f);
-            // Top edge
+
             shapeRenderer.rect(0, h * 0.92f, w, h * 0.08f);
         }
 
-        // Checkpoint gold flash: brief full-screen warm golden pulse
         if (checkpointFlashAlpha > 0.01f) {
             float alpha = checkpointFlashAlpha * 0.48f;
             shapeRenderer.setColor(1.0f, 0.82f, 0.25f, alpha);
@@ -982,9 +919,7 @@ public class WhereWindsMeetHUD implements Disposable {
         }
 
         shapeRenderer.end();
-        // ── End VFX ───────────────────────────────────────────────────────────
 
-        // 1. Draw HUD Background Shapes & Ornate Geometry (only during normal gameplay)
         if (!isVictoryOpen && !isDisqualified && !isDefeated) {
             MemorialEntry nearby = (memorials != null) ? memorials.getNearbyMemorial(player.getPosition()) : null;
             if (nearby == null && player.getPosition().dst(bd.spark36.world.DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
@@ -1009,7 +944,6 @@ public class WhereWindsMeetHUD implements Disposable {
             }
             shapeRenderer.end();
 
-            // 2. Draw HUD Outlines, Accents & Filigree
             beginShapes(ShapeType.Line);
             drawMissionCardBorders(w, h);
             if (parametersVisible) {
@@ -1026,7 +960,6 @@ public class WhereWindsMeetHUD implements Disposable {
             }
             shapeRenderer.end();
 
-            // 3. Draw Typography & Glyphs
             spriteBatch.begin();
             drawMissionCardText(player, memorials, nearest, dstToNearest, w, h);
             if (parametersVisible) {
@@ -1046,7 +979,6 @@ public class WhereWindsMeetHUD implements Disposable {
             spriteBatch.end();
         }
 
-        // 4. Toast Notification Banner (renders on top of HUD when active)
         if (!isVictoryOpen && !isDisqualified && !isDefeated && activeModalEntry == null && !isMapOpen && !isPauseMenuOpen) {
             if (congratulationsPopupActive) {
                 renderCongratulationsPopup(w, h);
@@ -1055,7 +987,6 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        // 4b. Boss Health Bar, Dialogue Prompt, and Combat Popups
         if (bd.spark36.level.LevelConfig.isCombatEnabled() && helmetGoon != null && !isVictoryOpen && !isDisqualified && !isDefeated && !isPauseMenuOpen && !isMapOpen && activeModalEntry == null
             && !congratulationsPopupActive && !helmetGoon.isKnockedOut()) {
             float dstGoon = player.getPosition().dst(helmetGoon.getPosition());
@@ -1071,14 +1002,12 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        // 4c. Interactive Student NPC Dialogue Subtitle Box
         bd.spark36.level.DialogueRepository.DialogueLine activeLine = (dialogueManager.isDialogueActive()) ?
             dialogueManager.getCurrentLine() : activeNpcDialogue;
         if (activeLine != null && !isVictoryOpen && !isDisqualified && !isDefeated && !isPauseMenuOpen && !isMapOpen && activeModalEntry == null) {
             renderStudentNpcDialogue(activeLine, w, h);
         }
 
-        // 5. Overlays: Historical Archival Modal, Map, Pause Menu, Victory, Disqualification, or Defeat Screen
         if (isVictoryOpen) {
             renderVictoryScreen(w, h);
         } else if (isDisqualified) {
@@ -1096,48 +1025,34 @@ public class WhereWindsMeetHUD implements Disposable {
             else renderPauseMenu(w, h);
         }
 
-        if (creditsScreen.isOpen()) creditsScreen.render(shapeRenderer, spriteBatch, fonts, w, h); // T4
+        if (creditsScreen.isOpen()) creditsScreen.render(shapeRenderer, spriteBatch, fonts, w, h);
 
-        // 6. Debug Bounds & Overlap Check Overlay (Toggle via F3 / Grave `)
         if (debugOverlayEnabled) {
             drawDebugOverlay(currentLayout, w, h);
         }
     }
 
-    // ==========================================
-    // GLASS PANEL HELPERS
-    // ==========================================
-
-    /**
-     * Begins a ShapeRenderer pass with alpha blending forced on. SpriteBatch.end() disables GL_BLEND,
-     * so blending must be re-enabled before every shape pass or translucent colors render opaque (ANGLE/GLES2).
-     */
     private void beginShapes(ShapeType type) {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         shapeRenderer.begin(type);
     }
 
-    /** Smooth 0..1..0 pulse: cosine wave passed through smoothstep so peaks/troughs ease in and out (no jitter). */
     private float easedPulse(float speed) {
         float t = 0.5f - 0.5f * MathUtils.cos(animTime * speed);
         return t * t * (3f - 2f * t);
     }
 
-    /** Filled pass: thin soft outer glow + gradient smoked-glass body + faint warm top sheen. */
     private void fillGlassPanel(float x, float y, float pw, float ph) {
-        // Outer glow: one thin feathered frame just outside the border
+
         fillFrame(x - 2.5f, y - 2.5f, pw + 5f, ph + 5f, 2f, panelGlow.r, panelGlow.g, panelGlow.b, panelGlow.a);
 
-        // Gradient glass body (bottom-left, bottom-right, top-right, top-left)
         shapeRenderer.rect(x, y, pw, ph, panelGlassBottom, panelGlassBottom, panelGlassTop, panelGlassTop);
 
-        // Top sheen strip fading downward
         float sheenH = Math.min(18f, ph * 0.35f);
         shapeRenderer.rect(x, y + ph - sheenH, pw, sheenH, panelSheenClear, panelSheenClear, panelSheen, panelSheen);
     }
 
-    /** Filled rectangular frame of thickness t. */
     private void fillFrame(float x, float y, float fw, float fh, float t, float r, float g, float b, float a) {
         shapeRenderer.setColor(r, g, b, a);
         shapeRenderer.rect(x, y, fw, t);
@@ -1146,17 +1061,12 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.rect(x + fw - t, y + t, t, fh - 2f * t);
     }
 
-    /** Line pass: crisp 1px gold border with a gentle eased breathing brightness. */
     private void strokeGlassBorder(float x, float y, float bw, float bh) {
         float breathe = easedPulse(1.6f);
         shapeRenderer.setColor(panelBorder.r, panelBorder.g, panelBorder.b, 0.75f + 0.20f * breathe);
         shapeRenderer.rect(x, y, bw, bh);
     }
 
-    /**
-     * Readable text over the 3D world. Large fonts (title/header) get a soft dark outline + drop shadow;
-     * small fonts get only a crisp 1px drop shadow (an outline smears small glyphs).
-     */
     private void drawOutlined(com.badlogic.gdx.graphics.g2d.BitmapFont font, String text, float x, float y, Color color) {
         drawOutlined(font, text, x, y, color.r, color.g, color.b, color.a);
     }
@@ -1167,7 +1077,7 @@ public class WhereWindsMeetHUD implements Disposable {
         y = Math.round(y);
         boolean hasBuiltInOutline = font == fonts.titleFont || font == fonts.headerFont;
         if (!hasBuiltInOutline) {
-            // Clean 1px drop shadow for fonts without built-in FreeType border
+
             font.setColor(0f, 0f, 0f, 0.85f * a);
             font.draw(spriteBatch, text, x + 1f, y - 1f);
         }
@@ -1175,19 +1085,14 @@ public class WhereWindsMeetHUD implements Disposable {
         font.draw(spriteBatch, text, x, y);
     }
 
-    // ==========================================
-    // 1. TOP-LEFT MISSION CARD (Matching Mockup)
-    // ==========================================
     private void drawMissionCardBg(JulyMemorials memorials, float w, float h) {
         float cardX = currentLayout.cardX;
         float cardY = currentLayout.cardY;
         float cardW = currentLayout.cardW;
         float cardH = currentLayout.cardH;
 
-        // See-through smoked glass background with soft gold halo
         fillGlassPanel(cardX, cardY, cardW, cardH);
 
-        // Gold Diamond Icon for "ACTIVE MISSION"
         shapeRenderer.setColor(goldAccent);
         float dX = cardX + 18f;
         float dY = cardY + cardH - 18f;
@@ -1195,17 +1100,14 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.triangle(dX, dY + dS, dX + dS, dY, dX, dY - dS);
         shapeRenderer.triangle(dX, dY + dS, dX - dS, dY, dX, dY - dS);
 
-        // Glowing Golden Progress Bar (Dynamic: fills as archives are inspected)
         float barX = cardX + 18f;
         float barY = cardY + 48f;
         float barW = cardW - 36f;
         float barH = 5f;
 
-        // Track
         shapeRenderer.setColor(0.18f, 0.16f, 0.12f, 0.45f);
         shapeRenderer.rect(barX, barY, barW, barH);
 
-        // Gold/Green Fill with Gleam based on actual mission progress
         int inspected = memorials.getInspectedCount();
         int total = memorials.getTotalCount();
         float progress = total > 0 ? (float) inspected / (float) total : 0f;
@@ -1214,17 +1116,15 @@ public class WhereWindsMeetHUD implements Disposable {
         if (fillW > 0f) {
             shapeRenderer.setColor(inspected >= total ? Color.GREEN : goldAccent);
             shapeRenderer.rect(barX, barY, fillW, barH);
-            // Soft glow above/below the fill
+
             shapeRenderer.setColor(1.0f, 0.85f, 0.40f, 0.14f);
             shapeRenderer.rect(barX, barY - 2f, fillW, barH + 4f);
 
-            // Gleam particle (eased sweep, slows smoothly at both ends)
             float gleamPos = easedPulse(1.25f) * fillW;
             shapeRenderer.setColor(1.0f, 0.98f, 0.85f, 0.95f);
             shapeRenderer.circle(barX + gleamPos, barY + barH / 2f, 4f, 12);
         }
 
-        // Waypoint Compass Needle Icon Circle (next to DISTANCE)
         float cX = cardX + cardW - 36f;
         float cY = cardY + 24f;
         shapeRenderer.setColor(0.08f, 0.18f, 0.22f, 0.40f);
@@ -1239,36 +1139,28 @@ public class WhereWindsMeetHUD implements Disposable {
         float cardW = currentLayout.cardW;
         float cardH = currentLayout.cardH;
 
-        // Crisp thin gold border with gentle breathing glow
         strokeGlassBorder(cardX, cardY, cardW, cardH);
 
-        // Ornate Corner Brackets (⌜ ⌝ ⌞ ⌟)
         shapeRenderer.setColor(goldAccent);
         float cLen = 14f;
 
-        // Top-Left ⌜
         shapeRenderer.line(cardX - 2, cardY + cardH + 2, cardX + cLen, cardY + cardH + 2);
         shapeRenderer.line(cardX - 2, cardY + cardH + 2, cardX - 2, cardY + cardH - cLen);
 
-        // Top-Right ⌝
         shapeRenderer.line(cardX + cardW + 2, cardY + cardH + 2, cardX + cardW - cLen, cardY + cardH + 2);
         shapeRenderer.line(cardX + cardW + 2, cardY + cardH + 2, cardX + cardW + 2, cardY + cardH - cLen);
 
-        // Bottom-Left ⌞
         shapeRenderer.line(cardX - 2, cardY - 2, cardX + cLen, cardY - 2);
         shapeRenderer.line(cardX - 2, cardY - 2, cardX - 2, cardY + cLen);
 
-        // Bottom-Right ⌟
         shapeRenderer.line(cardX + cardW + 2, cardY - 2, cardX + cardW - cLen, cardY - 2);
         shapeRenderer.line(cardX + cardW + 2, cardY - 2, cardX + cardW + 2, cardY + cLen);
 
-        // Waypoint Compass Needle Icon Ring
         float cX = cardX + cardW - 36f;
         float cY = cardY + 24f;
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.circle(cX, cY, 15f, 24);
 
-        // Pointer needle (pointing towards Curzon Hall)
         float nAngle = (animTime * 1.5f) % 360f * MathUtils.degreesToRadians;
         shapeRenderer.line(cX, cY, cX + 11f * MathUtils.cos(nAngle), cY + 11f * MathUtils.sin(nAngle));
     }
@@ -1302,7 +1194,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         if (allDone && !goonKnockedOut) {
             if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
-                // Climax Combat Confrontation (Arena Mode)
+
                 drawOutlined(fonts.smallFont, "CLIMAX OBJECTIVE: CONFRONTATION", cardX + 18f, cardY + cardH - 18f, new Color(1.0f, 0.45f, 0.25f, 1f));
                 String bossTitle = "CONFRONT THE AGGRESSOR";
                 drawOutlined(fonts.headerFont, bossTitle, cardX + 18f, cardY + cardH - 42f, goldAccent);
@@ -1311,7 +1203,7 @@ public class WhereWindsMeetHUD implements Disposable {
                     (player != null ? player.getPosition().dst(helmetGoon.getPosition()) : dst) : dst;
                 drawOutlined(fonts.headerFont, String.format("DISTANCE: %.1f M", goonDst), cardX + 18f, cardY + 24f, goldAccent);
             } else {
-                // Peaceful Campus Reconnaissance Completion (Level 1 Story Mode)
+
                 drawOutlined(fonts.smallFont, "ALL ARCHIVES UNLOCKED: 05 / 05", cardX + 18f, cardY + cardH - 18f, Color.GREEN);
                 drawOutlined(fonts.headerFont, "RECONNAISSANCE COMPLETE", cardX + 18f, cardY + cardH - 42f, goldAccent);
                 drawOutlined(fonts.bodyFont, "All 5 historical archives secured. Proceed to Curzon Hall promenade.", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
@@ -1323,7 +1215,7 @@ public class WhereWindsMeetHUD implements Disposable {
             drawOutlined(fonts.bodyFont, "All 5 archives secured & the attacker held back. Campus safe!", cardX + 18f, cardY + cardH - 74f, Color.WHITE);
             drawOutlined(fonts.headerFont, "STATUS: COMPLETED", cardX + 18f, cardY + 24f, Color.GREEN);
         } else {
-            // Standard archive progression
+
             String missionTag = String.format("ACTIVE MISSION: %02d / %02d", Math.min(ins + 1, total), total);
             drawOutlined(fonts.smallFont, missionTag, cardX + 18f, cardY + cardH - 18f, new Color(1.0f, 0.75f, 0.30f, 1f));
 
@@ -1338,26 +1230,20 @@ public class WhereWindsMeetHUD implements Disposable {
         }
     }
 
-    // =======================================================
-    // 2. TOP-RIGHT ANTIQUE 8-POINT COMPASS ROSE (Matching Mockup)
-    // =======================================================
     private void drawAntiqueCompassRoseFilled(float w, float h, float yaw) {
         float cx = currentLayout.compassCx;
         float cy = currentLayout.compassCy;
         float r = currentLayout.compassR;
 
-        // Circular transparent glass background
         shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.22f);
         shapeRenderer.circle(cx, cy, r, 48);
 
-        // Waypoint Ticker Pill to the left ("◆ CURZON HALL  W")
         float pillW = currentLayout.pillW;
         float pillH = currentLayout.pillH;
         float pillX = currentLayout.pillX;
         float pillY = currentLayout.pillY;
         fillGlassPanel(pillX, pillY, pillW, pillH);
 
-        // Diamond marker on ticker
         shapeRenderer.setColor(goldAccent);
         float dX = pillX + 14f;
         float dY = cy;
@@ -1365,8 +1251,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.triangle(dX, dY + dS, dX + dS, dY, dX, dY - dS);
         shapeRenderer.triangle(dX, dY + dS, dX - dS, dY, dX, dY - dS);
 
-        // 8-Point Antique Shaded Compass Star!
-        // 4 Primary Points (N, E, S, W)
         float len1 = r - 10f;
         float baseW1 = 12f;
 
@@ -1383,16 +1267,13 @@ public class WhereWindsMeetHUD implements Disposable {
             float rx = cx + baseW1 * MathUtils.cos(rightRad);
             float ry = cy + baseW1 * MathUtils.sin(rightRad);
 
-            // Shaded light gold facet
             shapeRenderer.setColor(goldAccent);
             shapeRenderer.triangle(cx, cy, tx, ty, lx, ly);
 
-            // Shaded dark bronze facet
             shapeRenderer.setColor(goldDark);
             shapeRenderer.triangle(cx, cy, tx, ty, rx, ry);
         }
 
-        // 4 Secondary Points (NE, SE, SW, NW)
         float len2 = r * 0.58f;
         float baseW2 = 8f;
 
@@ -1416,7 +1297,6 @@ public class WhereWindsMeetHUD implements Disposable {
             shapeRenderer.triangle(cx, cy, tx, ty, rx, ry);
         }
 
-        // Center Gold Jewel Boss
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.circle(cx, cy, 6f, 16);
     }
@@ -1426,13 +1306,11 @@ public class WhereWindsMeetHUD implements Disposable {
         float cy = currentLayout.compassCy;
         float r = currentLayout.compassR;
 
-        // Outer ornate gold rims
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.circle(cx, cy, r, 54);
         shapeRenderer.setColor(goldMuted);
         shapeRenderer.circle(cx, cy, r - 6f, 48);
 
-        // Degree tick marks
         for (int i = 0; i < 360; i += 15) {
             float tickRad = (90f - i + yaw) * MathUtils.degreesToRadians;
             float inner = (i % 90 == 0) ? r - 12f : ((i % 45 == 0) ? r - 9f : r - 5f);
@@ -1445,7 +1323,6 @@ public class WhereWindsMeetHUD implements Disposable {
             );
         }
 
-        // Waypoint Ticker Border
         float pillW = currentLayout.pillW;
         float pillH = currentLayout.pillH;
         float pillX = currentLayout.pillX;
@@ -1458,7 +1335,6 @@ public class WhereWindsMeetHUD implements Disposable {
         float cy = currentLayout.compassCy;
         float r = currentLayout.compassR;
 
-        // Cardinal Letters (N, E, S, W)
         String[] cardinals = {"N", "E", "S", "W"};
         Color[] cardColors = {healthRed, goldAccent, goldAccent, goldAccent};
 
@@ -1471,26 +1347,20 @@ public class WhereWindsMeetHUD implements Disposable {
             fonts.smallFont.draw(spriteBatch, cardinals[i], lx, ly);
         }
 
-        // Degree readout beneath
         int displayYaw = (int) ((yaw % 360 + 360) % 360);
         fonts.smallFont.setColor(goldAccent);
         fonts.smallFont.draw(spriteBatch, displayYaw + " deg", cx - 20f, cy - r - 8f);
 
-        // Waypoint Ticker Text ("CURZON HALL   W")
         float pillX = currentLayout.pillX;
         drawOutlined(fonts.smallFont, "CURZON HALL   W", pillX + 28f, cy + 5f, goldAccent);
     }
 
-    // ========================================================
-    // 3. BOTTOM-LEFT LIVE MISSION PARAMETERS CHECKLIST & COUNTER
-    // ========================================================
     private void drawMissionChecklistBg(PlayerController player, JulyMemorials memorials, float w, float h) {
         float bx = currentLayout.checkX;
         float by = currentLayout.checkY;
         float bw = currentLayout.checkW;
         float bh = currentLayout.checkH;
 
-        // See-through smoked glass backing with soft gold halo
         fillGlassPanel(bx, by, bw, bh);
 
         if (activeLevel != null) {
@@ -1517,7 +1387,6 @@ public class WhereWindsMeetHUD implements Disposable {
             return;
         }
 
-        // Active objective row highlight: gold glow bar fading to the right + solid left accent bar
         Array<MemorialEntry> entries = (memorials != null) ? memorials.getEntries() : new Array<MemorialEntry>();
         MemorialEntry nextObj = (memorials != null) ? memorials.getNextObjective(player.getPosition()) : null;
         float startY = by + bh - 38f;
@@ -1530,21 +1399,20 @@ public class WhereWindsMeetHUD implements Disposable {
             float rowBot = rowTop - itemSpacing;
             float rowX = bx + 8f;
             float rowW = bw - 16f;
-            // Soft translucent gold glow (max alpha 0.22) fading to fully clear on the right
+
             tmpColor.set(1.0f, 0.80f, 0.32f, 0.12f + 0.10f * pulse);
             Color clear = panelSheenClear;
             shapeRenderer.rect(rowX, rowBot, rowW, itemSpacing, tmpColor, clear, clear, tmpColor);
-            // Thin soft gold underline, fading right
+
             tmpColor.set(1.0f, 0.86f, 0.38f, 0.45f + 0.15f * pulse);
             shapeRenderer.rect(rowX, rowBot, rowW * 0.8f, 1f, tmpColor, clear, clear, tmpColor);
-            // Left accent bar (+ faint halo), left of the text
+
             shapeRenderer.setColor(1.0f, 0.86f, 0.40f, 0.10f + 0.08f * pulse);
             shapeRenderer.rect(rowX - 1f, rowBot + 1f, 4f, itemSpacing - 2f);
             shapeRenderer.setColor(activeRowGold);
             shapeRenderer.rect(rowX, rowBot + 2f, 2f, itemSpacing - 4f);
         }
 
-        // Progress bar track at bottom of checklist
         float barX = bx + 16f;
         float barY = by + 12f;
         float barW = bw - 32f;
@@ -1573,10 +1441,8 @@ public class WhereWindsMeetHUD implements Disposable {
         float bw = currentLayout.checkW;
         float bh = currentLayout.checkH;
 
-        // Crisp thin gold border with gentle breathing glow
         strokeGlassBorder(bx, by, bw, bh);
 
-        // Ornate Corner Brackets
         shapeRenderer.setColor(goldAccent);
         float cLen = 14f;
         shapeRenderer.line(bx - 2, by + bh + 2, bx + cLen, by + bh + 2);
@@ -1588,7 +1454,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.line(bx + bw + 2, by - 2, bx + bw - cLen, by - 2);
         shapeRenderer.line(bx + bw + 2, by - 2, bx + bw + 2, by + cLen);
 
-        // Separator below title
         shapeRenderer.setColor(goldMuted);
         shapeRenderer.line(bx + 14f, by + bh - 28f, bx + bw - 14f, by + bh - 28f);
 
@@ -1607,7 +1472,6 @@ public class WhereWindsMeetHUD implements Disposable {
             return;
         }
 
-        // Strike-through lines on completed objectives
         Array<MemorialEntry> entries = (memorials != null) ? memorials.getEntries() : new Array<MemorialEntry>();
         float startY = by + bh - 38f;
         float itemSpacing = 18f;
@@ -1658,12 +1522,10 @@ public class WhereWindsMeetHUD implements Disposable {
         int ins = (memorials != null) ? memorials.getInspectedCount() : 0;
         int tot = (memorials != null) ? memorials.getTotalCount() : 5;
 
-        // 1. Header: "* MISSION PARAMETERS: 01 / 05" + [P] HIDE hint
         String headerTitle = String.format("* MISSION PARAMETERS: %02d / %02d", ins, tot);
         drawOutlined(fonts.keyFont, headerTitle, bx + 16f, by + bh - 10f, ins >= tot ? Color.GREEN : goldAccent);
         drawOutlined(fonts.smallFont, "[P] HIDE", bx + bw - 75f, by + bh - 10f, 0.95f, 0.84f, 0.52f, 1f);
 
-        // 2. Checklist of the 5 Memorial checkpoints
         String[] shortNames = CHECKLIST_NAMES;
 
         Array<MemorialEntry> entries = (memorials != null) ? memorials.getEntries() : new Array<MemorialEntry>();
@@ -1675,32 +1537,29 @@ public class WhereWindsMeetHUD implements Disposable {
             MemorialEntry entry = entries.get(i);
             float y = startY - i * itemSpacing;
             if (entry.inspected) {
-                // Completed: dimmed muted green [OK] (struck through in the border pass)
+
                 drawOutlined(fonts.smallFont, "[OK] " + shortNames[i], bx + 16f, y, doneRowColor);
             } else if (entry == nextObj) {
-                // Active objective: bright gold with gentle eased brightness breathing
+
                 float pulse = easedPulse(2.4f);
                 float dst = player.getPosition().dst(entry.position);
                 String line = String.format("[>]  %s (%.0fm)", shortNames[i], dst);
                 drawOutlined(fonts.smallFont, line, bx + 16f, y,
                     1f, 0.80f + 0.08f * pulse, 0.26f + 0.10f * pulse, 1f);
             } else {
-                // Upcoming
+
                 drawOutlined(fonts.smallFont, "[  ] " + shortNames[i], bx + 16f, y, upcomingRowColor);
             }
         }
 
-        // 3. Progress percentage
         int pct = tot > 0 ? (ins * 100 / tot) : 0;
         String pctStr = String.format("PROGRESS: %d%% (%d/5 COMPLETE)", pct, ins);
         drawOutlined(fonts.smallFont, pctStr, bx + bw - 195f, by + 30f, ins >= tot ? Color.GREEN : goldAccent);
     }
 
-    // In-world 3D Waypoint Pin floating above active objective
     public void draw3DObjectivePinDirect(Vector3 targetPos, String title, float dst, com.badlogic.gdx.graphics.Camera camera, float w, float h) {
         if (targetPos == null || camera == null) return;
 
-        // Elevated pin height (7.5m) so the waypoint floats clearly above portals and player character from third-person perspective
         Vector3 pinPos = new Vector3(targetPos.x, 7.5f, targetPos.z);
         Vector3 scr = camera.project(pinPos);
 
@@ -1740,11 +1599,8 @@ public class WhereWindsMeetHUD implements Disposable {
         draw3DObjectivePinDirect(target.position, target.title, player.getPosition().dst(target.position), camera, w, h);
     }
 
-    // ========================================================
-    // 4. CENTER SPEECH-BUBBLE INTERACTION PROMPT (Matching Mockup)
-    // ========================================================
     private void drawSpeechBubblePromptBg(float w, float h) {
-        // Zero solid background: completely transparent campus view!
+
     }
 
     private void drawSpeechBubblePromptBorders(float w, float h) {
@@ -1753,13 +1609,11 @@ public class WhereWindsMeetHUD implements Disposable {
         float px = (w - promptW) / 2f + 140f;
         float py = h * 0.44f;
 
-        // Gold border with subtle pulse
         float pulse = 0.7f + 0.3f * easedPulse(3.0f);
         shapeRenderer.setColor(1.0f, 0.84f * pulse, 0.38f, 1f);
 
         shapeRenderer.rect(px, py, promptW, promptH);
 
-        // Pointer Beak lines
         shapeRenderer.line(px, py + 34f, px - 16f, py + 26f);
         shapeRenderer.line(px - 16f, py + 26f, px, py + 18f);
     }
@@ -1786,7 +1640,7 @@ public class WhereWindsMeetHUD implements Disposable {
         }
 
         if (nearby != null && nearby.id == 99) {
-            // Boundary Stone Prompt (Matching reference image [RT] Boundary Stone)
+
             fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
             fonts.headerFont.draw(spriteBatch, "[E]  INSPECT BOUNDARY STONE (1921)", px + 18f, py + 41f);
             fonts.headerFont.setColor(goldAccent);
@@ -1797,7 +1651,7 @@ public class WhereWindsMeetHUD implements Disposable {
             fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.80f, 1f));
             fonts.smallFont.draw(spriteBatch, "-- HISTORIC DHAKA UNIVERSITY HERITAGE", px + 47f, py + 20f);
         } else {
-            // Text with drop shadows
+
             fonts.headerFont.setColor(0f, 0f, 0f, 0.90f);
             fonts.headerFont.draw(spriteBatch, "[E]  INSPECT HISTORICAL ARCHIVE", px + 23f, py + 41f);
             fonts.headerFont.setColor(goldAccent);
@@ -1810,34 +1664,24 @@ public class WhereWindsMeetHUD implements Disposable {
         }
     }
 
-    // ========================================================
-    // 5. BOTTOM-RIGHT SLEEK KEYCAPS (Matching Mockup)
-    // ========================================================
     private void drawKeycapsBg(float w, float h) {
         float kBaseX = currentLayout.keyBaseX;
         float kBaseY = currentLayout.keyBaseY;
 
-        // Keycap button boxes (see-through smoked glass with gold halo)
-        // [W]
         fillGlassPanel(kBaseX + 68f, kBaseY + 84f, 28f, 26f);
-        // [A] [S] [D]
+
         fillGlassPanel(kBaseX + 36f, kBaseY + 54f, 28f, 26f);
         fillGlassPanel(kBaseX + 68f, kBaseY + 54f, 28f, 26f);
         fillGlassPanel(kBaseX + 100f, kBaseY + 54f, 28f, 26f);
 
-        // [SHIFT]
         fillGlassPanel(kBaseX + 138f, kBaseY + 54f, 48f, 26f);
 
-        // [J] (Jump / Double Jump)
         fillGlassPanel(kBaseX + 16f, kBaseY + 26f, 26f, 22f);
 
-        // [E]
         fillGlassPanel(kBaseX + 138f, kBaseY + 26f, 26f, 22f);
 
-        // [M]
         fillGlassPanel(kBaseX + 44f, kBaseY, 26f, 20f);
 
-        // [ESC]
         fillGlassPanel(kBaseX + 114f, kBaseY, 36f, 20f);
     }
 
@@ -1848,26 +1692,20 @@ public class WhereWindsMeetHUD implements Disposable {
         float breathe = easedPulse(1.6f);
         shapeRenderer.setColor(panelBorder.r, panelBorder.g, panelBorder.b, 0.78f + 0.17f * breathe);
 
-        // [W]
         shapeRenderer.rect(kBaseX + 68f, kBaseY + 84f, 28f, 26f);
-        // [A] [S] [D]
+
         shapeRenderer.rect(kBaseX + 36f, kBaseY + 54f, 28f, 26f);
         shapeRenderer.rect(kBaseX + 68f, kBaseY + 54f, 28f, 26f);
         shapeRenderer.rect(kBaseX + 100f, kBaseY + 54f, 28f, 26f);
 
-        // [SHIFT]
         shapeRenderer.rect(kBaseX + 138f, kBaseY + 54f, 48f, 26f);
 
-        // [J] (Jump / Double Jump)
         shapeRenderer.rect(kBaseX + 16f, kBaseY + 26f, 26f, 22f);
 
-        // [E]
         shapeRenderer.rect(kBaseX + 138f, kBaseY + 26f, 26f, 22f);
 
-        // [M]
         shapeRenderer.rect(kBaseX + 44f, kBaseY, 26f, 20f);
 
-        // [ESC]
         shapeRenderer.rect(kBaseX + 114f, kBaseY, 36f, 20f);
     }
 
@@ -1875,7 +1713,6 @@ public class WhereWindsMeetHUD implements Disposable {
         float kBaseX = currentLayout.keyBaseX;
         float kBaseY = currentLayout.keyBaseY;
 
-        // Button letter labels
         drawOutlined(fonts.keyFont, "W", kBaseX + 76f, kBaseY + 102f, goldAccent);
         drawOutlined(fonts.keyFont, "A", kBaseX + 44f, kBaseY + 72f, goldAccent);
         drawOutlined(fonts.keyFont, "S", kBaseX + 77f, kBaseY + 72f, goldAccent);
@@ -1887,7 +1724,6 @@ public class WhereWindsMeetHUD implements Disposable {
         drawOutlined(fonts.keyFont, "M", kBaseX + 51f, kBaseY + 15f, goldAccent);
         drawOutlined(fonts.keyFont, "ESC", kBaseX + 118f, kBaseY + 15f, goldAccent);
 
-        // Action sub-labels matching updated keybinds:
         drawOutlined(fonts.smallFont, "MOVE", kBaseX - 6f, kBaseY + 72f, Color.WHITE);
         drawOutlined(fonts.smallFont, "SPRINT", kBaseX + 192f, kBaseY + 72f, Color.WHITE);
         drawOutlined(fonts.smallFont, "JUMP (2X)", kBaseX + 48f, kBaseY + 42f, Color.WHITE);
@@ -1895,7 +1731,6 @@ public class WhereWindsMeetHUD implements Disposable {
         drawOutlined(fonts.smallFont, "MAP", kBaseX + 75f, kBaseY + 15f, Color.WHITE);
         drawOutlined(fonts.smallFont, "PAUSE", kBaseX + 156f, kBaseY + 15f, Color.WHITE);
 
-        // Action Hints: Crouch, Attack (Arena mode only), Gender, and Hide Parameters (anchored within safe margins)
         String hint;
         if (bd.spark36.level.LevelConfig.isCombatEnabled()) {
             hint = "HOLD [J] AT WALL: CLIMB  |  [C] CROUCH  |  [F] ATTACK  |  [G] GENDER (M/F)  |  [P] PARAMETERS";
@@ -1907,28 +1742,22 @@ public class WhereWindsMeetHUD implements Disposable {
         drawOutlined(fonts.smallFont, hint, hintX, currentLayout.hintLineY, goldAccent);
     }
 
-    // ==========================================
-    // HISTORICAL MEMORIAL FLOATING OVERLAY (100% Transparent, No Black Box)
-    // ==========================================
     private void renderMemorialModal(MemorialEntry entry, float w, float h) {
-        // Frosted transparent glassmorphic panel with gold filigree and generous margins
+
         float mw = 880f;
         float mh = 250f;
         float mx = (w - mw) / 2f;
-        float my = 42f; // Floating in lower area of screen
+        float my = 42f;
 
-        // Smoked glass panel backing with soft glow and top sheen
         beginShapes(ShapeType.Filled);
         shapeRenderer.setColor(0.02f, 0.04f, 0.06f, 0.85f);
         shapeRenderer.rect(mx, my, mw, mh);
         fillGlassPanel(mx, my, mw, mh);
 
-        // Thin golden top line
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(mx, my + mh - 2f, mw, 2f);
         shapeRenderer.end();
 
-        // Golden Corner brackets
         beginShapes(ShapeType.Line);
         shapeRenderer.setColor(goldBorder);
         float cLen = 16f;
@@ -1942,41 +1771,33 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.line(mx + mw, my, mx + mw, my + cLen);
         shapeRenderer.end();
 
-        // Essential Text with drop shadow for 100% readability directly against 3D world
         spriteBatch.begin();
         float textX = mx + 32f;
 
-        // Header Title: strictly positioned with generous padding inside top border
         fonts.titleFont.setColor(0f, 0f, 0f, 0.98f);
         fonts.titleFont.draw(spriteBatch, entry.title, textX + 2f, my + mh - 34f);
         fonts.titleFont.setColor(goldAccent);
         fonts.titleFont.draw(spriteBatch, entry.title, textX, my + mh - 32f);
 
-        // Subtitle: Date & Location
         fonts.smallFont.setColor(0f, 0f, 0f, 0.98f);
         fonts.smallFont.draw(spriteBatch, entry.date + "   |   " + entry.location, textX + 1.5f, my + mh - 67.5f);
         fonts.smallFont.setColor(new Color(0.95f, 0.90f, 0.70f, 1f));
         fonts.smallFont.draw(spriteBatch, entry.date + "   |   " + entry.location, textX, my + mh - 66f);
 
-        // Description narrative
         fonts.bodyFont.setColor(0f, 0f, 0f, 0.98f);
         fonts.bodyFont.draw(spriteBatch, entry.description, textX + 1.5f, my + mh - 97.5f, mw - 64f, 10, true);
         fonts.bodyFont.setColor(Color.WHITE);
         fonts.bodyFont.draw(spriteBatch, entry.description, textX, my + mh - 96f, mw - 64f, 10, true);
 
-        // Close prompt
         fonts.promptFont.setColor(0f, 0f, 0f, 0.98f);
         fonts.promptFont.draw(spriteBatch, "[E] / [ESC] Close Archive", mx + mw - 238f, my + 27f);
         fonts.promptFont.setColor(goldAccent);
         fonts.promptFont.draw(spriteBatch, "[E] / [ESC] Close Archive", mx + mw - 240f, my + 28f);
 
         spriteBatch.end();
-        bd.spark36.hud.screens.HistoricalContextCard.render(shapeRenderer, spriteBatch, fonts, entry.id, mx, my + mh + 8f, mw); // T4
+        bd.spark36.hud.screens.HistoricalContextCard.render(shapeRenderer, spriteBatch, fonts, entry.id, mx, my + mh + 8f, mw);
     }
 
-    // ========================================================
-    // TACTICAL MAP HUD BUTTON (Top-Right under Compass)
-    // ========================================================
     private void drawTacticalMapButtonBg(float w, float h) {
         fillGlassPanel(currentLayout.mapBtnX, currentLayout.mapBtnY, currentLayout.mapBtnW, currentLayout.mapBtnH);
     }
@@ -2004,9 +1825,6 @@ public class WhereWindsMeetHUD implements Disposable {
         drawOutlined(fonts.keyFont, "[M]  CAMPUS MAP", currentLayout.mapBtnX + 18f, currentLayout.mapBtnY + 23f, goldAccent);
     }
 
-    // ==========================================
-    // CAMPUS TACTICAL MAP OVERLAY (MATCHING MEDIA_1790270627121)
-    // ==========================================
     private void renderCampusMap(PlayerController player, JulyMemorials memorials, float cameraYaw, float w, float h) {
         if (campusMapTex == null && !campusMapLoadTried) loadCampusMapTexture();
         if (campusMapTex != null) {
@@ -2014,7 +1832,6 @@ public class WhereWindsMeetHUD implements Disposable {
             return;
         }
 
-        // Fallback: shape-drawn map, used only if the map image is missing from the assets
         float mapW = 1520f;
         float mapH = h - 50f;
         float mx = (w - mapW) / 2f;
@@ -2022,81 +1839,53 @@ public class WhereWindsMeetHUD implements Disposable {
 
         float centerMapX = mx + mapW / 2f;
         float centerMapY = my + mapH / 2f + 16f;
-        float scale = 4.8f; // 4.8 pixels per meter
-        // screenX = centerMapX + worldX * scale
-        // screenY = centerMapY - (worldZ - 18) * scale  [north=negZ=higher Y]
+        float scale = 4.8f;
 
-        // ============================================================
-        // FILLED PASS
-        // ============================================================
         beginShapes(ShapeType.Filled);
 
-        // Full dark backdrop
         shapeRenderer.setColor(0f, 0f, 0f, 0.92f);
         shapeRenderer.rect(0, 0, w, h);
 
-        // Map canvas
         shapeRenderer.setColor(0.07f, 0.09f, 0.11f, 0.97f);
         shapeRenderer.rect(mx, my, mapW, mapH);
 
-        // Campus lawn (reference: rich green base)
         shapeRenderer.setColor(0.13f, 0.20f, 0.12f, 0.95f);
         shapeRenderer.rect(centerMapX - 100f * scale, centerMapY - 62f * scale, 200f * scale, 124f * scale);
 
-        // Fuller Road (north, top of map)
         shapeRenderer.setColor(0.16f, 0.16f, 0.18f, 0.96f);
         shapeRenderer.rect(centerMapX - 110f * scale, centerMapY + 62f * scale, 220f * scale, 10f * scale);
 
-        // Doel Chattar Road (south, bottom of map)
         shapeRenderer.rect(centerMapX - 110f * scale, centerMapY - 72f * scale, 220f * scale, 14f * scale);
 
-        // South boundary wall (red brick, gap at Main Gate)
         shapeRenderer.setColor(0.52f, 0.18f, 0.14f, 0.96f);
         shapeRenderer.rect(centerMapX - 110f * scale, centerMapY - 62f * scale, 105f * scale, 2.0f * scale);
         shapeRenderer.rect(centerMapX + 5.5f * scale, centerMapY - 62f * scale, 104.5f * scale, 2.0f * scale);
 
-        // ============================================================
-        // WALKWAY NETWORK
-        // ============================================================
         shapeRenderer.setColor(0.70f, 0.63f, 0.50f, 0.92f);
 
-        // Central Promenade: X=0, Z=+78 (gate) to Z=-40 (behind Curzon Hall)
         shapeRenderer.rect(centerMapX - 3.6f * scale, centerMapY - 62f * scale, 7.2f * scale, 118f * scale);
 
-        // Pukur ring paths: X=+-14m, Z=-10.8 to +24
         float ringBottomY = centerMapY - (24f - 18f) * scale;
         shapeRenderer.rect(centerMapX - 16.4f * scale, ringBottomY, 4.8f * scale, 34.8f * scale);
         shapeRenderer.rect(centerMapX + 11.6f * scale, ringBottomY, 4.8f * scale, 34.8f * scale);
 
-        // North link (Z=-10.8) and south link (Z=+24) joining the promenade to the ring paths
         shapeRenderer.rect(centerMapX - 14f * scale, centerMapY - (-10.8f - 18f) * scale - 2.4f * scale, 28f * scale, 4.8f * scale);
         shapeRenderer.rect(centerMapX - 14f * scale, centerMapY - (24f - 18f) * scale - 2.4f * scale, 28f * scale, 4.8f * scale);
 
-        // West Cross-Avenue: Z=+26, X=0 to X=-74
         shapeRenderer.rect(centerMapX - 74f * scale, centerMapY - (26f - 18f) * scale - 2.4f * scale, 74f * scale, 4.8f * scale);
 
-        // West North Branch to Madhur Canteen: X=-56, Z=+26 to Z=-20
         shapeRenderer.rect(centerMapX - 58.4f * scale, centerMapY - (26f - 18f) * scale, 4.8f * scale, 46f * scale);
 
-        // West South Branch to Hakim Chattar: X=-58, Z=+26 to Z=+54
         shapeRenderer.rect(centerMapX - 60.4f * scale, centerMapY - (54f - 18f) * scale, 4.8f * scale, 28f * scale);
 
-        // East Cross-Avenue: Z=+26, X=0 to X=+74
         shapeRenderer.rect(centerMapX, centerMapY - (26f - 18f) * scale - 2.4f * scale, 74f * scale, 4.8f * scale);
 
-        // East North Branch to Swadhinata: X=+56, Z=+26 to Z=-18
         shapeRenderer.rect(centerMapX + 53.6f * scale, centerMapY - (26f - 18f) * scale, 4.8f * scale, 44f * scale);
 
-        // East South Branch to Raju: X=+44, Z=+26 to Z=+42
         shapeRenderer.rect(centerMapX + 41.6f * scale, centerMapY - (42f - 18f) * scale, 4.8f * scale, 16f * scale);
 
-        // Curzon Hall front verandah path: Z=-17, X=-48 to X=+48
         shapeRenderer.rect(centerMapX - 48f * scale, centerMapY - (-17f - 18f) * scale - 3f * scale, 96f * scale, 6f * scale);
 
-        // ============================================================
-        // CURZON HALL PUKUR
-        // Pond sits in the centre of the spine; the promenade splits around it
-        // ============================================================
         float pukurWorldX = 0f;
         float pukurWorldZ = 6f;
         float pukurWm     = 18f;
@@ -2107,21 +1896,15 @@ public class WhereWindsMeetHUD implements Disposable {
         float pW = pukurWm * scale;
         float pH = pukurHm * scale;
 
-        // Stone curb border
         shapeRenderer.setColor(0.82f, 0.79f, 0.74f, 1f);
         shapeRenderer.rect(pX - pW / 2f - 4f, pY - pH / 2f - 4f, pW + 8f, pH + 8f);
-        // Water
+
         shapeRenderer.setColor(0.20f, 0.55f, 0.64f, 0.96f);
         shapeRenderer.rect(pX - pW / 2f, pY - pH / 2f, pW, pH);
-        // Shimmer
+
         shapeRenderer.setColor(0.35f, 0.72f, 0.80f, 0.50f);
         shapeRenderer.rect(pX - pW / 2f + 4f, pY - pH / 2f + 3f, pW * 0.6f, pH * 0.25f);
 
-        // ============================================================
-        // BUILDINGS
-        // ============================================================
-
-        // 1. CURZON HALL (north/top-center)
         float chX = centerMapX;
         float chY = centerMapY - (-32f - 18f) * scale;
         shapeRenderer.setColor(0.66f, 0.21f, 0.15f, 0.97f);
@@ -2136,7 +1919,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.circle(chX - 44.5f * scale, chY - 2.5f * scale, 2.1f * scale, 16);
         shapeRenderer.circle(chX + 44.5f * scale, chY - 2.5f * scale, 2.1f * scale, 16);
 
-        // 2. CENTRAL LIBRARY BUILDING (far west)
         float clMapX = centerMapX - 68f * scale;
         float clMapY = centerMapY - (22f - 18f) * scale;
         shapeRenderer.setColor(0.63f, 0.23f, 0.17f, 0.97f);
@@ -2146,7 +1928,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(0.75f, 0.73f, 0.70f, 0.96f);
         shapeRenderer.rect(clMapX + 14f * scale, clMapY - 8f * scale, 4f * scale, 16f * scale);
 
-        // 3. HAKIM CHATTAR (bottom-left, octagonal)
         float hkMapX = centerMapX - 58f * scale;
         float hkMapY = centerMapY - (54f - 18f) * scale;
         shapeRenderer.setColor(0.70f, 0.30f, 0.20f, 0.96f);
@@ -2154,7 +1935,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.circle(hkMapX, hkMapY, 1.3f * scale, 8);
 
-        // 4. MADHUR CANTEEN (top-left)
         float mcMapX = centerMapX - 56f * scale;
         float mcMapY = centerMapY - (-16f - 18f) * scale;
         shapeRenderer.setColor(0.56f, 0.22f, 0.18f, 0.97f);
@@ -2162,14 +1942,12 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(0.82f, 0.76f, 0.68f, 0.96f);
         shapeRenderer.rect(mcMapX - 8f * scale, mcMapY - 7f * scale, 16f * scale, 3.5f * scale);
 
-        // 5. BOOK STALLS (west of promenade, north of Arts Plaza)
         shapeRenderer.setColor(0.36f, 0.26f, 0.16f, 0.96f);
         for (float bsz : new float[]{6f, 12f, 18f}) {
             float bsMapY = centerMapY - (bsz - 18f) * scale;
             shapeRenderer.rect(centerMapX - 44f * scale, bsMapY - 1.4f * scale, 2.8f * scale, 2.8f * scale);
         }
 
-        // 6. ARTS PLAZA + APARAJEYO BANGLA (west of promenade)
         float abMapX = centerMapX - 36f * scale;
         float abMapY = centerMapY - (26f - 18f) * scale;
         shapeRenderer.setColor(0.78f, 0.76f, 0.72f, 0.96f);
@@ -2177,7 +1955,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(0.24f, 0.27f, 0.30f, 0.97f);
         shapeRenderer.circle(abMapX, abMapY, 2.0f * scale, 12);
 
-        // 8. TEACHER-STUDENT CENTRE (far right, modernist)
         float tscMapX = centerMapX + 68f * scale;
         float tscMapY = centerMapY - (20f - 18f) * scale;
         shapeRenderer.setColor(0.74f, 0.73f, 0.70f, 0.97f);
@@ -2189,7 +1966,6 @@ public class WhereWindsMeetHUD implements Disposable {
             shapeRenderer.rect(tscMapX - 19.5f * scale, tscMapY + f * 1.8f * scale - 0.4f * scale, 1.5f * scale, 0.8f * scale);
         }
 
-        // 9. RAJU MEMORIAL ROUNDABOUT (south-east)
         float rjMapX = centerMapX + 44f * scale;
         float rjMapY = centerMapY - (42f - 18f) * scale;
         shapeRenderer.setColor(0.16f, 0.16f, 0.18f, 0.96f);
@@ -2199,7 +1975,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(0.90f, 0.88f, 0.84f, 0.97f);
         shapeRenderer.rect(rjMapX - 2.4f * scale, rjMapY - 2.4f * scale, 4.8f * scale, 4.8f * scale);
 
-        // 10. SWADHINATA SANGRAM SCULPTURE GARDEN (top-right)
         float ssMapX = centerMapX + 56f * scale;
         float ssMapY = centerMapY - (-16f - 18f) * scale;
         shapeRenderer.setColor(0.68f, 0.66f, 0.62f, 0.96f);
@@ -2209,7 +1984,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.circle(ssMapX + 4.5f * scale, ssMapY + 3f * scale, 1.2f * scale, 8);
         shapeRenderer.circle(ssMapX, ssMapY - 3f * scale, 1.2f * scale, 8);
 
-        // 11. MAIN GATE (south/bottom-center)
         float mgMapY = centerMapY - (78f - 18f) * scale;
         shapeRenderer.setColor(0.70f, 0.22f, 0.16f, 0.97f);
         shapeRenderer.rect(centerMapX - 4.8f * scale, mgMapY - 1.5f * scale, 9.6f * scale, 3.5f * scale);
@@ -2221,7 +1995,6 @@ public class WhereWindsMeetHUD implements Disposable {
             centerMapX - 2.2f * scale, mgMapY + 1.5f * scale,
             centerMapX + 2.2f * scale, mgMapY + 1.5f * scale);
 
-        // 12. TREE CANOPIES
         float[][] treeMapLocs = {
             {-19.5f, -2f}, {19.5f, -2f},
             {-50f, -28f}, {-62f, -28f}, {50f, -28f}, {62f, -28f},
@@ -2242,7 +2015,6 @@ public class WhereWindsMeetHUD implements Disposable {
             shapeRenderer.circle(centerMapX + t[0] * scale, centerMapY - (t[1] - 18f) * scale, 2.0f * scale, 10);
         }
 
-        // 13. OBJECTIVE & MEMORIAL PINS
         MemorialEntry nextObj = memorials.getNextObjective(player.getPosition());
         for (MemorialEntry entry : memorials.getEntries()) {
             float pointX = centerMapX + entry.position.x * scale;
@@ -2262,7 +2034,6 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        // 14. LIVE PLAYER MARKER
         Vector3 ppos = player.getPosition();
         float pMapX = centerMapX + ppos.x * scale;
         float pMapY = centerMapY - (ppos.z - 18f) * scale;
@@ -2280,7 +2051,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(Color.WHITE);
         shapeRenderer.triangle(tipX, tipY, baseLeftX, baseLeftY, baseRightX, baseRightY);
 
-        // 15. UI PANEL BACKGROUNDS
         float vtX = mx + 20f, vtY = my + 20f, vtW = 270f, vtH = 185f;
         shapeRenderer.setColor(0.04f, 0.06f, 0.08f, 0.93f);
         shapeRenderer.rect(vtX, vtY, vtW, vtH);
@@ -2293,7 +2063,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(0.10f, 0.14f, 0.20f, 0.93f);
         shapeRenderer.rect(cbX, cbY, cbW, cbH);
 
-        // LEGEND ICONS
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(legX + 16f, legY + legH - 48f, 11f, 11f);
         shapeRenderer.setColor(1.0f, 0.85f, 0.25f, 1f);
@@ -2318,9 +2087,6 @@ public class WhereWindsMeetHUD implements Disposable {
 
         shapeRenderer.end();
 
-        // ============================================================
-        // LINE BORDERS PASS
-        // ============================================================
         beginShapes(ShapeType.Line);
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.rect(mx, my, mapW, mapH);
@@ -2341,7 +2107,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(new Color(0.30f, 0.42f, 0.56f, 0.90f));
         shapeRenderer.rect(cbX, cbY, cbW, cbH);
 
-        // Compass Rose
         float crX = mx + 90f, crY = my + mapH - 90f, crR = 52f;
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.circle(crX, crY, crR, 36);
@@ -2354,12 +2119,8 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.line(crX + crR * 0.7f, crY - crR * 0.7f, crX - crR * 0.7f, crY + crR * 0.7f);
         shapeRenderer.end();
 
-        // ============================================================
-        // TEXT PASS
-        // ============================================================
         spriteBatch.begin();
 
-        // Title
         fonts.titleFont.setColor(0f, 0f, 0f, 0.90f);
         fonts.titleFont.draw(spriteBatch, "LEVEL 1: DHAKA UNIVERSITY", centerMapX - 218f + 2f, my + mapH - 18f);
         fonts.titleFont.setColor(goldAccent);
@@ -2367,7 +2128,6 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.setColor(new Color(0.88f, 0.84f, 0.68f, 1f));
         fonts.smallFont.draw(spriteBatch, "Mall Chattar Corridor  \u2022  Curzon Hall Precinct  \u2022  Est. 1921", centerMapX - 240f, my + mapH - 42f);
 
-        // Compass
         fonts.headerFont.setColor(healthRed);
         fonts.headerFont.draw(spriteBatch, "N", crX - 6f, crY + crR + 22f);
         fonts.smallFont.setColor(goldAccent);
@@ -2375,11 +2135,9 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.draw(spriteBatch, "W", crX - crR - 18f, crY + 5f);
         fonts.smallFont.draw(spriteBatch, "E", crX + crR + 6f, crY + 5f);
 
-        // Close button
         fonts.promptFont.setColor(goldAccent);
         fonts.promptFont.draw(spriteBatch, "[M] / [ESC]  Close  X", cbX + 12f, cbY + 23f);
 
-        // Landmark labels
         fonts.smallFont.setColor(Color.WHITE);
         fonts.smallFont.draw(spriteBatch, "Fuller Road Corridor", centerMapX - 60f, centerMapY + 64f * scale);
         fonts.smallFont.draw(spriteBatch, "Curzon Hall", chX - 32f, chY + 2.5f * scale);
@@ -2398,7 +2156,6 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.draw(spriteBatch, "Sculpture Garden", ssMapX - 46f, ssMapY + 10f * scale - 14f);
         fonts.smallFont.draw(spriteBatch, "Main Gate", centerMapX - 28f, mgMapY - 10f);
 
-        // Visual Target Card
         if (textures != null && textures.mapVisualTarget != null) {
             spriteBatch.draw(textures.mapVisualTarget, vtX + 12f, vtY + 38f, vtW - 24f, 110f);
         }
@@ -2407,7 +2164,6 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.setColor(Color.WHITE);
         fonts.smallFont.draw(spriteBatch, "Curzon Hall (Science Faculty)", vtX + 14f, vtY + 24f);
 
-        // Map Legend Card
         fonts.promptFont.setColor(goldAccent);
         fonts.promptFont.draw(spriteBatch, "MAP LEGEND", legX + 16f, legY + legH - 14f);
         fonts.smallFont.setColor(Color.WHITE);
@@ -2424,39 +2180,27 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
-    // ==========================================
-    // CAMPUS MAP (illustrated map image + live markers)
-    // ==========================================
-    // The map art was cleaned of its baked-in UI (title bar, menu button, legend, photo panels,
-    // quest pins). The top 48px title bar was cropped off, so anchors below stay in the original
-    // 843px-tall picture's coordinates and MAP_TOP_CROP is subtracted when converting.
     private static final float MAP_IMG_W = 1264f;
     private static final float MAP_IMG_H = 795f;
     private static final float MAP_TOP_CROP = 48f;
 
-    /**
-     * Landmarks whose in-game position is pinned to a spot on the map illustration:
-     * {worldX, worldZ, imageX, imageY} with the image origin at the top-left.
-     * The illustration is hand-drawn, not to scale, so a plain linear mapping drifts; these
-     * anchors pull the markers onto the right buildings (see {@link #worldToMapImage}).
-     */
     private static final float[][] MAP_ANCHORS = {
-        {0f, 78f, 632f, 745f},      // Main Gate
-        {0f, -32f, 630f, 170f},     // Curzon Hall
-        {0f, -16f, 630f, 262f},     // Curzon Hall central arcade
-        {0f, 6f, 630f, 405f},       // Curzon Hall Pukur
-        {-68f, 22f, 150f, 385f},    // Central Library
-        {68f, 20f, 1105f, 400f},    // Teacher-Student Centre
-        {66f, 20f, 1085f, 410f},    // TSC memorial
-        {-56f, -16f, 255f, 130f},   // Madhur Canteen
-        {-58f, 54f, 190f, 640f},    // Hakim Chattar
-        {-58f, 36f, 200f, 545f},    // Library steps / Hakim memorial
-        {-36f, 26f, 440f, 430f},    // Aparajeyo Bangla statue / Arts Plaza
-        {-42f, 38f, 345f, 375f},    // Book stalls
-        {44f, 42f, 930f, 410f},     // Raju memorial
-        {56f, -16f, 1030f, 150f},   // Swadhinata Sangram garden
-        {-26f, 52f, 400f, 590f},    // West academic building
-        {26f, 52f, 870f, 590f},     // East academic building
+        {0f, 78f, 632f, 745f},
+        {0f, -32f, 630f, 170f},
+        {0f, -16f, 630f, 262f},
+        {0f, 6f, 630f, 405f},
+        {-68f, 22f, 150f, 385f},
+        {68f, 20f, 1105f, 400f},
+        {66f, 20f, 1085f, 410f},
+        {-56f, -16f, 255f, 130f},
+        {-58f, 54f, 190f, 640f},
+        {-58f, 36f, 200f, 545f},
+        {-36f, 26f, 440f, 430f},
+        {-42f, 38f, 345f, 375f},
+        {44f, 42f, 930f, 410f},
+        {56f, -16f, 1030f, 150f},
+        {-26f, 52f, 400f, 590f},
+        {26f, 52f, 870f, 590f},
     };
 
     private final com.badlogic.gdx.graphics.g2d.GlyphLayout glyphs = new com.badlogic.gdx.graphics.g2d.GlyphLayout();
@@ -2476,12 +2220,6 @@ public class WhereWindsMeetHUD implements Disposable {
         }
     }
 
-    /**
-     * Converts a world position to a pixel on the map image. Starts from a linear estimate
-     * (gate at the bottom, north up) and bends it toward the landmark anchors: each anchor's
-     * error is blended in by inverse-distance weight, so a landmark lands exactly on its
-     * building and positions in between are smoothly interpolated.
-     */
     private static void worldToMapImage(float wx, float wz, float[] out) {
         float baseX = 632f + 7.0f * wx;
         float baseY = 745f - 4.85f * (78f - wz);
@@ -2495,7 +2233,7 @@ public class WhereWindsMeetHUD implements Disposable {
                 out[1] = a[3] - MAP_TOP_CROP;
                 return;
             }
-            float weight = 1f / (d2 * (float) Math.sqrt(d2)); // 1 / d^3: landmarks dominate nearby
+            float weight = 1f / (d2 * (float) Math.sqrt(d2));
             corrX += weight * (a[2] - (632f + 7.0f * a[0]));
             corrY += weight * (a[3] - (745f - 4.85f * (78f - a[1])));
             weightSum += weight;
@@ -2512,7 +2250,6 @@ public class WhereWindsMeetHUD implements Disposable {
         float dx = (w - dw) / 2f;
         float dy = (h - dh) / 2f + 8f;
 
-        // Dim the game behind the map
         beginShapes(ShapeType.Filled);
         shapeRenderer.setColor(0f, 0f, 0f, 0.94f);
         shapeRenderer.rect(0, 0, w, h);
@@ -2528,7 +2265,6 @@ public class WhereWindsMeetHUD implements Disposable {
 
         beginShapes(ShapeType.Filled);
 
-        // Memorial pins: secured = green, current objective = pulsing gold diamond, others = gold
         for (MemorialEntry entry : memorials.getEntries()) {
             worldToMapImage(entry.position.x, entry.position.z, pt);
             float px = dx + pt[0] * fit;
@@ -2536,7 +2272,7 @@ public class WhereWindsMeetHUD implements Disposable {
             shapeRenderer.setColor(0f, 0f, 0f, 0.55f);
             shapeRenderer.circle(px, py, 11f, 20);
             if (entry == nextObj) {
-                // Backing plate so the objective label stays readable over light paths
+
                 glyphs.setText(fonts.smallFont, "OBJECTIVE: " + entry.title);
                 shapeRenderer.setColor(0.03f, 0.05f, 0.08f, 0.82f);
                 shapeRenderer.rect(px - 86f, py + 17f, glyphs.width + 12f, 24f);
@@ -2556,7 +2292,6 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        // Live player marker
         Vector3 ppos = player.getPosition();
         worldToMapImage(ppos.x, ppos.z, pt);
         float pMapX = dx + pt[0] * fit;
@@ -2585,7 +2320,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.rect(dx, dy, dw, dh);
         shapeRenderer.end();
 
-        // Labels: objective name above its pin, "YOU" beside the player, close hint underneath
         spriteBatch.begin();
         if (nextObj != null) {
             worldToMapImage(nextObj.position.x, nextObj.position.z, pt);
@@ -2605,12 +2339,6 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
-    // ==========================================
-    // PAUSE MENU
-    // ==========================================
-    // ==========================================
-    // PAUSE MENU & EXIT CONFIRMATION
-    // ==========================================
     private void renderPauseMenu(float w, float h) {
         beginShapes(ShapeType.Filled);
         shapeRenderer.setColor(0f, 0f, 0f, 0.82f);
@@ -2621,19 +2349,15 @@ public class WhereWindsMeetHUD implements Disposable {
         float px = (w - pw) / 2f;
         float py = (h - ph) / 2f;
 
-        // Smoked obsidian glass backing
         fillGlassPanel(px, py, pw, ph);
 
-        // Radiant Gold Top Accent
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(px, py + ph - 4f, pw, 4f);
 
-        // Vertical Divider between Menu options and Codex
         float dividerX = px + 390f;
         shapeRenderer.setColor(goldDark.r, goldDark.g, goldDark.b, 0.40f);
         shapeRenderer.rect(dividerX, py + 24f, 1.5f, ph - 48f);
 
-        // Interactive button fills in Left Column
         float btnX = px + 28f;
         float btnW = dividerX - px - 46f;
         float btnH = 38f;
@@ -2655,7 +2379,6 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        // Rule of July Highlight Box at bottom of right column
         float ruleX = dividerX + 24f;
         float ruleY = py + 24f;
         float ruleW = pw - (dividerX - px) - 48f;
@@ -2669,7 +2392,6 @@ public class WhereWindsMeetHUD implements Disposable {
         beginShapes(ShapeType.Line);
         strokeGlassBorder(px, py, pw, ph);
 
-        // Button borders and corner brackets
         for (int i = 0; i < PAUSE_ITEM_COUNT; i++) {
             float by = startY - i * spacingY;
             if (pauseMenuSelection == i && !isExitConfirmOpen) {
@@ -2679,7 +2401,7 @@ public class WhereWindsMeetHUD implements Disposable {
                     shapeRenderer.setColor(goldAccent);
                 }
                 shapeRenderer.rect(btnX, by, btnW, btnH);
-                // Corner brackets
+
                 float cb = 8f;
                 shapeRenderer.line(btnX - 2f, by + btnH + 2f, btnX - 2f + cb, by + btnH + 2f);
                 shapeRenderer.line(btnX - 2f, by + btnH + 2f, btnX - 2f, by + btnH + 2f - cb);
@@ -2695,11 +2417,9 @@ public class WhereWindsMeetHUD implements Disposable {
             }
         }
 
-        // Border around Rule box
         shapeRenderer.setColor(0.92f, 0.55f, 0.22f, 0.80f);
         shapeRenderer.rect(ruleX, ruleY, ruleW, ruleH);
 
-        // Decorative corner brackets on main pause panel
         float cb = 16f;
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.line(px - 4f, py + ph + 4f, px - 4f + cb, py + ph + 4f);
@@ -2713,14 +2433,13 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.end();
 
         spriteBatch.begin();
-        // Left Column: Menu Header
+
         fonts.titleFont.setColor(goldAccent);
         fonts.titleFont.draw(spriteBatch, "GAME PAUSED", px + 36f, py + ph - 22f);
 
         fonts.smallFont.setColor(goldMuted);
         fonts.smallFont.draw(spriteBatch, "2x12: Spark • Birth of 36 July", px + 38f, py + ph - 50f);
 
-        // Menu items labels
         String tmName;
         int tmMode = bd.spark36.render.RenderPipelineConfig.toneMappingMode;
         if (tmMode == 1) tmName = "ACES FILMIC";
@@ -2752,14 +2471,12 @@ public class WhereWindsMeetHUD implements Disposable {
             fonts.headerFont.draw(spriteBatch, itemShortcuts[i] + "  " + itemLabels[i], btnX + 16f, by + btnH / 2f + 8f);
         }
 
-        // Hints underneath buttons
         fonts.smallFont.setColor(new Color(0.70f, 0.68f, 0.64f, 0.85f));
         fonts.smallFont.draw(spriteBatch, "[M] Map  •  In game: [P] Parameters, [G] Gender", btnX, py + 56f);
 
         fonts.smallFont.setColor(new Color(0.55f, 0.52f, 0.50f, 0.80f));
         fonts.smallFont.draw(spriteBatch, "Dhaka University Campus • July 2024", btnX, py + 34f);
 
-        // Right Column: Martial Arts & Controls Codex
         fonts.headerFont.setColor(goldAccent);
         fonts.headerFont.draw(spriteBatch, "SELF-DEFENSE & CONTROLS CODEX", dividerX + 26f, py + ph - 24f);
 
@@ -2787,40 +2504,32 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.smallFont.setColor(new Color(1.0f, 0.82f, 0.35f, 1f));
         fonts.smallFont.draw(spriteBatch, "Defensive self-protection only. FICTIONAL GAMEPLAY. Knockouts optional.", dividerX + 26f, py + ph - 386f);
 
-        // Rule of July Text
         fonts.smallFont.setColor(new Color(1.0f, 0.82f, 0.35f, 1f));
         fonts.smallFont.draw(spriteBatch, "CAMPUS RULE OF JULY:", ruleX + 16f, ruleY + ruleH - 14f);
         fonts.smallFont.setColor(new Color(0.95f, 0.92f, 0.88f, 0.90f));
         fonts.smallFont.draw(spriteBatch, "Striking unarmed, innocent students results in instant disqualification.", ruleX + 16f, ruleY + ruleH - 34f);
         spriteBatch.end();
 
-        // Exit Confirmation Dialog Overlay (if active)
         if (isExitConfirmOpen) {
             renderExitConfirmationDialog(w, h);
         }
     }
 
-    /**
-     * Renders the modal Exit Confirmation Dialog on top of the pause menu.
-     */
     private void renderExitConfirmationDialog(float w, float h) {
         float cw = 640f;
         float ch = 280f;
         float cx = (w - cw) / 2f;
         float cy = (h - ch) / 2f;
 
-        // Dark dimming backdrop
         beginShapes(ShapeType.Filled);
         shapeRenderer.setColor(0f, 0f, 0f, 0.85f);
         shapeRenderer.rect(0, 0, w, h);
 
         fillGlassPanel(cx, cy, cw, ch);
 
-        // Top accent bar (Crimson alert)
         shapeRenderer.setColor(0.92f, 0.35f, 0.28f, 1f);
         shapeRenderer.rect(cx, cy + ch - 4f, cw, 4f);
 
-        // Buttons filled background
         float btnY = cy + 34f;
         float btnH = 48f;
         float b0X = cx + 45f, b0W = 250f;
@@ -2842,14 +2551,12 @@ public class WhereWindsMeetHUD implements Disposable {
         beginShapes(ShapeType.Line);
         strokeGlassBorder(cx, cy, cw, ch);
 
-        // Button borders & corner brackets
         shapeRenderer.setColor(exitConfirmSelection == 0 ? goldAccent : new Color(goldDark.r, goldDark.g, goldDark.b, 0.5f));
         shapeRenderer.rect(b0X, btnY, b0W, btnH);
 
         shapeRenderer.setColor(exitConfirmSelection == 1 ? new Color(0.98f, 0.42f, 0.36f, 1f) : new Color(0.70f, 0.30f, 0.25f, 0.5f));
         shapeRenderer.rect(b1X, btnY, b1W, btnH);
 
-        // Corner brackets on selected button
         float cb = 10f;
         float selX = (exitConfirmSelection == 0) ? b0X : b1X;
         float selW = (exitConfirmSelection == 0) ? b0W : b1W;
@@ -2864,7 +2571,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.line(selX + selW + 2f, btnY - 2f, selX + selW + 2f - cb, btnY - 2f);
         shapeRenderer.line(selX + selW + 2f, btnY - 2f, selX + selW + 2f, btnY - 2f + cb);
 
-        // Dialog outer corner brackets
         float dcb = 14f;
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.line(cx - 3f, cy + ch + 3f, cx - 3f + dcb, cy + ch + 3f);
@@ -2878,12 +2584,11 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.end();
 
         spriteBatch.begin();
-        // Title: EXIT GAME?
+
         fonts.titleFont.setColor(new Color(0.98f, 0.42f, 0.36f, 1f));
         glyphLayout.setText(fonts.titleFont, "EXIT GAME?");
         fonts.titleFont.draw(spriteBatch, "EXIT GAME?", cx + (cw - glyphLayout.width) / 2f, cy + ch - 26f);
 
-        // Warning text
         fonts.bodyFont.setColor(new Color(0.90f, 0.88f, 0.84f, 1f));
         String msg1 = "Are you sure you want to quit to desktop?";
         glyphLayout.setText(fonts.bodyFont, msg1);
@@ -2894,13 +2599,11 @@ public class WhereWindsMeetHUD implements Disposable {
         glyphLayout.setText(fonts.smallFont, msg2);
         fonts.smallFont.draw(spriteBatch, msg2, cx + (cw - glyphLayout.width) / 2f, cy + ch - 110f);
 
-        // Button 0: Cancel
         fonts.headerFont.setColor(exitConfirmSelection == 0 ? goldAccent : new Color(0.85f, 0.82f, 0.78f, 0.95f));
         String cancelLabel = "[ESC] CANCEL";
         glyphLayout.setText(fonts.headerFont, cancelLabel);
         fonts.headerFont.draw(spriteBatch, cancelLabel, b0X + (b0W - glyphLayout.width) / 2f, btnY + btnH / 2f + 8f);
 
-        // Button 1: Quit
         fonts.headerFont.setColor(exitConfirmSelection == 1 ? new Color(1.0f, 0.45f, 0.40f, 1f) : new Color(0.90f, 0.45f, 0.40f, 0.85f));
         String quitLabel = "[ENTER] QUIT GAME";
         glyphLayout.setText(fonts.headerFont, quitLabel);
@@ -2909,9 +2612,6 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
-    /**
-     * Renders full on-screen Controls & Martial Arts Codex Overlay.
-     */
     private void renderHelpControlsScreen(float w, float h) {
         float hw = Math.min(1080f, w - 80f);
         float hh = Math.min(620f, h - 60f);
@@ -2924,16 +2624,13 @@ public class WhereWindsMeetHUD implements Disposable {
 
         fillGlassPanel(hx, hy, hw, hh);
 
-        // Radiant Gold Top Accent
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(hx, hy + hh - 4f, hw, 4f);
 
-        // Vertical divider between Locomotion and Combat
         float midX = hx + hw * 0.50f;
         shapeRenderer.setColor(goldDark.r, goldDark.g, goldDark.b, 0.35f);
         shapeRenderer.rect(midX, hy + 70f, 1.5f, hh - 140f);
 
-        // Close button background
         float closeBtnX = hx + hw - 170f;
         float closeBtnY = hy + 20f;
         float closeBtnW = 140f;
@@ -2948,7 +2645,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(closeBtnX, closeBtnY, closeBtnW, closeBtnH);
 
-        // Corner brackets on outer panel
         float cb = 16f;
         shapeRenderer.line(hx - 4f, hy + hh + 4f, hx - 4f + cb, hy + hh + 4f);
         shapeRenderer.line(hx - 4f, hy + hh + 4f, hx - 4f, hy + hh + 4f - cb);
@@ -2961,14 +2657,13 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.end();
 
         spriteBatch.begin();
-        // Title & Subtitle
+
         fonts.titleFont.setColor(goldAccent);
         fonts.titleFont.draw(spriteBatch, "CONTROLS & HISTORICAL FIELD CODEX", hx + 36f, hy + hh - 24f);
 
         fonts.smallFont.setColor(goldMuted);
         fonts.smallFont.draw(spriteBatch, "Spark: Birth of 36 July • University of Dhaka Campus", hx + 38f, hy + hh - 52f);
 
-        // Left Column: Movement & Campus Exploration
         fonts.headerFont.setColor(goldAccent);
         fonts.headerFont.draw(spriteBatch, "LOCOMOTION & ATHLETICS", hx + 36f, hy + hh - 86f);
 
@@ -2989,7 +2684,6 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.bodyFont.draw(spriteBatch, "• G : Switch Gender (Toggle Male / Female Student)", leftX, lineY); lineY -= stepY;
         fonts.bodyFont.draw(spriteBatch, "• H / F1 : Toggle this Controls Codex anytime", leftX, lineY);
 
-        // Right Column: Martial Arts Defense & Combat
         fonts.headerFont.setColor(goldAccent);
         fonts.headerFont.draw(spriteBatch, "DEFENSIVE SELF-PROTECTION", midX + 24f, hy + hh - 86f);
 
@@ -3013,7 +2707,6 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.bodyFont.draw(spriteBatch, "• Combat is defensive self-protection (FICTIONAL GAMEPLAY).", rightX, rLineY); rLineY -= stepY;
         fonts.bodyFont.draw(spriteBatch, "• Knockouts are optional, never required to finish a chapter.", rightX, rLineY);
 
-        // Bottom Bar info and Close Button
         fonts.smallFont.setColor(goldMuted);
         fonts.smallFont.draw(spriteBatch, "Press [ESC] or [H] to return to game", hx + 40f, hy + 42f);
 
@@ -3023,15 +2716,9 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
-    // ==========================================
-    // TOAST NOTIFICATION: MISSION COMPLETE BANNER
-    // ==========================================
-    // TOAST NOTIFICATION: MISSION COMPLETE BANNER
-    // ==========================================
     private void renderMissionCompleteBanner(float w, float h) {
         if (missionBannerTime <= 0f) return;
 
-        // Smooth alpha fade: 0.8s fade in, 0.8s fade out
         float alpha = 1f;
         if (missionBannerTime > 5.2f) {
             alpha = (6.0f - missionBannerTime) / 0.8f;
@@ -3045,16 +2732,13 @@ public class WhereWindsMeetHUD implements Disposable {
         float bx = (w - bw) / 2f;
         float by = h - 105f;
 
-        // Transparent glass background (zero dark block!)
         beginShapes(ShapeType.Filled);
         shapeRenderer.setColor(0.01f, 0.02f, 0.04f, 0.20f * alpha);
         shapeRenderer.rect(bx, by, bw, bh);
 
-        // Gold top accent
         shapeRenderer.setColor(1.0f, 0.85f, 0.40f, 0.95f * alpha);
         shapeRenderer.rect(bx, by + bh - 3f, bw, 3f);
 
-        // Gold diamond icon on left
         float dx = bx + 28f;
         float dy = by + bh / 2f;
         float ds = 8f;
@@ -3062,13 +2746,11 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.triangle(dx, dy + ds, dx - ds, dy, dx, dy - ds);
         shapeRenderer.end();
 
-        // Border
         beginShapes(ShapeType.Line);
         shapeRenderer.setColor(0.92f, 0.76f, 0.32f, 0.90f * alpha);
         shapeRenderer.rect(bx, by, bw, bh);
         shapeRenderer.end();
 
-        // Text with drop shadows
         spriteBatch.begin();
         fonts.titleFont.setColor(0f, 0f, 0f, 0.85f * alpha);
         fonts.titleFont.draw(spriteBatch, "* MISSION COMPLETE! *", bx + 50f + 2f, by + bh - 16f);
@@ -3083,13 +2765,9 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
-    // ==========================================
-    // CELEBRATORY TOAST: CONGRATULATIONS POPUP
-    // ==========================================
     private void renderCongratulationsPopup(float w, float h) {
         if (congratulationsPopupTimer <= 0f) return;
 
-        // Fade in (first 0.35s) and fade out (last 0.45s)
         float alpha = 1f;
         float elapsed = 3.2f - congratulationsPopupTimer;
         if (elapsed < 0.35f) {
@@ -3104,20 +2782,16 @@ public class WhereWindsMeetHUD implements Disposable {
         float px = (w - pw) / 2f;
         float py = h - 114f;
 
-        // Frosted translucent dark backing with soft gold tint
         beginShapes(ShapeType.Filled);
         shapeRenderer.setColor(0.02f, 0.04f, 0.08f, 0.92f * alpha);
         shapeRenderer.rect(px, py, pw, ph);
 
-        // Warm gold header banner stripe
         shapeRenderer.setColor(0.24f, 0.18f, 0.06f, 0.92f * alpha);
         shapeRenderer.rect(px, py + ph - 28f, pw, 28f);
 
-        // Gold top accent line
         shapeRenderer.setColor(1.0f, 0.86f, 0.38f, 0.98f * alpha);
         shapeRenderer.rect(px, py + ph - 3f, pw, 3f);
 
-        // Side diamond accents
         float leftDiaX = px + 28f;
         float rightDiaX = px + pw - 28f;
         float diaY = py + ph / 2f;
@@ -3128,14 +2802,12 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.triangle(rightDiaX, diaY + ds, rightDiaX - ds, diaY, rightDiaX, diaY - ds);
         shapeRenderer.end();
 
-        // Elegant double borders
         beginShapes(ShapeType.Line);
         shapeRenderer.setColor(0.92f, 0.78f, 0.34f, 0.92f * alpha);
         shapeRenderer.rect(px, py, pw, ph);
         shapeRenderer.setColor(0.60f, 0.50f, 0.20f, 0.50f * alpha);
         shapeRenderer.rect(px + 4f, py + 4f, pw - 8f, ph - 8f);
 
-        // Corner filigree brackets
         float cLen = 14f;
         shapeRenderer.setColor(1.0f, 0.88f, 0.40f, alpha);
         shapeRenderer.line(px - 2f, py + ph + 2f, px + cLen, py + ph + 2f);
@@ -3148,9 +2820,8 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.line(px + pw + 2f, py - 2f, px + pw + 2f, py + cLen);
         shapeRenderer.end();
 
-        // Typography
         spriteBatch.begin();
-        // Title
+
         String titleStr = "* CONGRATULATIONS! LEVEL 1 COMPLETE *";
         glyphLayout.setText(fonts.titleFont, titleStr);
         float titleX = px + (pw - glyphLayout.width) / 2f;
@@ -3159,7 +2830,6 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.titleFont.setColor(1.0f, 0.88f, 0.38f, alpha);
         fonts.titleFont.draw(spriteBatch, titleStr, titleX, py + ph - 5f);
 
-        // Subtitle
         String subStr = "Campus Safe: The Attacker Has Been Held Back!";
         glyphLayout.setText(fonts.headerFont, subStr);
         float subX = px + (pw - glyphLayout.width) / 2f;
@@ -3168,7 +2838,6 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.headerFont.setColor(1f, 1f, 1f, 0.95f * alpha);
         fonts.headerFont.draw(spriteBatch, subStr, subX, py + 42f);
 
-        // Status Prompt
         String promptStr = "Preparing Final Mission Debrief... [ENTER / CLICK to Proceed]";
         glyphLayout.setText(fonts.smallFont, promptStr);
         float promptX = px + (pw - glyphLayout.width) / 2f;
@@ -3178,9 +2847,6 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
-    // ==========================================
-    // 4b. BOSS HEALTH BAR & COMBAT HUD
-    // ==========================================
     private void renderBossHealthBar(bd.spark36.character.HelmetGoon goon, float w, float h) {
         float bw = currentLayout.bossW;
         float bh = 16f;
@@ -3188,14 +2854,12 @@ public class WhereWindsMeetHUD implements Disposable {
         float by = currentLayout.bossY + 18f;
 
         beginShapes(ShapeType.Filled);
-        // Smoked glass panel behind boss bar (accommodates health and posture poise bars)
+
         fillGlassPanel(bx - 14f, by - 34f, bw + 28f, bh + 54f);
 
-        // Health Bar Track
         shapeRenderer.setColor(0.18f, 0.08f, 0.08f, 0.88f);
         shapeRenderer.rect(bx, by, bw, bh);
 
-        // Boss Health Fill
         float pct = MathUtils.clamp(goon.getHealth() / goon.getMaxHealth(), 0f, 1f);
         float fillW = bw * pct;
         if (fillW > 0f) {
@@ -3203,12 +2867,10 @@ public class WhereWindsMeetHUD implements Disposable {
             shapeRenderer.setColor(barCol);
             shapeRenderer.rect(bx, by, fillW, bh);
 
-            // Glowing highlight line at top of fill
             shapeRenderer.setColor(1.0f, 0.65f, 0.35f, 0.40f);
             shapeRenderer.rect(bx, by + bh - 3f, fillW, 3f);
         }
 
-        // Boss Posture / Poise Meter (Technical Martial Arts Poise Bar)
         float py = by - 8f;
         float ph = 6f;
         shapeRenderer.setColor(0.14f, 0.10f, 0.06f, 0.90f);
@@ -3224,7 +2886,6 @@ public class WhereWindsMeetHUD implements Disposable {
             shapeRenderer.rect(bx, py, poiseW, ph);
         }
 
-        // Diamond crest at top center
         shapeRenderer.setColor(goldAccent);
         float cdX = bx + bw / 2f;
         float cdY = by + bh + 14f;
@@ -3237,7 +2898,6 @@ public class WhereWindsMeetHUD implements Disposable {
         strokeGlassBorder(bx, by, bw, bh);
         strokeGlassBorder(bx, py, bw, ph);
 
-        // Corner teeth
         shapeRenderer.setColor(goldAccent);
         float cL = 8f;
         shapeRenderer.line(bx - 3f, by + bh + 3f, bx + cL, by + bh + 3f);
@@ -3294,7 +2954,6 @@ public class WhereWindsMeetHUD implements Disposable {
         float bengaliX = Math.max(dx + 265f, dx + 34f + glyphLayout.width);
         fonts.headerFont.draw(spriteBatch, diag.getSpeaker() + " :", dx + 18f, dy + dh - 16f);
 
-        // Authentic Bengali threat subtitle
         if (bd.spark36.app.DialoguePrefs.showBengaliLine()) {
             bFont.setColor(Color.WHITE);
             bFont.draw(spriteBatch, "\"" + diag.getTextBengali() + "\"", bengaliX, dy + dh - 16f);
@@ -3316,7 +2975,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         beginShapes(ShapeType.Filled);
         fillGlassPanel(dx, dy, dw, dh);
-        shapeRenderer.setColor(0.32f, 0.85f, 0.52f, 0.90f); // Emerald top stripe for student dialogue
+        shapeRenderer.setColor(0.32f, 0.85f, 0.52f, 0.90f);
         shapeRenderer.rect(dx, dy + dh - 3f, dw, 3f);
         shapeRenderer.end();
 
@@ -3332,7 +2991,6 @@ public class WhereWindsMeetHUD implements Disposable {
         float bengaliX = Math.max(dx + 285f, dx + 34f + glyphLayout.width);
         fonts.headerFont.draw(spriteBatch, diag.getSpeaker() + " :", dx + 18f, dy + dh - 16f);
 
-        // Authentic Bengali student voice (language / subtitle settings pick which lines show)
         if (bd.spark36.app.DialoguePrefs.showBengaliLine()) {
             bFont.setColor(Color.WHITE);
             bFont.draw(spriteBatch, "\"" + diag.getTextBengali() + "\"", bengaliX, dy + dh - 16f);
@@ -3344,7 +3002,6 @@ public class WhereWindsMeetHUD implements Disposable {
         }
         bd.spark36.hud.screens.DialogueText.end();
 
-        // Advance prompt if sequence is active (placed in bottom-right corner as a distinct key badge)
         if (dialogueManager.isDialogueActive()) {
             int cur = dialogueManager.getCurrentLineIndex() + 1;
             int tot = dialogueManager.getTotalLines();
@@ -3383,16 +3040,13 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
-    // ==========================================
-    // DISQUALIFICATION OVERLAY (Campus Peace Rule)
-    // ==========================================
     private void renderDisqualificationScreen(float w, float h) {
         float[] vMouse = GameInput.getVirtualMousePos(w, h);
         float mouseX = vMouse[0];
         float mouseY = vMouse[1];
 
         beginShapes(ShapeType.Filled);
-        // Dim screen background with dark crimson tint
+
         shapeRenderer.setColor(0.12f, 0.02f, 0.02f, 0.82f);
         shapeRenderer.rect(0, 0, w, h);
 
@@ -3401,19 +3055,15 @@ public class WhereWindsMeetHUD implements Disposable {
         float dx = (w - dw) / 2f;
         float dy = (h - dh) / 2f;
 
-        // Smoked glass panel
         shapeRenderer.setColor(0.05f, 0.02f, 0.03f, 0.92f);
         shapeRenderer.rect(dx, dy, dw, dh);
 
-        // Header band in danger red
         shapeRenderer.setColor(0.35f, 0.06f, 0.08f, 0.92f);
         shapeRenderer.rect(dx, dy + dh - 70f, dw, 70f);
 
-        // Top crimson accent line
         shapeRenderer.setColor(1.0f, 0.25f, 0.20f, 1f);
         shapeRenderer.rect(dx, dy + dh - 4f, dw, 4f);
 
-        // Sub-box for rule explanation
         float sx = dx + 35f;
         float sy = dy + 110f;
         float sw = dw - 70f;
@@ -3421,21 +3071,19 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(0.10f, 0.04f, 0.05f, 0.85f);
         shapeRenderer.rect(sx, sy, sw, sh);
 
-        // Buttons
         float btnY = dy + 35f;
         float btnH = 46f;
-        // Button 1: Retry
+
         float b1X = dx + 85f, b1W = 260f;
         boolean b1Hover = (mouseX >= b1X && mouseX <= b1X + b1W && mouseY >= btnY && mouseY <= btnY + btnH);
         shapeRenderer.setColor(b1Hover ? new Color(0.45f, 0.15f, 0.15f, 0.90f) : new Color(0.20f, 0.06f, 0.08f, 0.85f));
         shapeRenderer.rect(b1X, btnY, b1W, btnH);
 
-        // Button 2: Main Menu
         float b2X = dx + 455f, b2W = 260f;
         boolean b2Hover = (mouseX >= b2X && mouseX <= b2X + b2W && mouseY >= btnY && mouseY <= btnY + btnH);
         if (Gdx.input.isButtonJustPressed(com.badlogic.gdx.Input.Buttons.LEFT)) {
-            if (b1Hover) exitAction = 3; // Retry
-            else if (b2Hover) exitAction = 1; // Main Menu
+            if (b1Hover) exitAction = 3;
+            else if (b2Hover) exitAction = 1;
         }
         shapeRenderer.setColor(b2Hover ? new Color(0.35f, 0.25f, 0.10f, 0.90f) : new Color(0.15f, 0.10f, 0.06f, 0.85f));
         shapeRenderer.rect(b2X, btnY, b2W, btnH);
@@ -3483,9 +3131,6 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
-    // ==========================================
-    // DEFEAT OVERLAY (Player Knocked Out)
-    // ==========================================
     private void renderDefeatScreen(float w, float h) {
         float[] vMouse = GameInput.getVirtualMousePos(w, h);
         float mouseX = vMouse[0];
@@ -3566,15 +3211,11 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
-    // ==========================================
-    // GRAND LEVEL 1 VICTORY & CINEMATIC FINISH SCREEN
-    // ==========================================
     private void renderVictoryScreen(float w, float h) {
         float[] vMouse = GameInput.getVirtualMousePos(w, h);
         float mouseX = vMouse[0];
         float mouseY = vMouse[1];
 
-        // 1. Cinematic Background Artwork / Wallpaper (matching user reference image)
         com.badlogic.gdx.graphics.Texture bgTex = getCinematicFinishTexture();
         if (bgTex != null) {
             beginShapes(ShapeType.Filled);
@@ -3601,19 +3242,15 @@ public class WhereWindsMeetHUD implements Disposable {
         float vx = (w - vw) / 2f;
         float vy = (h - vh) / 2f;
 
-        // Elegant glassmorphic panel (translucent frosted dark slate)
         shapeRenderer.setColor(0.04f, 0.07f, 0.12f, 0.82f);
         shapeRenderer.rect(vx, vy, vw, vh);
 
-        // Header band
         shapeRenderer.setColor(0.06f, 0.09f, 0.14f, 0.88f);
         shapeRenderer.rect(vx, vy + vh - 75f, vw, 75f);
 
-        // Gold top accent
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.rect(vx, vy + vh - 4f, vw, 4f);
 
-        // Narrative box
         float nx = vx + 35f;
         float ny = vy + 265f;
         float nw = vw - 70f;
@@ -3621,7 +3258,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(0.05f, 0.07f, 0.10f, 0.75f);
         shapeRenderer.rect(nx, ny, nw, nh);
 
-        // Statistics sub-card
         float sx = vx + 35f;
         float sy = vy + 124f;
         float sw = vw - 70f;
@@ -3629,29 +3265,25 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(0.06f, 0.09f, 0.12f, 0.85f);
         shapeRenderer.rect(sx, sy, sw, sh);
 
-        // Interactive Button Backgrounds (Hoverable)
         float btnY = vy + 38f;
         float btnH = 46f;
-        // Button 1: Menu
+
         float b1X = vx + 45f, b1W = 230f;
         boolean b1Hover = (mouseX >= b1X && mouseX <= b1X + b1W && mouseY >= btnY && mouseY <= btnY + btnH);
         shapeRenderer.setColor(b1Hover ? new Color(0.35f, 0.28f, 0.12f, 0.95f) : new Color(0.12f, 0.14f, 0.18f, 0.85f));
         shapeRenderer.rect(b1X, btnY, b1W, btnH);
 
-        // Button 2: Replay
         float b2X = vx + 315f, b2W = 230f;
         boolean b2Hover = (mouseX >= b2X && mouseX <= b2X + b2W && mouseY >= btnY && mouseY <= btnY + btnH);
         shapeRenderer.setColor(b2Hover ? new Color(0.20f, 0.35f, 0.25f, 0.95f) : new Color(0.12f, 0.14f, 0.18f, 0.85f));
         shapeRenderer.rect(b2X, btnY, b2W, btnH);
 
-        // Button 3: Exit
         float b3X = vx + 585f, b3W = 230f;
         boolean b3Hover = (mouseX >= b3X && mouseX <= b3X + b3W && mouseY >= btnY && mouseY <= btnY + btnH);
         shapeRenderer.setColor(b3Hover ? new Color(0.38f, 0.15f, 0.15f, 0.95f) : new Color(0.12f, 0.14f, 0.18f, 0.85f));
         shapeRenderer.rect(b3X, btnY, b3W, btnH);
         shapeRenderer.end();
 
-        // Lines and Borders
         beginShapes(ShapeType.Line);
         shapeRenderer.setColor(goldBorder);
         shapeRenderer.rect(vx, vy, vw, vh);
@@ -3668,7 +3300,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(b3Hover ? Color.RED : goldBorder);
         shapeRenderer.rect(b3X, btnY, b3W, btnH);
 
-        // Ornate Corner Brackets (⌜ ⌝ ⌞ ⌟)
         float cLen = 22f;
         shapeRenderer.setColor(goldAccent);
         shapeRenderer.line(vx - 4f, vy + vh + 4f, vx + cLen, vy + vh + 4f);
@@ -3681,7 +3312,6 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.line(vx + vw + 4f, vy - 4f, vx + vw + 4f, vy + cLen);
         shapeRenderer.end();
 
-        // Typography
         spriteBatch.begin();
         int lvlNum = (activeLevel != null) ? activeLevel.getLevelNumber() : 1;
         String levelTitle = (activeLevel != null) ? activeLevel.getTitle() : "THE SPARK OF SOLIDARITY";
@@ -3702,7 +3332,6 @@ public class WhereWindsMeetHUD implements Disposable {
         float subHeaderX = vx + (vw - glyphLayout.width) / 2f;
         fonts.headerFont.draw(spriteBatch, subHeader, subHeaderX, vy + vh - 48f);
 
-        // Historical Tribute Narrative
         fonts.bodyFont.setColor(Color.WHITE);
         String victoryNarrative;
         String narrativeSecondPara;
@@ -3740,7 +3369,6 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.bodyFont.setColor(new Color(0.88f, 0.88f, 0.92f, 1f));
         fonts.bodyFont.draw(spriteBatch, narrativeSecondPara, nx + 18f, ny + nh - 65f, nw - 36f, 10, true);
 
-        // Statistics Card
         fonts.headerFont.setColor(goldAccent);
         fonts.headerFont.draw(spriteBatch, "MISSION PERFORMANCE & STATISTICS", sx + 20f, sy + sh - 15f);
 
@@ -3760,7 +3388,6 @@ public class WhereWindsMeetHUD implements Disposable {
         String rankStr = (lvlNum == 6) ? "RANK S+ -- LIBERATOR OF 36 JULY" : "RANK S -- HERO OF 36 JULY";
         fonts.headerFont.draw(spriteBatch, rankStr, sx + sw - 290f, sy + 58f);
 
-        // Chapter unlock & auto-advance notice
         if (lvlNum < 6) {
             fonts.promptFont.setColor(new Color(0.35f, 1.0f, 0.45f, 1f));
             String unlockBanner = "*** CHAPTER " + (lvlNum + 1) + " UNLOCKED! ***";
@@ -3783,7 +3410,6 @@ public class WhereWindsMeetHUD implements Disposable {
             fonts.smallFont.draw(spriteBatch, advanceNotice, vx + (vw - glyphLayout.width) / 2f, vy + 97f);
         }
 
-        // Interactive action prompts
         fonts.promptFont.setColor(b1Hover ? Color.WHITE : goldAccent);
         fonts.promptFont.draw(spriteBatch, "[M] Main Menu", b1X + 45f, btnY + 30f);
 
@@ -3797,13 +3423,11 @@ public class WhereWindsMeetHUD implements Disposable {
         spriteBatch.end();
     }
 
-    /** Trigger celebratory toast directly (used for automated visual verification) */
     public void triggerCongratulationsToastForTest() {
         congratulationsPopupActive = true;
         congratulationsPopupTimer = 3.0f;
     }
 
-    /** Trigger victory screen directly (used for automated visual verification) */
     public void triggerVictoryForTest() {
         isVictoryOpen = true;
         victoryShown = true;
@@ -3812,22 +3436,18 @@ public class WhereWindsMeetHUD implements Disposable {
         bd.spark36.level.LevelConfig.unlockNextLevel(currentLvl);
     }
 
-    /** T4: Credits & Sources overlay (Level 6 epilogue objective). */
     public void openCredits(String fromLabel) { creditsScreen.open(fromLabel); }
 
-    /** Open memorial modal directly (used for automated visual verification) */
     public void openMemorialModal(MemorialEntry entry) {
         this.activeModalEntry = entry;
     }
 
-    /** Open pause menu directly (used for automated visual verification) */
     public void openPauseMenuForTest() {
         this.isPauseMenuOpen = true;
         this.isExitConfirmOpen = false;
         this.pauseMenuSelection = 0;
     }
 
-    /** Open exit confirmation dialog directly (used for automated visual verification) */
     public void openExitConfirmForTest() {
         this.isPauseMenuOpen = true;
         this.isExitConfirmOpen = true;
@@ -3870,7 +3490,6 @@ public class WhereWindsMeetHUD implements Disposable {
         return creditsScreen.isOpen() || activeModalEntry != null || isMapOpen || isPauseMenuOpen || isExitConfirmOpen || isVictoryOpen || isDisqualified || isDefeated || isHelpControlsOpen;
     }
 
-    /** Reset HUD state (used when returning from main menu or replaying) */
     public void reset() {
         activeModalEntry = null;
         isMapOpen = false;
@@ -3878,7 +3497,7 @@ public class WhereWindsMeetHUD implements Disposable {
         isHelpControlsOpen = false;
         isExitConfirmOpen = false;
         settingsScreen.close();
-        creditsScreen.close(); // T4
+        creditsScreen.close();
         pauseMenuSelection = 0;
         exitConfirmSelection = 0;
         isVictoryOpen = false;
@@ -3912,11 +3531,6 @@ public class WhereWindsMeetHUD implements Disposable {
         fonts.keyFont.draw(spriteBatch, "[P] SHOW MISSION PARAMETERS", bx, by + 20f);
     }
 
-    /**
-     * Diagnostic debug overlay (toggle via F3 or Grave `):
-     * Draws safe margins in cyan, panel bounding boxes in green (or red on collision),
-     * and performs real-time collision detection across all active HUD panels.
-     */
     private void drawDebugOverlay(HUDLayout l, float w, float h) {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -3924,11 +3538,9 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
         shapeRenderer.begin(ShapeType.Line);
 
-        // 1. Safe Margin Boundary (Cyan)
         shapeRenderer.setColor(0f, 0.9f, 1f, 0.85f);
         shapeRenderer.rect(l.safeMarginX, l.safeMarginY, l.virtW - 2f * l.safeMarginX, l.virtH - 2f * l.safeMarginY);
 
-        // 2. Active Panel Rectangles
         com.badlogic.gdx.math.Rectangle rCard = new com.badlogic.gdx.math.Rectangle(l.cardX, l.cardY, l.cardW, l.cardH);
         com.badlogic.gdx.math.Rectangle rCheck = parametersVisible ? new com.badlogic.gdx.math.Rectangle(l.checkX, l.checkY, l.checkW, l.checkH) : null;
         com.badlogic.gdx.math.Rectangle rCompass = new com.badlogic.gdx.math.Rectangle(l.pillX, l.compassCy - l.compassR - 10f, l.virtW - l.safeMarginX - l.pillX, 2f * l.compassR + 20f);
@@ -3958,7 +3570,6 @@ public class WhereWindsMeetHUD implements Disposable {
         }
         shapeRenderer.end();
 
-        // 3. Status readout
         spriteBatch.getProjectionMatrix().setToOrtho2D(0, 0, w, h);
         spriteBatch.begin();
         fonts.smallFont.setColor(overlaps == 0 ? Color.GREEN : Color.RED);

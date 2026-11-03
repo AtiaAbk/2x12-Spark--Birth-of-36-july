@@ -1,3 +1,4 @@
+// ei file ta campus e student der prothom shonghat er level
 package bd.spark36.level;
 
 import com.badlogic.gdx.Gdx;
@@ -28,14 +29,6 @@ import bd.spark36.mission.MissionObjective;
 import bd.spark36.mission.MissionTracker;
 import bd.spark36.mission.ObjectiveType;
 
-/**
- * LEVEL 2: "The Day the Streets Changed" (যেদিন পথ বদলে গেল)
- * Period: July 15, 2024 (Armed counter-protesters attack peaceful students at DU).
- * Environment: Barricaded Raju Anti-Terrorism Sculpture & Arts Faculty Crossroads.
- * Focus: Get injured students to the medical shelter. Aggressors are a hazard to evade, block or break away from.
- * Combat: Defensive self-protection only (FICTIONAL GAMEPLAY). Knockouts are optional and never required.
- * Hitting unarmed students = instant disqualification.
- */
 public class Level2StudentConfrontation implements CampaignLevel {
 
     private DhakaCampusWorld world;
@@ -48,21 +41,12 @@ public class Level2StudentConfrontation implements CampaignLevel {
     private final Array<ModelInstance> barricadeInstances = new Array<>();
     private final java.util.List<float[]> colliders = new java.util.ArrayList<>();
 
-    // Objectives (defensive, non-lethal; reference section 8.3):
-    // 1. Stabilize injured student at Raju Sculpture
-    // 2. Escort that student to the medical shelter
-    // 3. Reach the second injured student on the Arts Faculty road
-    // 4. Escort the second student to the medical shelter
-    // 5. Secure the medical shelter
-    // Aggressors are a hazard to evade / block / break away from. Knockouts are optional
-    // and never complete an objective in story mode.
     private final Level2ShelterObjectives objectives = new Level2ShelterObjectives();
 
-    /** Aggressor spawn points (hazards around the injured students and the approach road). */
     private final Vector3[] aggressorSpawns = {
-        new Vector3(44f, 0f, 38f),  // Raju Sculpture east
-        new Vector3(38f, 0f, 44f),  // Raju Sculpture west
-        new Vector3(22f, 0f, 36f)   // Arts Faculty approach road
+        new Vector3(44f, 0f, 38f),
+        new Vector3(38f, 0f, 44f),
+        new Vector3(22f, 0f, 36f)
     };
     private final boolean[] aggressorKnockoutCounted = new boolean[3];
 
@@ -83,7 +67,6 @@ public class Level2StudentConfrontation implements CampaignLevel {
         }
     }
 
-    /** Pure objective logic (package-private for headless tests). */
     Level2ShelterObjectives getShelterObjectives() {
         return objectives;
     }
@@ -196,7 +179,7 @@ public class Level2StudentConfrontation implements CampaignLevel {
             checkCompletion(hud);
             return true;
         }
-        // Student crowd interaction
+
         if (crowd != null && hud != null && crowd.interactWithClosest(playerPos, 2.6f, getLevelNumber(), hud)) {
             return true;
         }
@@ -209,11 +192,6 @@ public class Level2StudentConfrontation implements CampaignLevel {
         }
     }
 
-    /**
-     * Story mode: complete only when the injured students are sheltered (zero knockouts allowed).
-     * Arena mode (fictional folk-sport sparring, separate from the campaign) additionally
-     * accepts subduing all three sparring aggressors, preserving the original Arena loop.
-     */
     @Override
     public boolean isLevelComplete() {
         if (objectives.isComplete()) return true;
@@ -226,12 +204,10 @@ public class Level2StudentConfrontation implements CampaignLevel {
         return true;
     }
 
-    /** Disqualification check for striking unarmed students (package-private for tests). */
     String checkCivilianStrike(Vector3 pos, float headingDeg) {
         return CivilianStrikeRule.check(crowd, pos, headingDeg, CivilianStrikeRule.STUDENT_VIOLATION);
     }
 
-    /** Test hook: inject a headless crowd without building the 3D world. */
     void setCrowdForTest(CampusCrowd crowd) {
         this.crowd = crowd;
     }
@@ -249,12 +225,12 @@ public class Level2StudentConfrontation implements CampaignLevel {
 
     @Override
     public Vector3 getSpawnPosition() {
-        return new Vector3(44f, 0f, 26f); // Road approach to Raju Sculpture
+        return new Vector3(44f, 0f, 26f);
     }
 
     @Override
     public float getSpawnHeading() {
-        return 180f; // Facing Raju Sculpture
+        return 180f;
     }
 
     @Override
@@ -267,13 +243,11 @@ public class Level2StudentConfrontation implements CampaignLevel {
             missionTracker.reset();
         }
 
-        // Overcast, stormy monsoon environment
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.45f, 0.42f, 0.46f, 1f));
         DirectionalLight stormSun = new DirectionalLight().set(0.68f, 0.65f, 0.72f, -0.4f, -0.8f, -0.4f);
         environment.add(stormSun);
 
-        // Spawn 3 Helmeted Aggressors
         HelmetGoon g1 = new HelmetGoon(textures);
         g1.setRole(HelmetGoon.Role.HELMETED_AGGRESSOR);
         g1.reset(aggressorSpawns[0].x, aggressorSpawns[0].z);
@@ -289,7 +263,6 @@ public class Level2StudentConfrontation implements CampaignLevel {
         g3.reset(aggressorSpawns[2].x, aggressorSpawns[2].z);
         aggressors.add(g3);
 
-        // Build Barricades and Medical Triage Tent
         ModelBuilder mb = new ModelBuilder();
         long attr = Usage.Position | Usage.Normal;
         Material woodMat = new Material(ColorAttribute.createDiffuse(new Color(0.48f, 0.32f, 0.18f, 1f)));
@@ -302,7 +275,6 @@ public class Level2StudentConfrontation implements CampaignLevel {
         barricadeModels.add(barricadeModel);
         barricadeModels.add(tentModel);
 
-        // Place barricades blocking road junctions around Raju roundabout
         Vector3[] barPositions = {
             new Vector3(44f, 0f, 48f),
             new Vector3(36f, 0f, 36f),
@@ -315,14 +287,12 @@ public class Level2StudentConfrontation implements CampaignLevel {
             colliders.add(new float[] { bp.x - 2.1f, 0f, bp.z - 0.5f, bp.x + 2.1f, 1.4f, bp.z + 0.5f });
         }
 
-        // Place Medical Triage Tent near Arts Gate
         ModelInstance ti = new ModelInstance(tentModel);
         ti.transform.setTranslation(Level2ShelterObjectives.SHELTER_POS);
         barricadeInstances.add(ti);
         colliders.add(new float[] { Level2ShelterObjectives.SHELTER_POS.x - 2.5f, 0f, Level2ShelterObjectives.SHELTER_POS.z - 2.5f,
                                     Level2ShelterObjectives.SHELTER_POS.x + 2.5f, 3.5f, Level2ShelterObjectives.SHELTER_POS.z + 2.5f });
 
-        // Combine colliders
         for (float[] b : world.getColliders()) {
             colliders.add(b);
         }
@@ -347,7 +317,6 @@ public class Level2StudentConfrontation implements CampaignLevel {
         if (world != null) world.update(delta);
         if (crowd != null) crowd.update(delta, player.getPosition());
 
-        // Update aggressors
         HelmetGoon closestAggressor = null;
         float closestDst = Float.MAX_VALUE;
 
@@ -375,7 +344,6 @@ public class Level2StudentConfrontation implements CampaignLevel {
             player.clearCombatTarget();
         }
 
-        // Knockout check for player
         if (player.isKnockedOut() && !hud.isDefeated()) {
             hud.setDefeated(true);
         }
@@ -419,14 +387,12 @@ public class Level2StudentConfrontation implements CampaignLevel {
         if (prog >= 0.40f && prog <= 0.68f && !attackHitProcessed) {
             attackHitProcessed = true;
 
-            // Campus Peace Rule: Hitting unarmed peers is strictly forbidden
             String violation = checkCivilianStrike(player.getPosition(), player.getHeadingDegrees());
             if (violation != null) {
                 hud.setDisqualified(true, violation);
                 return true;
             }
 
-            // Martial arts strike against active aggressor
             for (int i = 0; i < aggressors.size; i++) {
                 HelmetGoon g = aggressors.get(i);
                 if (g.isKnockedOut()) continue;
@@ -457,10 +423,6 @@ public class Level2StudentConfrontation implements CampaignLevel {
         return false;
     }
 
-    /**
-     * An aggressor was knocked out in self-defence. Optional: it is counted once, shown as a
-     * neutral notice, and never completes a story objective (no reward for knockouts).
-     */
     private void recordOptionalKnockout(int i, WhereWindsMeetHUD hud) {
         if (i < 0 || i >= aggressorKnockoutCounted.length || aggressorKnockoutCounted[i]) return;
         aggressorKnockoutCounted[i] = true;
