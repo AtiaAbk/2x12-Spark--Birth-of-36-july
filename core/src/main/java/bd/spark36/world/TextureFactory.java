@@ -2618,6 +2618,8 @@ public class TextureFactory implements Disposable {
             }
         }
         Texture normalMap = createNormalMap(pix, 2.5f);
+        normalMap.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+        normalMap.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         pix.dispose();
         return normalMap;
     }

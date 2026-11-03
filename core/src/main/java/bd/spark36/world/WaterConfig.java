@@ -58,10 +58,10 @@ public final class WaterConfig {
 
     // ── Optical & Shading Parameters ─────────────────────────────────────────
     /** Characteristic Dhaka University pond shallow water tint (clean sunlit teal). */
-    public static final Color SHALLOW_COLOR = new Color(0.20f, 0.56f, 0.68f, 0.72f);
+    public static final Color SHALLOW_COLOR = new Color(0.18f, 0.60f, 0.66f, 0.74f);
 
     /** Deep water body color (algae-tinted emerald teal). */
-    public static final Color DEEP_COLOR = new Color(0.06f, 0.24f, 0.32f, 0.94f);
+    public static final Color DEEP_COLOR = new Color(0.04f, 0.20f, 0.26f, 0.94f);
 
     /** Light extinction / depth absorption coefficient. */
     public static final float ABSORPTION_COEFF = 2.8f;

@@ -54,8 +54,7 @@ public class LevelConfig {
             } else if (currentMode == GameMode.ARENA) {
                 combatEnabled = true;
             } else {
-                // Story Mode Level 1 is strictly peaceful by project rule
-                combatEnabled = (currentLevel > 1);
+                combatEnabled = true;
             }
         }
 
@@ -79,11 +78,7 @@ public class LevelConfig {
 
     public static void setGameMode(GameMode mode) {
         currentMode = mode;
-        if (mode == GameMode.ARENA) {
-            combatEnabled = true;
-        } else if (mode == GameMode.STORY && currentLevel == 1) {
-            combatEnabled = false;
-        }
+        combatEnabled = true;
     }
 
     public static int getCurrentLevel() {
@@ -92,9 +87,6 @@ public class LevelConfig {
 
     public static void setCurrentLevel(int level) {
         currentLevel = level;
-        if (currentMode == GameMode.STORY && currentLevel == 1) {
-            combatEnabled = false;
-        }
     }
 
     public static boolean isPeacefulLevel() {
@@ -104,13 +96,7 @@ public class LevelConfig {
     public static void reset(int level, GameMode mode) {
         currentLevel = level;
         currentMode = mode;
-        if (mode == GameMode.ARENA) {
-            combatEnabled = true;
-        } else if (mode == GameMode.STORY && level == 1) {
-            combatEnabled = false;
-        } else {
-            combatEnabled = true;
-        }
+        combatEnabled = true;
     }
 
     // ==========================================

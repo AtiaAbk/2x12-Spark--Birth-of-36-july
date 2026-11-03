@@ -946,7 +946,7 @@ public class WhereWindsMeetHUD implements Disposable {
 
         // 0. Draw 3D In-World Waypoint Pin directly above next objective
         if (camera != null && !isModalOpen()) {
-            if (activeLevel != null && activeLevel.getLevelNumber() > 1 && !activeLevel.isLevelComplete()) {
+            if (activeLevel != null && !activeLevel.isLevelComplete()) {
                 Vector3 wp = activeLevel.getActiveWaypoint();
                 String title = activeLevel.getMissionTitle();
                 float dst = activeLevel.getWaypointDistance(player.getPosition());
@@ -1279,7 +1279,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float cardW = currentLayout.cardW;
         float cardH = currentLayout.cardH;
 
-        if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+        if (activeLevel != null) {
             String missionTag = activeLevel.getMissionTag();
             drawOutlined(fonts.smallFont, missionTag, cardX + 18f, cardY + cardH - 18f, new Color(1.0f, 0.75f, 0.30f, 1f));
 
@@ -1493,7 +1493,7 @@ public class WhereWindsMeetHUD implements Disposable {
         // See-through smoked glass backing with soft gold halo
         fillGlassPanel(bx, by, bw, bh);
 
-        if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+        if (activeLevel != null) {
             float barX = bx + 16f;
             float barY = by + 12f;
             float barW = bw - 32f;
@@ -1592,7 +1592,7 @@ public class WhereWindsMeetHUD implements Disposable {
         shapeRenderer.setColor(goldMuted);
         shapeRenderer.line(bx + 14f, by + bh - 28f, bx + bw - 14f, by + bh - 28f);
 
-        if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+        if (activeLevel != null) {
             String[] items = activeLevel.getChecklistItems();
             float startY = by + bh - 38f;
             float itemSpacing = 18f;
@@ -1627,7 +1627,7 @@ public class WhereWindsMeetHUD implements Disposable {
         float bw = currentLayout.checkW;
         float bh = currentLayout.checkH;
 
-        if (activeLevel != null && activeLevel.getLevelNumber() > 1) {
+        if (activeLevel != null) {
             int ins = activeLevel.getCompletedObjectiveCount();
             int tot = activeLevel.getTotalObjectiveCount();
 

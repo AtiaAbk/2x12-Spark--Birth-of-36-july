@@ -33,6 +33,33 @@ public class CivilianStrikeDisqualificationTest {
     }
 
     @Test
+    @DisplayName("Level 1: striking an unarmed student returns a disqualification")
+    public void testLevel1StrikeOnStudentDisqualifies() {
+        Level1PeacefulCampus level = new Level1PeacefulCampus();
+        assertTrue(level.isCombatEnabled(), "Level 1 combat must be enabled for self-defense and peace rule enforcement");
+        level.setCrowdForTest(crowd);
+        String v = level.checkCivilianStrike(PLAYER, 0f);
+        assertNotNull(v, "hitting a student in Level 1 must disqualify");
+        assertTrue(v.startsWith("VIOLATION"));
+        assertNull(level.checkCivilianStrike(PLAYER, 180f), "swinging away from the student is not a violation");
+    }
+
+    @Test
+    @DisplayName("Level 1: 5 campus archives must be explored before aggressors, and subduing them completes the mission")
+    public void testLevel1ExplorationAndCombatProgression() {
+        Level1PeacefulCampus level = new Level1PeacefulCampus();
+        assertEquals(6, level.getTotalObjectiveCount());
+        assertFalse(level.isCombatPhase(), "combat phase begins only after the 5 archives are explored");
+        assertFalse(level.isLevelComplete(), "level is not complete at start");
+
+        // Complete all objectives via test hook
+        level.completeAllObjectivesForTest();
+        assertTrue(level.isCombatPhase(), "combat phase must activate");
+        assertTrue(level.allAggressorsSubdued(), "all aggressors must be knocked out");
+        assertTrue(level.isLevelComplete(), "level must complete after subduing helmeted attackers");
+    }
+
+    @Test
     @DisplayName("Level 2: striking an unarmed student returns a disqualification")
     public void testLevel2StrikeOnStudentDisqualifies() {
         Level2StudentConfrontation level = new Level2StudentConfrontation();
