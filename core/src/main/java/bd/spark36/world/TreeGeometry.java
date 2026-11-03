@@ -175,11 +175,11 @@ final class TreeGeometry {
                                   int[] cardCells, float blossomChance) {
         RNG.setSeed(mix((long) (seed * 1000f) * 31L + 17L));
 
-        // Ellipsoid surface area (Knud Thomsen approximation) sets how many cards we need
+        // Ellipsoid surface area (Knud Thomsen approximation) sets how many card clusters we need
         final double p = 1.6;
         double area = 4.0 * Math.PI * Math.pow(
             (Math.pow(rx * ry, p) + Math.pow(rx * rz, p) + Math.pow(ry * rz, p)) / 3.0, 1.0 / p);
-        int count = Math.min(MAX_LEAVES_PER_CANOPY, (int) (2.6 * area / (leafSize * leafSize * 0.55f)));
+        int count = Math.min(160, (int) (1.45 * area / (leafSize * leafSize * 0.55f)));
         count = (int) (count * leafDensity);
 
         for (int i = 0; i < count; i++) {
@@ -218,7 +218,7 @@ final class TreeGeometry {
             ny /= nl;
             nz /= nl;
 
-            // Tangent frame on the card plane, spun by a random angle
+            // Tangent frame on the primary card plane, spun by a random angle
             if (Math.abs(ny) < 0.95f) UP.set(0f, 1f, 0f); else UP.set(1f, 0f, 0f);
             SIDE.set(nx, ny, nz).crs(UP).nor();
             AXIS.set(nx, ny, nz).crs(SIDE).nor();
@@ -227,7 +227,7 @@ final class TreeGeometry {
             float tx = SIDE.x * cs + AXIS.x * sn, ty = SIDE.y * cs + AXIS.y * sn, tz = SIDE.z * cs + AXIS.z * sn;
             float bx = -SIDE.x * sn + AXIS.x * cs, by = -SIDE.y * sn + AXIS.y * cs, bz = -SIDE.z * sn + AXIS.z * cs;
 
-            float half = leafSize * (0.75f + 0.55f * RNG.nextFloat()) * 0.5f;
+            float half = leafSize * (0.80f + 0.45f * RNG.nextFloat()) * 0.5f;
             // Lift slightly off the core so cards don't z-fight with it
             float ox = px + nx * half * 0.30f, oy = py + ny * half * 0.30f, oz = pz + nz * half * 0.30f;
 
@@ -241,6 +241,7 @@ final class TreeGeometry {
             float u0 = (cell % 2) * 0.5f, u1 = u0 + 0.5f;
             float v0 = (cell / 2) * 0.5f, v1 = v0 + 0.5f;
 
+            // Primary card
             V0.setPos(ox - tx * half - bx * half, oy - ty * half - by * half, oz - tz * half - bz * half)
                 .setNor(nx, ny, nz).setUV(u0, v1);
             V1.setPos(ox + tx * half - bx * half, oy + ty * half - by * half, oz + tz * half - bz * half)
@@ -249,6 +250,35 @@ final class TreeGeometry {
                 .setNor(nx, ny, nz).setUV(u1, v0);
             V3.setPos(ox - tx * half + bx * half, oy - ty * half + by * half, oz - tz * half - bz * half)
                 .setNor(nx, ny, nz).setUV(u0, v0);
+            mpb.rect(V0, V1, V2, V3);
+
+            // Crossing volumetric card rotated ~72° with subtle 3D tilt for rich leaf volume from all viewing angles
+            float crossAng = 1.25f; // ~72 degrees
+            float csC = MathUtils.cos(crossAng), snC = MathUtils.sin(crossAng);
+            float tx2 = tx * csC + bx * snC;
+            float ty2 = ty * csC + by * snC;
+            float tz2 = tz * csC + bz * snC;
+            float bx2 = -tx * snC + bx * csC;
+            float by2 = -ty * snC + by * csC;
+            float bz2 = -tz * snC + bz * csC;
+
+            float tilt = 0.28f;
+            float bx2T = bx2 * 0.88f + nx * tilt;
+            float by2T = by2 * 0.88f + ny * tilt;
+            float bz2T = bz2 * 0.88f + nz * tilt;
+
+            int cell2 = (cardCells.length > 1) ? cardCells[RNG.nextInt(cardCells.length)] : cell;
+            float u0b = (cell2 % 2) * 0.5f, u1b = u0b + 0.5f;
+            float v0b = (cell2 / 2) * 0.5f, v1b = v0b + 0.5f;
+
+            V0.setPos(ox - tx2 * half - bx2T * half, oy - ty2 * half - by2T * half, oz - tz2 * half - bz2T * half)
+                .setNor(nx, ny, nz).setUV(u0b, v1b);
+            V1.setPos(ox + tx2 * half - bx2T * half, oy + ty2 * half - by2T * half, oz + tz2 * half - bz2T * half)
+                .setNor(nx, ny, nz).setUV(u1b, v1b);
+            V2.setPos(ox + tx2 * half + bx2T * half, oy + ty2 * half + by2T * half, oz + tz2 * half + bz2T * half)
+                .setNor(nx, ny, nz).setUV(u1b, v0b);
+            V3.setPos(ox - tx2 * half + bx2T * half, oy - ty2 * half - by2T * half, oz - tz2 * half - bz2T * half)
+                .setNor(nx, ny, nz).setUV(u0b, v0b);
             mpb.rect(V0, V1, V2, V3);
         }
     }
