@@ -4,10 +4,6 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import bd.spark36.SparkGame;
 
-/**
- * Desktop (LWJGL3) Launcher for 2x12: Spark — Birth of 36 July.
- * Configured for crisp modern graphics on macOS Retina and PC displays.
- */
 public class DesktopLauncher {
 
     public static void main(String[] args) {
@@ -15,7 +11,8 @@ public class DesktopLauncher {
             return;
         }
 
-        // Ensure macOS brings this game window to the absolute front and gives it full keyboard focus
+        // Ensure macOS brings this game window to the absolute front and gives it full
+        // keyboard focus
         if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
             Thread focusThread = new Thread(new Runnable() {
                 @Override
@@ -23,19 +20,21 @@ public class DesktopLauncher {
                     try {
                         String jvmName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
                         String pid = jvmName.split("@")[0];
-                        int[] delays = {400, 800, 1500, 2500};
+                        int[] delays = { 400, 800, 1500, 2500 };
                         for (int delay : delays) {
                             Thread.sleep(delay);
-                            Runtime.getRuntime().exec(new String[]{
-                                "osascript", "-e",
-                                "tell application \"System Events\" to set frontmost of first process whose unix id is " + pid + " to true"
+                            Runtime.getRuntime().exec(new String[] {
+                                    "osascript", "-e",
+                                    "tell application \"System Events\" to set frontmost of first process whose unix id is "
+                                            + pid + " to true"
                             });
-                            Runtime.getRuntime().exec(new String[]{
-                                "osascript", "-e",
-                                "tell application \"System Events\" to set frontmost of (every process whose name contains \"java\") to true"
+                            Runtime.getRuntime().exec(new String[] {
+                                    "osascript", "-e",
+                                    "tell application \"System Events\" to set frontmost of (every process whose name contains \"java\") to true"
                             });
                         }
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
                 }
             });
             focusThread.setDaemon(true);
@@ -80,12 +79,14 @@ public class DesktopLauncher {
                 try {
                     org.lwjgl.glfw.GLFW.glfwFocusWindow(window.getWindowHandle());
                     org.lwjgl.glfw.GLFW.glfwRequestWindowAttention(window.getWindowHandle());
-                } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {
+                }
             }
         });
 
         // Anti-aliasing (8x MSAA) and 24-bit depth buffer for crisp clean polygon edges
-        // Override with -Dbd.spark36.msaa=N (some AMD drivers crash on 8x at window creation)
+        // Override with -Dbd.spark36.msaa=N (some AMD drivers crash on 8x at window
+        // creation)
         int msaaSamples = Integer.getInteger("bd.spark36.msaa", 8);
         configuration.setBackBufferConfig(8, 8, 8, 8, 24, 0, msaaSamples);
 

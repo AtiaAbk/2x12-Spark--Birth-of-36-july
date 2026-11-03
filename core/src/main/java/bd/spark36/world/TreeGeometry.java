@@ -152,16 +152,18 @@ final class TreeGeometry {
     }
 
     /**
-     * A leafy canopy: a slightly smaller dark clump as the shaded core, wrapped in individual
-     * leaf cards scattered over the same lumpy surface. {@code cardCells} is the atlas cells the
-     * cards may use (0 leaf, 1 leaf fan, 2 feathery leaf, 3 blossoms) with {@code blossomChance}
-     * the odds a card is the blossom cell.
+     * A leafy canopy: inner dense volumetric leaf cards providing depth and body,
+     * wrapped in outer leaf cards creating crisp silhouettes against the sky.
+     * Strictly matching Image 1: zero solid opaque sphere blob; pure volumetric alpha foliage bunches.
      */
     static void foliage(MeshPartBuilder core, MeshPartBuilder cards, float cx, float cy, float cz,
                         float rx, float ry, float rz, float seed, float leafSize,
                         int[] cardCells, float blossomChance) {
         float coreScale = leafDensity < 1f ? 0.90f * (0.45f + 0.55f * leafDensity) : 0.90f;
-        clump(core, cx, cy, cz, rx * coreScale, ry * coreScale, rz * coreScale, seed);
+        // Inner dense foliage mass: slightly smaller, rich body, provides self-shadowed volume
+        leafCards(core, cx, cy, cz, rx * 0.70f * coreScale, ry * 0.70f * coreScale, rz * 0.70f * coreScale,
+                  seed + 101f, leafSize * 1.15f, cardCells, blossomChance * 0.4f);
+        // Outer foliage mass: distinct leaf silhouettes against the sky
         leafCards(cards, cx, cy, cz, rx, ry, rz, seed, leafSize, cardCells, blossomChance);
     }
 
@@ -277,8 +279,37 @@ final class TreeGeometry {
                 .setNor(nx, ny, nz).setUV(u1b, v1b);
             V2.setPos(ox + tx2 * half + bx2T * half, oy + ty2 * half + by2T * half, oz + tz2 * half + bz2T * half)
                 .setNor(nx, ny, nz).setUV(u1b, v0b);
-            V3.setPos(ox - tx2 * half + bx2T * half, oy - ty2 * half - by2T * half, oz - tz2 * half - bz2T * half)
+            V3.setPos(ox - tx2 * half + bx2T * half, oy - ty2 * half + by2T * half, oz - tz2 * half - bz2T * half)
                 .setNor(nx, ny, nz).setUV(u0b, v0b);
+            mpb.rect(V0, V1, V2, V3);
+
+            // Third crossing volumetric card rotated ~135° with counter-pitch for full 3D star bunch (Image 1 style)
+            float crossAng3 = 2.35f; // ~135 degrees
+            float csC3 = MathUtils.cos(crossAng3), snC3 = MathUtils.sin(crossAng3);
+            float tx3 = tx * csC3 + bx * snC3;
+            float ty3 = ty * csC3 + by * snC3;
+            float tz3 = tz * csC3 + bz * snC3;
+            float bx3 = -tx * snC3 + bx * csC3;
+            float by3 = -ty * snC3 + by * csC3;
+            float bz3 = -tz * snC3 + bz * csC3;
+
+            float tilt3 = -0.24f;
+            float bx3T = bx3 * 0.88f + nx * tilt3;
+            float by3T = by3 * 0.88f + ny * tilt3;
+            float bz3T = bz3 * 0.88f + nz * tilt3;
+
+            int cell3 = (cardCells.length > 2) ? cardCells[RNG.nextInt(cardCells.length)] : cell;
+            float u0c = (cell3 % 2) * 0.5f, u1c = u0c + 0.5f;
+            float v0c = (cell3 / 2) * 0.5f, v1c = v0c + 0.5f;
+
+            V0.setPos(ox - tx3 * half - bx3T * half, oy - ty3 * half - by3T * half, oz - tz3 * half - bz3T * half)
+                .setNor(nx, ny, nz).setUV(u0c, v1c);
+            V1.setPos(ox + tx3 * half - bx3T * half, oy + ty3 * half - by3T * half, oz + tz3 * half - bz3T * half)
+                .setNor(nx, ny, nz).setUV(u1c, v1c);
+            V2.setPos(ox + tx3 * half + bx3T * half, oy + ty3 * half + by3T * half, oz + tz3 * half + bz3T * half)
+                .setNor(nx, ny, nz).setUV(u1c, v0c);
+            V3.setPos(ox - tx3 * half + bx3T * half, oy - ty3 * half + by3T * half, oz - tz3 * half - bz3T * half)
+                .setNor(nx, ny, nz).setUV(u0c, v0c);
             mpb.rect(V0, V1, V2, V3);
         }
     }

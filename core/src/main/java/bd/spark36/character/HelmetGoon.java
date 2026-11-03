@@ -138,6 +138,10 @@ public class HelmetGoon implements Disposable {
     private final Matrix4 legLTransform = new Matrix4();
     private final Matrix4 legRTransform = new Matrix4();
 
+    public HelmetGoon() {
+        // Headless / unit test constructor without requiring an active OpenGL context
+    }
+
     public HelmetGoon(TextureFactory textures) {
         buildModels(textures);
     }
@@ -559,6 +563,7 @@ public class HelmetGoon implements Disposable {
      * Renders the 3D Goon, Helmet, and Lathi into the ModelBatch.
      */
     public void render(ModelBatch batch, Environment env) {
+        if (torsoInst == null) return; // Headless / test instance
         rootTransform.idt();
         rootTransform.translate(position.x, position.y, position.z);
         rootTransform.rotate(Vector3.Y, heading);
@@ -723,6 +728,9 @@ public class HelmetGoon implements Disposable {
     public boolean isWindingUp() { return role == Role.HELMETED_AGGRESSOR && isAttacking && attackProgress < 0.48f; }
     public String getCombatPopupText() { return (role == Role.HELMETED_AGGRESSOR && combatPopupTimer > 0f) ? combatPopupText : null; }
     public Color getCombatPopupColor() { return combatPopupColor; }
+
+    public float getHeading() { return heading; }
+    public void setHeading(float headingDeg) { this.heading = headingDeg; }
 
     public void startFightDirectly() {
         this.role = Role.HELMETED_AGGRESSOR;

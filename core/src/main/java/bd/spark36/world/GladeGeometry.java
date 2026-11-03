@@ -128,24 +128,62 @@ final class GladeGeometry {
         }
     }
 
-    /** A hanging leaf spray: 3 intersecting vertical cards pivoting at their top centre for full 3D volume. */
+    /**
+     * An authentic botanical bamboo leaf spray matching Image 2:
+     * Slopes outward and downward along the branchlet with graceful lateral spread,
+     * displaying the slender lanceolate blades with monocot parallel venation.
+     */
     private static void spray(MeshPartBuilder mpb, float x, float y, float z, float yaw, float size) {
         int cell = RNG.nextInt(4);
         float u0 = (cell % 2) * 0.5f, u1 = u0 + 0.5f;
         float v0 = (cell / 2) * 0.5f, v1 = v0 + 0.5f;
-        float half = size * 0.5f;
-        float top = y + 0.06f * size, bottom = y - 0.94f * size;
 
-        // 3 planes at 60 degree increments for lush volumetric foliage
-        for (int k = 0; k < 3; k++) {
-            float a = yaw + k * (MathUtils.PI / 3f);
-            float tx = MathUtils.cos(a) * half, tz = MathUtils.sin(a) * half;
-            V0.setPos(x - tx, bottom, z - tz).setNor(0f, 1f, 0f).setUV(u0, v1);
-            V1.setPos(x + tx, bottom, z + tz).setNor(0f, 1f, 0f).setUV(u1, v1);
-            V2.setPos(x + tx, top, z + tz).setNor(0f, 1f, 0f).setUV(u1, v0);
-            V3.setPos(x - tx, top, z - tz).setNor(0f, 1f, 0f).setUV(u0, v0);
-            mpb.rect(V0, V1, V2, V3);
-        }
+        float reach = size * 0.95f;
+        float halfW = size * 0.45f;
+        float droop = -size * 0.38f;
+
+        // Direction vectors
+        float dx = MathUtils.cos(yaw), dz = MathUtils.sin(yaw);
+        float px = -dz, pz = dx; // perpendicular
+
+        // Upward-biased normal for rich daylight wrap
+        float nx = -dx * 0.15f, ny = 0.96f, nz = -dz * 0.15f;
+
+        // Primary arching card extending along the branchlet
+        float tipX = x + dx * reach, tipY = y + droop, tipZ = z + dz * reach;
+        V0.setPos(tipX - px * halfW, tipY, tipZ - pz * halfW).setNor(nx, ny, nz).setUV(u0, v1);
+        V1.setPos(tipX + px * halfW, tipY, tipZ + pz * halfW).setNor(nx, ny, nz).setUV(u1, v1);
+        V2.setPos(x + px * halfW * 0.35f, y + 0.05f * size, z + pz * halfW * 0.35f).setNor(nx, ny, nz).setUV(u1, v0);
+        V3.setPos(x - px * halfW * 0.35f, y + 0.05f * size, z - pz * halfW * 0.35f).setNor(nx, ny, nz).setUV(u0, v0);
+        mpb.rect(V0, V1, V2, V3);
+
+        // Crossing volumetric card rotated ~60° with secondary cell
+        int cell2 = (cell + 1) % 4;
+        float u0b = (cell2 % 2) * 0.5f, u1b = u0b + 0.5f;
+        float v0b = (cell2 / 2) * 0.5f, v1b = v0b + 0.5f;
+
+        float ang2 = yaw + 1.05f; // ~60 degrees
+        float dx2 = MathUtils.cos(ang2), dz2 = MathUtils.sin(ang2);
+        float px2 = -dz2, pz2 = dx2;
+        float tipX2 = x + dx2 * reach * 0.88f, tipY2 = y + droop * 0.92f, tipZ2 = z + dz2 * reach * 0.88f;
+
+        V0.setPos(tipX2 - px2 * halfW, tipY2, tipZ2 - pz2 * halfW).setNor(nx, ny, nz).setUV(u0b, v1b);
+        V1.setPos(tipX2 + px2 * halfW, tipY2, tipZ2 + pz2 * halfW).setNor(nx, ny, nz).setUV(u1b, v1b);
+        V2.setPos(x + px2 * halfW * 0.3f, y + 0.04f * size, z + pz2 * halfW * 0.3f).setNor(nx, ny, nz).setUV(u1b, v0b);
+        V3.setPos(x - px2 * halfW * 0.3f, y + 0.04f * size, z - px2 * halfW * 0.3f).setNor(nx, ny, nz).setUV(u0b, v0b);
+        mpb.rect(V0, V1, V2, V3);
+
+        // Counter-crossing card rotated ~ -55°
+        float ang3 = yaw - 0.95f;
+        float dx3 = MathUtils.cos(ang3), dz3 = MathUtils.sin(ang3);
+        float px3 = -dz3, pz3 = dx3;
+        float tipX3 = x + dx3 * reach * 0.82f, tipY3 = y + droop * 0.85f, tipZ3 = z + dz3 * reach * 0.82f;
+
+        V0.setPos(tipX3 - px3 * halfW * 0.9f, tipY3, tipZ3 - pz3 * halfW * 0.9f).setNor(nx, ny, nz).setUV(u0, v1);
+        V1.setPos(tipX3 + px3 * halfW * 0.9f, tipY3, tipZ3 + pz3 * halfW * 0.9f).setNor(nx, ny, nz).setUV(u1, v1);
+        V2.setPos(x + px3 * halfW * 0.25f, y + 0.03f * size, z + pz3 * halfW * 0.25f).setNor(nx, ny, nz).setUV(u1, v0);
+        V3.setPos(x - px3 * halfW * 0.25f, y + 0.03f * size, z - px3 * halfW * 0.25f).setNor(nx, ny, nz).setUV(u0, v0);
+        mpb.rect(V0, V1, V2, V3);
     }
 
     /**

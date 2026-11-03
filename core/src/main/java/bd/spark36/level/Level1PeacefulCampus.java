@@ -271,28 +271,38 @@ public class Level1PeacefulCampus implements CampaignLevel {
         combatPhase = true;
 
         Vector3 pPos = (player != null) ? player.getPosition() : new Vector3(0f, 0f, 36f);
-        float hDeg = (player != null) ? player.getHeadingDegrees() : 0f;
+        float hDeg = (player != null) ? player.getHeadingDegrees() : 180f;
 
-        // Spawn 3 helmeted attackers in front of the player
-        float[] angles = { 0f, -35f, 35f };
-        float[] dists = { 13f, 15f, 15f };
-        for (int i = 0; i < aggressors.size; i++) {
-            float angle = (hDeg + angles[i]) * MathUtils.degreesToRadians;
-            float dist = dists[i];
-            float spawnX = pPos.x - MathUtils.sin(angle) * dist;
-            float spawnZ = pPos.z - MathUtils.cos(angle) * dist;
-            HelmetGoon g = aggressors.get(i);
-            g.reset(spawnX, spawnZ);
+        // Ensure 3 helmeted aggressors exist
+        while (aggressors.size < 3) {
+            HelmetGoon g = (textures != null) ? new HelmetGoon(textures) : new HelmetGoon();
             g.setRole(HelmetGoon.Role.HELMETED_AGGRESSOR);
+            aggressors.add(g);
         }
 
-        MissionObjective m5 = missionTracker.getObjectiveById("m5");
-        if (m5 != null) {
-            m5.activate();
+        // Spawn 3 helmeted attackers directly in front of the player (facing the player)
+        float[] angles = { 0f, -30f, 30f };
+        float[] dists = { 12f, 14f, 14f };
+        for (int i = 0; i < aggressors.size; i++) {
+            float forwardAngle = hDeg + angles[i];
+            float forwardX = MathUtils.sinDeg(forwardAngle);
+            float forwardZ = MathUtils.cosDeg(forwardAngle);
+            float spawnX = MathUtils.clamp(pPos.x + forwardX * dists[i], -65f, 65f);
+            float spawnZ = MathUtils.clamp(pPos.z + forwardZ * dists[i], -40f, 74f);
+
+            HelmetGoon g = aggressors.get(i);
+            g.reset(spawnX, spawnZ);
+            g.startFightDirectly();
+            g.setHeading(hDeg + 180f); // Turn to face the player directly
+        }
+
+        MissionObjective m6 = missionTracker.getObjectiveById("m6");
+        if (m6 != null) {
+            m6.activate();
         }
 
         if (hud != null) {
-            hud.triggerMissionToast("ALERT: HELMETED ATTACKERS WITH LATHI ADVANCING! / সতর্কবার্তা: লাঠিধারী হেলমেট বাহিনী আক্রমণ করতে আসছে!", 5);
+            hud.triggerMissionToast("ALERT: CHHATRA LEAGUE HELMET FORCE ATTACKING! / ছাত্রলীগ হেলমেট বাহিনী আক্রমণ করতে আসছে!", 5);
             bd.spark36.audio.SoundManager.get().playObjective();
         }
     }
@@ -340,7 +350,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
         this.campusSecurity = new HelmetGoon(textures);
         this.campusSecurity.setRole(HelmetGoon.Role.CAMPUS_SECURITY);
-        this.campusSecurity.reset(0f, 36.0f);
+        this.campusSecurity.reset(0f, 60.0f); // Positioned prominently on the promenade ahead of spawn (0, 72)
 
         // Pre-create the 3 Helmeted Aggressors
         aggressors.clear();
@@ -360,12 +370,43 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
     @Override
     public void update(float delta, PlayerController player, CinematicCamera camera, boolean canMove, WhereWindsMeetHUD hud) {
+        // Debug / Fast-test shortcut: Press F6 or X to instantly trigger Chhatra League combat encounter
+        if ((Gdx.input.isKeyJustPressed(Input.Keys.F6) || Gdx.input.isKeyJustPressed(Input.Keys.X)) && !combatPhase) {
+            if (memorials != null) {
+                for (MemorialEntry entry : memorials.getEntries()) {
+                    entry.inspected = true;
+                    missionTracker.completeObjective("m" + entry.id);
+                }
+            }
+            triggerCombatEncounter(player, hud);
+            return;
+        }
+
         if (world != null) world.update(delta);
         if (memorials != null) memorials.update(delta);
         if (crowd != null) crowd.update(delta, player.getPosition());
 
         if (campusSecurity != null && !combatPhase && canMove) {
             campusSecurity.update(delta, player);
+        }
+
+        // Proximity Exploration: Discover memorial when walking near (<= 6.5m)
+        if (!combatPhase && memorials != null && player != null) {
+            Vector3 pPos = player.getPosition();
+            for (MemorialEntry entry : memorials.getEntries()) {
+                if (!entry.inspected && pPos.dst(entry.position) <= 6.5f) {
+                    entry.inspected = true;
+                    missionTracker.completeObjective("m" + entry.id);
+                    if (hud != null) {
+                        hud.triggerMissionToast("EXPLORED: " + entry.title + " / " + entry.location, getCompletedObjectiveCount());
+                        bd.spark36.audio.SoundManager.get().playObjective();
+                    }
+                    if (allExplorationsComplete()) {
+                        triggerCombatEncounter(player, hud);
+                    }
+                    break;
+                }
+            }
         }
 
         if (combatPhase && canMove) {
@@ -398,7 +439,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
             // Check if all aggressors are subdued (Victory)
             if (allAggressorsSubdued() && !victoryTriggered) {
                 victoryTriggered = true;
-                missionTracker.completeObjective("m5");
+                missionTracker.completeObjective("m6");
                 if (hud != null) {
                     hud.triggerVictory();
                 }
@@ -492,7 +533,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
                             if (camera != null) camera.addShake(0.24f);
                             if (allAggressorsSubdued() && !victoryTriggered) {
                                 victoryTriggered = true;
-                                missionTracker.completeObjective("m5");
+                                missionTracker.completeObjective("m6");
                                 if (hud != null) {
                                     hud.triggerVictory();
                                 }

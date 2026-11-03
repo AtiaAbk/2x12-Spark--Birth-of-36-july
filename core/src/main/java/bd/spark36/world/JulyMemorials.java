@@ -134,12 +134,14 @@ public class JulyMemorials implements Disposable {
         Model baseModel = mb.createBox(2.2f, 0.4f, 2.2f, baseMat, attr);
         Model pillarModel = mb.createBox(1.0f, 2.6f, 1.0f, pillarMat, attr);
         Model plaqueModel = mb.createBox(0.85f, 1.2f, 1.04f, goldMat, attr);
-        Model beaconModel = mb.createSphere(0.55f, 0.55f, 0.55f, 16, 16, beaconMat, attr);
+        Model capModel = mb.createBox(1.2f, 0.18f, 1.2f, baseMat, attr);
+        Model finialModel = mb.createBox(0.38f, 0.38f, 0.38f, goldMat, attr);
 
         models.add(baseModel);
         models.add(pillarModel);
         models.add(plaqueModel);
-        models.add(beaconModel);
+        models.add(capModel);
+        models.add(finialModel);
 
         for (MemorialEntry entry : entries) {
             ModelInstance baseInst = new ModelInstance(baseModel);
@@ -154,9 +156,13 @@ public class JulyMemorials implements Disposable {
             plaqueInst.transform.setTranslation(entry.position.x, 1.8f, entry.position.z);
             instances.add(plaqueInst);
 
-            ModelInstance beaconInst = new ModelInstance(beaconModel);
-            beaconInst.transform.setTranslation(entry.position.x, 3.4f, entry.position.z);
-            beaconInstances.add(beaconInst);
+            ModelInstance capInst = new ModelInstance(capModel);
+            capInst.transform.setTranslation(entry.position.x, 3.08f, entry.position.z);
+            instances.add(capInst);
+
+            ModelInstance finialInst = new ModelInstance(finialModel);
+            finialInst.transform.setTranslation(entry.position.x, 3.32f, entry.position.z);
+            beaconInstances.add(finialInst);
         }
     }
 
@@ -168,16 +174,15 @@ public class JulyMemorials implements Disposable {
             MemorialEntry entry = entries.get(i);
             ModelInstance beacon = beaconInstances.get(i);
 
-            // Gentle floating bob
-            float hoverY = 3.4f + MathUtils.sin(beaconPulseTime * 2f + i) * 0.12f;
-            beacon.transform.setTranslation(entry.position.x, hoverY, entry.position.z);
+            // Firmly placed finial cap (no floating or bobbing)
+            beacon.transform.setTranslation(entry.position.x, 3.32f, entry.position.z);
 
-            // If inspected, beacon changes to bright green/gold
+            // If inspected, plaque/finial reflects green completion
             ColorAttribute diff = (ColorAttribute) beacon.materials.first().get(ColorAttribute.Diffuse);
             if (entry.inspected) {
-                diff.color.set(0.2f + 0.4f * pulse, 0.85f + 0.15f * pulse, 0.4f, 1f);
+                diff.color.set(0.2f, 0.85f, 0.4f, 1f);
             } else {
-                diff.color.set(1f, 0.70f + 0.30f * pulse, 0.25f, 1f);
+                diff.color.set(0.95f, 0.78f, 0.30f, 1f);
             }
         }
     }

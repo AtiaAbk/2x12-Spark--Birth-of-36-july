@@ -89,4 +89,47 @@ public class CivilianStrikeDisqualificationTest {
         Vector3 far = new Vector3(PLAYER.x, 0f, PLAYER.z - 10f);
         assertNull(CivilianStrikeRule.check(crowd, far, 0f, CivilianStrikeRule.STUDENT_VIOLATION));
     }
+
+    @Test
+    @DisplayName("Promenade crowd seeding: walkers are initialized on main avenue in active walking state")
+    public void testPromenadeCrowdSeedingAndMovement() {
+        CampusCrowd promenadeCrowd = new CampusCrowd(12, COLLIDERS);
+        StudentNPC[] students = promenadeCrowd.getStudents();
+        assertTrue(students.length >= 6);
+
+        // Check the first 6 seeded promenade students
+        int walkingCount = 0;
+        for (int i = 0; i < 6; i++) {
+            StudentNPC s = students[i];
+            assertTrue(s.getPosition().z >= 30f && s.getPosition().z <= 70f,
+                "Student " + i + " must be positioned on the main promenade avenue");
+            if (s.getState() == bd.spark36.character.NpcBehaviorState.WALKING) {
+                walkingCount++;
+            }
+        }
+        assertTrue(walkingCount >= 4, "Most promenade students must be actively walking on frame 1");
+    }
+
+    @Test
+    @DisplayName("Level 1 combat encounter: aggressors spawn directly in front of the player, ready to attack")
+    public void testCombatEncounterSpawnsInFrontOfPlayer() {
+        Level1PeacefulCampus level = new Level1PeacefulCampus();
+        bd.spark36.character.PlayerController player = new bd.spark36.character.PlayerController();
+        player.setPosition(0f, 0f, 72f);
+        player.setHeadingDegrees(180f); // Facing north (towards negative Z)
+
+        level.triggerCombatEncounter(player, null);
+        assertTrue(level.isCombatPhase(), "Combat phase must be active");
+
+        com.badlogic.gdx.utils.Array<bd.spark36.character.HelmetGoon> aggressors = level.getAggressors();
+        assertEquals(3, aggressors.size, "Must spawn 3 helmeted aggressors");
+
+        for (int i = 0; i < aggressors.size; i++) {
+            bd.spark36.character.HelmetGoon g = aggressors.get(i);
+            assertTrue(g.getPosition().z < player.getPosition().z,
+                "Aggressor " + i + " must spawn in front of player (z < 72)");
+            assertEquals(bd.spark36.character.HelmetGoon.State.APPROACHING, g.getState(),
+                "Aggressors must immediately advance on player in APPROACHING state");
+        }
+    }
 }

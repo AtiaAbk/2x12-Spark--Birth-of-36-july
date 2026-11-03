@@ -560,114 +560,178 @@ public class TextureFactory implements Disposable {
      * - Cell 2: Feathery Compound Frond (bipinnate Delonix regia) with 16 pairs of delicate micro-leaflets.
      * - Cell 3: Krishnachura Blossoming Spray with fiery scarlet petals and golden stamens over fresh green foliage.
      */
+    /**
+     * 2x2 atlas of high-resolution alpha-cut foliage card clusters (1024x1024, each cell 512px)
+     * strictly matching Reference Images 1 & 2:
+     * - Cell 0: Full Deciduous Leaf Sprig (Image 1 Left Tree) with 28 stylized leaves, 3-tier colors, and pale midribs.
+     * - Cell 1: Lateral Sweeping Leaf Fan (Image 1 Left Tree) for dense perimeter and shoulder coverage.
+     * - Cell 2: Autumn Orange / Golden Leaf Cluster (Image 1 Middle Tree) in rich golds, amber-orange, and rust tones.
+     * - Cell 3: Krishnachura Scarlet Blossoms & Stylized Green Leaves (Dhaka University Heritage aesthetic).
+     */
     private Texture createLeafAtlas() {
-        int cell = 256;
+        int cell = 512;
         Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
         pix.fill();
 
-        // ── Cell 0: Full Deciduous Leaf Spray (Image 1 Green Tree Style) ──────────
-        drawTwigSegment(pix, 0, 0, 128, 252, 128, 175, 4.5f, 0.28f, 0.20f, 0.12f, 1f);
-        drawTwigSegment(pix, 0, 0, 128, 175, 75, 120, 3.2f, 0.32f, 0.24f, 0.15f, 1f);
-        drawTwigSegment(pix, 0, 0, 128, 175, 128, 70, 3.5f, 0.32f, 0.24f, 0.15f, 1f);
-        drawTwigSegment(pix, 0, 0, 128, 175, 180, 115, 3.2f, 0.32f, 0.24f, 0.15f, 1f);
-        drawTwigSegment(pix, 0, 0, 75, 120, 40, 75, 2.0f, 0.36f, 0.26f, 0.16f, 1f);
-        drawTwigSegment(pix, 0, 0, 180, 115, 215, 70, 2.0f, 0.36f, 0.26f, 0.16f, 1f);
+        // Pale chartreuse/lime midrib stem color (Image 1 signature feature)
+        float mR = 0.84f, mG = 0.98f, mB = 0.44f; // #D6FA70
 
+        // ── Cell 0: Primary Green Leaf Sprig (Image 1 Left Tree Style) ───────────
+        drawTwigSegment(pix, 0, 0, cell, 256, 508, 256, 350, 7.5f, 0.28f, 0.20f, 0.12f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 256, 350, 150, 240, 5.5f, 0.32f, 0.24f, 0.15f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 256, 350, 256, 140, 5.8f, 0.32f, 0.24f, 0.15f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 256, 350, 360, 230, 5.5f, 0.32f, 0.24f, 0.15f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 150, 240, 80, 150, 3.8f, 0.36f, 0.26f, 0.16f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 360, 230, 430, 140, 3.8f, 0.36f, 0.26f, 0.16f, 1f);
+
+        // 28 Stylized Deciduous Leaves: {bx, by, length, halfWidth, angleRad, tier (0=shadow, 1=mid, 2=highlight)}
         float[][] cell0Leaves = {
             // Left twig cluster
-            {128, 175, 52, 12, -2.10f}, {110, 155, 55, 13, -2.45f}, {90, 135, 56, 13, -2.05f},
-            {75, 120, 52, 12, -2.60f}, {60, 100, 50, 11, -2.15f}, {40, 75, 46, 11, -2.55f},
-            {55, 80, 48, 11, -1.75f}, {80, 105, 50, 12, -1.50f},
+            {256, 350, 105, 24, -2.10f, 0}, {220, 310, 110, 26, -2.45f, 1}, {180, 270, 112, 26, -2.05f, 1},
+            {150, 240, 105, 24, -2.60f, 1}, {120, 200, 100, 23, -2.15f, 1}, {80,  150,  92, 22, -2.55f, 2},
+            {110, 160,  96, 23, -1.75f, 2}, {160, 210, 100, 24, -1.50f, 1}, {190, 240, 105, 25, -1.85f, 0},
             // Center twig cluster
-            {128, 150, 58, 14, -1.80f}, {128, 150, 58, 14, -1.35f},
-            {128, 120, 60, 14, -1.95f}, {128, 120, 60, 14, -1.20f},
-            {128, 90, 55, 13, -1.65f}, {128, 90, 55, 13, -1.45f},
-            {128, 70, 50, 12, -1.57f},
+            {256, 300, 116, 27, -1.80f, 0}, {256, 300, 116, 27, -1.35f, 0},
+            {256, 240, 120, 28, -1.95f, 1}, {256, 240, 120, 28, -1.20f, 1},
+            {256, 180, 112, 26, -1.65f, 2}, {256, 180, 112, 26, -1.45f, 2},
+            {256, 140, 102, 24, -1.57f, 2},
             // Right twig cluster
-            {145, 155, 55, 13, -0.70f}, {165, 135, 56, 13, -1.10f},
-            {180, 115, 52, 12, -0.55f}, {195, 100, 50, 11, -1.00f},
-            {215, 70, 46, 11, -0.60f}, {200, 80, 48, 11, -1.35f},
-            {175, 105, 50, 12, -1.65f}
+            {290, 310, 110, 26, -0.70f, 0}, {330, 270, 112, 26, -1.10f, 1},
+            {360, 230, 105, 24, -0.55f, 1}, {390, 200, 100, 23, -1.00f, 1},
+            {430, 140,  92, 22, -0.60f, 2}, {400, 160,  96, 23, -1.35f, 2},
+            {350, 210, 100, 24, -1.65f, 1}, {320, 240, 105, 25, -1.25f, 0},
+            // Extra crown fringe leaves (distinct silhouettes against sky)
+            {140, 130,  88, 21, -2.30f, 2}, {256, 100,  90, 21, -1.57f, 2},
+            {370, 130,  88, 21, -0.85f, 2}, {210, 120,  85, 20, -1.80f, 2}
         };
+
         for (float[] lf : cell0Leaves) {
-            float t = lf[2] / 60f;
-            drawDeciduousStylizedLeaf(pix, 0, 0, lf[0], lf[1], lf[2], lf[3], lf[4],
-                0.08f, 0.26f, 0.09f, 0.26f + 0.12f * t, 0.58f + 0.18f * t, 0.14f + 0.08f * t);
+            int tier = (int) lf[5];
+            float br, bg, bb, tr, tg, tb;
+            if (tier == 0) {
+                // Tier 0: Deep forest green shadow underlayer
+                br = 0.08f; bg = 0.24f; bb = 0.08f;
+                tr = 0.16f; tg = 0.42f; tb = 0.11f;
+            } else if (tier == 1) {
+                // Tier 1: Vibrant emerald / apple green body
+                br = 0.14f; bg = 0.40f; bb = 0.11f;
+                tr = 0.38f; tg = 0.76f; tb = 0.18f;
+            } else {
+                // Tier 2: Luminous sunlit mint / lime highlights (Image 1 canopy top)
+                br = 0.28f; bg = 0.62f; bb = 0.16f;
+                tr = 0.66f; tg = 0.94f; tb = 0.28f;
+            }
+            drawDeciduousStylizedLeaf(pix, 0, 0, cell, lf[0], lf[1], lf[2], lf[3], lf[4],
+                br, bg, bb, tr, tg, tb, mR, mG, mB);
         }
 
-        // ── Cell 1: Lateral Sweeping Leaf Spray (Canopy Periphery) ───────────────
-        drawTwigSegment(pix, cell, 0, 128, 252, 140, 160, 4.0f, 0.28f, 0.20f, 0.12f, 1f);
-        drawTwigSegment(pix, cell, 0, 140, 160, 70, 105, 3.0f, 0.32f, 0.24f, 0.15f, 1f);
-        drawTwigSegment(pix, cell, 0, 140, 160, 205, 95, 3.0f, 0.32f, 0.24f, 0.15f, 1f);
+        // ── Cell 1: Lateral Sweeping Leaf Fan (Image 1 Left Tree) ────────────────
+        drawTwigSegment(pix, cell, 0, cell, 256, 508, 280, 320, 7.0f, 0.28f, 0.20f, 0.12f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 280, 320, 140, 210, 5.0f, 0.32f, 0.24f, 0.15f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 280, 320, 410, 190, 5.0f, 0.32f, 0.24f, 0.15f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 140, 210, 60,  140, 3.5f, 0.36f, 0.26f, 0.16f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 410, 190, 460, 130, 3.5f, 0.36f, 0.26f, 0.16f, 1f);
 
         float[][] cell1Leaves = {
-            {140, 175, 58, 13, -2.25f}, {140, 175, 58, 13, -0.90f},
-            {115, 140, 55, 12, -2.40f}, {90, 120, 52, 12, -2.10f},
-            {70, 105, 48, 11, -2.60f}, {50, 90, 44, 10, -2.20f},
-            {100, 125, 50, 11, -1.60f}, {130, 135, 52, 12, -1.45f},
-            {165, 140, 55, 12, -0.75f}, {185, 120, 52, 12, -1.05f},
-            {205, 95, 48, 11, -0.55f}, {225, 85, 44, 10, -0.95f},
-            {170, 115, 50, 11, -1.50f}, {140, 110, 54, 12, -1.57f}
+            {280, 350, 116, 26, -2.25f, 0}, {280, 350, 116, 26, -0.90f, 0},
+            {230, 280, 110, 25, -2.40f, 1}, {180, 240, 105, 24, -2.10f, 1},
+            {140, 210,  98, 23, -2.60f, 1}, {100, 180,  92, 22, -2.20f, 2},
+            {60,  140,  86, 20, -2.55f, 2}, {90,  140,  88, 21, -1.85f, 2},
+            {200, 250, 102, 23, -1.60f, 1}, {260, 270, 105, 24, -1.45f, 1},
+            {330, 280, 110, 25, -0.75f, 1}, {370, 240, 105, 24, -1.05f, 1},
+            {410, 190,  98, 23, -0.55f, 1}, {445, 170,  92, 22, -0.95f, 2},
+            {470, 120,  86, 20, -0.65f, 2}, {430, 130,  88, 21, -1.30f, 2},
+            {340, 230, 102, 23, -1.50f, 1}, {280, 220, 108, 25, -1.57f, 1},
+            {210, 180,  96, 22, -1.90f, 2}, {350, 180,  96, 22, -1.25f, 2},
+            {280, 150,  94, 21, -1.57f, 2}
         };
+
         for (float[] lf : cell1Leaves) {
-            drawDeciduousStylizedLeaf(pix, cell, 0, lf[0], lf[1], lf[2], lf[3], lf[4],
-                0.09f, 0.28f, 0.10f, 0.34f, 0.68f, 0.18f);
+            int tier = (int) lf[5];
+            float br = (tier == 0) ? 0.08f : (tier == 1 ? 0.14f : 0.28f);
+            float bg = (tier == 0) ? 0.24f : (tier == 1 ? 0.40f : 0.62f);
+            float bb = (tier == 0) ? 0.08f : (tier == 1 ? 0.11f : 0.16f);
+            float tr = (tier == 0) ? 0.16f : (tier == 1 ? 0.38f : 0.66f);
+            float tg = (tier == 0) ? 0.42f : (tier == 1 ? 0.76f : 0.94f);
+            float tb = (tier == 0) ? 0.11f : (tier == 1 ? 0.18f : 0.28f);
+            drawDeciduousStylizedLeaf(pix, cell, 0, cell, lf[0], lf[1], lf[2], lf[3], lf[4],
+                br, bg, bb, tr, tg, tb, mR, mG, mB);
         }
 
-        // ── Cell 2: Feathery Compound Frond (Delonix Regia / Bipinnate Frond) ───
+        // ── Cell 2: Autumn Orange / Golden Leaf Cluster (Image 1 Middle Tree) ────
         int ox = 0, oy = cell;
-        final float up = -MathUtils.HALF_PI;
-        drawTwigSegment(pix, ox, oy, 128, 252, 128, 15, 3.2f, 0.26f, 0.18f, 0.10f, 1f);
-        for (int i = 0; i < 16; i++) {
-            float t = 0.08f + i * 0.056f;
-            float ry = 248f - t * 230f;
-            float rx = 128f + MathUtils.sin(t * 2.2f) * 8f;
-            float len = 74f * (1f - 0.42f * t);
-            float hw = 12f * (1f - 0.25f * t);
-            drawDeciduousStylizedLeaf(pix, ox, oy, rx, ry, len, hw, up - 1.05f,
-                0.10f, 0.30f, 0.11f, 0.30f, 0.62f, 0.18f);
-            drawDeciduousStylizedLeaf(pix, ox, oy, rx, ry, len, hw, up + 1.05f,
-                0.10f, 0.30f, 0.11f, 0.30f, 0.62f, 0.18f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 508, 256, 350, 7.5f, 0.28f, 0.15f, 0.07f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 350, 150, 240, 5.5f, 0.32f, 0.18f, 0.09f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 350, 256, 140, 5.8f, 0.32f, 0.18f, 0.09f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 350, 360, 230, 5.5f, 0.32f, 0.18f, 0.09f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 150, 240, 80,  150, 3.8f, 0.36f, 0.20f, 0.10f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 360, 230, 430, 140, 3.8f, 0.36f, 0.20f, 0.10f, 1f);
+
+        // Autumn colors strictly from Image 1 middle tree:
+        // Deep rust brown underlayer: #80350B (0.50, 0.21, 0.04)
+        // Radiant amber-orange body:  #E66E19 (0.90, 0.43, 0.10)
+        // Luminous golden highlight:  #F5B82E (0.96, 0.72, 0.18)
+        // Pale golden midrib stem:    #FEE57A (0.99, 0.90, 0.48)
+        float aMR = 0.99f, aMG = 0.90f, aMB = 0.48f;
+        for (float[] lf : cell0Leaves) {
+            int tier = (int) lf[5];
+            float br, bg, bb, tr, tg, tb;
+            if (tier == 0) {
+                // Tier 0: Deep rust-brown shadow
+                br = 0.42f; bg = 0.16f; bb = 0.04f;
+                tr = 0.65f; tg = 0.28f; tb = 0.06f;
+            } else if (tier == 1) {
+                // Tier 1: Radiant amber-orange body
+                br = 0.78f; bg = 0.32f; bb = 0.06f;
+                tr = 0.94f; tg = 0.52f; tb = 0.12f;
+            } else {
+                // Tier 2: Warm golden-yellow canopy highlights
+                br = 0.88f; bg = 0.54f; bb = 0.10f;
+                tr = 0.98f; tg = 0.82f; tb = 0.24f;
+            }
+            drawDeciduousStylizedLeaf(pix, ox, oy, cell, lf[0], lf[1], lf[2], lf[3], lf[4],
+                br, bg, bb, tr, tg, tb, aMR, aMG, aMB);
         }
 
-        // ── Cell 3: Blazing Scarlet Krishnachura Blossom Cluster ─────────────────
+        // ── Cell 3: Blazing Scarlet Krishnachura Blossom & Leaf Cluster ───────────
         ox = cell; oy = cell;
-        drawTwigSegment(pix, ox, oy, 128, 252, 128, 170, 4.0f, 0.28f, 0.20f, 0.12f, 1f);
-        drawTwigSegment(pix, ox, oy, 128, 170, 75, 115, 3.0f, 0.32f, 0.24f, 0.15f, 1f);
-        drawTwigSegment(pix, ox, oy, 128, 170, 185, 115, 3.0f, 0.32f, 0.24f, 0.15f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 508, 256, 340, 7.0f, 0.28f, 0.20f, 0.12f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 340, 150, 230, 5.0f, 0.32f, 0.24f, 0.15f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 340, 370, 230, 5.0f, 0.32f, 0.24f, 0.15f, 1f);
 
         float[][] krishnaBgLeaves = {
-            {128, 180, 52, 11, -2.1f}, {128, 180, 52, 11, -1.0f},
-            {100, 150, 48, 10, -2.3f}, {80, 130, 44, 9, -2.0f},
-            {155, 150, 48, 10, -0.8f}, {175, 130, 44, 9, -1.1f},
-            {128, 130, 50, 11, -1.6f}, {128, 90, 45, 10, -1.55f}
+            {256, 360, 105, 23, -2.1f, 0}, {256, 360, 105, 23, -1.0f, 0},
+            {200, 300,  96, 21, -2.3f, 1}, {160, 260,  88, 19, -2.0f, 1},
+            {310, 300,  96, 21, -0.8f, 1}, {350, 260,  88, 19, -1.1f, 1},
+            {256, 260, 100, 22, -1.6f, 2}, {256, 180,  90, 20, -1.55f, 2}
         };
         for (float[] lf : krishnaBgLeaves) {
-            drawDeciduousStylizedLeaf(pix, ox, oy, lf[0], lf[1], lf[2], lf[3], lf[4],
-                0.09f, 0.28f, 0.10f, 0.26f, 0.58f, 0.15f);
+            drawDeciduousStylizedLeaf(pix, ox, oy, cell, lf[0], lf[1], lf[2], lf[3], lf[4],
+                0.09f, 0.28f, 0.10f, 0.32f, 0.68f, 0.16f, mR, mG, mB);
         }
 
+        // Fiery Krishnachura Scarlet Blossoms
         float[][] flowers = {
-            {128, 155}, {95, 135}, {160, 135}, {128, 115}, {75, 105},
-            {180, 105}, {105, 85}, {150, 85}, {128, 60}, {60, 80},
-            {195, 80}, {128, 195}
+            {256, 310}, {190, 270}, {320, 270}, {256, 230}, {150, 210},
+            {360, 210}, {210, 170}, {300, 170}, {256, 120}, {120, 160},
+            {390, 160}, {256, 390}
         };
         for (float[] f : flowers) {
-            int petLen = 16;
+            int petLen = 32;
             for (int p = 0; p < 5; p++) {
                 float ang = p * MathUtils.PI2 / 5f + f[0] * 0.15f;
-                float px = f[0] + MathUtils.cos(ang) * petLen;
-                float py = f[1] + MathUtils.sin(ang) * petLen;
+                float pxx = f[0] + MathUtils.cos(ang) * petLen;
+                float pyy = f[1] + MathUtils.sin(ang) * petLen;
                 pix.setColor(0.98f, 0.14f, 0.08f, 1f);
-                pix.fillCircle(ox + (int) px, oy + (int) py, 5);
-                pix.setColor(1.0f, 0.32f, 0.12f, 1f);
-                pix.fillCircle(ox + (int) px, oy + (int) py, 2);
+                pix.fillCircle(ox + (int) pxx, oy + (int) pyy, 10);
+                pix.setColor(1.0f, 0.38f, 0.12f, 1f);
+                pix.fillCircle(ox + (int) pxx, oy + (int) pyy, 4);
             }
             pix.setColor(1.0f, 0.90f, 0.25f, 1f);
-            pix.fillCircle(ox + (int) f[0], oy + (int) f[1], 4);
+            pix.fillCircle(ox + (int) f[0], oy + (int) f[1], 8);
             pix.setColor(1.0f, 0.98f, 0.65f, 1f);
-            pix.fillCircle(ox + (int) f[0], oy + (int) f[1], 2);
+            pix.fillCircle(ox + (int) f[0], oy + (int) f[1], 4);
         }
 
         Texture tex = new Texture(pix, Format.RGBA8888, true);
@@ -678,84 +742,84 @@ public class TextureFactory implements Disposable {
     }
 
     /**
-     * 2x2 atlas of botanical bamboo leaf sprays matching Image 3 (media_1793732581908_e6f827e6.png):
-     * - Cell 0: Direct Image 3 replica — authentic branching bamboo twig with 3 nodal clusters of lanceolate leaves.
+     * 2x2 atlas of botanical bamboo leaf sprays strictly matching Image 2 (poaceae monocot morphology):
+     * - Cell 0: Direct Image 2 replica — authentic branching bamboo twig with 3 nodal clusters of lanceolate leaves.
      * - Cell 1: Arching bamboo spray with graceful drooping lateral blades.
-     * - Cell 2: Dense cascading bamboo cluster with sharp pointed leaves.
+     * - Cell 2: Dense cascading bamboo cluster with sharp hanging pointed leaves.
      * - Cell 3: Young sunlit bamboo shoot spray with fresh lime-emerald venation.
      */
     private Texture createBambooAtlas() {
-        int cell = 256;
+        int cell = 512;
         Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
         pix.fill();
 
-        // Botanical Bamboo Colors from Image 3
-        float bR = 0.118f, bG = 0.302f, bB = 0.157f; // Base #1E4D28
-        float tR = 0.494f, tG = 0.796f, tB = 0.275f; // Tip #7ECB46
-        float mR = 0.447f, mG = 0.722f, mB = 0.251f; // Midrib #72B840
+        // Botanical Bamboo Colors strictly from Image 2
+        float bR = 0.105f, bG = 0.300f, bB = 0.130f; // Base #1B4D21 (deep forest green)
+        float tR = 0.510f, tG = 0.835f, tB = 0.255f; // Tip #82D541 (sunlit lime green)
+        float mR = 0.620f, mG = 0.900f, mB = 0.320f; // Midrib #9EE652 (light pale green)
 
-        // ── Cell 0: Direct Image 3 Replica (Branch with 3 Nodal Clusters) ────────
-        drawTwigSegment(pix, 0, 0, 75, 250, 115, 175, 3.2f, 0.267f, 0.431f, 0.165f, 1f);
-        drawTwigSegment(pix, 0, 0, 115, 175, 145, 105, 2.6f, 0.267f, 0.431f, 0.165f, 1f);
-        drawTwigSegment(pix, 0, 0, 145, 105, 175, 45, 2.0f, 0.267f, 0.431f, 0.165f, 1f);
+        // ── Cell 0: Direct Image 2 Replica (Branch with 3 Nodal Clusters) ────────
+        drawTwigSegment(pix, 0, 0, cell, 150, 500, 230, 350, 6.5f, 0.28f, 0.44f, 0.18f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 230, 350, 290, 210, 5.2f, 0.28f, 0.44f, 0.18f, 1f);
+        drawTwigSegment(pix, 0, 0, cell, 290, 210, 350, 90,  4.0f, 0.28f, 0.44f, 0.18f, 1f);
 
         // Node 1 (lower): side twig + cluster of 4 lanceolate leaves
-        drawTwigSegment(pix, 0, 0, 115, 175, 75, 155, 2.0f, 0.267f, 0.431f, 0.165f, 1f);
-        drawBotanicalBambooLeaf(pix, 0, 0, 75, 155, 115f, 9.0f, -2.35f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, 0, 0, 75, 155, 135f, 9.8f, -1.95f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, 0, 0, 75, 155, 120f, 9.2f, -1.50f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, 0, 0, 75, 155, 95f,  8.2f, -1.05f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawTwigSegment(pix, 0, 0, cell, 230, 350, 150, 310, 4.0f, 0.28f, 0.44f, 0.18f, 1f);
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 150, 310, 230f, 18.0f, -2.35f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 150, 310, 270f, 19.6f, -1.95f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 150, 310, 240f, 18.4f, -1.50f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 150, 310, 190f, 16.4f, -1.05f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
 
         // Node 2 (mid): side twig + cluster of 4 lanceolate leaves
-        drawTwigSegment(pix, 0, 0, 145, 105, 185, 95, 2.0f, 0.267f, 0.431f, 0.165f, 1f);
-        drawBotanicalBambooLeaf(pix, 0, 0, 185, 95, 120f, 9.0f, 0.25f,  bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, 0, 0, 185, 95, 140f, 9.8f, -0.25f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, 0, 0, 185, 95, 130f, 9.2f, -0.75f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, 0, 0, 185, 95, 105f, 8.2f, 0.65f,  bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawTwigSegment(pix, 0, 0, cell, 290, 210, 370, 190, 4.0f, 0.28f, 0.44f, 0.18f, 1f);
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 370, 190, 240f, 18.0f,  0.25f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 370, 190, 280f, 19.6f, -0.25f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 370, 190, 260f, 18.4f, -0.75f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 370, 190, 210f, 16.4f,  0.65f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
 
-        // Node 3 (top terminal): star fan of 5 lanceolate leaves
-        drawBotanicalBambooLeaf(pix, 0, 0, 175, 45, 125f, 9.0f, -1.65f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, 0, 0, 175, 45, 145f, 9.6f, -1.25f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, 0, 0, 175, 45, 155f, 10.0f, -0.75f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, 0, 0, 175, 45, 135f, 9.2f, -0.20f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, 0, 0, 175, 45, 110f, 8.5f, 0.35f,  bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        // Node 3 (top terminal): crown fan of 5 lanceolate leaves
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 350, 90, 250f, 18.0f, -1.65f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 350, 90, 290f, 19.2f, -1.25f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 350, 90, 310f, 20.0f, -0.75f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 350, 90, 270f, 18.4f, -0.20f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, 0, 0, cell, 350, 90, 220f, 17.0f,  0.35f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
 
         // ── Cell 1: Arching Lateral Bamboo Spray ─────────────────────────────────
-        drawTwigSegment(pix, cell, 0, 128, 252, 145, 160, 2.8f, 0.267f, 0.431f, 0.165f, 1f);
-        drawTwigSegment(pix, cell, 0, 145, 160, 80, 120, 2.0f, 0.267f, 0.431f, 0.165f, 1f);
-        drawTwigSegment(pix, cell, 0, 145, 160, 205, 110, 2.0f, 0.267f, 0.431f, 0.165f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 256, 508, 290, 320, 5.6f, 0.28f, 0.44f, 0.18f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 290, 320, 160, 240, 4.0f, 0.28f, 0.44f, 0.18f, 1f);
+        drawTwigSegment(pix, cell, 0, cell, 290, 320, 410, 220, 4.0f, 0.28f, 0.44f, 0.18f, 1f);
 
-        drawBotanicalBambooLeaf(pix, cell, 0, 80, 120, 130f, 9.2f, -2.40f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, cell, 0, 80, 120, 145f, 9.6f, -2.00f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, cell, 0, 80, 120, 125f, 9.0f, -1.55f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, cell, 0, cell, 160, 240, 260f, 18.4f, -2.40f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, cell, 0, cell, 160, 240, 290f, 19.2f, -2.00f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, cell, 0, cell, 160, 240, 250f, 18.0f, -1.55f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
 
-        drawBotanicalBambooLeaf(pix, cell, 0, 205, 110, 130f, 9.2f, -0.75f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, cell, 0, 205, 110, 145f, 9.6f, -0.30f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, cell, 0, 205, 110, 120f, 8.8f, 0.15f,  bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, cell, 0, cell, 410, 220, 260f, 18.4f, -0.75f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, cell, 0, cell, 410, 220, 290f, 19.2f, -0.30f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, cell, 0, cell, 410, 220, 240f, 17.6f,  0.15f, bR, bG, bB, tR, tG, tB, mR, mG, mB);
 
         // ── Cell 2: Dense Cascading Bamboo Cluster (Hanging Spray) ───────────────
         int ox = 0, oy = cell;
-        drawTwigSegment(pix, ox, oy, 128, 10, 128, 90, 2.8f, 0.267f, 0.431f, 0.165f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 20, 256, 180, 5.6f, 0.28f, 0.44f, 0.18f, 1f);
         float[] hangAngles = {-1.85f, -1.45f, -1.15f, -0.85f, -0.55f, -0.25f, 0.15f};
-        float[] hangLens =   {135f,   155f,   180f,   195f,   175f,   150f,   125f};
+        float[] hangLens =   {270f,   310f,   360f,   390f,   350f,   300f,   250f};
         for (int i = 0; i < hangAngles.length; i++) {
             float ang = hangAngles[i] + MathUtils.HALF_PI; // hang downward
-            drawBotanicalBambooLeaf(pix, ox, oy, 128, 90, hangLens[i], 9.2f, ang,
+            drawBotanicalBambooLeaf(pix, ox, oy, cell, 256, 180, hangLens[i], 18.4f, ang,
                 bR, bG, bB, tR, tG, tB, mR, mG, mB);
         }
 
         // ── Cell 3: Sunlit Young Bamboo Shoot Spray ──────────────────────────────
         ox = cell; oy = cell;
-        drawTwigSegment(pix, ox, oy, 128, 252, 135, 150, 2.6f, 0.32f, 0.50f, 0.18f, 1f);
-        drawTwigSegment(pix, ox, oy, 135, 150, 150, 75, 2.0f, 0.32f, 0.50f, 0.18f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 508, 270, 300, 5.2f, 0.32f, 0.50f, 0.18f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 270, 300, 300, 150, 4.0f, 0.32f, 0.50f, 0.18f, 1f);
 
-        float sTR = 0.584f, sTG = 0.878f, sTB = 0.322f; // Sunny lime #95E052
-        drawBotanicalBambooLeaf(pix, ox, oy, 135, 150, 115f, 8.8f, -2.25f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, ox, oy, 135, 150, 135f, 9.4f, -1.85f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, ox, oy, 150, 75,  140f, 9.6f, -1.35f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, ox, oy, 150, 75,  150f, 9.8f, -0.90f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
-        drawBotanicalBambooLeaf(pix, ox, oy, 150, 75,  125f, 9.0f, -0.45f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
+        float sTR = 0.584f, sTG = 0.880f, sTB = 0.320f; // Sunny lime #95E052
+        drawBotanicalBambooLeaf(pix, ox, oy, cell, 270, 300, 230f, 17.6f, -2.25f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, ox, oy, cell, 270, 300, 270f, 18.8f, -1.85f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, ox, oy, cell, 300, 150, 280f, 19.2f, -1.35f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, ox, oy, cell, 300, 150, 300f, 19.6f, -0.90f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
+        drawBotanicalBambooLeaf(pix, ox, oy, cell, 300, 150, 250f, 18.0f, -0.45f, bR, bG, bB, sTR, sTG, sTB, mR, mG, mB);
 
         Texture tex = new Texture(pix, Format.RGBA8888, true);
         tex.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
@@ -765,55 +829,57 @@ public class TextureFactory implements Disposable {
     }
 
     /**
-     * 2x2 atlas of Cherry / Magnolia / Bokul white blossom clusters matching Image 2:
+     * 2x2 atlas of Cherry / Magnolia / Bokul white blossom clusters (1024x1024, each cell 512px):
      * - Soft white/ivory 5-petaled flowers with blush centers, golden stamens, and fresh spring leaves.
      */
     private Texture createWhiteBlossomAtlas() {
-        int cell = 256;
+        int cell = 512;
         Pixmap pix = new Pixmap(cell * 2, cell * 2, Format.RGBA8888);
         pix.setColor(0f, 0f, 0f, 0f);
         pix.fill();
+
+        float mR = 0.84f, mG = 0.98f, mB = 0.44f;
 
         for (int c = 0; c < 4; c++) {
             int ox = (c % 2) * cell;
             int oy = (c / 2) * cell;
 
-            drawTwigSegment(pix, ox, oy, 128, 252, 128, 170, 3.5f, 0.32f, 0.22f, 0.14f, 1f);
-            drawTwigSegment(pix, ox, oy, 128, 170, 80, 115, 2.5f, 0.35f, 0.25f, 0.16f, 1f);
-            drawTwigSegment(pix, ox, oy, 128, 170, 175, 115, 2.5f, 0.35f, 0.25f, 0.16f, 1f);
+            drawTwigSegment(pix, ox, oy, cell, 256, 508, 256, 340, 7.0f, 0.32f, 0.22f, 0.14f, 1f);
+            drawTwigSegment(pix, ox, oy, cell, 256, 340, 160, 230, 5.0f, 0.35f, 0.25f, 0.16f, 1f);
+            drawTwigSegment(pix, ox, oy, cell, 256, 340, 350, 230, 5.0f, 0.35f, 0.25f, 0.16f, 1f);
 
             float[][] leaves = {
-                {128, 180, 48, 11, -2.1f}, {128, 180, 48, 11, -1.0f},
-                {105, 145, 45, 10, -2.3f}, {75, 120, 42, 9, -2.0f},
-                {150, 145, 45, 10, -0.8f}, {180, 120, 42, 9, -1.1f},
-                {128, 125, 46, 10, -1.57f}, {128, 85, 42, 9, -1.55f}
+                {256, 360, 96, 22, -2.1f}, {256, 360, 96, 22, -1.0f},
+                {210, 290, 90, 20, -2.3f}, {150, 240, 84, 18, -2.0f},
+                {300, 290, 90, 20, -0.8f}, {360, 240, 84, 18, -1.1f},
+                {256, 250, 92, 20, -1.57f}, {256, 170, 84, 18, -1.55f}
             };
             for (float[] lf : leaves) {
-                drawDeciduousStylizedLeaf(pix, ox, oy, lf[0], lf[1], lf[2], lf[3], lf[4],
-                    0.10f, 0.32f, 0.11f, 0.35f, 0.68f, 0.18f);
+                drawDeciduousStylizedLeaf(pix, ox, oy, cell, lf[0], lf[1], lf[2], lf[3], lf[4],
+                    0.10f, 0.32f, 0.11f, 0.35f, 0.68f, 0.18f, mR, mG, mB);
             }
 
             float[][] blossoms = {
-                {128, 155}, {95, 135}, {160, 135}, {128, 115}, {75, 105},
-                {180, 105}, {105, 85}, {150, 85}, {128, 60}, {60, 80},
-                {195, 80}, {128, 195}, {100, 180}, {155, 180}
+                {256, 310}, {190, 270}, {320, 270}, {256, 230}, {150, 210},
+                {360, 210}, {210, 170}, {300, 170}, {256, 120}, {120, 160},
+                {390, 160}, {256, 390}, {200, 360}, {310, 360}
             };
             for (float[] b : blossoms) {
-                int petLen = 15;
+                int petLen = 30;
                 for (int p = 0; p < 5; p++) {
                     float ang = p * MathUtils.PI2 / 5f + b[0] * 0.15f;
-                    float px = b[0] + MathUtils.cos(ang) * petLen;
-                    float py = b[1] + MathUtils.sin(ang) * petLen;
+                    float pxx = b[0] + MathUtils.cos(ang) * petLen;
+                    float pyy = b[1] + MathUtils.sin(ang) * petLen;
                     float blush = MathUtils.random(0.92f, 0.99f);
                     pix.setColor(0.99f, blush, blush * 0.95f, 1f);
-                    pix.fillCircle(ox + (int) px, oy + (int) py, 5);
+                    pix.fillCircle(ox + (int) pxx, oy + (int) pyy, 10);
                     pix.setColor(1.0f, 0.88f, 0.92f, 1f);
-                    pix.fillCircle(ox + (int) px, oy + (int) py, 2);
+                    pix.fillCircle(ox + (int) pxx, oy + (int) pyy, 4);
                 }
                 pix.setColor(1.0f, 0.88f, 0.22f, 1f);
-                pix.fillCircle(ox + (int) b[0], oy + (int) b[1], 4);
+                pix.fillCircle(ox + (int) b[0], oy + (int) b[1], 8);
                 pix.setColor(1.0f, 0.98f, 0.60f, 1f);
-                pix.fillCircle(ox + (int) b[0], oy + (int) b[1], 2);
+                pix.fillCircle(ox + (int) b[0], oy + (int) b[1], 4);
             }
         }
 
@@ -2007,7 +2073,14 @@ public class TextureFactory implements Disposable {
      * - Monocot parallel venation: fine longitudinal lines running parallel to the midrib from base to tip.
      * - Rich chlorophyll bamboo green with lighter translucent midrib and sunny lime tip.
      */
-    private void drawBotanicalBambooLeaf(Pixmap pix, int ox, int oy,
+    /**
+     * Draws an authentic botanical bamboo leaf strictly matching Image 2 (poaceae monocot morphology):
+     * - Slender lanceolate blade: narrow base, expands to maximum width at ~28% length, long graceful taper to acute needle tip.
+     * - Monocot parallel venation: fine longitudinal lines running parallel to the midrib from base to tip.
+     * - 3D crease across midrib: lit half (+8%) vs shaded half (-10%).
+     * - Rich chlorophyll bamboo green with lighter translucent midrib and sunny lime tip.
+     */
+    private void drawBotanicalBambooLeaf(Pixmap pix, int ox, int oy, int cellSize,
                                          float bx, float by, float length, float halfWidth,
                                          float angleRad,
                                          float br, float bg, float bb,
@@ -2017,9 +2090,8 @@ public class TextureFactory implements Disposable {
         float px = -dy, py = dx; // perpendicular
 
         float reach = length + halfWidth + 2f;
-        int maxLocal = (ox + 256 <= pix.getWidth()) ? 255 : pix.getWidth() - 1;
-        int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(maxLocal, (int) (bx + reach));
-        int minY = Math.max(0, (int) (by - reach)), maxY = Math.min(maxLocal, (int) (by + reach));
+        int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(cellSize - 1, (int) (bx + reach));
+        int minY = Math.max(0, (int) (by - reach)), maxY = Math.min(cellSize - 1, (int) (by + reach));
 
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
@@ -2028,8 +2100,9 @@ public class TextureFactory implements Disposable {
                 float t = along / length;
                 if (t < 0f || t > 1f) continue;
 
-                float across = Math.abs(rx * px + ry * py);
-                // Botanical bamboo leaf profile: widest at t=0.28, tapers to fine acute point at t=1.0
+                float sideDist = rx * px + ry * py;
+                float across = Math.abs(sideDist);
+                // Botanical bamboo leaf profile (Image 2 poaceae monocot): widest at t=0.28, long acute taper
                 float w = halfWidth * (float) Math.sin(Math.PI * Math.pow(t, 0.62)) * (1.12f - 0.28f * t);
                 if (across > w + 0.5f) continue;
 
@@ -2041,10 +2114,14 @@ public class TextureFactory implements Disposable {
                 float g = MathUtils.lerp(bg, tg, t);
                 float b = MathUtils.lerp(bb, tb, t);
 
-                // Monocot parallel venation (longitudinal veins parallel to midrib)
-                if (across < 1.15f) {
-                    // Central midrib
+                // 3D crease across midrib: one side catches direct light (+8%), other in slight shade (-10%)
+                float foldGain = (sideDist > 0f) ? 1.08f : 0.90f;
+
+                // Monocot parallel venation (fine longitudinal veins parallel to midrib)
+                if (across < 1.35f) {
+                    // Central translucent pale green midrib
                     r = mr; g = mg; b = mb;
+                    foldGain = 1.0f;
                 } else {
                     // 3 longitudinal parallel vein lines on either side
                     float vDist1 = Math.abs(normAcross - 0.32f);
@@ -2058,30 +2135,41 @@ public class TextureFactory implements Disposable {
                 }
 
                 float rim = 1f - 0.22f * MathUtils.clamp((normAcross - 0.75f) / 0.25f, 0f, 1f);
-                pix.setColor(MathUtils.clamp(r * rim, 0f, 1f),
-                             MathUtils.clamp(g * rim, 0f, 1f),
-                             MathUtils.clamp(b * rim, 0f, 1f), alpha);
+                pix.setColor(MathUtils.clamp(r * foldGain * rim, 0f, 1f),
+                             MathUtils.clamp(g * foldGain * rim, 0f, 1f),
+                             MathUtils.clamp(b * foldGain * rim, 0f, 1f), alpha);
                 pix.drawPixel(ox + x, oy + y);
             }
         }
     }
 
+    private void drawBotanicalBambooLeaf(Pixmap pix, int ox, int oy,
+                                         float bx, float by, float length, float halfWidth,
+                                         float angleRad,
+                                         float br, float bg, float bb,
+                                         float tr, float tg, float tb,
+                                         float mr, float mg, float mb) {
+        int autoCell = (pix.getWidth() == 1024) ? 512 : 256;
+        drawBotanicalBambooLeaf(pix, ox, oy, autoCell, bx, by, length, halfWidth, angleRad,
+            br, bg, bb, tr, tg, tb, mr, mg, mb);
+    }
+
     /**
-     * Draws one stylized deciduous leaf with pointed ovate silhouette, curved midrib,
-     * natural leaf color gradient, and subtle pinnate venation matching Image 1.
+     * Draws one stylized deciduous leaf with pointed ovate silhouette, pale lime midrib stem,
+     * natural leaf color gradient, and 3D volume fold crease strictly matching Image 1.
      */
-    private void drawDeciduousStylizedLeaf(Pixmap pix, int ox, int oy,
+    private void drawDeciduousStylizedLeaf(Pixmap pix, int ox, int oy, int cellSize,
                                           float bx, float by, float length, float halfWidth,
                                           float angleRad,
                                           float br, float bg, float bb,
-                                          float tr, float tg, float tb) {
+                                          float tr, float tg, float tb,
+                                          float mr, float mg, float mb) {
         float dx = MathUtils.cos(angleRad), dy = MathUtils.sin(angleRad);
         float px = -dy, py = dx;
 
         float reach = length + halfWidth + 2f;
-        int maxLocal = (ox + 256 <= pix.getWidth()) ? 255 : pix.getWidth() - 1;
-        int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(maxLocal, (int) (bx + reach));
-        int minY = Math.max(0, (int) (by - reach)), maxY = Math.min(maxLocal, (int) (by + reach));
+        int minX = Math.max(0, (int) (bx - reach)), maxX = Math.min(cellSize - 1, (int) (bx + reach));
+        int minY = Math.max(0, (int) (by - reach)), maxY = Math.min(cellSize - 1, (int) (by + reach));
 
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
@@ -2090,41 +2178,58 @@ public class TextureFactory implements Disposable {
                 float t = along / length;
                 if (t < 0f || t > 1f) continue;
 
-                float across = Math.abs(rx * px + ry * py);
-                // Stylized deciduous leaf: teardrop / ovate with sharp tip
+                float sideDist = rx * px + ry * py;
+                float across = Math.abs(sideDist);
+                // Stylized deciduous leaf: teardrop / ovate with sharp tip matching Image 1
                 float w = halfWidth * (float) Math.pow(Math.sin(Math.PI * Math.pow(t, 0.72)), 0.82);
                 if (across > w + 0.5f) continue;
 
                 float alpha = MathUtils.clamp(w - across + 0.5f, 0f, 1f);
                 float edge = w > 0.01f ? across / w : 1f;
 
+                // Color gradient along blade: darker base to bright sunlit tip
                 float r = MathUtils.lerp(br, tr, t);
                 float g = MathUtils.lerp(bg, tg, t);
                 float b = MathUtils.lerp(bb, tb, t);
 
-                // Subtle midrib and pinnate side veins
-                float vein = 0f;
-                if (across < 1.2f) {
-                    vein = 0.045f;
+                // 3D crease / volume fold: lit side vs shaded side
+                float foldGain = (sideDist > 0f) ? 1.09f : 0.91f;
+
+                // Pale chartreuse midrib stem (Image 1 signature feature)
+                if (across < 1.35f) {
+                    r = mr; g = mg; b = mb;
+                    foldGain = 1.0f;
                 } else {
                     float sidePhase = (t * 6f - edge * 1.5f) % 1f;
                     if (sidePhase < 0f) sidePhase += 1f;
-                    if (sidePhase < 0.12f) vein = 0.02f;
+                    if (sidePhase < 0.12f) {
+                        r *= 0.90f; g *= 0.92f; b *= 0.88f;
+                    }
                 }
 
-                float rim = 1f - 0.28f * MathUtils.clamp((edge - 0.75f) / 0.25f, 0f, 1f);
-                pix.setColor(MathUtils.clamp((r + vein) * rim, 0f, 1f),
-                             MathUtils.clamp((g + vein) * rim, 0f, 1f),
-                             MathUtils.clamp((b + vein * 0.4f) * rim, 0f, 1f), alpha);
+                float rim = 1f - 0.22f * MathUtils.clamp((edge - 0.78f) / 0.22f, 0f, 1f);
+                pix.setColor(MathUtils.clamp(r * foldGain * rim, 0f, 1f),
+                             MathUtils.clamp(g * foldGain * rim, 0f, 1f),
+                             MathUtils.clamp(b * foldGain * rim, 0f, 1f), alpha);
                 pix.drawPixel(ox + x, oy + y);
             }
         }
     }
 
+    private void drawDeciduousStylizedLeaf(Pixmap pix, int ox, int oy,
+                                          float bx, float by, float length, float halfWidth,
+                                          float angleRad,
+                                          float br, float bg, float bb,
+                                          float tr, float tg, float tb) {
+        int autoCell = (pix.getWidth() == 1024) ? 512 : 256;
+        drawDeciduousStylizedLeaf(pix, ox, oy, autoCell, bx, by, length, halfWidth, angleRad,
+            br, bg, bb, tr, tg, tb, 0.84f, 0.98f, 0.44f);
+    }
+
     /**
      * Draws a woody twig segment connecting nodes and leaf clusters.
      */
-    private void drawTwigSegment(Pixmap pix, int ox, int oy,
+    private void drawTwigSegment(Pixmap pix, int ox, int oy, int cellSize,
                                 float x0, float y0, float x1, float y1, float thickness,
                                 float r, float g, float b, float a) {
         float dx = x1 - x0, dy = y1 - y0;
@@ -2143,11 +2248,18 @@ public class TextureFactory implements Disposable {
             for (int d = -halfSpan; d <= halfSpan; d++) {
                 int ix = Math.round(cx + px * d);
                 int iy = Math.round(cy + py * d);
-                if (ix >= 0 && ix < 256 && iy >= 0 && iy < 256) {
+                if (ix >= 0 && ix < cellSize && iy >= 0 && iy < cellSize) {
                     pix.drawPixel(ox + ix, oy + iy);
                 }
             }
         }
+    }
+
+    private void drawTwigSegment(Pixmap pix, int ox, int oy,
+                                float x0, float y0, float x1, float y1, float thickness,
+                                float r, float g, float b, float a) {
+        int autoCell = (pix.getWidth() == 1024) ? 512 : 256;
+        drawTwigSegment(pix, ox, oy, autoCell, x0, y0, x1, y1, thickness, r, g, b, a);
     }
 
     private Texture[] createTreeBarkWithNormal() {

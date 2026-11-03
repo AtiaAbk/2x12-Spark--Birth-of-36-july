@@ -463,21 +463,24 @@ public class DhakaCampusWorld implements Disposable {
         );
 
         Material leafClumpMat = new Material(
-            PBRTextureAttribute.createBaseColorTexture(textures.leafClump),
+            PBRTextureAttribute.createBaseColorTexture(textures.leafAtlas),
+            FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
             IntAttribute.createCullFace(0),
-            ColorAttribute.createDiffuse(new Color(0.95f, 0.98f, 0.92f, 1f)),
+            ColorAttribute.createDiffuse(new Color(0.92f, 0.95f, 0.90f, 1f)),
             ColorAttribute.createEmissive(new Color(0.015f, 0.035f, 0.01f, 1f))
         );
 
         Material blossomClumpMat = new Material(
-            PBRTextureAttribute.createBaseColorTexture(textures.blossomClump),
+            PBRTextureAttribute.createBaseColorTexture(textures.leafAtlas),
+            FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 0.97f, 0.94f, 1f)),
             ColorAttribute.createEmissive(new Color(0.03f, 0.02f, 0.01f, 1f))
         );
 
         Material whiteBlossomClumpMat = new Material(
-            PBRTextureAttribute.createBaseColorTexture(textures.whiteBlossomClump),
+            PBRTextureAttribute.createBaseColorTexture(textures.whiteBlossomAtlas),
+            FloatAttribute.createAlphaTest(VegetationConfig.LEAF_ALPHA_CUTOFF),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
             ColorAttribute.createEmissive(new Color(0.03f, 0.03f, 0.025f, 1f))
@@ -1420,11 +1423,8 @@ public class DhakaCampusWorld implements Disposable {
         beamBuilder.begin();
         MeshPartBuilder beamPart = beamBuilder.part("lightShafts", GL20.GL_TRIANGLES, attr, beamMat);
         Vector3 towardSun = new Vector3(0.55f, 0.60f, 0.58f).nor();
-        // {baseX, baseZ, width, length}
-        float[][] shafts = {
-            {14f, 38f, 3.0f, 19f}, {19f, 41f, 2.4f, 22f}, {24.5f, 39f, 3.4f, 18f},
-            {30f, 40f, 2.6f, 20f}, {11f, 44f, 2.2f, 17f}
-        };
+        // Light shafts disabled for clean, natural summer sky
+        float[][] shafts = {};
         for (float[] s : shafts) {
             addLightShaft(beamPart, s[0], s[1], s[2], s[3], towardSun);
             addLightShaft(beamPart, -s[0] - 2f, s[1] + 1f, s[2] * 0.9f, s[3], towardSun);
