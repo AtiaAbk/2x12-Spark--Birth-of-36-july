@@ -203,33 +203,8 @@ public class AtmosphereRenderer implements Disposable {
         shapeRenderer.setColor(hColor.r, hColor.g, hColor.b, pulse);
         shapeRenderer.rect(0, horizonGlowY, w, h * 0.14f);
 
-        for (float[] c : cloudLayer2) {
-            float cx = c[0] * w;
-            float cy = (0.52f + c[1] * 0.35f) * h + pitchOffset * 0.55f;
-            float cw = c[2] * w * 1.5f;
-            float ch = c[3] * h * 0.85f;
-            float calpha = Math.min(1.0f, c[5] * 0.10f * cloudAlpha);
-            if (calpha <= 0.005f) continue;
-            for (int s = 0; s < 3; s++) {
-                float ox = (s - 1.0f) * cw * 0.28f;
-                float oy = MathUtils.sin(s * 1.4f) * ch * 0.20f;
-                float ew = cw * (0.75f + s * 0.12f);
-                float eh = ch * (0.65f + s * 0.10f);
-                shapeRenderer.setColor(0.96f, 0.97f, 1.0f, calpha);
-                shapeRenderer.ellipse(cx + ox - ew * 0.5f, cy + oy - eh * 0.5f, ew, eh, 32);
-            }
-        }
-
-        for (float[] c : cloudLayer1) {
-            float cx = c[0] * w;
-            float cy = c[1] * h + pitchOffset * 0.70f;
-            float cw = c[2] * w;
-            float ch = c[3] * h * 1.6f;
-            float calpha = Math.min(1.0f, c[5] * 0.16f * cloudAlpha);
-            if (calpha <= 0.005f) continue;
-            shapeRenderer.setColor(0.95f, 0.97f, 1.00f, calpha);
-            shapeRenderer.ellipse(cx - cw * 0.5f, cy - ch * 0.5f, cw, ch, 28);
-        }
+        // ── Cloud disks disabled for clean, natural sky matching Image 1 ──────────────────
+        // (Flat moving ellipses removed to avoid artificial hovering disks over Curzon Hall)
 
         float birdAlpha = Math.max(0.0f, 1.0f - rainIntensity * 1.6f);
         if (birdAlpha > 0.05f) {
