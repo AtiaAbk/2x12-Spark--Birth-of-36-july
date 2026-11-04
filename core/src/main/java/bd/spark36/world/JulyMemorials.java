@@ -42,6 +42,7 @@ public class JulyMemorials implements Disposable {
     private final Array<Model> models = new Array<>();
     private final Array<ModelInstance> instances = new Array<>();
     private final Array<ModelInstance> beaconInstances = new Array<>();
+    private final Array<ModelInstance> beamInstances = new Array<>();
 
     private float beaconPulseTime = 0f;
 
@@ -135,11 +136,21 @@ public class JulyMemorials implements Disposable {
         Model capModel = mb.createBox(1.2f, 0.18f, 1.2f, baseMat, attr);
         Model finialModel = mb.createBox(0.38f, 0.38f, 0.38f, goldMat, attr);
 
+        Color beamCol = new Color(1.0f, 0.84f, 0.28f, 0.70f);
+        Material beamMat = new Material(
+            ColorAttribute.createDiffuse(beamCol),
+            PBRColorAttribute.createBaseColorFactor(beamCol),
+            PBRColorAttribute.createEmissive(new Color(1.0f, 0.85f, 0.35f, 1f)),
+            PBRFloatAttribute.createMetallic(0.0f),
+            PBRFloatAttribute.createRoughness(0.20f));
+        Model beamModel = mb.createCylinder(0.40f, 12.0f, 0.40f, 12, beamMat, attr);
+
         models.add(baseModel);
         models.add(pillarModel);
         models.add(plaqueModel);
         models.add(capModel);
         models.add(finialModel);
+        models.add(beamModel);
 
         for (MemorialEntry entry : entries) {
             ModelInstance baseInst = new ModelInstance(baseModel);
@@ -161,6 +172,10 @@ public class JulyMemorials implements Disposable {
             ModelInstance finialInst = new ModelInstance(finialModel);
             finialInst.transform.setTranslation(entry.position.x, 3.32f, entry.position.z);
             beaconInstances.add(finialInst);
+
+            ModelInstance beamInst = new ModelInstance(beamModel);
+            beamInst.transform.setTranslation(entry.position.x, 9.32f, entry.position.z);
+            beamInstances.add(beamInst);
         }
     }
 
@@ -180,6 +195,13 @@ public class JulyMemorials implements Disposable {
             } else {
                 diff.color.set(0.95f, 0.78f, 0.30f, 1f);
             }
+
+            if (i < beamInstances.size) {
+                ModelInstance beam = beamInstances.get(i);
+                float beamScale = 0.85f + 0.20f * pulse;
+                beam.transform.setToTranslation(entry.position.x, 9.32f, entry.position.z);
+                beam.transform.scale(beamScale, 1.0f, beamScale);
+            }
         }
     }
 
@@ -189,6 +211,11 @@ public class JulyMemorials implements Disposable {
         }
         for (ModelInstance beacon : beaconInstances) {
             batch.render(beacon, env);
+        }
+        for (int i = 0; i < entries.size; i++) {
+            if (!entries.get(i).inspected && i < beamInstances.size) {
+                batch.render(beamInstances.get(i), env);
+            }
         }
     }
 
@@ -244,5 +271,6 @@ public class JulyMemorials implements Disposable {
         models.clear();
         instances.clear();
         beaconInstances.clear();
+        beamInstances.clear();
     }
 }

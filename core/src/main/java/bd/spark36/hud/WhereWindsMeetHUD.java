@@ -117,6 +117,7 @@ public class WhereWindsMeetHUD implements Disposable {
     private boolean isDefeated = false;
 
     private bd.spark36.level.CampaignLevel activeLevel = null;
+    private final Vector3 pinProjectTmp = new Vector3();
 
     public void setActiveLevel(bd.spark36.level.CampaignLevel level) {
         this.activeLevel = level;
@@ -876,10 +877,14 @@ public class WhereWindsMeetHUD implements Disposable {
         MemorialEntry nearest = memorials.getNextObjective(player.getPosition());
         float dstToNearest = nearest != null ? player.getPosition().dst(nearest.position) : 65.4f;
 
-        // 3D objective pin above Curzon Hall / world landmarks disabled per user request
-        // Keeping HUD cards, checklist, and minimap clean and distraction-free
+        // 3D floating objective pin above world landmarks with real-time distance
         if (camera != null && !isModalOpen()) {
-            // Disabled in world view
+            Vector3 activeWp = (activeLevel != null) ? activeLevel.getActiveWaypoint() : (nearest != null ? nearest.position : null);
+            String wpTitle = (activeLevel != null) ? activeLevel.getMissionTitle() : (nearest != null ? nearest.title : "CAMPUS OBJECTIVE");
+            float wpDst = (activeLevel != null) ? activeLevel.getWaypointDistance(player.getPosition()) : (nearest != null ? player.getPosition().dst(nearest.position) : 0f);
+            if (activeWp != null && (activeLevel == null || !activeLevel.isLevelComplete())) {
+                draw3DObjectivePinDirect(activeWp, wpTitle, wpDst, camera, w, h);
+            }
         }
 
         beginShapes(ShapeType.Filled);
@@ -1495,11 +1500,25 @@ public class WhereWindsMeetHUD implements Disposable {
             float startY = by + bh - 38f;
             float itemSpacing = 18f;
 
+            int nextIndex = -1;
+            for (int k = 0; k < items.length; k++) {
+                if (!activeLevel.isChecklistItemDone(k)) {
+                    nextIndex = k;
+                    break;
+                }
+            }
+
             for (int i = 0; i < items.length; i++) {
                 float y = startY - i * itemSpacing;
                 boolean isDone = activeLevel.isChecklistItemDone(i);
                 if (isDone) {
                     drawOutlined(fonts.smallFont, "[OK] " + items[i], bx + 16f, y, doneRowColor);
+                } else if (i == nextIndex) {
+                    float pulse = easedPulse(2.4f);
+                    float dst = activeLevel.getWaypointDistance(player.getPosition());
+                    String line = String.format("[>]  %s (%.0fm)", items[i], dst);
+                    drawOutlined(fonts.smallFont, line, bx + 16f, y,
+                        1f, 0.80f + 0.08f * pulse, 0.26f + 0.10f * pulse, 1f);
                 } else {
                     drawOutlined(fonts.smallFont, "[  ] " + items[i], bx + 16f, y, upcomingRowColor);
                 }
@@ -1552,8 +1571,8 @@ public class WhereWindsMeetHUD implements Disposable {
     public void draw3DObjectivePinDirect(Vector3 targetPos, String title, float dst, com.badlogic.gdx.graphics.Camera camera, float w, float h) {
         if (targetPos == null || camera == null) return;
 
-        Vector3 pinPos = new Vector3(targetPos.x, 7.5f, targetPos.z);
-        Vector3 scr = camera.project(pinPos);
+        pinProjectTmp.set(targetPos.x, 7.5f, targetPos.z);
+        Vector3 scr = camera.project(pinProjectTmp);
 
         if (scr.z > 0f && scr.z < 1.0f) {
             float px = scr.x * (w / Gdx.graphics.getBackBufferWidth());

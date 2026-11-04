@@ -418,9 +418,8 @@ public class Level1PeacefulCampus implements CampaignLevel {
         this.crowd = new CampusCrowd(32, player.getColliders());
         this.crowd.setLevelProfile(1);
 
-        this.campusSecurity = new HelmetGoon(textures);
-        this.campusSecurity.setRole(HelmetGoon.Role.CAMPUS_SECURITY);
-        this.campusSecurity.reset(0f, 60.0f);
+        // Exploration phase: No villains or aggressors on campus. Campus is completely peaceful.
+        this.campusSecurity = null;
 
         aggressors.clear();
         for (int i = 0; i < 3; i++) {
@@ -469,11 +468,14 @@ public class Level1PeacefulCampus implements CampaignLevel {
             interactionSystem.update(delta, player.getPosition(), player.getHeadingDegrees());
         }
 
-        if (campusSecurity != null && !combatPhase) {
-            campusSecurity.update(delta, player);
-        }
-
-        if (combatPhase) {
+        if (!combatPhase) {
+            if (hud != null) {
+                hud.setHelmetGoon(null);
+            }
+            if (player != null) {
+                player.clearCombatTarget();
+            }
+        } else {
             HelmetGoon closestAggressor = null;
             float closestDst = Float.MAX_VALUE;
             for (HelmetGoon g : aggressors) {
@@ -512,9 +514,6 @@ public class Level1PeacefulCampus implements CampaignLevel {
     @Override
     public void renderShadow(ModelBatch shadowBatch) {
         if (world != null) world.renderShadowCasters(shadowBatch);
-        if (!combatPhase && campusSecurity != null) {
-            campusSecurity.render(shadowBatch, null);
-        }
         if (combatPhase) {
             for (HelmetGoon g : aggressors) {
                 g.render(shadowBatch, null);
@@ -526,9 +525,6 @@ public class Level1PeacefulCampus implements CampaignLevel {
     public void render3D(ModelBatch modelBatch, Environment environment) {
         if (world != null) world.render(modelBatch);
         if (memorials != null) memorials.render(modelBatch, environment);
-        if (!combatPhase && campusSecurity != null) {
-            campusSecurity.render(modelBatch, environment);
-        }
         if (combatPhase) {
             for (HelmetGoon g : aggressors) {
                 g.render(modelBatch, environment);

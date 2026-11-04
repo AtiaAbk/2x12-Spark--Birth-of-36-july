@@ -108,7 +108,16 @@ public class CampusCrowd {
             {  20.0f,  31.0f, 2, 17, 90f },
             {  35.0f,  31.0f, 17, 18, 90f },
             {  42.0f,  20.0f, 18, 19, 180f },
-            {  42.0f,   5.0f, 19, 18,   0f }
+            {  42.0f,   5.0f, 19, 18,   0f },
+            // Additional University Walkway Circulation (32 active walkers across campus)
+            { -45.5f,  12.0f, 13, 14, 180f },
+            { -45.0f,  -2.0f, 14, 13,   0f },
+            { -48.0f,  46.0f, 15, 16, -90f },
+            {  22.0f, -16.5f, 9, 11,  90f },
+            { -22.0f, -16.5f, 9, 10, -90f },
+            {  -6.0f, -11.5f, 5, 8,   90f },
+            {   6.0f, -11.5f, 7, 8,  -90f },
+            {  42.0f,  -1.0f, 19, 18,   0f }
         };
         int count = Math.min(campusSpawns.length, students.length);
         for (int i = 0; i < count; i++) {
@@ -192,13 +201,9 @@ public class CampusCrowd {
 
                 case 1:
                 default:
-                    if (i % 8 == 0) {
-                        s.transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(1.2f, 2.4f));
-                    } else if (i % 8 == 1) {
-                        s.transitionTo(NpcBehaviorState.IDLE, MathUtils.random(1.0f, 2.0f));
-                    } else {
-                        s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(20f, 45f));
-                    }
+                    // All campus students walk continuously across the grounds
+                    s.transitionTo(NpcBehaviorState.WALKING, MathUtils.random(60f, 180f));
+                    s.setCurrentSpeed(s.getBaseSpeed());
                     break;
             }
         }
@@ -232,7 +237,7 @@ public class CampusCrowd {
                     s.applyAvoidanceForce(push[0], push[1], delta, graph);
                     o.applyAvoidanceForce(-push[0], -push[1], delta, graph);
 
-                    if (s.getState() == NpcBehaviorState.WALKING && o.getState() == NpcBehaviorState.WALKING &&
+                    if (activeLevelNumber != 1 && s.getState() == NpcBehaviorState.WALKING && o.getState() == NpcBehaviorState.WALKING &&
                         s.getChatCooldown() <= 0f && o.getChatCooldown() <= 0f && d2 < 1.15f * 1.15f && MathUtils.randomBoolean(0.30f)) {
                         float chatDuration = MathUtils.random(1.8f, 3.0f);
                         s.startSocializing(o, chatDuration);

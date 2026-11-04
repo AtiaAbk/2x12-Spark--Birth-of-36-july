@@ -55,6 +55,8 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
         this.variant = Math.max(1, variant);
         this.baseSpeed = baseSpeed;
         this.currentSpeed = baseSpeed;
+        this.state = NpcBehaviorState.IDLE;
+        this.previousState = NpcBehaviorState.IDLE;
         this.speedPhase = MathUtils.random(MathUtils.PI2);
         this.roleTitle = roleTitle != null ? roleTitle : (this.gender == 1 ? "DU Female Student" : "DU Male Student");
         this.chatCooldown = MathUtils.random(5f, 25f);
@@ -196,14 +198,7 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
             } else if (state == NpcBehaviorState.FLEEING) {
                 transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(2f, 4f));
             } else {
-                float roll = MathUtils.random();
-                if (roll < 0.05f) {
-                    transitionTo(NpcBehaviorState.LOOKING_AROUND, MathUtils.random(1.2f, 2.2f));
-                } else if (roll < 0.08f) {
-                    transitionTo(NpcBehaviorState.IDLE, MathUtils.random(1.0f, 1.8f));
-                } else {
-                    transitionTo(NpcBehaviorState.WALKING, MathUtils.random(18f, 40f));
-                }
+                transitionTo(NpcBehaviorState.WALKING, MathUtils.random(30f, 90f));
             }
         }
     }
@@ -385,6 +380,13 @@ public class StudentNPC implements bd.spark36.interaction.Interactable {
         this.state = newState;
         this.stateTimer = 0f;
         this.stateDuration = duration;
+        if (newState == NpcBehaviorState.WALKING && currentSpeed < baseSpeed * 0.8f) {
+            this.currentSpeed = baseSpeed;
+        }
+    }
+
+    public void setCurrentSpeed(float speed) {
+        this.currentSpeed = speed;
     }
 
     public void startSocializing(StudentNPC partner, float duration) {

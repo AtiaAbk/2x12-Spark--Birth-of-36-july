@@ -192,4 +192,66 @@ public class FullPipelineIntegrationAuditTest {
         assertEquals(2, LevelConfig.getCurrentLevel());
         assertTrue(LevelConfig.getUnlockedLevel() >= 2, "Unlocked level must not be reset to 1");
     }
+
+    @Test
+    @DisplayName("INTEGRATION 6: Verify 100% of students walk in Level 1 and villain does not spawn until 5 archives explored")
+    public void testExplorationPhaseAllStudentsWalkingAndNoVillains() {
+        CampusCrowd crowd = new CampusCrowd(32, player.getColliders());
+        crowd.setLevelProfile(1);
+        assertEquals(32, crowd.getStudentCount());
+
+        for (int i = 0; i < crowd.getStudentCount(); i++) {
+            StudentNPC s = crowd.getStudents()[i];
+            assertEquals(bd.spark36.character.NpcBehaviorState.WALKING, s.getState(),
+                "Student " + i + " must be walking in Level 1 peaceful campus");
+            assertTrue(s.getSpeed() > 0f, "Student " + i + " must have active walking speed");
+        }
+
+        // Level 1 starts peaceful
+        assertFalse(level1.isCombatPhase(), "Level 1 must not be in combat phase initially");
+
+        // Inspect one by one and verify checklist progression
+        JulyMemorials memorials = level1.getMemorials();
+        for (int i = 0; i < 4; i++) {
+            JulyMemorials.MemorialEntry entry = memorials.getEntries().get(i);
+            level1.onInteract(entry.position.cpy(), player, null);
+            assertTrue(level1.isChecklistItemDone(i), "Archive " + (i + 1) + " must be completed");
+            assertFalse(level1.isCombatPhase(), "Villain must NOT arrive before all 5 archives are explored");
+        }
+
+        // Inspect 5th archive
+        JulyMemorials.MemorialEntry entry5 = memorials.getEntries().get(4);
+        level1.onInteract(entry5.position.cpy(), player, null);
+        assertTrue(level1.isChecklistItemDone(4), "Archive 5 must be completed");
+        assertTrue(level1.allExplorationsComplete(), "All 5 explorations must be complete");
+
+        // Now villain encounter activates
+        assertTrue(level1.isCombatPhase(), "Chhatra League aggressors must arrive only after 5 archives explored");
+        assertEquals(3, level1.getRemainingAggressorsCount(), "3 aggressors must arrive");
+    }
+
+    @Test
+    @DisplayName("INTEGRATION 7: Verify tree foliage coordinates do not clip into Central Library, TSC, or Academic Buildings")
+    public void testTreeLocationsClearOfBuildings() {
+        for (float[] loc : bd.spark36.world.DhakaCampusWorld.TREE_LOCATIONS) {
+            float x = loc[0];
+            float z = loc[1];
+
+            // Central Library: X in [-89, -44], Z in [4, 40]
+            boolean insideLibrary = (x >= -89f && x <= -44f && z >= 4f && z <= 40f);
+            assertFalse(insideLibrary, "Tree at (" + x + ", " + z + ") clips into Central Library");
+
+            // TSC: X in [39, 88], Z in [4, 36]
+            boolean insideTSC = (x >= 39f && x <= 88f && z >= 4f && z <= 36f);
+            assertFalse(insideTSC, "Tree at (" + x + ", " + z + ") clips into TSC");
+
+            // West Academic Building: X in [-36, -16], Z in [46, 58]
+            boolean insideWestAcad = (x >= -36f && x <= -16f && z >= 46f && z <= 58f);
+            assertFalse(insideWestAcad, "Tree at (" + x + ", " + z + ") clips into West Academic Building");
+
+            // East Academic Building: X in [16, 36], Z in [46, 58]
+            boolean insideEastAcad = (x >= 16f && x <= 36f && z >= 46f && z <= 58f);
+            assertFalse(insideEastAcad, "Tree at (" + x + ", " + z + ") clips into East Academic Building");
+        }
+    }
 }

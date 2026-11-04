@@ -41,24 +41,30 @@ import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 public class DhakaCampusWorld implements Disposable {
 
     public static final float[][] TREE_LOCATIONS = {
-
+        // Courtyard / Pond grass verges (completely clear of Curzon Hall & Pond)
         {-19.5f, 14f, 1},
         {-19.5f, -2f, 1},
         {19.5f, -2f, 1},
         {19.5f, 14f, 3},
         {-13.5f, 35.5f, 3},
         {13.5f, 35.5f, 1},
-        {-14.5f, 50f, 3},
-        {14.5f, 50f, 1},
+        // Mid-promenade lawn verges (7.5m clear of academic buildings at X=±16 to ±36)
+        {-8.5f, 50f, 3},
+        {8.5f, 50f, 1},
+        // Open lawns between pond and plazas (clear of Arts Plaza & Raju sculpture)
         {-28.0f, 16f, 0}, {28.0f, 16f, 1},
-        {-48.0f, 6f, 1},  {48.0f, 6f, 3},
-        {-62.0f, 36.0f, 0}, {62.0f, 36.0f, 0},
+        // Clear of Central Library (X: -89 to -44) and TSC terrace (X: 39 to 88)
+        {-34.0f, 2f, 1},  {32.0f, 2f, 3},
+        // Outer lawns north of academic wings
+        {-44.0f, 54.0f, 0}, {44.0f, 54.0f, 0},
+        // South of Curzon Hall arcades
         {-32.0f, -12f, 1}, {32.0f, -12f, 3},
+        // North gate entrance verges
         {-22.0f, 68f, 3}, {22.0f, 68f, 1},
         {-11.5f, 71f, 0},
-
+        // Ornamental royal palms along pond and promenade grass verges
         {-18f, 2f, 2}, {18f, 2f, 2},
-        {-20f, 45.0f, 2}, {20f, 45.0f, 2}
+        {-8.5f, 44.0f, 2}, {8.5f, 44.0f, 2}
     };
 
     public static final Vector3 BOUNDARY_STONE_POS = new Vector3(7.8f, 0f, 36.5f);
