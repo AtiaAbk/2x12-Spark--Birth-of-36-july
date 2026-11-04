@@ -115,12 +115,12 @@ public class ParticleSystem implements Disposable {
     private int screenW, screenH;
 
     private static final Color[] LEAF_COLORS = {
-        new Color(0.72f, 0.42f, 0.12f, 1f),
-        new Color(0.82f, 0.56f, 0.08f, 1f),
-        new Color(0.55f, 0.32f, 0.10f, 1f),
-        new Color(0.25f, 0.52f, 0.18f, 1f),
-        new Color(0.35f, 0.60f, 0.22f, 1f),
-        new Color(0.78f, 0.28f, 0.12f, 1f),
+        new Color(0.22f, 0.55f, 0.16f, 1f),
+        new Color(0.30f, 0.68f, 0.20f, 1f),
+        new Color(0.18f, 0.48f, 0.14f, 1f),
+        new Color(0.38f, 0.75f, 0.24f, 1f),
+        new Color(0.26f, 0.60f, 0.18f, 1f),
+        new Color(0.45f, 0.82f, 0.28f, 1f),
     };
 
     public ParticleSystem() {

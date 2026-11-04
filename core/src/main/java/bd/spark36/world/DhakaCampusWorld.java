@@ -413,7 +413,7 @@ public class DhakaCampusWorld implements Disposable {
             FloatAttribute.createAlphaTest(0.01f),
             IntAttribute.createCullFace(0),
             ColorAttribute.createDiffuse(new Color(1f, 1f, 1f, 1f)),
-            ColorAttribute.createEmissive(new Color(0.03f, 0.02f, 0.015f, 1f))
+            ColorAttribute.createEmissive(new Color(0.02f, 0.04f, 0.015f, 1f))
         );
 
         Material whiteBlossomClumpMat = new Material(

@@ -412,24 +412,22 @@ public class TextureFactory implements Disposable {
         }
 
         if (blossoms) {
+            // Extra dense lush green leaf canopy layer to cover inner volumes and heighten foliage density
+            int extraLeaves = 450;
+            for (int i = 0; i < extraLeaves; i++) {
+                float x = MathUtils.random(0, size - 1);
+                float y = MathUtils.random(0, size - 1);
+                float angle = MathUtils.random(0f, MathUtils.PI2);
+                float len = MathUtils.random(14f, 28f);
+                float hw = MathUtils.random(5.0f, 9.5f);
 
-            int flowerCount = 180;
-            for (int f = 0; f < flowerCount; f++) {
-                float fx = MathUtils.random(0, size - 1);
-                float fy = MathUtils.random(0, size - 1);
-                int petLen = MathUtils.random(7, 14);
+                // Sunlit emerald to chartreuse green leaf blades (zero red)
+                float br = 0.18f, bg = 0.45f, bb = 0.12f;
+                float tr = 0.38f, tg = 0.75f, tb = 0.20f;
+
                 for (int ox = -size; ox <= size; ox += size) {
                     for (int oy = -size; oy <= size; oy += size) {
-                        for (int p = 0; p < 5; p++) {
-                            float pAng = p * MathUtils.PI2 / 5f + f * 0.2f;
-                            float px = fx + ox + MathUtils.cos(pAng) * petLen;
-                            float py = fy + oy + MathUtils.sin(pAng) * petLen;
-                            pix.setColor(0.96f, 0.14f + MathUtils.random(0.08f), 0.06f, 1f);
-                            pix.fillCircle((int) px, (int) py, Math.max(3, petLen / 3));
-                        }
-
-                        pix.setColor(1.0f, 0.88f, 0.22f, 1f);
-                        pix.fillCircle((int) (fx + ox), (int) (fy + oy), 3);
+                        drawClumpLeafBlade(pix, x + ox, y + oy, len, hw, angle, br, bg, bb, tr, tg, tb);
                     }
                 }
             }
@@ -666,44 +664,47 @@ public class TextureFactory implements Disposable {
                 br, bg, bb, tr, tg, tb, aMR, aMG, aMB);
         }
 
-        // ── Cell 3: Blazing Scarlet Krishnachura Blossom & Leaf Cluster ───────────
+        // ── Cell 3: Dense Multi-Tier Lush Tropical Green Canopy Sprig ───────────
         ox = cell; oy = cell;
         drawTwigSegment(pix, ox, oy, cell, 256, 508, 256, 340, 7.0f, 0.45f, 0.26f, 0.14f, 1f);
         drawTwigSegment(pix, ox, oy, cell, 256, 340, 150, 230, 5.0f, 0.48f, 0.28f, 0.16f, 1f);
         drawTwigSegment(pix, ox, oy, cell, 256, 340, 370, 230, 5.0f, 0.48f, 0.28f, 0.16f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 150, 230, 70,  150, 3.8f, 0.52f, 0.30f, 0.18f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 370, 230, 440, 140, 3.8f, 0.52f, 0.30f, 0.18f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 340, 256, 120, 5.2f, 0.48f, 0.28f, 0.16f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 120, 200, 70,  3.2f, 0.52f, 0.30f, 0.18f, 1f);
+        drawTwigSegment(pix, ox, oy, cell, 256, 120, 310, 70,  3.2f, 0.52f, 0.30f, 0.18f, 1f);
 
-        float[][] krishnaBgLeaves = {
-            {256, 360, 105, 23, -2.1f, 0}, {256, 360, 105, 23, -1.0f, 0},
-            {200, 300,  96, 21, -2.3f, 1}, {160, 260,  88, 19, -2.0f, 1},
-            {310, 300,  96, 21, -0.8f, 1}, {350, 260,  88, 19, -1.1f, 1},
-            {256, 260, 100, 22, -1.6f, 2}, {256, 180,  90, 20, -1.55f, 2}
+        float[][] cell3LushLeaves = {
+            // Lower/Shadow tier (rich forest green)
+            {256, 360, 115, 26, -2.10f, 0}, {256, 360, 115, 26, -1.05f, 0},
+            {200, 310, 110, 25, -2.35f, 0}, {310, 310, 110, 25, -0.80f, 0},
+            {150, 240, 106, 24, -2.55f, 0}, {370, 240, 106, 24, -0.60f, 0},
+            // Mid tier (vibrant emerald and summer leaf green)
+            {256, 290, 118, 27, -1.85f, 1}, {256, 290, 118, 27, -1.30f, 1},
+            {170, 230, 108, 25, -2.15f, 1}, {340, 230, 108, 25, -1.00f, 1},
+            {120, 180, 102, 23, -2.40f, 1}, {390, 180, 102, 23, -0.75f, 1},
+            {80,  140,  94, 22, -2.60f, 1}, {430, 130,  94, 22, -0.55f, 1},
+            {256, 230, 114, 26, -1.90f, 1}, {256, 230, 114, 26, -1.25f, 1},
+            {220, 170, 104, 24, -1.65f, 1}, {290, 170, 104, 24, -1.50f, 1},
+            // Crown/Highlight tier (luminous chartreuse and sunlit lime green)
+            {256, 170, 108, 25, -1.57f, 2}, {256, 120, 102, 24, -1.57f, 2},
+            {200, 120,  96, 22, -2.10f, 2}, {310, 120,  96, 22, -1.05f, 2},
+            {200,  70,  90, 21, -2.30f, 2}, {310,  70,  90, 21, -0.85f, 2},
+            {256,  70,  92, 21, -1.57f, 2}, {150, 130,  92, 22, -1.80f, 2},
+            {360, 130,  92, 22, -1.35f, 2}, {256,  30,  88, 20, -1.57f, 2}
         };
-        for (float[] lf : krishnaBgLeaves) {
+
+        for (float[] lf : cell3LushLeaves) {
+            int tier = (int) lf[5];
+            float br = (tier == 0) ? 0.10f : (tier == 1 ? 0.20f : 0.38f);
+            float bg = (tier == 0) ? 0.32f : (tier == 1 ? 0.56f : 0.78f);
+            float bb = (tier == 0) ? 0.08f : (tier == 1 ? 0.12f : 0.18f);
+            float tr = (tier == 0) ? 0.22f : (tier == 1 ? 0.45f : 0.74f);
+            float tg = (tier == 0) ? 0.55f : (tier == 1 ? 0.82f : 0.98f);
+            float tb = (tier == 0) ? 0.12f : (tier == 1 ? 0.18f : 0.28f);
             drawDeciduousStylizedLeaf(pix, ox, oy, cell, lf[0], lf[1], lf[2], lf[3], lf[4],
-                0.14f, 0.38f, 0.10f, 0.45f, 0.82f, 0.18f, mR, mG, mB);
-        }
-
-        // Fiery Krishnachura Scarlet Blossoms
-        float[][] flowers = {
-            {256, 310}, {190, 270}, {320, 270}, {256, 230}, {150, 210},
-            {360, 210}, {210, 170}, {300, 170}, {256, 120}, {120, 160},
-            {390, 160}, {256, 390}
-        };
-        for (float[] f : flowers) {
-            int petLen = 32;
-            for (int p = 0; p < 5; p++) {
-                float ang = p * MathUtils.PI2 / 5f + f[0] * 0.15f;
-                float pxx = f[0] + MathUtils.cos(ang) * petLen;
-                float pyy = f[1] + MathUtils.sin(ang) * petLen;
-                pix.setColor(0.98f, 0.14f, 0.08f, 1f);
-                pix.fillCircle(ox + (int) pxx, oy + (int) pyy, 10);
-                pix.setColor(1.0f, 0.38f, 0.12f, 1f);
-                pix.fillCircle(ox + (int) pxx, oy + (int) pyy, 4);
-            }
-            pix.setColor(1.0f, 0.90f, 0.25f, 1f);
-            pix.fillCircle(ox + (int) f[0], oy + (int) f[1], 8);
-            pix.setColor(1.0f, 0.98f, 0.65f, 1f);
-            pix.fillCircle(ox + (int) f[0], oy + (int) f[1], 4);
+                br, bg, bb, tr, tg, tb, mR, mG, mB);
         }
 
         Texture tex = new Texture(pix, Format.RGBA8888, true);
@@ -2296,34 +2297,14 @@ public class TextureFactory implements Disposable {
         drawBranchLine(pix, 256, 300, 140, 180, 4);
         drawBranchLine(pix, 256, 300, 370, 170, 4);
 
-        for (int b = 0; b < 28; b++) {
-            float fx = MathUtils.random(70, 442);
-            float fy = MathUtils.random(50, 390);
-            float fLen = MathUtils.random(65, 120);
-            float fAngle = MathUtils.random(-80, 80);
-            Color fernCol = new Color(0.12f, 0.48f, 0.10f, 1f);
-            Color fernVein = new Color(0.45f, 0.82f, 0.24f, 1f);
-            drawBambooBlade(pix, fx, fy, fLen, fAngle, 7.5f, fernCol, fernVein);
-        }
-
-        int flowerCount = 95;
-        for (int i = 0; i < flowerCount; i++) {
+        for (int b = 0; b < 75; b++) {
             float fx = MathUtils.random(50, 462);
             float fy = MathUtils.random(40, 410);
-            int petLen = MathUtils.random(11, 22);
-
-            for (int p = 0; p < 5; p++) {
-                float pAngle = p * 72f + MathUtils.random(-12f, 12f);
-                float px = fx + MathUtils.cosDeg(pAngle) * petLen;
-                float py = fy + MathUtils.sinDeg(pAngle) * petLen;
-
-                float shade = MathUtils.random(0.90f, 1.0f);
-                pix.setColor(0.99f * shade, 0.12f + MathUtils.random(-0.02f, 0.08f), 0.06f, 1f);
-                pix.fillCircle((int)px, (int)py, Math.max(4, petLen / 3));
-            }
-
-            pix.setColor(1.0f, 0.92f, 0.20f, 1f);
-            pix.fillCircle((int)fx, (int)fy, 4);
+            float fLen = MathUtils.random(70, 135);
+            float fAngle = MathUtils.random(-85, 85);
+            Color fernCol = new Color(0.14f, 0.52f, 0.12f, 1f);
+            Color fernVein = new Color(0.48f, 0.86f, 0.26f, 1f);
+            drawBambooBlade(pix, fx, fy, fLen, fAngle, 8.5f, fernCol, fernVein);
         }
 
         Texture tex = new Texture(pix);

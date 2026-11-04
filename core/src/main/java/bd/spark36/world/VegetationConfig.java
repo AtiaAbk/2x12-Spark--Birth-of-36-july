@@ -15,7 +15,7 @@ public final class VegetationConfig {
 
     public static final float RAIN_TREE_LEAF_CARD_SIZE = 0.42f;
 
-    public static final float KRISHNA_LEAF_CARD_SIZE = 0.36f;
+    public static final float KRISHNA_LEAF_CARD_SIZE = 0.42f;
 
     public static final float WHITE_BLOSSOM_CARD_SIZE = 0.38f;
 

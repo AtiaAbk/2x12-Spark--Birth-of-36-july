@@ -153,7 +153,7 @@ final class TreeGeometry {
         final double p = 1.6;
         double area = 4.0 * Math.PI * Math.pow(
             (Math.pow(rx * ry, p) + Math.pow(rx * rz, p) + Math.pow(ry * rz, p)) / 3.0, 1.0 / p);
-        int count = MathUtils.clamp((int) (area * 1.35f * leafDensity), 22, 52);
+        int count = MathUtils.clamp((int) (area * 1.85f * leafDensity), 32, 68);
 
         for (int i = 0; i < count; i++) {
             float th = RNG.nextFloat() * MathUtils.PI2;
@@ -300,7 +300,7 @@ final class TreeGeometry {
     private static final float RAIN_LEAF = VegetationConfig.RAIN_TREE_LEAF_CARD_SIZE;
     private static final float KRISHNA_LEAF = VegetationConfig.KRISHNA_LEAF_CARD_SIZE;
     private static final int[] RAIN_CELLS = {0, 0, 1, 1, 1};
-    private static final int[] KRISHNA_CELLS = {0, 0, 1, 1};
+    private static final int[] KRISHNA_CELLS = {0, 0, 1, 1, 3, 3};
 
     static void krishnaTree(MeshPartBuilder trunk, MeshPartBuilder blossom, MeshPartBuilder cards,
                             float x, float z, float s, float seed) {
@@ -314,18 +314,20 @@ final class TreeGeometry {
         limb(trunk, m1x, 0.70f * s, m1z, 0.42f * s, x, 1.85f * s, z, 0.34f * s, 9);
         limb(trunk, x, 1.85f * s, z, 0.34f * s, x, topY, z, 0.24f * s, 9);
 
-        for (int k = 0; k < 3; k++) {
-            float ang = seed + k * MathUtils.PI2 / 3f;
+        for (int k = 0; k < 4; k++) {
+            float ang = seed + k * MathUtils.PI2 / 4f;
             float ca = MathUtils.cos(ang), sa = MathUtils.sin(ang);
             float ex = x + ca * 3.4f * s, ey = topY + 1.2f * s, ez = z + sa * 3.4f * s;
             limb(trunk, x, topY - 0.2f * s, z, 0.22f * s, ex, ey, ez, 0.08f * s, 7);
-            foliage(blossom, cards, ex, ey + 0.6f * s, ez, 2.9f * s, 1.4f * s, 2.9f * s, seed + k * 1.9f,
-                KRISHNA_LEAF * s, KRISHNA_CELLS, 0.65f);
+            foliage(blossom, cards, ex, ey + 0.6f * s, ez, 3.1f * s, 1.6f * s, 3.1f * s, seed + k * 1.9f,
+                KRISHNA_LEAF * s, KRISHNA_CELLS, 0f);
             foliage(blossom, cards, x + ca * 1.8f * s, topY + 1.4f * s, z + sa * 1.8f * s,
-                2.5f * s, 1.3f * s, 2.5f * s, seed + k * 0.8f + 3f, KRISHNA_LEAF * s, KRISHNA_CELLS, 0.60f);
+                2.7f * s, 1.4f * s, 2.7f * s, seed + k * 0.8f + 3f, KRISHNA_LEAF * s, KRISHNA_CELLS, 0f);
         }
-        foliage(blossom, cards, x, topY + 1.6f * s, z, 3.6f * s, 1.5f * s, 3.6f * s, seed + 6f,
-            KRISHNA_LEAF * s, KRISHNA_CELLS, 0.60f);
+        foliage(blossom, cards, x, topY + 1.7f * s, z, 3.8f * s, 1.7f * s, 3.8f * s, seed + 6f,
+            KRISHNA_LEAF * s, KRISHNA_CELLS, 0f);
+        foliage(blossom, cards, x, topY + 2.5f * s, z, 2.8f * s, 1.4f * s, 2.8f * s, seed + 8.5f,
+            KRISHNA_LEAF * s, KRISHNA_CELLS, 0f);
     }
 
     private static final float WHITE_LEAF = VegetationConfig.WHITE_BLOSSOM_CARD_SIZE;
