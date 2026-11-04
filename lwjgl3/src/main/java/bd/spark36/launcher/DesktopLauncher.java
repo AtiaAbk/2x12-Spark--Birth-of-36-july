@@ -67,6 +67,7 @@ public class DesktopLauncher {
                 configuration.setWindowedMode(1440, 900);
             }
         }
+        configuration.setWindowPosition(40, 40);
         configuration.setResizable(true);
 
         configuration.setWindowListener(new com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowAdapter() {

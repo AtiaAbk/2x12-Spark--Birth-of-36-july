@@ -264,6 +264,10 @@ public class WhereWindsMeetHUD implements Disposable {
         return isDefeated;
     }
 
+    public boolean isVictoryOpen() {
+        return isVictoryOpen;
+    }
+
     private bd.spark36.level.DialogueRepository.DialogueLine activeNpcDialogue = null;
     private float npcDialogueTimer = 0f;
     private final bd.spark36.dialogue.DialogueManager dialogueManager = new bd.spark36.dialogue.DialogueManager();

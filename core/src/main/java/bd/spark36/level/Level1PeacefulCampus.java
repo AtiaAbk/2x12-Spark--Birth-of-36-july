@@ -34,6 +34,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
     private final Array<HelmetGoon> aggressors = new Array<>();
     private TextureFactory textures;
     private final MissionTracker missionTracker = new MissionTracker(false);
+    private final bd.spark36.interaction.InteractionSystem interactionSystem = new bd.spark36.interaction.InteractionSystem();
 
     private boolean combatPhase = false;
     private boolean victoryTriggered = false;
@@ -53,6 +54,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
     public Level1PeacefulCampus() {
         this.memorials = new JulyMemorials();
         initDefaultObjectives();
+        registerInteractables();
     }
 
     private void initDefaultObjectives() {
@@ -179,13 +181,86 @@ public class Level1PeacefulCampus implements CampaignLevel {
         return CHECKLIST.length;
     }
 
+    public void registerInteractables() {
+        interactionSystem.clear();
+        if (memorials != null) {
+            for (final MemorialEntry entry : memorials.getEntries()) {
+                interactionSystem.register(new bd.spark36.interaction.Interactable() {
+                    @Override public Vector3 getInteractionPosition() { return entry.position; }
+                    @Override public float getInteractionRadius() { return 3.8f; }
+                    @Override public String getInteractionPrompt() { return "[E] INSPECT HISTORICAL ARCHIVE — 36 JULY MOVEMENT"; }
+                    @Override public boolean canInteract(Vector3 playerPos, float playerHeading) { return !combatPhase && !entry.inspected; }
+                    @Override public boolean onInteract(Vector3 playerPos, PlayerController player, WhereWindsMeetHUD hud) {
+                        entry.inspected = true;
+                        missionTracker.completeObjective("m" + entry.id);
+                        bd.spark36.mission.MissionManager.get().advanceProgress(1);
+                        if (hud != null) {
+                            hud.openMemorialModal(entry);
+                            hud.triggerMissionToast(entry.title, getCompletedObjectiveCount());
+                        }
+                        if (allExplorationsComplete()) {
+                            triggerCombatEncounter(player, hud);
+                        }
+                        return true;
+                    }
+                    @Override public int getInteractionPriority() { return 3; }
+                    @Override public String getInteractableId() { return "MemorialArchive_" + entry.id; }
+                });
+            }
+        }
+
+        interactionSystem.register(new bd.spark36.interaction.Interactable() {
+            @Override public Vector3 getInteractionPosition() { return DhakaCampusWorld.BOUNDARY_STONE_POS; }
+            @Override public float getInteractionRadius() { return 3.2f; }
+            @Override public String getInteractionPrompt() { return "[E] INSPECT 1921 HERITAGE BOUNDARY MARKER"; }
+            @Override public boolean canInteract(Vector3 playerPos, float playerHeading) { return !combatPhase; }
+            @Override public boolean onInteract(Vector3 playerPos, PlayerController player, WhereWindsMeetHUD hud) {
+                if (hud != null) hud.openMemorialModal(hud.getBoundaryStoneEntry());
+                return true;
+            }
+            @Override public int getInteractionPriority() { return 1; }
+            @Override public String getInteractableId() { return "BoundaryMarker_1921"; }
+        });
+
+        interactionSystem.register(new bd.spark36.interaction.Interactable() {
+            @Override public Vector3 getInteractionPosition() { return new Vector3(0f, 0.18f, 17.2f); }
+            @Override public float getInteractionRadius() { return 4.0f; }
+            @Override public String getInteractionPrompt() { return "[E] SIT BY CURZON PUKUR GHAT"; }
+            @Override public boolean canInteract(Vector3 playerPos, float playerHeading) { return !combatPhase && world != null && world.isNearPondGhat(playerPos); }
+            @Override public boolean onInteract(Vector3 playerPos, PlayerController player, WhereWindsMeetHUD hud) {
+                if (player != null) {
+                    boolean nextSit = !player.isSittingWater();
+                    player.setSittingWater(nextSit);
+                    if (nextSit) {
+                        player.setPosition(0f, 0.18f, 17.2f);
+                        bd.spark36.audio.SoundManager.get().playSplash();
+                    }
+                    return true;
+                }
+                return false;
+            }
+            @Override public int getInteractionPriority() { return 1; }
+            @Override public String getInteractableId() { return "CurzonPukurGhat"; }
+        });
+
+        if (crowd != null && crowd.getStudents() != null) {
+            for (StudentNPC student : crowd.getStudents()) {
+                interactionSystem.register(student);
+            }
+        }
+    }
+
     @Override
     public String getContextPrompt(Vector3 playerPos) {
         if (combatPhase) return null;
-        if (memorials == null) return null;
-        for (MemorialEntry entry : memorials.getEntries()) {
-            if (!entry.inspected && playerPos.dst(entry.position) <= 3.8f) {
-                return "[E] INSPECT HISTORICAL ARCHIVE — 36 JULY MOVEMENT";
+        String prompt = interactionSystem.getContextPrompt();
+        if (prompt != null) return prompt;
+
+        if (memorials != null) {
+            for (MemorialEntry entry : memorials.getEntries()) {
+                if (!entry.inspected && playerPos.dst(entry.position) <= 3.8f) {
+                    return "[E] INSPECT HISTORICAL ARCHIVE — 36 JULY MOVEMENT";
+                }
             }
         }
         if (playerPos.dst(DhakaCampusWorld.BOUNDARY_STONE_POS) <= 3.2f) {
@@ -203,21 +278,31 @@ public class Level1PeacefulCampus implements CampaignLevel {
     @Override
     public boolean onInteract(Vector3 playerPos, PlayerController player, WhereWindsMeetHUD hud) {
         if (combatPhase) return false;
-        if (memorials == null) return false;
+        float heading = (player != null) ? player.getHeadingDegrees() : 180f;
+        boolean consumed = interactionSystem.triggerInteraction(playerPos, heading, player, hud);
+        if (consumed) {
+            bd.spark36.interaction.Interactable focused = interactionSystem.getFocusedInteractable();
+            if (focused instanceof StudentNPC) {
+                bd.spark36.mission.MissionManager.get().advanceProgress(1);
+            }
+            return true;
+        }
 
-        for (MemorialEntry entry : memorials.getEntries()) {
-            if (!entry.inspected && playerPos.dst(entry.position) <= 3.8f) {
-                entry.inspected = true;
-                missionTracker.completeObjective("m" + entry.id);
-                if (hud != null) {
-                    hud.openMemorialModal(entry);
-                    hud.triggerMissionToast(entry.title, getCompletedObjectiveCount());
+        if (memorials != null) {
+            for (MemorialEntry entry : memorials.getEntries()) {
+                if (!entry.inspected && playerPos.dst(entry.position) <= 3.8f) {
+                    entry.inspected = true;
+                    missionTracker.completeObjective("m" + entry.id);
+                    bd.spark36.mission.MissionManager.get().advanceProgress(1);
+                    if (hud != null) {
+                        hud.openMemorialModal(entry);
+                        hud.triggerMissionToast(entry.title, getCompletedObjectiveCount());
+                    }
+                    if (allExplorationsComplete()) {
+                        triggerCombatEncounter(player, hud);
+                    }
+                    return true;
                 }
-
-                if (allExplorationsComplete()) {
-                    triggerCombatEncounter(player, hud);
-                }
-                return true;
             }
         }
 
@@ -231,11 +316,13 @@ public class Level1PeacefulCampus implements CampaignLevel {
             player.setSittingWater(nextSit);
             if (nextSit) {
                 player.setPosition(0f, 0.18f, 17.2f);
+                bd.spark36.audio.SoundManager.get().playSplash();
             }
             return true;
         }
 
         if (crowd != null && player != null && crowd.interactWithClosest(playerPos, 2.6f, getLevelNumber(), hud)) {
+            bd.spark36.mission.MissionManager.get().advanceProgress(1);
             return true;
         }
 
@@ -349,6 +436,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
         camera.setColliders(player.getColliders());
         camera.setAngles(0f, -4f);
         camera.setDistance(4.5f);
+        registerInteractables();
     }
 
     @Override
@@ -377,27 +465,12 @@ public class Level1PeacefulCampus implements CampaignLevel {
         if (memorials != null) memorials.update(delta);
         if (crowd != null) crowd.update(delta, player.getPosition());
 
-        if (campusSecurity != null && !combatPhase) {
-            campusSecurity.update(delta, player);
+        if (player != null) {
+            interactionSystem.update(delta, player.getPosition(), player.getHeadingDegrees());
         }
 
-        if (!combatPhase && memorials != null && player != null) {
-            Vector3 pPos = player.getPosition();
-            for (MemorialEntry entry : memorials.getEntries()) {
-                if (!entry.inspected && pPos.dst(entry.position) <= 6.5f) {
-                    entry.inspected = true;
-                    missionTracker.completeObjective("m" + entry.id);
-                    bd.spark36.mission.MissionManager.get().advanceProgress(1);
-                    if (hud != null) {
-                        hud.triggerMissionToast("EXPLORED: " + entry.title + " / " + entry.location, getCompletedObjectiveCount());
-                        bd.spark36.audio.SoundManager.get().playObjective();
-                    }
-                    if (allExplorationsComplete()) {
-                        triggerCombatEncounter(player, hud);
-                    }
-                    break;
-                }
-            }
+        if (campusSecurity != null && !combatPhase) {
+            campusSecurity.update(delta, player);
         }
 
         if (combatPhase) {
@@ -544,6 +617,7 @@ public class Level1PeacefulCampus implements CampaignLevel {
 
     public void setCrowdForTest(CampusCrowd crowd) {
         this.crowd = crowd;
+        registerInteractables();
     }
 
     public int getRemainingAggressorsCount() {
@@ -590,6 +664,11 @@ public class Level1PeacefulCampus implements CampaignLevel {
     }
 
     public HelmetGoon getCampusSecurity() {
+        if (campusSecurity == null) {
+            campusSecurity = (textures != null) ? new HelmetGoon(textures) : new HelmetGoon();
+            campusSecurity.setRole(HelmetGoon.Role.CAMPUS_SECURITY);
+            campusSecurity.reset(0f, 60.0f);
+        }
         return (!combatPhase || aggressors.size == 0) ? campusSecurity : aggressors.get(0);
     }
 
@@ -604,6 +683,11 @@ public class Level1PeacefulCampus implements CampaignLevel {
     @Override
     public MissionTracker getMissionTracker() {
         return missionTracker;
+    }
+
+    @Override
+    public bd.spark36.interaction.InteractionSystem getInteractionSystem() {
+        return interactionSystem;
     }
 
     @Override

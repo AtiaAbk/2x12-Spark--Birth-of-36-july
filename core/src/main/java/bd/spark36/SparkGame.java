@@ -229,11 +229,22 @@ public class SparkGame extends ApplicationAdapter {
 
     private static final boolean DEV_KEYS = Boolean.getBoolean("bd.spark36.devKeys");
 
+    private float fullRunTimer = 0f;
+
     private final bd.spark36.diagnostics.FrameStats frameStats =
         bd.spark36.diagnostics.FrameStats.fromSystemProperties();
 
     @Override
     public void render() {
+        if (System.getProperty("bd.spark36.exitAfterSeconds") != null) {
+            fullRunTimer += Gdx.graphics.getDeltaTime();
+            float maxSec = Float.parseFloat(System.getProperty("bd.spark36.exitAfterSeconds"));
+            if (fullRunTimer >= maxSec) {
+                Gdx.app.exit();
+                return;
+            }
+        }
+
         if (frameStats != null && gameState != GameState.MAIN_MENU
                 && frameStats.record(Gdx.graphics.getDeltaTime())) {
             Gdx.app.log("FrameStats", frameStats.summary());

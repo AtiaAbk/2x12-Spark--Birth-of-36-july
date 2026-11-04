@@ -82,7 +82,7 @@ public class LevelConfig {
         currentLevel = level;
         currentMode = mode;
         combatEnabled = true;
-        unlockedLevel = 1;
+        unlockedLevel = Math.max(1, level);
     }
 
     private static int unlockedLevel = 1;
