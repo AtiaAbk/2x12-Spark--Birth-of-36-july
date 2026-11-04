@@ -112,6 +112,9 @@ public final class RenderPipelineConfig {
                 try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
                     props.load(fis);
                 }
+                if (Gdx.app != null) {
+                    Gdx.app.log("RenderPipelineConfig", "Loaded visuals.properties from: " + file.getAbsolutePath());
+                }
                 exposure = getFloat(props, "exposure", exposure);
                 contrast = getFloat(props, "contrast", contrast);
                 saturation = getFloat(props, "saturation", saturation);

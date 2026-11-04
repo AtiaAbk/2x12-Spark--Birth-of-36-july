@@ -16,6 +16,22 @@ allprojects {
   apply plugin: 'eclipse'
   apply plugin: 'idea'
 
+  // Configure Eclipse / VS Code Java (JDT LS) to output to build/classes/java/main instead of bin/
+  eclipse {
+    classpath {
+      defaultOutputDir = file('build/classes/java/main')
+      file.whenMerged { cp ->
+        cp.entries.findAll { it.hasProperty('output') }.each { entry ->
+          if (entry.path.contains('test')) {
+            entry.output = 'build/classes/java/test'
+          } else {
+            entry.output = 'build/classes/java/main'
+          }
+        }
+      }
+    }
+  }
+
   // This allows you to "Build and run using IntelliJ IDEA", an option in IDEA's Settings.
   idea {
     module {
@@ -27,8 +43,16 @@ allprojects {
 
 configure(subprojects) {
   apply plugin: 'java-library'
+  apply plugin: 'eclipse'
   java.sourceCompatibility = 8
   java.targetCompatibility = 8
+
+  eclipse.classpath.defaultOutputDir = file('build/classes/java/main')
+  eclipse.classpath.file.whenMerged { cp ->
+    cp.entries.findAll { it.hasProperty('output') }.each { entry ->
+      entry.output = null
+    }
+  }
 
   // From https://lyze.dev/2021/04/29/libGDX-Internal-Assets-List/
   // The article can be helpful when using assets.txt in your project.

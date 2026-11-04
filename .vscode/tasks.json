@@ -1,0 +1,77 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Game (Gradle)",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                ":core:classes",
+                ":lwjgl3:classes",
+                "generateAssetList"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "silent",
+                "clear": false
+            },
+            "problemMatcher": ["$javac"]
+        },
+        {
+            "label": "Clean & Build Game (Gradle)",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                "clean",
+                ":core:classes",
+                ":lwjgl3:classes",
+                "generateAssetList"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "clear": true
+            },
+            "problemMatcher": ["$javac"]
+        },
+        {
+            "label": "Run Game (Gradle)",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                ":lwjgl3:run",
+                "-Dbd.spark36.windowed=true"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Fullscreen (Gradle)",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": [
+                ":lwjgl3:run"
+            ],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}

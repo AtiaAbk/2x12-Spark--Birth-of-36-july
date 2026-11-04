@@ -1,0 +1,35 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Run Game (2x12: Spark)",
+            "request": "launch",
+            "mainClass": "bd.spark36.launcher.DesktopLauncher",
+            "projectName": "2x12-lwjgl3",
+            "cwd": "${workspaceFolder}/assets",
+            "vmArgs": "-XstartOnFirstThread --enable-native-access=ALL-UNNAMED -Dbd.spark36.windowed=true",
+            "preLaunchTask": "Build Game (Gradle)"
+        },
+        {
+            "type": "java",
+            "name": "Debug Game (2x12: Spark)",
+            "request": "launch",
+            "mainClass": "bd.spark36.launcher.DesktopLauncher",
+            "projectName": "2x12-lwjgl3",
+            "cwd": "${workspaceFolder}/assets",
+            "vmArgs": "-XstartOnFirstThread --enable-native-access=ALL-UNNAMED -Dbd.spark36.windowed=true",
+            "preLaunchTask": "Build Game (Gradle)"
+        },
+        {
+            "type": "java",
+            "name": "Run Fullscreen (2x12: Spark)",
+            "request": "launch",
+            "mainClass": "bd.spark36.launcher.DesktopLauncher",
+            "projectName": "2x12-lwjgl3",
+            "cwd": "${workspaceFolder}/assets",
+            "vmArgs": "-XstartOnFirstThread --enable-native-access=ALL-UNNAMED",
+            "preLaunchTask": "Build Game (Gradle)"
+        }
+    ]
+}

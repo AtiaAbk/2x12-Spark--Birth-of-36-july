@@ -13,7 +13,10 @@ bin/
 **/bin/
 core/bin/
 lwjgl3/bin/
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
 .settings/
 .project
 .classpath
